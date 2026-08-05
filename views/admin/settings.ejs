@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Ayarları — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">SİSTEM YÖNETİMİ</div>
+      <a href="/admin" class="mss-link active">Admin Paneli</a>
+      <div class="mss-sub">
+        <a href="/admin/users" class="mss-sub-link">👥 Kullanıcı Yönetimi</a>
+        <a href="/admin/users/add" class="mss-sub-link">➕ Yeni Kullanıcı</a>
+        <a href="/admin/settings" class="mss-sub-link active">🛠️ Sistem Ayarları</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <a href="/admin" class="mt-link active">Sistem Yönetimi</a>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <div class="page-header">
+        <div>
+          <h1>Kurumsal Sistem Ayarları</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sistem genelindeki çalışma parametrelerini yönetin.</p>
+        </div>
+      </div>
+
+      <div class="form-panel">
+        <form action="/admin/settings" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <div class="form-grid">
+            <% settings.forEach(setting => { %>
+              <div class="input-group">
+                <label for="<%= setting.key %>">
+                  <%= setting.description || setting.key %>
+                  <span style="font-size: 0.75rem; color: var(--indigo);">[<%= setting.category %>]</span>
+                </label>
+
+                <% if (setting.key === 'maintenance_mode') { %>
+                  <select id="<%= setting.key %>" name="<%= setting.key %>">
+                    <option value="false" <%= setting.value === 'false' ? 'selected' : '' %>>Devre Dışı (Normal Çalışma)</option>
+                    <option value="true" <%= setting.value === 'true' ? 'selected' : '' %>>Aktif (Yalnızca Admin Girişi)</option>
+                  </select>
+                <% } else { %>
+                  <input type="text" id="<%= setting.key %>" name="<%= setting.key %>" value="<%= setting.value %>" required>
+                <% } %>
+              </div>
+            <% }) %>
+          </div>
+
+          <button type="submit" class="btn" style="align-self: flex-start; margin-top: 1rem;">Sistem Ayarlarını Kaydet ➔</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satış Siparişi Düzenle — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">💼 SATIŞ & PAZARLAMA</div>
+
+      <div class="mss-group-title">📊 DASHBOARD & ONAY</div>
+      <div class="mss-sub">
+        <a href="/sales/analytics" class="mss-sub-link">📊 Satış Analitiği</a>
+        <a href="/sales/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+      </div>
+
+      <div class="mss-group-title">📋 SATIŞ OPERASYONLARI</div>
+      <div class="mss-sub">
+        <a href="/sales/quotes" class="mss-sub-link">📜 Teklif & Fiyatlandırma</a>
+        <a href="/sales/orders" class="mss-sub-link active">📋 Satış Siparişleri</a>
+        <a href="/sales/dispatches" class="mss-sub-link">🚚 Sevkiyat & İrsaliye</a>
+        <a href="/sales/invoices" class="mss-sub-link">🧾 Satış Faturaları</a>
+      </div>
+
+      <div class="mss-group-title">👥 MÜŞTERİ & FİYAT YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/sales/customers" class="mss-sub-link">👥 Cari Müşteri Kartları</a>
+        <a href="/sales/price-lists" class="mss-sub-link">💰 Özel Fiyat Listeleri</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %>
+          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
+          <a href="/stock" class="mt-link">Stok & Depo</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
+          <a href="/sales" class="mt-link active">Satış Yönetimi</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Purchase_Manager') { %>
+          <a href="/purchase" class="mt-link">Satın Alma</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+          <a href="/production" class="mt-link">Üretim Planlama</a>
+        <% } %>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <div class="page-header">
+        <div>
+          <h1>Satış Siparişi Düzenle & Detaylar</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">[<%= order.orderNo %>] siparişinin müşteri, teslimat ve fiyat detaylarını güncelleyin.</p>
+        </div>
+        <a href="/sales/orders" class="btn btn-secondary">◀ Sipariş Listesine Dön</a>
+      </div>
+
+      <% if (error) { %>
+        <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
+      <% } %>
+
+      <div class="form-panel">
+        <form action="/sales/orders/<%= order.id %>/edit" method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+          
+          <!-- Müşteri Bilgileri -->
+          <div>
+            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1rem;">👤 Müşteri & İletişim Detayları</h3>
+            <div class="form-grid form-grid--3">
+              <div class="input-group">
+                <label for="orderNo">Sipariş No <span class="req-star">*</span></label>
+                <input type="text" id="orderNo" name="orderNo" value="<%= order.orderNo %>" required readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(255,255,255,0.05);">
+              </div>
+              <div class="input-group">
+                <label for="customerName">Müşteri / Kurum Adı <span class="req-star">*</span></label>
+                <input type="text" id="customerName" name="customerName" value="<%= order.customerName %>" required>
+              </div>
+              <div class="input-group">
+                <label for="customerTaxNo">Müşteri Vergi No</label>
+                <input type="text" id="customerTaxNo" name="customerTaxNo" value="<%= order.customerTaxNo || '' %>">
+              </div>
+              <div class="input-group">
+                <label for="customerEmail">E-Posta</label>
+                <input type="email" id="customerEmail" name="customerEmail" value="<%= order.customerEmail || '' %>">
+              </div>
+              <div class="input-group">
+                <label for="customerPhone">Telefon</label>
+                <input type="text" id="customerPhone" name="customerPhone" value="<%= order.customerPhone || '' %>">
+              </div>
+              <div class="input-group">
+                <label for="salesRep">Satış Temsilcisi</label>
+                <input type="text" id="salesRep" name="salesRep" value="<%= order.salesRep || '' %>">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sipariş Şartları ve Tarihler -->
+          <div>
+            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1rem;">📅 Durum, Tarihler ve Ödeme Şartı</h3>
+            <div class="form-grid form-grid--4">
+              <div class="input-group">
+                <label for="status">Sipariş Durumu <span class="req-star">*</span></label>
+                <select id="status" name="status" required>
+                  <option value="Pending_Approval" <%= order.status === 'Pending_Approval' ? 'selected' : '' %>>Onay Bekliyor</option>
+                  <option value="Approved" <%= order.status === 'Approved' ? 'selected' : '' %>>Onaylandı (Hazırlanıyor)</option>
+                  <option value="Completed" <%= order.status === 'Completed' ? 'selected' : '' %>>Sevk Edildi (Tamamlandı)</option>
+                  <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>İptal</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="priority">Aciliyet</label>
+                <select id="priority" name="priority">
+                  <option value="Normal" <%= order.priority === 'Normal' ? 'selected' : '' %>>Normal</option>
+                  <option value="High" <%= order.priority === 'High' ? 'selected' : '' %>>Yüksek</option>
+                  <option value="Urgent" <%= order.priority === 'Urgent' ? 'selected' : '' %>>Acil</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="paymentTerm">Ödeme Şartı</label>
+                <select id="paymentTerm" name="paymentTerm">
+                  <option value="Pesin" <%= order.paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin</option>
+                  <option value="Vadeli_30" <%= order.paymentTerm === 'Vadeli_30' ? 'selected' : '' %>>30 Gün Vadeli</option>
+                  <option value="Vadeli_60" <%= order.paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
+                  <option value="Kredi_Karti" <%= order.paymentTerm === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="orderDate">Sipariş Tarihi</label>
+                <input type="date" id="orderDate" name="orderDate" value="<%= order.orderDate %>" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Satılan Ürün ve Fiyatlar -->
+          <div>
+            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1rem;">📦 Satılan Ürün (Mamul), Miktar ve Tutar</h3>
+            <div class="form-grid form-grid--3">
+              <div class="input-group">
+                <label for="stockItemId">Satılan Ürün (Mamul / Ticari Mal) <span class="req-star">*</span></label>
+                <select id="stockItemId" name="stockItemId" required>
+                  <% stockItems.forEach(item => { %>
+                    <option value="<%= item.id %>" <%= order.stockItemId == item.id ? 'selected' : '' %>>
+                      [<%= item.stockCode %>] <%= item.name %> (<%= item.category %>)
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="quantity">Satış Miktarı <span class="req-star">*</span></label>
+                <input type="number" step="0.01" id="quantity" name="quantity" value="<%= order.quantity %>" required oninput="calcTotals()">
+              </div>
+              <div class="input-group">
+                <label for="unitPrice">Birim Satış Fiyatı <span class="req-star">*</span></label>
+                <input type="number" step="0.01" id="unitPrice" name="unitPrice" value="<%= order.unitPrice %>" required oninput="calcTotals()">
+              </div>
+              <div class="input-group">
+                <label for="discountRate">Müşteri İskontosu (%)</label>
+                <input type="number" step="0.01" id="discountRate" name="discountRate" value="<%= order.discountRate %>" oninput="calcTotals()">
+              </div>
+              <div class="input-group">
+                <label for="taxRate">KDV Oranı (%)</label>
+                <input type="number" step="0.01" id="taxRate" name="taxRate" value="<%= order.taxRate %>" oninput="calcTotals()">
+              </div>
+              <div class="input-group">
+                <label for="currency">Para Birimi</label>
+                <select id="currency" name="currency">
+                  <option value="TRY" <%= order.currency === 'TRY' ? 'selected' : '' %>>TRY (₺)</option>
+                  <option value="USD" <%= order.currency === 'USD' ? 'selected' : '' %>>USD ($)</option>
+                  <option value="EUR" <%= order.currency === 'EUR' ? 'selected' : '' %>>EUR (€)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hesaplanan Tutar Kartı -->
+          <div style="background: rgba(15, 23, 42, 0.6); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center;">
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Ara Toplam</span>
+              <strong id="displaySubtotal" style="font-size: 1.1rem; color: #fff;"><%= order.subtotal %> TL</strong>
+            </div>
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">İskonto Tutar</span>
+              <strong id="displayDiscount" style="font-size: 1.1rem; color: #ec4899;"><%= order.discountAmount %> TL</strong>
+            </div>
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">KDV Tutarı</span>
+              <strong id="displayTax" style="font-size: 1.1rem; color: var(--indigo);"><%= order.taxAmount %> TL</strong>
+            </div>
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Genel Toplam</span>
+              <strong id="displayTotal" style="font-size: 1.3rem; color: var(--emerald);"><%= order.totalAmount %> TL</strong>
+            </div>
+          </div>
+
+          <div class="form-grid form-grid--2">
+            <div class="input-group">
+              <label for="shippingAddress">Sevkiyat Adresi</label>
+              <textarea id="shippingAddress" name="shippingAddress" rows="2"><%= order.shippingAddress || '' %></textarea>
+            </div>
+            <div class="input-group">
+              <label for="billingAddress">Fatura Adresi</label>
+              <textarea id="billingAddress" name="billingAddress" rows="2"><%= order.billingAddress || '' %></textarea>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="notes">Satış Notları</label>
+            <input type="text" id="notes" name="notes" value="<%= order.notes || '' %>">
+          </div>
+
+          <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn" style="background: var(--pink); border-color: var(--pink);">💾 Değişiklikleri Kaydet</button>
+            <a href="/sales/orders" class="btn btn-secondary">İptal</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function calcTotals() {
+      const q = parseFloat(document.getElementById('quantity').value) || 0;
+      const p = parseFloat(document.getElementById('unitPrice').value) || 0;
+      const d = parseFloat(document.getElementById('discountRate').value) || 0;
+      const t = parseFloat(document.getElementById('taxRate').value) || 20;
+
+      const sub = q * p;
+      const disc = sub * (d / 100);
+      const afterDisc = sub - disc;
+      const tax = afterDisc * (t / 100);
+      const tot = afterDisc + tax;
+
+      document.getElementById('displaySubtotal').textContent = sub.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+      document.getElementById('displayDiscount').textContent = disc.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+      document.getElementById('displayTax').textContent = tax.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+      document.getElementById('displayTotal').textContent = tot.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

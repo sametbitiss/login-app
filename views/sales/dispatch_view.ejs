@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sevk İrsaliyesi Detayı (<%= dispatch ? dispatch.dispatchNo : '' %>) — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    @media print {
+      .module-sidebar, .module-topbar, .no-print { display: none !important; }
+      .module-main { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+      .paper-invoice { border: none !important; box-shadow: none !important; background: #ffffff !important; color: #0f172a !important; }
+    }
+    
+    .paper-invoice { 
+      background: #ffffff; 
+      color: #0f172a;
+      border: 1px solid #cbd5e1; 
+      border-radius: 16px; 
+      padding: 44px; 
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); 
+      max-width: 920px; 
+      margin: 0 auto 30px auto; 
+    }
+    .pi-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+      border-bottom: 2px solid #e2e8f0; 
+      padding-bottom: 24px; 
+      margin-bottom: 30px; 
+    }
+    .pi-brand { 
+      font-size: 1.5rem; 
+      font-weight: 900; 
+      color: #15803d; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+    }
+    .pi-title { text-align: right; }
+    .pi-title h2 { font-size: 1.6rem; font-weight: 900; color: #0f172a; margin: 0; }
+    .pi-title p { color: #334155; font-size: 0.95rem; font-weight: 600; margin: 5px 0 0 0; }
+    .pi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px; }
+    .pi-box { 
+      background: #f8fafc; 
+      padding: 20px; 
+      border-radius: 12px; 
+      border: 1px solid #cbd5e1; 
+    }
+    .pi-box h4 { 
+      font-size: 0.85rem; 
+      font-weight: 800; 
+      color: #475569; 
+      text-transform: uppercase; 
+      margin-bottom: 10px; 
+      letter-spacing: 0.05em;
+    }
+    .pi-box p { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 6px 0; }
+    .pi-box-detail { color: #334155; font-size: 0.9rem; font-weight: 500; line-height: 1.6; }
+    
+    .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    .summary-table th { 
+      background: #e2e8f0; 
+      color: #0f172a; 
+      font-weight: 800; 
+      text-align: left; 
+      padding: 14px 16px; 
+      border-bottom: 2px solid #94a3b8; 
+      font-size: 0.9rem;
+    }
+    .summary-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; color: #0f172a; font-weight: 500; }
+  </style>
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar no-print">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">SATIŞ YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/sales/dispatches" class="mss-sub-link active">🚚 Sevkiyat & İrsaliye</a>
+        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri Listesi</a>
+        <a href="/sales/quotes" class="mss-sub-link">📜 Teklif & Fiyatlandırma</a>
+        <a href="/sales/invoices" class="mss-sub-link">🧾 Faturalandırma</a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar no-print">
+      <div class="mt-left">
+        <a href="/sales/dispatches" class="btn btn-outline-secondary btn-sm">← İrsaliye Listesine Dön</a>
+      </div>
+      <div class="mt-right">
+        <button onclick="window.print()" class="btn btn-outline-primary btn-sm">🖨️ İrsaliye Yazdır / PDF</button>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <% if (!dispatch) { %>
+        <div class="alert alert-danger">İrsaliye bulunamadı.</div>
+      <% } else { %>
+        <div class="paper-invoice">
+          <div class="pi-header">
+            <div class="pi-brand">
+              🚚 ENTERPRISE LOJİSTİK & SEVKİYAT
+            </div>
+            <div class="pi-title">
+              <h2>RESMİ SEVK İRSALİYESİ</h2>
+              <p>İrsaliye No: <strong style="color: #15803d;"><%= dispatch.dispatchNo %></strong></p>
+              <p>Sevk Tarihi: <strong><%= dispatch.dispatchDate %></strong></p>
+            </div>
+          </div>
+
+          <div class="pi-grid">
+            <div class="pi-box">
+              <h4>TESLİMAT YAPILACAK MÜŞTERİ</h4>
+              <p><%= dispatch.customerName %></p>
+              <div class="pi-box-detail">
+                Adres: <strong><%= dispatch.shippingAddress || (dispatch.customer ? dispatch.customer.address : 'Müşteri Teslimat Adresi') %></strong><br>
+                <%= dispatch.customer && dispatch.customer.phone ? 'İletişim: ' + dispatch.customer.phone : '' %>
+              </div>
+            </div>
+            <div class="pi-box">
+              <h4>LOJİSTİK & NAKLİYE BİLGİLERİ</h4>
+              <p>Taşıyıcı Firma: <strong style="color: #0f172a;"><%= dispatch.carrierCompany || 'Kendi Aracımız' %></strong></p>
+              <div class="pi-box-detail">
+                Araç Plakası: <strong style="color: #0f172a;"><%= dispatch.vehiclePlate || 'Belirtilmedi' %></strong><br>
+                Sürücü Adı: <strong style="color: #0f172a;"><%= dispatch.driverName || 'Belirtilmedi' %></strong><br>
+                Takip No: <strong style="color: #0f172a;"><%= dispatch.trackingNo || '-' %></strong>
+              </div>
+            </div>
+          </div>
+
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Sevk Edilen Mal/Malzeme</th>
+                <th>Sipariş No</th>
+                <th>Miktar</th>
+                <th>Birim</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong style="font-size: 1rem; color: #0f172a;"><%= dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.name : 'Ürün' %></strong><br>
+                  <span style="color: #475569; font-weight: 600; font-size: 0.85rem;"><%= dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.stockCode : '' %></span>
+                </td>
+                <td><strong style="color: #15803d; font-family: 'JetBrains Mono', monospace;"><%= dispatch.saleOrder ? dispatch.saleOrder.orderNo : '-' %></strong></td>
+                <td><strong style="font-size: 1.15rem; color: #15803d;"><%= dispatch.saleOrder ? dispatch.saleOrder.quantity : 1 %></strong></td>
+                <td><%= dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.unit : 'Adet' %></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top: 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center; color: #0f172a;">
+            <div style="border-top: 2px solid #cbd5e1; padding-top: 14px;">
+              <strong style="font-size: 0.95rem; display: block; margin-bottom: 4px;">TESLİM EDEN (Depo/Lojistik Sorumlusu)</strong>
+              <span style="color: #475569; font-weight: 600;"><%= dispatch.creator ? dispatch.creator.username : 'Yetkili' %></span>
+              <br><br><small style="color: #64748b; font-weight: 600;">İmza / Kaşe</small>
+            </div>
+            <div style="border-top: 2px solid #cbd5e1; padding-top: 14px;">
+              <strong style="font-size: 0.95rem; display: block; margin-bottom: 4px;">TESLİM ALAN (Müşteri/Alıcı)</strong>
+              <span style="color: #475569; font-weight: 600;"><%= dispatch.customerName %></span>
+              <br><br><small style="color: #64748b; font-weight: 600;">Teslim Alma Tarihi / İmza</small>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sevkiyat ve Teslimat (Dağıtım) Planlaması — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">💼 SATIŞ & PAZARLAMA</div>
+
+      <div class="mss-group-title">📊 DASHBOARD & ONAY</div>
+      <div class="mss-sub">
+        <a href="/sales/analytics" class="mss-sub-link">📊 Satış Analitiği</a>
+        <a href="/sales/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+      </div>
+
+      <div class="mss-group-title">📋 SATIŞ OPERASYONLARI</div>
+      <div class="mss-sub">
+        <a href="/sales/quotes" class="mss-sub-link">📜 Teklif & Fiyatlandırma</a>
+        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri</a>
+        <a href="/sales/dispatches" class="mss-sub-link active">🚚 Sevkiyat & İrsaliye</a>
+        <a href="/sales/invoices" class="mss-sub-link">🧾 Satış Faturaları</a>
+      </div>
+
+      <div class="mss-group-title">👥 MÜŞTERİ & FİYAT YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/sales/customers" class="mss-sub-link">👥 Cari Müşteri Kartları</a>
+        <a href="/sales/price-lists" class="mss-sub-link">💰 Özel Fiyat Listeleri</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %>
+          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link active">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+          <a href="/production" class="mt-link">Üretim Planlama</a>
+        <% } %>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <!-- Sub-Nav Bar -->
+      <div class="module-subnav">
+        <a href="/sales/analytics" class="msn-link">📊 Satış Analitiği</a>
+        <a href="/sales/approvals" class="msn-link">⚡ Yönetsel Onaylar</a>
+        <a href="/sales/quotes" class="msn-link">📜 Teklif & Fiyatlandırma</a>
+        <a href="/sales/orders" class="msn-link">📋 Satış Siparişleri</a>
+        <a href="/sales/dispatches" class="msn-link active">🚚 Sevkiyat & İrsaliye</a>
+        <a href="/sales/invoices" class="msn-link">🧾 Satış Faturaları</a>
+        <a href="/sales/customers" class="msn-link">👥 Cari Müşteri Kartları</a>
+        <a href="/sales/price-lists" class="msn-link">💰 Özel Fiyat Listeleri</a>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <h1>Sevkiyat ve Teslimat (Dağıtım) Planlaması</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Onaylı siparişlerin depodan araçlara yüklenerek sevk edilmesi ve Sevk İrsaliyesi kesilmesi.</p>
+        </div>
+      </div>
+
+      <!-- Quick Dispatch Creation Form -->
+      <div class="form-panel" style="margin-bottom: 1.75rem;">
+        <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1rem;">🚚 Onaylı Sipariş İçin Sevk İrsaliyesi Kes</h3>
+        
+        <form action="/sales/dispatches/add" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="form-grid form-grid--3">
+            <div class="input-group">
+              <label for="saleOrderId">Sevkiyat Yapılacak Sipariş <span class="req-star">*</span></label>
+              <select id="saleOrderId" name="saleOrderId" required>
+                <option value="" disabled selected>-- Hazırlanan / Onaylı Sipariş Seçiniz --</option>
+                <% openOrders.forEach(o => { %>
+                  <option value="<%= o.id %>">[<%= o.orderNo %>] <%= o.customerName %> - <%= o.stockItem ? o.stockItem.name : '' %> (<%= o.quantity %> Adet)</option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="carrierCompany">Lojistik / Kargo Firması</label>
+              <input type="text" id="carrierCompany" name="carrierCompany" placeholder="Örn: Horoz Lojistik / Kendi Aracımız">
+            </div>
+            <div class="input-group">
+              <label for="vehiclePlate">Araç Plakası</label>
+              <input type="text" id="vehiclePlate" name="vehiclePlate" placeholder="Örn: 34 ABC 789">
+            </div>
+          </div>
+
+          <div class="form-grid form-grid--3">
+            <div class="input-group">
+              <label for="driverName">Sürücü Adı / TCKN</label>
+              <input type="text" id="driverName" name="driverName" placeholder="Örn: Ahmet Yılmaz">
+            </div>
+            <div class="input-group">
+              <label for="trackingNo">Lojistik Takip No</label>
+              <input type="text" id="trackingNo" name="trackingNo" placeholder="Örn: LOJ-98765432">
+            </div>
+            <div class="input-group">
+              <label for="notes">İrsaliye Notu</label>
+              <input type="text" id="notes" name="notes" placeholder="Örn: 2 Palet halinde teslim edilecektir.">
+            </div>
+          </div>
+
+          <div>
+            <button type="submit" class="btn" style="background: var(--pink); border-color: var(--pink);">📜 Sevk İrsaliyesini Kes ve Stoktan Düş</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Dispatch Notes Table -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>İrsaliye No</th>
+              <th>Sipariş No</th>
+              <th>Müşteri / Kurum</th>
+              <th>Sevk Tarihi</th>
+              <th>Lojistik / Taşıyıcı</th>
+              <th>Plaka</th>
+              <th>Sürücü</th>
+              <th>Takip No</th>
+              <th>Durum</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (dispatches.length === 0) { %>
+              <tr>
+                <td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                  Henüz kesilmiş sevk irsaliyesi bulunmamaktadır.
+                </td>
+              </tr>
+            <% } else { %>
+              <% dispatches.forEach(d => { %>
+                <tr>
+                  <td><strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= d.dispatchNo %></strong></td>
+                  <td><span style="font-family: 'JetBrains Mono', monospace;"><%= d.saleOrder ? d.saleOrder.orderNo : '—' %></span></td>
+                  <td><strong><%= d.customerName %></strong></td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(d.dispatchDate).toLocaleDateString('tr-TR') %></td>
+                  <td><%= d.carrierCompany || 'Kendi Aracımız' %></td>
+                  <td><span class="status-pill" style="background: rgba(255,255,255,0.08);"><%= d.vehiclePlate || '—' %></span></td>
+                  <td><%= d.driverName || '—' %></td>
+                  <td><%= d.trackingNo || '—' %></td>
+                  <td>
+                    <span class="status-pill status-active">● Sevk Edildi</span>
+                  </td>
+                  <td>
+                    <a href="/sales/dispatches/<%= d.id %>" class="btn btn-sm btn-outline-info" style="font-size: 0.75rem;">📄 İrsaliye Gör</a>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

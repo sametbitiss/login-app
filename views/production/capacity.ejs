@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kapasite Planlaması — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">ÜRETİM PLANLAMA</div>
+      <a href="/production/orders" class="mss-link active">Üretim Özellikleri</a>
+      <div class="mss-sub">
+        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri Listesi</a>
+        <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
+        <a href="/production/bom" class="mss-sub-link">📜 Reçeteler (BOM)</a>
+        <a href="/production/routing" class="mss-sub-link">🔄 Rotalama & Operasyon</a>
+        <a href="/production/capacity" class="mss-sub-link active">📊 Kapasite Planlama</a>
+        <a href="/production/mes" class="mss-sub-link">🏭 Üretim İzleme & MES</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= ALL_ROLES[user.role] || user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %>
+          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
+          <a href="/stock" class="mt-link">Stok & Depo</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
+          <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Purchase_Manager') { %>
+          <a href="/purchase" class="mt-link">Satın Alma</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+          <a href="/production" class="mt-link active">Üretim Planlama</a>
+        <% } %>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <!-- Sub-Nav -->
+      <div class="module-subnav">
+        <a href="/production/orders" class="msn-link">📋 İş Emirleri</a>
+        <a href="/production/bom" class="msn-link">📜 Üretim Reçeteleri (BOM)</a>
+        <a href="/production/routing" class="msn-link">🔄 Rotalama & Operasyonlar</a>
+        <a href="/production/capacity" class="msn-link active">📊 Kapasite Planlaması</a>
+        <a href="/production/mes" class="msn-link">🏭 Üretim İzleme & MES</a>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <h1>Kapasite Planlaması & İş Yükü Dengesi</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Tezgah ve iş merkezlerinin doluluk oranları (% Yük), iş gücü kapasitesi ve darboğaz (bottleneck) analizi.</p>
+        </div>
+      </div>
+
+      <!-- Capacity Grid Cards -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+        <% capacityReport.forEach(item => { %>
+          <div class="stat-card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <h3 style="font-size: 1rem; color: var(--text-main); font-weight: 700;"><%= item.workCenter %></h3>
+              <% if (item.isBottleneck) { %>
+                <span class="status-pill status-rejected">🚨 Darboğaz</span>
+              <% } else if (item.loadPercentage > 50) { %>
+                <span class="status-pill status-onleave">⚡ Optimal</span>
+              <% } else { %>
+                <span class="status-pill status-approved">Düşük Yük</span>
+              <% } %>
+            </div>
+
+            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.85rem; color: var(--text-muted);">Kapasite Kullanım Oranı:</span>
+              <strong style="font-size: 1.5rem; font-family: 'JetBrains Mono', monospace; color: <%= item.isBottleneck ? 'var(--rose)' : 'var(--emerald)' %>;">
+                <%= item.loadPercentage %>%
+              </strong>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="background: rgba(255,255,255,0.08); height: 10px; border-radius: 6px; overflow: hidden; margin-bottom: 1rem;">
+              <div style="width: <%= Math.min(100, item.loadPercentage) %>%; background: <%= item.isBottleneck ? 'var(--rose)' : 'var(--emerald)' %>; height: 100%; transition: width 0.4s ease;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px dashed var(--border); padding-top: 0.75rem;">
+              <span>Aktif İş Emri: <strong><%= item.activeOrdersCount %> Adet</strong></span>
+              <span>Yük / Kapasite: <strong><%= item.totalPlannedHours %> / <%= item.availableCapacityHours %> Saat</strong></span>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

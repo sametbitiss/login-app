@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hata - Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="logo">Enterprise ERP</div>
+    <% if (user) { %>
+    <div class="user-info">
+      <div class="user-profile">
+        <div class="avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+        <div>
+          <strong><%= user.username %></strong>
+          <span style="display: block; font-size: 0.75rem; color: #6b7280;"><%= user.role %></span>
+        </div>
+      </div>
+      <a href="/logout" class="btn btn-sm btn-secondary">Oturumu Kapat</a>
+    </div>
+    <% } %>
+  </header>
+
+  <main class="main-content">
+    <div class="container" style="max-width: 550px; text-align: center;">
+      <div style="font-size: 3.5rem; margin-bottom: 1rem;">⚠️</div>
+      <h2 style="color: #dc2626; margin-bottom: 0.5rem;"><%= statusCode %> - İşlem Başarısız</h2>
+      <p style="color: #4b5563; font-size: 1.05rem; margin-bottom: 1.5rem;"><%= message %></p>
+      
+      <% if (details && details.length > 0) { %>
+        <div class="error" style="text-align: left; font-size: 0.85rem; margin-bottom: 1.5rem;">
+          <strong>Detaylar:</strong>
+          <ul style="margin-left: 1.2rem; margin-top: 0.5rem;">
+            <% (Array.isArray(details) ? details : [details]).forEach(d => { %>
+              <li><%= d %></li>
+            <% }) %>
+          </ul>
+        </div>
+      <% } %>
+
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <a href="javascript:history.back()" class="btn btn-secondary">◀ Geri Dön</a>
+        <a href="/" class="btn">Ana Sayfaya Git</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

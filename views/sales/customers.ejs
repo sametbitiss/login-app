@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cari ve Müşteri Kartı Yönetimi — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">💼 SATIŞ & PAZARLAMA</div>
+
+      <div class="mss-group-title">📊 DASHBOARD & ONAY</div>
+      <div class="mss-sub">
+        <a href="/sales/analytics" class="mss-sub-link">📊 Satış Analitiği</a>
+        <a href="/sales/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+      </div>
+
+      <div class="mss-group-title">📋 SATIŞ OPERASYONLARI</div>
+      <div class="mss-sub">
+        <a href="/sales/quotes" class="mss-sub-link">📜 Teklif & Fiyatlandırma</a>
+        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri</a>
+        <a href="/sales/dispatches" class="mss-sub-link">🚚 Sevkiyat & İrsaliye</a>
+        <a href="/sales/invoices" class="mss-sub-link">🧾 Satış Faturaları</a>
+      </div>
+
+      <div class="mss-group-title">👥 MÜŞTERİ & FİYAT YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/sales/customers" class="mss-sub-link active">👥 Cari Müşteri Kartları</a>
+        <a href="/sales/customers/add" class="mss-sub-link">➕ Yeni Müşteri Ekle</a>
+        <a href="/sales/price-lists" class="mss-sub-link">💰 Özel Fiyat Listeleri</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %>
+          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link active">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+          <a href="/production" class="mt-link">Üretim Planlama</a>
+        <% } %>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <!-- Sub-Nav Bar -->
+      <div class="module-subnav">
+        <a href="/sales/analytics" class="msn-link">📊 Satış Analitiği</a>
+        <a href="/sales/approvals" class="msn-link">⚡ Yönetsel Onaylar</a>
+        <a href="/sales/quotes" class="msn-link">📜 Teklif & Fiyatlandırma</a>
+        <a href="/sales/orders" class="msn-link">📋 Satış Siparişleri</a>
+        <a href="/sales/dispatches" class="msn-link">🚚 Sevkiyat & İrsaliye</a>
+        <a href="/sales/invoices" class="msn-link">🧾 Satış Faturaları</a>
+        <a href="/sales/customers" class="msn-link active">👥 Cari Müşteri Kartları</a>
+        <a href="/sales/price-lists" class="msn-link">💰 Özel Fiyat Listeleri</a>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <h1>Cari ve Müşteri Kartı Yönetimi (CRM)</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Müşteri iletişim bilgileri, vergi detayları, risk limitleri, vadelendirme ve borç/alacak bakiyeleri.</p>
+        </div>
+        <a href="/sales/customers/add" class="btn btn-warning">➕ Yeni Cari Müşteri Ekle</a>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Cari Kodu</th>
+              <th>Firma Unvanı</th>
+              <th>Yetkili</th>
+              <th>İletişim</th>
+              <th>Vergi Daire / No</th>
+              <th>Risk Limiti</th>
+              <th>Güncel Borç Bakiyesi</th>
+              <th>Risk Seviyesi</th>
+              <th>Durum</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (customers.length === 0) { %>
+              <tr>
+                <td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                  Henüz kayıtlı müşteri cari kartı bulunmamaktadır.
+                </td>
+              </tr>
+            <% } else { %>
+              <% customers.forEach(c => { %>
+                <tr>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= c.customerCode %></strong></td>
+                  <td><strong><%= c.companyName %></strong></td>
+                  <td><%= c.contactPerson || '—' %></td>
+                  <td>
+                    <div style="font-size: 0.8rem;"><%= c.email || '—' %></div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= c.phone || '—' %></div>
+                  </td>
+                  <td style="font-size: 0.8rem;"><%= c.taxOffice ? c.taxOffice + ' / ' : '' %><%= c.taxNo || '—' %></td>
+                  <td><%= parseFloat(c.creditLimit).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> TL</td>
+                  <td>
+                    <strong style="color: <%= parseFloat(c.currentBalance) > parseFloat(c.creditLimit) ? 'var(--rose)' : 'var(--emerald)' %>;">
+                      <%= parseFloat(c.currentBalance).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> TL
+                    </strong>
+                  </td>
+                  <td>
+                    <% if (c.riskLevel === 'High' || c.riskLevel === 'Blocked') { %>
+                      <span class="status-pill status-rejected">● Yüksek Risk</span>
+                    <% } else if (c.riskLevel === 'Medium') { %>
+                      <span class="status-pill status-pending">● Orta Risk</span>
+                    <% } else { %>
+                      <span class="status-pill status-active">● Düşük Risk</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <span class="status-pill status-approved">● <%= c.status %></span>
+                  </td>
+                  <td>
+                    <a href="/sales/customers/<%= c.id %>" class="btn btn-sm btn-outline-primary" style="white-space: nowrap; font-size: 0.75rem;">👁️ Cari Detay & Ekstre</a>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

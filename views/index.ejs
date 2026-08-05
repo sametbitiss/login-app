@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Enterprise ERP Kurumsal Yönetim Paneli - Modüler iş süreçleri yönetimi">
+  <title>Enterprise ERP — Kurumsal Yönetim Paneli</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+
+  <!-- Animated Background Mesh -->
+  <div class="bg-mesh" aria-hidden="true">
+    <div class="mesh-orb mesh-orb--1"></div>
+    <div class="mesh-orb mesh-orb--2"></div>
+    <div class="mesh-orb mesh-orb--3"></div>
+    <div class="mesh-grid"></div>
+  </div>
+
+  <!-- Top Navbar -->
+  <header class="top-navbar" id="topNavbar">
+    <div class="navbar-inner">
+
+      <!-- Left: Brand + Nav Links -->
+      <div class="navbar-left">
+        <div class="navbar-brand">
+          <div class="brand-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="8" fill="url(#brandGrad)"/>
+              <path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="100%" stop-color="#8b5cf6"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">Enterprise</span>
+            <span class="brand-sub">ERP Suite</span>
+          </div>
+        </div>
+
+        <nav class="navbar-links" id="navLinks">
+          <a href="/" class="nlink active" id="nav-home">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Ana Sayfa
+          </a>
+
+          <% if (user.role === 'Admin') { %>
+            <a href="/admin" class="nlink" id="nav-admin">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Sistem Yönetimi
+            </a>
+          <% } %>
+
+          <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
+            <a href="/stock" class="nlink" id="nav-stock">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              Stok & Depo
+            </a>
+          <% } %>
+
+          <% if (user.role === 'Admin' || user.role === 'Sales_Manager' || user.role === 'Stock_Manager') { %>
+            <a href="/sales" class="nlink" id="nav-sales">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              Satış Yönetimi
+            </a>
+          <% } %>
+
+          <% if (user.role === 'Admin' || user.role === 'Purchase_Manager' || user.role === 'Stock_Manager') { %>
+            <a href="/purchase" class="nlink" id="nav-purchase">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              Satın Alma
+            </a>
+          <% } %>
+
+          <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+            <a href="/production" class="nlink" id="nav-production">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V10l4-4 4 4v10"/><path d="M13 20V4l6 6v10"/></svg>
+              Üretim Planlama
+            </a>
+          <% } %>
+        </nav>
+      </div>
+
+      <!-- Right: Time + Notification + User -->
+      <div class="navbar-right">
+        <div class="navbar-time" id="liveTime"></div>
+
+        <div class="navbar-notification" id="btn-notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+        </div>
+
+        <div class="navbar-user-pill">
+          <div class="navbar-avatar">
+            <%= user.username.charAt(0).toUpperCase() %>
+            <span class="avatar-online-dot"></span>
+          </div>
+          <div class="navbar-user-meta">
+            <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+            <span><%= user.role %></span>
+          </div>
+        </div>
+
+        <a href="/logout" class="navbar-logout-btn" id="btn-logout" title="Oturumu Kapat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menüyü Aç">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Dashboard Content -->
+  <main class="dash-main">
+
+    <!-- Hero Welcome Section -->
+    <section class="hero-welcome" id="hero-welcome">
+      <div class="hero-text">
+        <h1 class="hero-title">
+          <span class="hero-greeting">Hoş geldiniz,</span>
+          <span class="hero-name"><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></span>
+        </h1>
+        <p class="hero-subtitle">
+          Kurumsal operasyonlarınızı tek bir merkezden yönetin. 
+          <strong><%= user.role %></strong> yetki seviyesiyle erişilebilir modülleriniz aşağıda listelenmiştir.
+        </p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-ring">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="none"/>
+            <circle cx="60" cy="60" r="52" stroke="url(#statGrad)" stroke-width="8" fill="none" stroke-dasharray="326.73" stroke-dashoffset="326.73" stroke-linecap="round" class="stat-ring-progress"/>
+            <defs>
+              <linearGradient id="statGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6366f1"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="stat-ring-label">
+            <span class="stat-ring-value" id="activeModuleCount">0</span>
+            <span class="stat-ring-text">Aktif Modül</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick KPI Strip -->
+    <section class="kpi-strip" id="kpi-strip">
+      <div class="kpi-chip">
+        <div class="kpi-chip-icon kpi-chip--indigo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <div class="kpi-chip-data">
+          <span class="kpi-chip-label">Toplam Modül</span>
+          <span class="kpi-chip-value">6</span>
+        </div>
+      </div>
+      <div class="kpi-chip">
+        <div class="kpi-chip-icon kpi-chip--emerald">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="kpi-chip-data">
+          <span class="kpi-chip-label">Aktif Modül</span>
+          <span class="kpi-chip-value" id="kpiActiveCount">—</span>
+        </div>
+      </div>
+      <div class="kpi-chip">
+        <div class="kpi-chip-icon kpi-chip--amber">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="kpi-chip-data">
+          <span class="kpi-chip-label">Pasif Modül</span>
+          <span class="kpi-chip-value">1</span>
+        </div>
+      </div>
+      <div class="kpi-chip">
+        <div class="kpi-chip-icon kpi-chip--rose">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="kpi-chip-data">
+          <span class="kpi-chip-label">Güvenlik</span>
+          <span class="kpi-chip-value">A+</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Header -->
+    <div class="section-header" id="modules-section">
+      <div class="section-title-group">
+        <h2 class="section-title">ERP Modülleri</h2>
+        <p class="section-desc">Rolünüze (<%= user.role %>) özel yetkilendirilmiş kurumsal modüller</p>
+      </div>
+      <div class="section-filter">
+        <button class="filter-btn active" data-filter="all" id="filter-all">Tümü</button>
+        <button class="filter-btn" data-filter="active" id="filter-active">Aktif</button>
+        <button class="filter-btn" data-filter="locked" id="filter-locked">Kısıtlı</button>
+      </div>
+    </div>
+
+    <!-- Module Cards Grid -->
+    <div class="modules-grid" id="modulesGrid">
+
+      <!-- 1. Sistem Yönetimi -->
+      <% if (user.role === 'Admin') { %>
+        <a href="/admin" class="mod-card mod-card--active" data-status="active" id="card-admin">
+          <div class="mod-card-glow mod-card-glow--indigo"></div>
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--indigo">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--active">
+              <span class="mod-badge-dot"></span>AKTİF
+            </span>
+          </div>
+          <h3 class="mod-card-title">Sistem Yönetimi</h3>
+          <p class="mod-card-desc">Kullanıcı hesapları, parola sıfırlama, rol atamaları ve sistem ayarları</p>
+          <div class="mod-card-footer">
+            <span class="mod-card-action">Modüle Git <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+      <% } else { %>
+        <div class="mod-card mod-card--locked" data-status="locked" id="card-admin">
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--neutral">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--locked">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              KISITLI
+            </span>
+          </div>
+          <h3 class="mod-card-title">Sistem Yönetimi</h3>
+          <p class="mod-card-desc">Bu modüle erişmek için Admin yetkisi gerekmektedir.</p>
+        </div>
+      <% } %>
+
+      <!-- 2. Stok ve Depo Yönetimi -->
+      <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
+        <a href="/stock" class="mod-card mod-card--active" data-status="active" id="card-stock">
+          <div class="mod-card-glow mod-card-glow--cyan"></div>
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--cyan">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--active">
+              <span class="mod-badge-dot"></span>AKTİF
+            </span>
+          </div>
+          <h3 class="mod-card-title">Stok & Depo Yönetimi</h3>
+          <p class="mod-card-desc">Ürün ve malzeme stok kartları, stok ekleme, envanter takibi ve depo lokasyonları</p>
+          <div class="mod-card-footer">
+            <span class="mod-card-action">Modüle Git <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+      <% } else { %>
+        <div class="mod-card mod-card--locked" data-status="locked" id="card-stock">
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--neutral">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--locked">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              KISITLI
+            </span>
+          </div>
+          <h3 class="mod-card-title">Stok & Depo Yönetimi</h3>
+          <p class="mod-card-desc">Bu modüle erişmek için Stok Yöneticisi veya Admin yetkisi gerekmektedir.</p>
+        </div>
+      <% } %>
+
+      <!-- 3. Satış Yönetimi -->
+      <% if (user.role === 'Admin' || user.role === 'Sales_Manager' || user.role === 'Stock_Manager') { %>
+        <a href="/sales" class="mod-card mod-card--active" data-status="active" id="card-sales">
+          <div class="mod-card-glow mod-card-glow--emerald"></div>
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--emerald">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--active">
+              <span class="mod-badge-dot"></span>AKTİF
+            </span>
+          </div>
+          <h3 class="mod-card-title">Satış Yönetimi</h3>
+          <p class="mod-card-desc">Müşteri siparişleri, satış matrahı, iskonto ve KDV tutarları, teklif ve sipariş süreçleri</p>
+          <div class="mod-card-footer">
+            <span class="mod-card-action">Modüle Git <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+      <% } else { %>
+        <div class="mod-card mod-card--locked" data-status="locked" id="card-sales">
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--neutral">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--locked">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              KISITLI
+            </span>
+          </div>
+          <h3 class="mod-card-title">Satış Yönetimi</h3>
+          <p class="mod-card-desc">Bu modüle erişmek için Satış Yöneticisi veya Admin yetkisi gerekmektedir.</p>
+        </div>
+      <% } %>
+
+      <!-- 4. Satın Alma Yönetimi -->
+      <% if (user.role === 'Admin' || user.role === 'Purchase_Manager' || user.role === 'Stock_Manager') { %>
+        <a href="/purchase" class="mod-card mod-card--active" data-status="active" id="card-purchase">
+          <div class="mod-card-glow mod-card-glow--indigo"></div>
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--indigo">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--active">
+              <span class="mod-badge-dot"></span>AKTİF
+            </span>
+          </div>
+          <h3 class="mod-card-title">Satın Alma Yönetimi</h3>
+          <p class="mod-card-desc">Tedarikçi siparişleri, alış matrahı, iskonto ve KDV tutarları, ambar kabul ve tedarik süreçleri</p>
+          <div class="mod-card-footer">
+            <span class="mod-card-action">Modüle Git <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+      <% } else { %>
+        <div class="mod-card mod-card--locked" data-status="locked" id="card-purchase">
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--neutral">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--locked">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              KISITLI
+            </span>
+          </div>
+          <h3 class="mod-card-title">Satın Alma Yönetimi</h3>
+          <p class="mod-card-desc">Bu modüle erişmek için Satın Alma Yöneticisi veya Admin yetkisi gerekmektedir.</p>
+        </div>
+      <% } %>
+
+      <!-- 5. Üretim Planlama (AKTİF) -->
+      <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+        <a href="/production" class="mod-card mod-card--active" data-status="active" id="card-production">
+          <div class="mod-card-glow mod-card-glow--emerald"></div>
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--emerald">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V10l4-4 4 4v10"/><path d="M13 20V4l6 6v10"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--active">
+              <span class="mod-badge-dot"></span>AKTİF
+            </span>
+          </div>
+          <h3 class="mod-card-title">Üretim Planlama</h3>
+          <p class="mod-card-desc">Üretim hatları, iş emirleri, reçeteler (BOM), istasyon takibi ve kaynak planlama</p>
+          <div class="mod-card-footer">
+            <span class="mod-card-action">Modüle Git <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+      <% } else { %>
+        <div class="mod-card mod-card--locked" data-status="locked" id="card-production">
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--neutral">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V10l4-4 4 4v10"/><path d="M13 20V4l6 6v10"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--locked">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              KISITLI
+            </span>
+          </div>
+          <h3 class="mod-card-title">Üretim Planlama</h3>
+          <p class="mod-card-desc">Bu modüle erişmek için Üretim Yöneticisi veya Admin yetkisi gerekmektedir.</p>
+        </div>
+      <% } %>
+
+      <!-- 6. Kalite Kontrol Yönetimi (Pasif) -->
+      <div class="mod-card mod-card--coming" data-status="locked" id="card-quality">
+        <div class="mod-card-header">
+          <div class="mod-card-icon mod-card-icon--neutral">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <span class="mod-badge mod-badge--coming">ŞİMDİLİK PASİF</span>
+        </div>
+        <h3 class="mod-card-title">Kalite Kontrol</h3>
+        <p class="mod-card-desc">Girdi kalite testleri, proses denetimleri, sapma yönetimi ve kalite standartları</p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+      <div class="footer-left">
+        <span>© 2026 Enterprise ERP Suite</span>
+        <span class="footer-dot">·</span>
+        <span>v2.0.0</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-status">
+          <span class="footer-status-dot"></span>
+          Tüm Sistemler Aktif
+        </span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const opts = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+      const dateOpts = { day: 'numeric', month: 'long', year: 'numeric' };
+      const timeEl = document.getElementById('liveTime');
+      if (timeEl) {
+        timeEl.textContent = now.toLocaleDateString('tr-TR', dateOpts) + '  •  ' + now.toLocaleTimeString('tr-TR', opts);
+      }
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Count active modules
+    const activeCards = document.querySelectorAll('.mod-card--active');
+    const activeCount = activeCards.length;
+    const countEl = document.getElementById('activeModuleCount');
+    const kpiEl = document.getElementById('kpiActiveCount');
+    if (countEl) countEl.textContent = activeCount;
+    if (kpiEl) kpiEl.textContent = activeCount;
+
+    // Animate ring
+    const ringProgress = document.querySelector('.stat-ring-progress');
+    if (ringProgress) {
+      const total = 6;
+      const pct = activeCount / total;
+      const circumference = 2 * Math.PI * 52;
+      const offset = circumference * (1 - pct);
+      setTimeout(() => {
+        ringProgress.style.strokeDashoffset = offset;
+      }, 400);
+    }
+
+    // Mobile menu toggle
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const navLinks = document.getElementById('navLinks');
+    if (mobileBtn && navLinks) {
+      mobileBtn.addEventListener('click', () => {
+        navLinks.classList.toggle('open');
+        mobileBtn.classList.toggle('active');
+      });
+    }
+
+    // Filter buttons
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const allCards = document.querySelectorAll('.mod-card');
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        allCards.forEach(card => {
+          if (filter === 'all') {
+            card.style.display = '';
+          } else if (filter === 'active') {
+            card.style.display = card.classList.contains('mod-card--active') ? '' : 'none';
+          } else {
+            card.style.display = !card.classList.contains('mod-card--active') ? '' : 'none';
+          }
+        });
+      });
+    });
+
+    // Staggered card entrance animation
+    allCards.forEach((card, i) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(24px)';
+      setTimeout(() => {
+        card.style.transition = 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, 150 + i * 80);
+    });
+  </script>
+</body>
+</html>

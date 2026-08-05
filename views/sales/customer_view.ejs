@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Müşteri Cari Detayı (<%= customer ? customer.companyName : '' %>) — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .cust-card { 
+      background: var(--bg-surface); 
+      border: 1px solid var(--border); 
+      border-radius: 16px; 
+      padding: 32px; 
+      box-shadow: var(--shadow-md); 
+      margin-bottom: 24px; 
+    }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 28px; }
+    .metric-card { 
+      background: var(--bg-elevated); 
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      padding: 20px; 
+      text-align: center; 
+    }
+    .metric-card span { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 6px; letter-spacing: 0.05em; }
+    .metric-card strong { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); }
+    .risk-bar-container { background: rgba(255, 255, 255, 0.1); border-radius: 8px; height: 10px; overflow: hidden; margin-top: 10px; }
+    .risk-bar-fill { height: 100%; border-radius: 8px; transition: width 0.3s ease; }
+    .nav-tabs-custom { display: flex; gap: 12px; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+    .nav-tab-custom { 
+      padding: 12px 20px; 
+      font-weight: 700; 
+      color: var(--text-secondary); 
+      text-decoration: none; 
+      border-bottom: 3px solid transparent; 
+      margin-bottom: -2px; 
+      cursor: pointer; 
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+    .nav-tab-custom:hover { color: var(--text-primary); }
+    .nav-tab-custom.active { color: var(--indigo); border-bottom-color: var(--indigo); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      z-index: 9999; display: none; align-items: center; justify-content: center;
+    }
+    .modal-card {
+      background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 32px; width: 100%; max-width: 520px; box-shadow: var(--shadow-lg); color: var(--text-primary);
+    }
+  </style>
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">SATIŞ YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/sales/customers" class="mss-sub-link active">👥 Cari & Müşteri Kartları</a>
+        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri Listesi</a>
+        <a href="/sales/quotes" class="mss-sub-link">📜 Teklif & Fiyatlandırma</a>
+        <a href="/sales/dispatches" class="mss-sub-link">🚚 Sevkiyat & İrsaliye</a>
+        <a href="/sales/invoices" class="mss-sub-link">🧾 Faturalandırma</a>
+        <a href="/sales/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+        <a href="/sales/analytics" class="mss-sub-link">📊 Satış Analitiği</a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/sales/customers" class="btn btn-outline-secondary btn-sm">← Müşteri Listesine Dön</a>
+      </div>
+      <div class="mt-right">
+        <button onclick="document.getElementById('ledgerModal').style.display='flex'" class="btn btn-primary btn-sm">💳 Manuel Cari Hareket / Tahsilat Ekle</button>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <% if (!customer) { %>
+        <div class="alert alert-danger">Müşteri kaydı bulunamadı.</div>
+      <% } else { %>
+        <div class="cust-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+            <div>
+              <span class="badge bg-secondary mb-2" style="font-family: 'JetBrains Mono', monospace;"><%= customer.customerCode %></span>
+              <h1 style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 800; color: var(--text-primary);"><%= customer.companyName %></h1>
+              <p style="color: var(--text-secondary); margin: 6px 0 0 0; font-size: 0.95rem;">
+                <%= customer.contactPerson ? 'İletişim Kişisi: ' + customer.contactPerson : '' %> | <%= customer.email || 'E-posta Belirtilmedi' %> | <%= customer.phone || 'Tel Belirtilmedi' %>
+              </p>
+            </div>
+            <div>
+              <span class="badge bg-success" style="font-size: 0.95rem; padding: 8px 16px; font-weight: 700;"><%= customer.status %></span>
+            </div>
+          </div>
+
+          <!-- Metrics Grid -->
+          <div class="grid-3">
+            <div class="metric-card">
+              <span>Güncel Bakiye (Borç)</span>
+              <strong style="color: var(--rose);"><%= Number(customer.currentBalance || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> ₺</strong>
+            </div>
+
+            <div class="metric-card">
+              <span>Kredi / Risk Limiti</span>
+              <strong><%= Number(customer.creditLimit || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> ₺</strong>
+              <% 
+                const usage = customer.creditLimit > 0 ? (customer.currentBalance / customer.creditLimit) * 100 : 0;
+                const fillColor = usage > 90 ? 'var(--rose)' : (usage > 70 ? 'var(--amber)' : 'var(--emerald)');
+              %>
+              <div class="risk-bar-container">
+                <div class="risk-bar-fill" style="width: <%= Math.min(usage, 100) %>%; background: <%= fillColor %>;"></div>
+              </div>
+              <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 6px;">Limit Kullanımı: %<%= usage.toFixed(1) %></small>
+            </div>
+
+            <div class="metric-card">
+              <span>Ödeme Vadesi & Risk Seviyesi</span>
+              <strong style="color: var(--cyan);"><%= customer.paymentTermDays %> Gün</strong>
+              <div style="margin-top: 6px;">
+                <span class="badge <%= customer.riskLevel === 'High' ? 'bg-danger' : (customer.riskLevel === 'Medium' ? 'bg-warning' : 'bg-info') %>">
+                  Risk: <%= customer.riskLevel %>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation Tabs -->
+          <div class="nav-tabs-custom">
+            <div class="nav-tab-custom active" onclick="switchTab('ledgerTab', this)">📊 Cari Ekstre (Defter)</div>
+            <div class="nav-tab-custom" onclick="switchTab('ordersTab', this)">📋 Satış Siparişleri (<%= orders.length %>)</div>
+            <div class="nav-tab-custom" onclick="switchTab('quotesTab', this)">📜 Teklifler (<%= quotes.length %>)</div>
+            <div class="nav-tab-custom" onclick="switchTab('invoicesTab', this)">🧾 Faturalar (<%= invoices.length %>)</div>
+          </div>
+
+          <!-- TAB 1: CARI EKSTRE -->
+          <div id="ledgerTab" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Hesap Hareketleri & Defter Kayıtları</h3>
+            </div>
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Tarih</th>
+                    <th>Evrak / Belge No</th>
+                    <th>Açıklama</th>
+                    <th class="text-end">Borç (TL)</th>
+                    <th class="text-end">Alacak (TL)</th>
+                    <th class="text-end">Bakiye (TL)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (ledgerEntries.length === 0) { %>
+                    <tr><td colspan="6" class="text-center text-muted" style="padding: 24px;">Henüz cari hareket kaydı bulunmuyor.</td></tr>
+                  <% } else { %>
+                    <% ledgerEntries.forEach(l => { %>
+                      <tr>
+                        <td><%= l.transactionDate %></td>
+                        <td><strong style="font-family: 'JetBrains Mono', monospace; color: var(--indigo);"><%= l.documentNo %></strong></td>
+                        <td><%= l.description %></td>
+                        <td class="text-end font-weight-bold" style="color: var(--rose);"><%= l.debitAmount > 0 ? Number(l.debitAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '—' %></td>
+                        <td class="text-end font-weight-bold" style="color: var(--emerald);"><%= l.creditAmount > 0 ? Number(l.creditAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '—' %></td>
+                        <td class="text-end font-weight-bold"><%= Number(l.balanceAfter).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</td>
+                      </tr>
+                    <% }); %>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 2: SIPARIŞLER -->
+          <div id="ordersTab" class="tab-content">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Sipariş No</th>
+                    <th>Tarih</th>
+                    <th>Tutar</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (orders.length === 0) { %>
+                    <tr><td colspan="5" class="text-center text-muted" style="padding: 24px;">Müşteriye ait sipariş bulunamadı.</td></tr>
+                  <% } else { %>
+                    <% orders.forEach(o => { %>
+                      <tr>
+                        <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.orderNo %></strong></td>
+                        <td><%= o.orderDate %></td>
+                        <td class="font-weight-bold" style="color: var(--emerald);"><%= Number(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= o.currency %></td>
+                        <td><span class="badge bg-primary"><%= o.status %></span></td>
+                        <td><a href="/sales/orders/<%= o.id %>/detail" class="btn btn-sm btn-outline-info">Görüntüle</a></td>
+                      </tr>
+                    <% }); %>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 3: TEKLIFLER -->
+          <div id="quotesTab" class="tab-content">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Teklif No</th>
+                    <th>Tarih</th>
+                    <th>Toplam Tutar</th>
+                    <th>Statü</th>
+                    <th>İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (quotes.length === 0) { %>
+                    <tr><td colspan="5" class="text-center text-muted" style="padding: 24px;">Müşteriye ait teklif bulunamadı.</td></tr>
+                  <% } else { %>
+                    <% quotes.forEach(q => { %>
+                      <tr>
+                        <td><strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= q.quotationNo %></strong></td>
+                        <td><%= q.quotationDate %></td>
+                        <td class="font-weight-bold" style="color: var(--emerald);"><%= Number(q.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= q.currency %></td>
+                        <td><span class="badge bg-info"><%= q.status %></span></td>
+                        <td><a href="/sales/quotes/<%= q.id %>" class="btn btn-sm btn-outline-info">Görüntüle</a></td>
+                      </tr>
+                    <% }); %>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 4: FATURALAR -->
+          <div id="invoicesTab" class="tab-content">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Fatura No</th>
+                    <th>Tarih</th>
+                    <th>Tutar</th>
+                    <th>Ödeme Durumu</th>
+                    <th>İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (invoices.length === 0) { %>
+                    <tr><td colspan="5" class="text-center text-muted" style="padding: 24px;">Müşteriye ait fatura bulunamadı.</td></tr>
+                  <% } else { %>
+                    <% invoices.forEach(inv => { %>
+                      <tr>
+                        <td><strong style="color: var(--cyan); font-family: 'JetBrains Mono', monospace;"><%= inv.invoiceNo %></strong></td>
+                        <td><%= inv.invoiceDate %></td>
+                        <td class="font-weight-bold" style="color: var(--emerald);"><%= Number(inv.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= inv.currency %></td>
+                        <td><span class="badge bg-warning"><%= inv.paymentStatus %></span></td>
+                        <td><a href="/sales/invoices/<%= inv.id %>" class="btn btn-sm btn-outline-success">Görüntüle</a></td>
+                      </tr>
+                    <% }); %>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </main>
+  </div>
+
+  <!-- MANUEL HAREKET MODAL -->
+  <div id="ledgerModal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800;">💳 Cari Hareket / Tahsilat Ekle</h3>
+        <button onclick="document.getElementById('ledgerModal').style.display='none'" class="btn btn-sm btn-outline-secondary">✕</button>
+      </div>
+      <form action="/sales/customers/<%= customer ? customer.id : '' %>/ledger/add" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="input-group">
+          <label for="type">İşlem Tipi</label>
+          <select id="type" name="type" required>
+            <option value="Credit">Tahsilat / Alacak Kaydı (Müşteri Ödemesi)</option>
+            <option value="Debit">Borç / Fatura Kaydı (Borçlandır)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="amount">Tutar (TL)</label>
+          <input type="number" step="0.01" id="amount" name="amount" required placeholder="0.00">
+        </div>
+        <div class="input-group">
+          <label for="documentNo">Evrak / Dekont No</label>
+          <input type="text" id="documentNo" name="documentNo" placeholder="Örn: DEK-998231">
+        </div>
+        <div class="input-group">
+          <label for="description">Açıklama</label>
+          <input type="text" id="description" name="description" placeholder="Örn: Banka havalesi ile tahsilat">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+          <button type="button" onclick="document.getElementById('ledgerModal').style.display='none'" class="btn btn-secondary">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-tab-custom').forEach(t => t.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>

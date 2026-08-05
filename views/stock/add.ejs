@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stok Ekle — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="module-body">
+
+  <!-- Module Sidebar -->
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">STOK & DEPO</div>
+      <a href="/stock" class="mss-link active">Stok Yönetimi</a>
+      <div class="mss-sub">
+        <a href="/stock/items" class="mss-sub-link active">📦 Stok Kartları</a>
+        <a href="/stock/warehouses" class="mss-sub-link">🏬 Depo & Lokasyonlar</a>
+        <a href="/stock/lots" class="mss-sub-link">🏷️ Lot & Seri Numaraları</a>
+        <a href="/stock/transfers" class="mss-sub-link">🔄 Transfer & Hareketler</a>
+        <a href="/stock/goods-receipt" class="mss-sub-link">📥 Mal Kabul & Giriş</a>
+        <a href="/stock/dispatch" class="mss-sub-link">📤 Sevkiyat & Çıkış</a>
+        <a href="/stock/counting" class="mss-sub-link">📋 Envanter Sayımı</a>
+        <a href="/stock/alerts" class="mss-sub-link">🚨 Min/Max Uyarısı</a>
+        <a href="/stock/valuation" class="mss-sub-link">💰 Stok Maliyetlendirme</a>
+        <a href="/stock/terminal" class="mss-sub-link">📱 RF El Terminali</a>
+      </div>
+    </div>
+
+    <!-- Sidebar User -->
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Area -->
+  <div class="module-main">
+    <!-- Top Navbar -->
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %>
+          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <% } %>
+        <a href="/stock" class="mt-link active">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+          <a href="/production" class="mt-link">Üretim Planlama</a>
+        <% } %>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="module-content">
+      <div class="page-header">
+        <div>
+          <h1>Yeni Stok Kartı Ekle</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Zorunlu (*) alanları tamamlamadan stok kartı oluşturulamaz.</p>
+        </div>
+        <a href="/stock/items" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Listeye Dön
+        </a>
+      </div>
+
+      <% if (error) { %>
+        <div class="error" id="serverErrorBanner"><%= error %></div>
+      <% } %>
+
+      <!-- Dynamic Form Client-side Error Alert Banner -->
+      <div class="error" id="clientErrorBanner" style="display: none; margin-bottom: 1.25rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="clientErrorMessage">Kayıt Yapılamadı! Lütfen eksik olan zorunlu (*) alanları doldurunuz.</span>
+      </div>
+
+      <!-- Form Container with Tab Navigation -->
+      <form action="/stock/items/add" method="POST" class="stock-form-container" id="stockAddForm" novalidate>
+
+        <!-- Tab Header Bar -->
+        <div class="form-tabs-header">
+          <button type="button" class="tab-btn active" data-tab="tab-basic" id="tab-btn-basic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <span>1. Temel Bilgiler</span>
+            <span class="tab-badge tab-badge--req">*</span>
+          </button>
+
+          <button type="button" class="tab-btn" data-tab="tab-classification" id="tab-btn-classification">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>2. Sınıflandırma</span>
+            <span class="tab-badge tab-badge--req">*</span>
+          </button>
+
+          <button type="button" class="tab-btn" data-tab="tab-quantities" id="tab-btn-quantities">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>3. Stok Miktarları</span>
+          </button>
+
+          <button type="button" class="tab-btn" data-tab="tab-pricing" id="tab-btn-pricing">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>4. Fiyatlandırma</span>
+            <span class="tab-badge tab-badge--req">*</span>
+          </button>
+
+          <button type="button" class="tab-btn" data-tab="tab-logistics" id="tab-btn-logistics">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V10l4-4 4 4v10"/><path d="M13 20V4l6 6v10"/></svg>
+            <span>5. Depo & Lojistik</span>
+          </button>
+        </div>
+
+        <!-- Tab Body Panes -->
+        <div class="form-tabs-body">
+
+          <!-- Tab 1: Temel Bilgiler -->
+          <div class="tab-pane active" id="tab-basic">
+            <div class="tab-pane-title">📦 Temel Stok Bilgileri</div>
+            <div class="form-grid form-grid--3">
+              <div class="input-group">
+                <label for="stockCode">Stok Kodu <span class="req-star">*</span></label>
+                <input type="text" id="stockCode" name="stockCode" value="<%= formData.stockCode || nextCode %>" required placeholder="STK-0001">
+                <span class="field-error-msg">Stok kodu zorunludur.</span>
+              </div>
+              <div class="input-group">
+                <label for="barcode">Barkod</label>
+                <input type="text" id="barcode" name="barcode" value="<%= formData.barcode || '' %>" placeholder="8690000000000">
+              </div>
+              <div class="input-group">
+                <label for="status">Durum <span class="req-star">*</span></label>
+                <select id="status" name="status" required>
+                  <option value="" disabled <%= !formData.status ? 'selected' : '' %>>-- Durum Seçiniz --</option>
+                  <option value="Active" <%= formData.status === 'Active' ? 'selected' : '' %>>Aktif</option>
+                  <option value="Passive" <%= formData.status === 'Passive' ? 'selected' : '' %>>Pasif</option>
+                  <option value="Discontinued" <%= formData.status === 'Discontinued' ? 'selected' : '' %>>Üretimden Kalktı</option>
+                </select>
+                <span class="field-error-msg">Durum seçilmesi zorunludur.</span>
+              </div>
+            </div>
+            <div class="form-grid form-grid--1">
+              <div class="input-group">
+                <label for="name">Stok Adı (Ürün Adı) <span class="req-star">*</span></label>
+                <input type="text" id="name" name="name" value="<%= formData.name || '' %>" required placeholder="Örn: Paslanmaz Çelik Cıvata M8x50">
+                <span class="field-error-msg">Stok adı zorunludur.</span>
+              </div>
+            </div>
+            <div class="form-grid form-grid--1">
+              <div class="input-group">
+                <label for="description">Açıklama</label>
+                <textarea id="description" name="description" rows="3" placeholder="Stok hakkında detaylı açıklama..."><%= formData.description || '' %></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Sınıflandırma -->
+          <div class="tab-pane" id="tab-classification">
+            <div class="tab-pane-title">🏷️ Kategori, Birim ve Marka</div>
+            <div class="form-grid form-grid--4">
+              <div class="input-group">
+                <label for="category">Kategori <span class="req-star">*</span></label>
+                <select id="category" name="category" required>
+                  <option value="" disabled <%= !formData.category ? 'selected' : '' %>>-- Kategori Seçiniz --</option>
+                  <option value="Hammadde" <%= formData.category === 'Hammadde' ? 'selected' : '' %>>Hammadde</option>
+                  <option value="Yari_Mamul" <%= formData.category === 'Yari_Mamul' ? 'selected' : '' %>>Yarı Mamul</option>
+                  <option value="Mamul" <%= formData.category === 'Mamul' ? 'selected' : '' %>>Mamul</option>
+                  <option value="Ticari_Mal" <%= formData.category === 'Ticari_Mal' ? 'selected' : '' %>>Ticari Mal</option>
+                  <option value="Hizmet" <%= formData.category === 'Hizmet' ? 'selected' : '' %>>Hizmet</option>
+                  <option value="Diger" <%= formData.category === 'Diger' ? 'selected' : '' %>>Diğer</option>
+                </select>
+                <span class="field-error-msg">Kategori seçilmesi zorunludur.</span>
+              </div>
+              <div class="input-group">
+                <label for="unit">Birim <span class="req-star">*</span></label>
+                <select id="unit" name="unit" required>
+                  <option value="" disabled <%= !formData.unit ? 'selected' : '' %>>-- Birim Seçiniz --</option>
+                  <option value="Adet" <%= formData.unit === 'Adet' ? 'selected' : '' %>>Adet</option>
+                  <option value="Kg" <%= formData.unit === 'Kg' ? 'selected' : '' %>>Kilogram (Kg)</option>
+                  <option value="Lt" <%= formData.unit === 'Lt' ? 'selected' : '' %>>Litre (Lt)</option>
+                  <option value="Mt" <%= formData.unit === 'Mt' ? 'selected' : '' %>>Metre (Mt)</option>
+                  <option value="M2" <%= formData.unit === 'M2' ? 'selected' : '' %>>Metrekare (M²)</option>
+                  <option value="M3" <%= formData.unit === 'M3' ? 'selected' : '' %>>Metreküp (M³)</option>
+                  <option value="Paket" <%= formData.unit === 'Paket' ? 'selected' : '' %>>Paket</option>
+                  <option value="Koli" <%= formData.unit === 'Koli' ? 'selected' : '' %>>Koli</option>
+                  <option value="Ton" <%= formData.unit === 'Ton' ? 'selected' : '' %>>Ton</option>
+                  <option value="Set" <%= formData.unit === 'Set' ? 'selected' : '' %>>Set</option>
+                </select>
+                <span class="field-error-msg">Birim seçilmesi zorunludur.</span>
+              </div>
+              <div class="input-group">
+                <label for="brand">Marka</label>
+                <input type="text" id="brand" name="brand" value="<%= formData.brand || '' %>" placeholder="Örn: Bosch">
+              </div>
+              <div class="input-group">
+                <label for="model">Model / Versiyon</label>
+                <input type="text" id="model" name="model" value="<%= formData.model || '' %>" placeholder="Örn: GSR 18V-50">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Stok Miktarları -->
+          <div class="tab-pane" id="tab-quantities">
+            <div class="tab-pane-title">📊 Envanter & Limit Seviyeleri</div>
+            <div class="form-grid form-grid--3">
+              <div class="input-group">
+                <label for="currentStock">Mevcut Stok</label>
+                <input type="number" step="0.01" id="currentStock" name="currentStock" value="<%= formData.currentStock || '0' %>" placeholder="0">
+              </div>
+              <div class="input-group">
+                <label for="minStock">Minimum Stok (Kritik Eşik)</label>
+                <input type="number" step="0.01" id="minStock" name="minStock" value="<%= formData.minStock || '0' %>" placeholder="0">
+              </div>
+              <div class="input-group">
+                <label for="maxStock">Maksimum Stok</label>
+                <input type="number" step="0.01" id="maxStock" name="maxStock" value="<%= formData.maxStock || '' %>" placeholder="Sınırsız">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 4: Fiyatlandırma -->
+          <div class="tab-pane" id="tab-pricing">
+            <div class="tab-pane-title">💰 Alış / Satış Fiyatı & KDV</div>
+            <div class="form-grid form-grid--4">
+              <div class="input-group">
+                <label for="purchasePrice">Alış Fiyatı</label>
+                <input type="number" step="0.01" id="purchasePrice" name="purchasePrice" value="<%= formData.purchasePrice || '0' %>" placeholder="0.00">
+              </div>
+              <div class="input-group">
+                <label for="salePrice">Satış Fiyatı</label>
+                <input type="number" step="0.01" id="salePrice" name="salePrice" value="<%= formData.salePrice || '0' %>" placeholder="0.00">
+              </div>
+              <div class="input-group">
+                <label for="currency">Para Birimi <span class="req-star">*</span></label>
+                <select id="currency" name="currency" required>
+                  <option value="" disabled <%= !formData.currency ? 'selected' : '' %>>-- Para Birimi Seçiniz --</option>
+                  <option value="TRY" <%= formData.currency === 'TRY' ? 'selected' : '' %>>₺ TRY</option>
+                  <option value="USD" <%= formData.currency === 'USD' ? 'selected' : '' %>>$ USD</option>
+                  <option value="EUR" <%= formData.currency === 'EUR' ? 'selected' : '' %>>€ EUR</option>
+                </select>
+                <span class="field-error-msg">Para birimi seçilmesi zorunludur.</span>
+              </div>
+              <div class="input-group">
+                <label for="taxRate">KDV Oranı (%)</label>
+                <input type="number" step="0.01" id="taxRate" name="taxRate" value="<%= formData.taxRate || '20' %>" placeholder="20">
+              </div>
+            </div>
+            <!-- Profit Indicator -->
+            <div class="profit-indicator" id="profitIndicator" style="display: none; margin-top: 16px;">
+              <span>Tahmini Kâr Marjı: <strong id="profitValue">—</strong></span>
+            </div>
+          </div>
+
+          <!-- Tab 5: Depo & Lojistik -->
+          <div class="tab-pane" id="tab-logistics">
+            <div class="tab-pane-title">🏭 Depo Konumu & Tedarikçi Bilgileri</div>
+            <div class="form-grid form-grid--4">
+              <div class="input-group">
+                <label for="warehouseLocation">Depo / Raf Konumu</label>
+                <input type="text" id="warehouseLocation" name="warehouseLocation" value="<%= formData.warehouseLocation || '' %>" placeholder="Örn: Depo-A / Raf-12">
+              </div>
+              <div class="input-group">
+                <label for="supplier">Ana Tedarikçi</label>
+                <input type="text" id="supplier" name="supplier" value="<%= formData.supplier || '' %>" placeholder="Örn: Bosch Türkiye">
+              </div>
+              <div class="input-group">
+                <label for="weight">Ağırlık (kg)</label>
+                <input type="number" step="0.001" id="weight" name="weight" value="<%= formData.weight || '' %>" placeholder="0.000">
+              </div>
+              <div class="input-group">
+                <label for="dimensions">Boyutlar (GxYxD)</label>
+                <input type="text" id="dimensions" name="dimensions" value="<%= formData.dimensions || '' %>" placeholder="Örn: 30x20x15 cm">
+              </div>
+            </div>
+            <div class="form-grid form-grid--2">
+              <div class="input-group">
+                <label for="shelfLife">Raf Ömrü (Gün)</label>
+                <input type="number" id="shelfLife" name="shelfLife" value="<%= formData.shelfLife || '' %>" placeholder="Süresiz">
+              </div>
+              <div class="input-group">
+                <label for="notes">Notlar</label>
+                <textarea id="notes" name="notes" rows="2" placeholder="Ek bilgi, özel koşullar..."><%= formData.notes || '' %></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Form Actions Footer -->
+        <div class="form-tabs-footer">
+          <div class="tab-step-btns">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnPrevTab" style="display: none;">
+              ← Önceki Sekme
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnNextTab">
+              Sonraki Sekme →
+            </button>
+          </div>
+
+          <div class="form-submit-btns">
+            <button type="submit" class="btn btn-lg" id="btnSubmitForm">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Stok Kartı Oluştur
+            </button>
+            <a href="/stock/items" class="btn btn-secondary btn-lg">İptal</a>
+          </div>
+        </div>
+
+      </form>
+    </main>
+  </div>
+
+  <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Elements & State
+    const form = document.getElementById('stockAddForm');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    const btnPrev = document.getElementById('btnPrevTab');
+    const btnNext = document.getElementById('btnNextTab');
+    const clientErrorBanner = document.getElementById('clientErrorBanner');
+    const clientErrorMessage = document.getElementById('clientErrorMessage');
+
+    let currentTabIndex = 0;
+
+    function switchTab(index) {
+      if (index < 0 || index >= tabBtns.length) return;
+      currentTabIndex = index;
+
+      tabBtns.forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+      });
+
+      tabPanes.forEach((pane, i) => {
+        pane.classList.toggle('active', i === index);
+      });
+
+      // Update Prev/Next buttons
+      btnPrev.style.display = index === 0 ? 'none' : 'inline-flex';
+      btnNext.style.display = index === tabBtns.length - 1 ? 'none' : 'inline-flex';
+    }
+
+    tabBtns.forEach((btn, idx) => {
+      btn.addEventListener('click', () => switchTab(idx));
+    });
+
+    btnPrev.addEventListener('click', () => switchTab(currentTabIndex - 1));
+
+    // Validate a specific tab pane by index
+    function validateTab(paneIndex) {
+      const pane = tabPanes[paneIndex];
+      if (!pane) return true;
+
+      const requiredInputs = pane.querySelectorAll('[required]');
+      let isValid = true;
+
+      requiredInputs.forEach(input => {
+        const val = input.value ? input.value.trim() : '';
+        if (!val) {
+          isValid = false;
+          input.classList.add('is-invalid');
+        } else {
+          input.classList.remove('is-invalid');
+        }
+      });
+
+      return isValid;
+    }
+
+    // Update tab badges (shows red dot ! or checkmark ✓ based on validity)
+    function updateTabBadges() {
+      tabPanes.forEach((pane, i) => {
+        const requiredInputs = pane.querySelectorAll('[required]');
+        if (requiredInputs.length === 0) return;
+
+        let paneValid = true;
+        requiredInputs.forEach(input => {
+          if (!input.value || !input.value.trim()) paneValid = false;
+        });
+
+        const badge = tabBtns[i].querySelector('.tab-badge');
+        if (badge) {
+          if (paneValid) {
+            badge.classList.remove('tab-badge--err');
+            badge.classList.add('tab-badge--ok');
+            badge.textContent = '✓';
+          } else {
+            badge.classList.remove('tab-badge--ok');
+            badge.classList.add('tab-badge--err');
+            badge.textContent = '!';
+          }
+        }
+      });
+    }
+
+    // Input blur/change event to clear invalid styling as user types
+    form.querySelectorAll('input, select, textarea').forEach(input => {
+      input.addEventListener('input', () => {
+        if (input.value && input.value.trim()) {
+          input.classList.remove('is-invalid');
+        }
+        updateTabBadges();
+      });
+      input.addEventListener('change', () => {
+        if (input.value && input.value.trim()) {
+          input.classList.remove('is-invalid');
+        }
+        updateTabBadges();
+      });
+    });
+
+    // Next step button validates current tab first
+    btnNext.addEventListener('click', () => {
+      const isCurrentValid = validateTab(currentTabIndex);
+      if (!isCurrentValid) {
+        clientErrorMessage.textContent = 'Lütfen bu sekmedeki zorunlu (*) alanları doldurunuz.';
+        clientErrorBanner.style.display = 'flex';
+        return;
+      }
+      clientErrorBanner.style.display = 'none';
+      switchTab(currentTabIndex + 1);
+    });
+
+    // Global Form Submission Validation across ALL tabs
+    form.addEventListener('submit', (e) => {
+      // Clear previous invalid styles
+      form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+      let firstInvalidPaneIndex = -1;
+      let firstInvalidInput = null;
+      let missingFieldLabels = [];
+
+      // Check all required inputs across ALL tabs
+      tabPanes.forEach((pane, paneIndex) => {
+        const requiredInputs = pane.querySelectorAll('[required]');
+        requiredInputs.forEach(input => {
+          const val = input.value ? input.value.trim() : '';
+          if (!val) {
+            input.classList.add('is-invalid');
+            if (firstInvalidPaneIndex === -1) {
+              firstInvalidPaneIndex = paneIndex;
+              firstInvalidInput = input;
+            }
+            // Get label text
+            const label = input.closest('.input-group') ? input.closest('.input-group').querySelector('label') : null;
+            if (label) {
+              const labelClean = label.textContent.replace('*', '').trim();
+              if (!missingFieldLabels.includes(labelClean)) {
+                missingFieldLabels.push(labelClean);
+              }
+            }
+          }
+        });
+      });
+
+      updateTabBadges();
+
+      if (firstInvalidPaneIndex !== -1) {
+        e.preventDefault(); // STOP form submission!
+
+        // Switch to the first tab that has an invalid field
+        switchTab(firstInvalidPaneIndex);
+
+        // Show explicit error banner
+        clientErrorMessage.textContent = `Kayıt Yapılamadı! Lütfen eksik olan zorunlu (*) alanları doldurunuz: ${missingFieldLabels.join(', ')}`;
+        clientErrorBanner.style.display = 'flex';
+
+        // Focus first invalid input
+        if (firstInvalidInput) {
+          setTimeout(() => firstInvalidInput.focus(), 150);
+        }
+      } else {
+        clientErrorBanner.style.display = 'none';
+      }
+    });
+
+    // Initialize badges
+    updateTabBadges();
+
+    // Live Profit Margin Calculator
+    const purchaseEl = document.getElementById('purchasePrice');
+    const saleEl = document.getElementById('salePrice');
+    const profitInd = document.getElementById('profitIndicator');
+    const profitVal = document.getElementById('profitValue');
+
+    function calcProfit() {
+      const buy = parseFloat(purchaseEl.value) || 0;
+      const sell = parseFloat(saleEl.value) || 0;
+      if (buy > 0 && sell > 0) {
+        const margin = ((sell - buy) / buy * 100).toFixed(1);
+        profitVal.textContent = margin + '%';
+        profitVal.style.color = margin >= 0 ? 'var(--emerald)' : 'var(--rose)';
+        profitInd.style.display = 'flex';
+      } else {
+        profitInd.style.display = 'none';
+      }
+    }
+
+    purchaseEl.addEventListener('input', calcProfit);
+    saleEl.addEventListener('input', calcProfit);
+    calcProfit();
+  </script>
+</body>
+</html>

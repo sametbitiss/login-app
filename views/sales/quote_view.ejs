@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satış Teklifi Detayı (<%= quote ? quote.quotationNo : '' %>) — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    @media print {
+      .module-sidebar, .module-topbar, .no-print { display: none !important; }
+      .module-main { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+      .paper-invoice { border: none !important; box-shadow: none !important; background: #ffffff !important; color: #0f172a !important; }
+    }
+    
+    .paper-invoice { 
+      background: #ffffff; 
+      color: #0f172a;
+      border: 1px solid #cbd5e1; 
+      border-radius: 16px; 
+      padding: 44px; 
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); 
+      max-width: 920px; 
+      margin: 0 auto 30px auto; 
+    }
+    .pi-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+      border-bottom: 2px solid #e2e8f0; 
+      padding-bottom: 24px; 
+      margin-bottom: 30px; 
+    }
+    .pi-brand { 
+      font-size: 1.6rem; 
+      font-weight: 900; 
+      color: #312e81; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      letter-spacing: -0.02em;
+    }
+    .pi-title { text-align: right; }
+    .pi-title h2 { font-size: 1.6rem; font-weight: 900; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
+    .pi-title p { color: #334155; font-size: 0.95rem; font-weight: 600; margin: 5px 0 0 0; }
+    .pi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px; }
+    .pi-box { 
+      background: #f8fafc; 
+      padding: 20px; 
+      border-radius: 12px; 
+      border: 1px solid #cbd5e1; 
+    }
+    .pi-box h4 { 
+      font-size: 0.85rem; 
+      font-weight: 800; 
+      color: #475569; 
+      text-transform: uppercase; 
+      margin-bottom: 10px; 
+      letter-spacing: 0.05em;
+    }
+    .pi-box p { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 6px 0; }
+    .pi-box-detail { color: #334155; font-size: 0.9rem; font-weight: 500; line-height: 1.6; }
+    
+    .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    .summary-table th { 
+      background: #e2e8f0; 
+      color: #0f172a; 
+      font-weight: 800; 
+      text-align: left; 
+      padding: 14px 16px; 
+      border-bottom: 2px solid #94a3b8; 
+      font-size: 0.9rem;
+    }
+    .summary-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; color: #0f172a; font-weight: 500; }
+    .totals-box { margin-left: auto; width: 340px; background: #f8fafc; padding: 16px 20px; border-radius: 12px; border: 1px solid #cbd5e1; }
+    .tb-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; color: #334155; font-weight: 600; }
+    .tb-row strong { color: #0f172a; }
+    .tb-row.final { 
+      border-bottom: none; 
+      font-size: 1.25rem; 
+      font-weight: 900; 
+      color: #312e81; 
+      border-top: 2px solid #cbd5e1; 
+      padding-top: 14px; 
+      margin-top: 6px; 
+    }
+  </style>
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar no-print">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">SATIŞ YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/sales/quotes" class="mss-sub-link active">📜 Teklif & Fiyatlandırma</a>
+        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri Listesi</a>
+        <a href="/sales/customers" class="mss-sub-link">👥 Cari & Müşteri Kartları</a>
+        <a href="/sales/dispatches" class="mss-sub-link">🚚 Sevkiyat & İrsaliye</a>
+        <a href="/sales/invoices" class="mss-sub-link">🧾 Faturalandırma</a>
+        <a href="/sales/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+        <a href="/sales/analytics" class="mss-sub-link">📊 Satış Analitiği</a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar no-print">
+      <div class="mt-left">
+        <a href="/sales/quotes" class="btn btn-outline-secondary btn-sm">← Tekliflere Dön</a>
+      </div>
+      <div class="mt-right" style="display: flex; gap: 10px;">
+        <button onclick="window.print()" class="btn btn-outline-primary btn-sm">🖨️ Teklifi Yazdır / PDF</button>
+        <% if (quote && quote.status === 'Approved') { %>
+          <form action="/sales/quotes/<%= quote.id %>/convert" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-success btn-sm">⚡ Siparişe Dönüştür</button>
+          </form>
+        <% } %>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <% if (!quote) { %>
+        <div class="alert alert-danger">Teklif bulunamadı.</div>
+      <% } else { %>
+        <div class="paper-invoice">
+          <div class="pi-header">
+            <div class="pi-brand">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#4338ca"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+              ENTERPRISE A.Ş.
+            </div>
+            <div class="pi-title">
+              <h2>SATIŞ TEKLİFİ</h2>
+              <p>Teklif No: <strong style="color: #4338ca;"><%= quote.quotationNo %></strong></p>
+              <p>Tarih: <strong><%= quote.quotationDate %></strong></p>
+              <p>Geçerlilik: <strong><%= quote.validUntil || 'Belirtilmedi' %></strong></p>
+            </div>
+          </div>
+
+          <div class="pi-grid">
+            <div class="pi-box">
+              <h4>MÜŞTERİ BİLGİLERİ</h4>
+              <p><%= quote.customerName %></p>
+              <div class="pi-box-detail">
+                <%= quote.customer ? 'Cari Kodu: ' + quote.customer.customerCode : '' %><br>
+                <%= quote.customer && quote.customer.taxNo ? 'Vergi No: ' + quote.customer.taxNo : '' %><br>
+                <%= quote.customer && quote.customer.phone ? 'Tel: ' + quote.customer.phone : '' %>
+              </div>
+            </div>
+            <div class="pi-box">
+              <h4>TEKLİF DURUMU & KOŞULLARI</h4>
+              <p>Statü: 
+                <span class="badge bg-primary" style="font-size: 0.85rem; padding: 4px 10px;"><%= quote.status %></span>
+              </p>
+              <div class="pi-box-detail">
+                Para Birimi: <strong style="color: #0f172a;"><%= quote.currency %></strong><br>
+                Hazırlayan: <strong style="color: #0f172a;"><%= quote.creator ? quote.creator.username : 'Satış Temsilcisi' %></strong>
+              </div>
+            </div>
+          </div>
+
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Ürün / Hizmet Açıklaması</th>
+                <th>Miktar</th>
+                <th>Birim Fiyat</th>
+                <th>İskonto</th>
+                <th>KDV (%)</th>
+                <th class="text-end">Toplam Tutar</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong style="font-size: 1rem; color: #0f172a;"><%= quote.stockItem ? quote.stockItem.name : 'Ürün' %></strong><br>
+                  <span style="color: #475569; font-weight: 600; font-size: 0.85rem;"><%= quote.stockItem ? quote.stockItem.stockCode : '' %></span>
+                </td>
+                <td><strong><%= quote.quantity %></strong> <%= quote.stockItem ? quote.stockItem.unit : 'Adet' %></td>
+                <td><strong><%= Number(quote.unitPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %></strong> <%= quote.currency %></td>
+                <td><strong style="color: #dc2626;">%<%= quote.discountRate %></strong></td>
+                <td>%<%= quote.taxRate %></td>
+                <td class="text-end" style="font-size: 1.05rem; font-weight: 800; color: #4338ca;"><%= Number(quote.subtotal - quote.discountAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="totals-box">
+            <div class="tb-row">
+              <span>Ara Toplam:</span>
+              <strong><%= Number(quote.subtotal).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></strong>
+            </div>
+            <div class="tb-row">
+              <span>İskonto Tutar:</span>
+              <strong style="color: #dc2626;">-<%= Number(quote.discountAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></strong>
+            </div>
+            <div class="tb-row">
+              <span>KDV Tutarı:</span>
+              <strong><%= Number(quote.taxAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></strong>
+            </div>
+            <div class="tb-row final">
+              <span>GENEL TOPLAM:</span>
+              <span><%= Number(quote.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></span>
+            </div>
+          </div>
+
+          <% if (quote.notes) { %>
+            <div style="margin-top: 30px; background: #fefce8; padding: 18px; border-radius: 12px; border: 1px solid #fef08a; color: #713f12;">
+              <strong style="font-size: 0.95rem;">Teklif Notları & Koşulları:</strong>
+              <p style="margin: 6px 0 0 0; font-size: 0.95rem; font-weight: 500; color: #854d0e;"><%= quote.notes %></p>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+    </main>
+  </div>
+</body>
+</html>

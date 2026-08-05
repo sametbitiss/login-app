@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kullanıcı Düzenleme — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="module-body">
+
+  <!-- Module Sidebar -->
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">SİSTEM YÖNETİMİ</div>
+      <a href="/admin/users" class="mss-link active">Admin Paneli</a>
+      <div class="mss-sub">
+        <a href="/admin/users" class="mss-sub-link active">👥 Kullanıcı Yönetimi</a>
+        <a href="/admin/users/add" class="mss-sub-link">➕ Yeni Kullanıcı</a>
+        <a href="/admin/settings" class="mss-sub-link">🛠️ Sistem Ayarları</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= ALL_ROLES[user.role] || user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <a href="/admin/users" class="mt-link active">Sistem Yönetimi</a>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <div class="page-header">
+        <div>
+          <h1>Kullanıcı Hesabı & Profil Düzenle</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Kullanıcı: <strong>@<%= targetUser.username %></strong> (ID: #<%= targetUser.id %>) — Kayıt Tarihi: <%= new Date(targetUser.createdAt).toLocaleDateString('tr-TR') %></p>
+        </div>
+        <a href="/admin/users" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Listeye Dön
+        </a>
+      </div>
+
+      <% if (successMessage) { %>
+        <div style="padding: 14px 20px; background: rgba(16, 185, 129, 0.12); border: 1px solid var(--emerald); color: var(--emerald); border-radius: var(--radius-md); font-weight: 600; margin-bottom: 1.5rem;">
+          ✓ <%= successMessage %>
+        </div>
+      <% } %>
+
+      <!-- Dynamic Client Error Banner -->
+      <div class="error" id="clientErrorBanner" style="display: none; margin-bottom: 1.25rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="clientErrorMessage">Lütfen zorunlu (*) alanları eksiksiz doldurunuz.</span>
+      </div>
+
+      <!-- Tabbed User Update Form -->
+      <form action="/admin/users/<%= targetUser.id %>/update" method="POST" class="stock-form-container" id="userUpdateForm" novalidate>
+
+        <!-- Tab Header Bar -->
+        <div class="form-tabs-header">
+          <button type="button" class="tab-btn active" data-tab="tab-login" id="tab-btn-login">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>1. Kimlik & İletişim</span>
+          </button>
+
+          <button type="button" class="tab-btn" data-tab="tab-personal" id="tab-btn-personal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>2. Kişisel Bilgiler</span>
+          </button>
+
+          <button type="button" class="tab-btn" data-tab="tab-role" id="tab-btn-role">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>3. Kurumsal & Rol Yetkisi</span>
+            <span class="tab-badge tab-badge--req">*</span>
+          </button>
+        </div>
+
+        <!-- Tab Body Panes -->
+        <div class="form-tabs-body">
+
+          <!-- Tab 1: Kimlik & İletişim -->
+          <div class="tab-pane active" id="tab-login">
+            <div class="tab-pane-title">🔑 Kullanıcı Hesabı & İletişim Bilgileri</div>
+            <div class="form-grid form-grid--3">
+              <div class="input-group">
+                <label for="username">Kullanıcı Adı (Değiştirilemez)</label>
+                <input type="text" id="username" value="<%= targetUser.username %>" disabled style="opacity: 0.7; cursor: not-allowed;">
+              </div>
+
+              <div class="input-group">
+                <label for="email">E-Posta Adresi <span class="req-star">*</span></label>
+                <input type="email" id="email" name="email" value="<%= targetUser.email || '' %>" required placeholder="ahmet@enterprise-erp.com">
+              </div>
+
+              <div class="input-group">
+                <label for="phone">Telefon Numarası</label>
+                <input type="text" id="phone" name="phone" value="<%= targetUser.phone || '' %>" placeholder="+90 (5xx) xxx xx xx">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Kişisel Bilgiler -->
+          <div class="tab-pane" id="tab-personal">
+            <div class="tab-pane-title">👤 Ad ve Soyad</div>
+            <div class="form-grid form-grid--2">
+              <div class="input-group">
+                <label for="firstName">Ad</label>
+                <input type="text" id="firstName" name="firstName" value="<%= targetUser.firstName || '' %>" placeholder="Örn: Ahmet">
+              </div>
+
+              <div class="input-group">
+                <label for="lastName">Soyad</label>
+                <input type="text" id="lastName" name="lastName" value="<%= targetUser.lastName || '' %>" placeholder="Örn: Yılmaz">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Kurumsal & Rol Yetkisi -->
+          <div class="tab-pane" id="tab-role">
+            <div class="tab-pane-title">🏢 Departman, Unvan & ERP Rol Yetkisi</div>
+            <div class="form-grid form-grid--3">
+              <div class="input-group">
+                <label for="department">Departman <span class="req-star">*</span></label>
+                <select id="department" name="department" required>
+                  <% DEPARTMENTS.forEach(dept => { %>
+                    <option value="<%= dept %>" <%= (targetUser.department || 'Genel') === dept ? 'selected' : '' %>>
+                      <%= dept %>
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+
+              <div class="input-group">
+                <label for="title">Unvan / Pozisyon</label>
+                <input type="text" id="title" name="title" value="<%= targetUser.title || 'Personel' %>" placeholder="Örn: Depo Sorumlusu, Kıdemli Satış Temsilcisi">
+              </div>
+
+              <div class="input-group">
+                <label for="role">ERP Modül Rol Yetkisi <span class="req-star">*</span></label>
+                <select id="role" name="role" required>
+                  <% Object.keys(ALL_ROLES).forEach(rKey => { %>
+                    <option value="<%= rKey %>" <%= targetUser.role === rKey ? 'selected' : '' %>>
+                      <%= ALL_ROLES[rKey] %> (<%= rKey %>)
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid form-grid--3" style="margin-top: 1rem;">
+              <div class="input-group">
+                <label for="status">Hesap Durumu <span class="req-star">*</span></label>
+                <select id="status" name="status" required>
+                  <option value="Active" <%= targetUser.status === 'Active' ? 'selected' : '' %>>● Aktif</option>
+                  <option value="Inactive" <%= targetUser.status === 'Inactive' ? 'selected' : '' %>>● Pasif</option>
+                  <option value="Suspended" <%= targetUser.status === 'Suspended' ? 'selected' : '' %>>● Donduruldu / Kısıtlı</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Form Actions Footer -->
+        <div class="form-tabs-footer">
+          <div class="tab-step-btns">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnPrevTab" style="display: none;">
+              ← Önceki Sekme
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnNextTab">
+              Sonraki Sekme →
+            </button>
+          </div>
+
+          <div class="form-submit-btns">
+            <button type="submit" class="btn btn-lg" id="btnSubmitForm">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Profil Değişikliklerini Kaydet
+            </button>
+            <a href="/admin/users" class="btn btn-secondary btn-lg">İptal</a>
+          </div>
+        </div>
+
+      </form>
+
+      <!-- Password Reset Panel -->
+      <div class="form-panel" style="margin-top: 2rem;">
+        <h3 style="color: var(--amber); font-size: 1.05rem; margin-bottom: 12px;">🔑 Parola Sıfırlama</h3>
+        <form action="/admin/users/<%= targetUser.id %>/reset-password" method="POST" style="display: flex; gap: 1rem; align-items: flex-end; max-width: 600px;">
+          <div class="input-group" style="flex: 1;">
+            <label for="newPassword">Yeni Parola Belirleyin</label>
+            <input type="password" id="newPassword" name="newPassword" placeholder="En az 6 karakter giriniz" required>
+          </div>
+          <button type="submit" class="btn btn-secondary">Parolayı Güncelle</button>
+        </form>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Tab Navigation
+    const form = document.getElementById('userUpdateForm');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    const btnPrev = document.getElementById('btnPrevTab');
+    const btnNext = document.getElementById('btnNextTab');
+    const clientErrorBanner = document.getElementById('clientErrorBanner');
+
+    let currentTabIndex = 0;
+
+    function switchTab(index) {
+      if (index < 0 || index >= tabBtns.length) return;
+      currentTabIndex = index;
+
+      tabBtns.forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+      });
+
+      tabPanes.forEach((pane, i) => {
+        pane.classList.toggle('active', i === index);
+      });
+
+      btnPrev.style.display = index === 0 ? 'none' : 'inline-flex';
+      btnNext.style.display = index === tabBtns.length - 1 ? 'none' : 'inline-flex';
+    }
+
+    tabBtns.forEach((btn, idx) => {
+      btn.addEventListener('click', () => switchTab(idx));
+    });
+
+    btnPrev.addEventListener('click', () => switchTab(currentTabIndex - 1));
+    btnNext.addEventListener('click', () => switchTab(currentTabIndex + 1));
+  </script>
+</body>
+</html>

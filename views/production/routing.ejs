@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rotalama & Operasyonlar — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">ÜRETİM PLANLAMA</div>
+      <a href="/production/orders" class="mss-link active">Üretim Özellikleri</a>
+      <div class="mss-sub">
+        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri Listesi</a>
+        <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
+        <a href="/production/bom" class="mss-sub-link">📜 Reçeteler (BOM)</a>
+        <a href="/production/routing" class="mss-sub-link active">🔄 Rotalama & Operasyon</a>
+        <a href="/production/capacity" class="mss-sub-link">📊 Kapasite Planlama</a>
+        <a href="/production/mes" class="mss-sub-link">🏭 Üretim İzleme & MES</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= ALL_ROLES[user.role] || user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %>
+          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
+          <a href="/stock" class="mt-link">Stok & Depo</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
+          <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Purchase_Manager') { %>
+          <a href="/purchase" class="mt-link">Satın Alma</a>
+        <% } %>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+          <a href="/production" class="mt-link active">Üretim Planlama</a>
+        <% } %>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <!-- Sub-Nav -->
+      <div class="module-subnav">
+        <a href="/production/orders" class="msn-link">📋 İş Emirleri</a>
+        <a href="/production/bom" class="msn-link">📜 Üretim Reçeteleri (BOM)</a>
+        <a href="/production/routing" class="msn-link active">🔄 Rotalama & Operasyonlar</a>
+        <a href="/production/capacity" class="msn-link">📊 Kapasite Planlaması</a>
+        <a href="/production/mes" class="msn-link">🏭 Üretim İzleme & MES</a>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <h1>Operasyon Rotaları (Routing Management)</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">İmalat sürecindeki operasyon sıralaması, tezgahlara atanmış hazırlık ve işleme süreleri.</p>
+        </div>
+      </div>
+
+      <!-- Add Routing Operation Panel -->
+      <div class="form-panel" style="margin-bottom: 1.75rem;">
+        <h3 style="color: var(--indigo); font-size: 1.05rem; margin-bottom: 1rem;">➕ Yeni İmalat Operasyonu Tanımla</h3>
+        
+        <form action="/production/routing" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="form-grid form-grid--3">
+            <div class="input-group">
+              <label for="stockItemId">Üretilecek Ürün <span class="req-star">*</span></label>
+              <select id="stockItemId" name="stockItemId" required>
+                <option value="" disabled selected>-- Ürün Seçiniz --</option>
+                <% stockItems.forEach(item => { %>
+                  <option value="<%= item.id %>">[<%= item.stockCode %>] <%= item.name %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="operationSeq">Operasyon Sıra No (Seq) <span class="req-star">*</span></label>
+              <select id="operationSeq" name="operationSeq" required>
+                <option value="10">Op-10 (1. Adım)</option>
+                <option value="20">Op-20 (2. Adım)</option>
+                <option value="30">Op-30 (3. Adım)</option>
+                <option value="40">Op-40 (4. Adım)</option>
+                <option value="50">Op-50 (5. Adım)</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="operationName">Operasyon Adı <span class="req-star">*</span></label>
+              <input type="text" id="operationName" name="operationName" required placeholder="Örn: Lazer Kesim & Büküm">
+            </div>
+          </div>
+
+          <div class="form-grid form-grid--3">
+            <div class="input-group">
+              <label for="workCenter">İş Merkezi / Tezgah <span class="req-star">*</span></label>
+              <select id="workCenter" name="workCenter" required>
+                <% WORK_CENTERS.forEach(wc => { %>
+                  <option value="<%= wc %>"><%= wc %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="setupTimeMinutes">Hazırlık Süresi (Setup - Dk)</label>
+              <input type="number" id="setupTimeMinutes" name="setupTimeMinutes" step="1" min="0" value="15" placeholder="Örn: 20">
+            </div>
+
+            <div class="input-group">
+              <label for="runTimeMinutesPerUnit">Birim İşleme Süresi (Run Time - Dk)</label>
+              <input type="number" id="runTimeMinutesPerUnit" name="runTimeMinutesPerUnit" step="0.5" min="0.1" value="5.0" placeholder="Örn: 8.5">
+            </div>
+          </div>
+
+          <div class="form-grid form-grid--1">
+            <div class="input-group">
+              <label for="instructions">Operatör İmalat Direktifi / Talimatı</label>
+              <input type="text" id="instructions" name="instructions" placeholder="Örn: Parça işlenmeden önce yüzey pürüzlülüğü mikrometre ile ölçülmelidir.">
+            </div>
+          </div>
+
+          <button type="submit" class="btn" style="align-self: flex-start;">
+            Operasyon Rotasını Kaydet
+          </button>
+        </form>
+      </div>
+
+      <!-- Routings Table -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rota Kodu</th>
+              <th>Ürün Adı</th>
+              <th>Operasyon Adı (Sıra)</th>
+              <th>İş Merkezi / Tezgah</th>
+              <th>Hazırlık Süresi (Setup)</th>
+              <th>Birim İşleme (Run Time)</th>
+              <th>Operatör Talimatı</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (routings && routings.length > 0) { %>
+              <% routings.forEach(r => { %>
+                <tr>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= r.routingCode %></strong></td>
+                  <td>
+                    <strong style="color: var(--text-main);"><%= r.stockItem ? r.stockItem.name : '—' %></strong>
+                  </td>
+                  <td>
+                    <span class="status-pill status-approved" style="margin-right: 6px;">Op-<%= r.operationSeq %></span>
+                    <strong><%= r.operationName %></strong>
+                  </td>
+                  <td><strong style="color: var(--emerald);"><%= r.workCenter %></strong></td>
+                  <td><%= r.setupTimeMinutes %> Dk</td>
+                  <td><%= r.runTimeMinutesPerUnit %> Dk / Birim</td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= r.instructions || '—' %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  Henüz tanımlı imalat operasyon rotası bulunmamaktadır.
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

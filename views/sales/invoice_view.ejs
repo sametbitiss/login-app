@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Fatura — <%= invoice ? invoice.invoiceNo : 'Resmi Fatura' %></title>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #1e293b; padding: 2rem; margin: 0; }
+    .invoice-card { max-width: 800px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .header { display: flex; justify-content: space-between; border-bottom: 2px solid #3b82f6; padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+    .logo { font-size: 1.5rem; font-weight: 800; color: #1e40af; }
+    .invoice-title { text-align: right; }
+    .invoice-title h1 { margin: 0; font-size: 1.5rem; color: #0f172a; }
+    .details { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+    .table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+    .table th, .table td { padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    .table th { background: #f1f5f9; font-weight: 600; }
+    .totals { text-align: right; width: 300px; margin-left: auto; }
+    .totals div { display: flex; justify-content: space-between; padding: 0.4rem 0; font-size: 0.95rem; }
+    .totals .grand-total { font-size: 1.25rem; font-weight: 700; color: #16a34a; border-top: 2px solid #0f172a; padding-top: 0.5rem; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .no-print { display: none; }
+      .invoice-card { border: none; box-shadow: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print" style="max-width: 800px; margin: 0 auto 1rem auto; display: flex; justify-content: space-between; align-items: center;">
+    <a href="/sales/invoices" style="padding: 0.6rem 1.2rem; background: rgba(255,255,255,0.1); color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; border: 1px solid var(--border);">← Faturalara Dön</a>
+    <button onclick="window.print()" style="padding: 0.6rem 1.2rem; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">🖨️ Faturayı Yazdır / PDF İndir</button>
+  </div>
+
+  <% if (invoice) { %>
+    <div class="invoice-card">
+      <div class="header">
+        <div>
+          <div class="logo">ENTERPRISE ERP A.Ş.</div>
+          <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Organize Sanayi Bölgesi 2. Cadde No: 4 Dudullu / İstanbul</div>
+          <div style="font-size: 0.85rem; color: #64748b;">Marmara Kurumlar V.D. - 3880123456</div>
+        </div>
+        <div class="invoice-title">
+          <h1>SATIŞ FATURASI</h1>
+          <div style="font-family: monospace; font-size: 1.1rem; font-weight: 700; color: #2563eb; margin-top: 4px;"><%= invoice.invoiceNo %></div>
+        </div>
+      </div>
+
+      <div class="details">
+        <div>
+          <strong style="color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Sayın Müşterimiz:</strong>
+          <div style="font-size: 1.1rem; font-weight: 700; margin-top: 4px;"><%= invoice.customerName %></div>
+          <div style="font-size: 0.85rem; color: #475569; margin-top: 2px;">Vergi No: <%= invoice.customerTaxNo || '—' %></div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 0.85rem; color: #64748b;">Fatura Tarihi: <strong><%= new Date(invoice.invoiceDate).toLocaleDateString('tr-TR') %></strong></div>
+          <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Son Vade Tarihi: <strong><%= new Date(invoice.dueDate).toLocaleDateString('tr-TR') %></strong></div>
+          <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Ödeme Durumu: <strong><%= invoice.paymentStatus === 'Paid' ? 'ÖDENDİ' : 'ÖDENMEDİ (AÇIK HESAP)' %></strong></div>
+        </div>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Açıklama / Hizmet</th>
+            <th>Miktar</th>
+            <th>Birim Fiyat</th>
+            <th>KDV Oranı</th>
+            <th>Toplam Tutar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><%= invoice.saleOrder ? (invoice.saleOrder.stockItem ? invoice.saleOrder.stockItem.name : 'Satış Hizmeti') : 'Mamul Satışı' %></td>
+            <td><%= invoice.saleOrder ? invoice.saleOrder.quantity : 1 %> Adet</td>
+            <td><%= invoice.saleOrder ? parseFloat(invoice.saleOrder.unitPrice).toLocaleString('tr-TR', {minimumFractionDigits:2}) : '0.00' %> <%= invoice.currency %></td>
+            <td>%20</td>
+            <td><strong><%= parseFloat(invoice.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= invoice.currency %></strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div>
+          <span>Ara Toplam:</span>
+          <span><%= parseFloat(invoice.subtotal).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= invoice.currency %></span>
+        </div>
+        <div>
+          <span>İskonto Tutarı:</span>
+          <span>- <%= parseFloat(invoice.discountAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= invoice.currency %></span>
+        </div>
+        <div>
+          <span>KDV Tutarı (%20):</span>
+          <span><%= parseFloat(invoice.taxAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= invoice.currency %></span>
+        </div>
+        <div class="grand-total">
+          <span>Genel Toplam:</span>
+          <span><%= parseFloat(invoice.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= invoice.currency %></span>
+        </div>
+      </div>
+    </div>
+  <% } else { %>
+    <p style="text-align:center;">Fatura bulunamadı.</p>
+  <% } %>
+
+</body>
+</html>

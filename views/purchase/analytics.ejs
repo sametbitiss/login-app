@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satın Alma Analitik Dashboard — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .card-metric { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); }
+    .card-metric span { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 8px; letter-spacing: 0.05em; }
+    .card-metric strong { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+    .chart-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow-md); }
+    .chart-box h3 { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0 0 20px 0; }
+  </style>
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">🛒 SATIN ALMA YÖNETİMİ</div>
+
+      <div class="mss-group-title">📊 DASHBOARD & ONAY</div>
+      <div class="mss-sub">
+        <a href="/purchase/analytics" class="mss-sub-link active">📊 Satın Alma Analitiği</a>
+        <a href="/purchase/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+      </div>
+
+      <div class="mss-group-title">📋 SATIN ALMA OPERASYONLARI</div>
+      <div class="mss-sub">
+        <a href="/purchase/requisitions" class="mss-sub-link">📩 Satın Alma Talepleri</a>
+        <a href="/purchase/rfq" class="mss-sub-link">📨 Teklif Yönetimi (RFQ)</a>
+        <a href="/purchase/orders" class="mss-sub-link">📦 Satın Alma Siparişleri</a>
+        <a href="/purchase/goods-receipt" class="mss-sub-link">🚛 Mal Kabul (GRN)</a>
+      </div>
+
+      <div class="mss-group-title">🏭 TEDARİKÇİ YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/purchase/suppliers" class="mss-sub-link">🏢 Tedarikçi Kartları</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %>
+          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link active">Satın Alma</a>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+          <a href="/production" class="mt-link">Üretim Planlama</a>
+        <% } %>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <div class="module-subnav">
+        <a href="/purchase/analytics" class="msn-link active">📊 Analitik</a>
+        <a href="/purchase/approvals" class="msn-link">⚡ Onaylar</a>
+        <a href="/purchase/requisitions" class="msn-link">📩 Talepler</a>
+        <a href="/purchase/rfq" class="msn-link">📨 RFQ</a>
+        <a href="/purchase/orders" class="msn-link">📦 Siparişler</a>
+        <a href="/purchase/goods-receipt" class="msn-link">🚛 Mal Kabul</a>
+        <a href="/purchase/suppliers" class="msn-link">🏢 Tedarikçiler</a>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <h1>Satın Alma Analitik Dashboard</h1>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Tedarikçi bazlı harcamalar, dönemsel trendler ve satın alma KPI göstergeleri.</p>
+        </div>
+      </div>
+
+      <!-- KPI Grid -->
+      <div class="grid-4">
+        <div class="card-metric">
+          <span>Toplam Satın Alma</span>
+          <strong style="color: var(--indigo);"><%= stats.totalOrders %> Sipariş</strong>
+        </div>
+        <div class="card-metric">
+          <span>Onay Bekleyen</span>
+          <strong style="color: var(--amber);"><%= stats.pendingOrders %></strong>
+        </div>
+        <div class="card-metric">
+          <span>Teslim Alınan</span>
+          <strong style="color: var(--emerald);"><%= stats.receivedOrders %></strong>
+        </div>
+        <div class="card-metric">
+          <span>Toplam Harcama</span>
+          <strong style="color: var(--rose);"><%= parseFloat(stats.totalSpend).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> ₺</strong>
+        </div>
+      </div>
+
+      <div class="grid-4">
+        <div class="card-metric">
+          <span>Aktif Tedarikçi</span>
+          <strong style="color: var(--cyan);"><%= supplierStats.activeSuppliers %></strong>
+        </div>
+        <div class="card-metric">
+          <span>Toplam RFQ</span>
+          <strong style="color: var(--indigo);"><%= rfqStats.totalRfqs %></strong>
+        </div>
+        <div class="card-metric">
+          <span>Bekleyen Kalite Kontrol</span>
+          <strong style="color: var(--amber);"><%= grnStats.pendingInspection %></strong>
+        </div>
+        <div class="card-metric">
+          <span>Tamamlanan Mal Kabul</span>
+          <strong style="color: var(--emerald);"><%= grnStats.completedReceipts %></strong>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid-2">
+        <div class="chart-box">
+          <h3>🏭 Tedarikçi Bazlı Harcamalar (TL)</h3>
+          <canvas id="supplierSpendChart" height="220"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>📦 En Çok Satın Alınan 5 Ürün</h3>
+          <canvas id="topItemsChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Tables -->
+      <div class="grid-2">
+        <div class="chart-box">
+          <h3>🏢 Tedarikçi Harcama Tablosu</h3>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Tedarikçi</th>
+                  <th>Sipariş Adedi</th>
+                  <th class="text-end">Toplam Harcama (TL)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (!supplierSpend || supplierSpend.length === 0) { %>
+                  <tr><td colspan="3" class="text-center text-muted">Veri bulunamadı.</td></tr>
+                <% } else { %>
+                  <% supplierSpend.forEach(s => { %>
+                    <tr>
+                      <td><strong style="color: var(--text-primary);"><%= s.supplierName %></strong></td>
+                      <td><span class="badge bg-secondary"><%= s.orderCount %> Sipariş</span></td>
+                      <td class="text-end font-weight-bold" style="color: var(--emerald);"><%= Number(s.totalSpend).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</td>
+                    </tr>
+                  <% }); %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-box">
+          <h3>📋 Son Satın Alma Siparişleri</h3>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Sipariş No</th>
+                  <th>Tedarikçi</th>
+                  <th>Tutar</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (!recentOrders || recentOrders.length === 0) { %>
+                  <tr><td colspan="4" class="text-center text-muted">Henüz sipariş kaydı yok.</td></tr>
+                <% } else { %>
+                  <% recentOrders.slice(0, 5).forEach(o => { %>
+                    <tr>
+                      <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.orderNo %></strong></td>
+                      <td><%= o.supplierName %></td>
+                      <td class="font-weight-bold" style="color: var(--emerald);"><%= Number(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= o.currency %></td>
+                      <td>
+                        <% if (o.status === 'Received') { %>
+                          <span class="status-pill status-active">● Teslim Alındı</span>
+                        <% } else if (o.status === 'Ordered') { %>
+                          <span class="status-pill status-approved">● Sipariş Verildi</span>
+                        <% } else if (o.status === 'Pending_Approval') { %>
+                          <span class="status-pill status-pending">● Onay Bekliyor</span>
+                        <% } else { %>
+                          <span class="status-pill status-pending">● <%= o.status %></span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    Chart.defaults.color = '#8896b0';
+    Chart.defaults.font.family = 'Inter';
+
+    // Supplier Spend Chart
+    const sLabels = <%- JSON.stringify((supplierSpend || []).map(s => s.supplierName || 'Diğer')) %>;
+    const sValues = <%- JSON.stringify((supplierSpend || []).map(s => parseFloat(s.totalSpend || 0))) %>;
+    const ctxS = document.getElementById('supplierSpendChart').getContext('2d');
+    new Chart(ctxS, {
+      type: 'bar',
+      data: {
+        labels: sLabels.length > 0 ? sLabels : ['Henüz Veri Yok'],
+        datasets: [{
+          label: 'Toplam Harcama (TL)',
+          data: sValues.length > 0 ? sValues : [0],
+          backgroundColor: ['rgba(99, 102, 241, 0.75)', 'rgba(16, 185, 129, 0.75)', 'rgba(6, 182, 212, 0.75)', 'rgba(245, 158, 11, 0.75)', 'rgba(244, 63, 94, 0.75)'],
+          borderColor: ['#6366f1', '#10b981', '#06b6d4', '#f59e0b', '#f43f5e'],
+          borderWidth: 1,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, beginAtZero: true }
+        }
+      }
+    });
+
+    // Top Items Chart
+    const iLabels = <%- JSON.stringify((topItems || []).map(i => (i.stockItem ? i.stockItem.name : 'Ürün') )) %>;
+    const iValues = <%- JSON.stringify((topItems || []).map(i => parseFloat(i.totalSpend || 0))) %>;
+    const ctxI = document.getElementById('topItemsChart').getContext('2d');
+    new Chart(ctxI, {
+      type: 'doughnut',
+      data: {
+        labels: iLabels.length > 0 ? iLabels : ['Henüz Veri Yok'],
+        datasets: [{
+          data: iValues.length > 0 ? iValues : [1],
+          backgroundColor: ['#6366f1', '#10b981', '#06b6d4', '#f59e0b', '#ec4899'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'right', labels: { color: '#f0f2f5' } } }
+      }
+    });
+  </script>
+</body>
+</html>
