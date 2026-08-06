@@ -7,6 +7,7 @@ const stockRoutes = require('./routes/stockRoutes');
 const saleRoutes = require('./routes/saleRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const productionRoutes = require('./routes/productionRoutes');
+const qualityRoutes = require('./routes/qualityRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const { sequelize } = require('../models');
 const seedInitialData = require('./utils/seedData');
@@ -32,6 +33,7 @@ app.use('/stock', stockRoutes);
 app.use('/sales', saleRoutes);
 app.use('/purchase', purchaseRoutes);
 app.use('/production', productionRoutes);
+app.use('/quality', qualityRoutes);
 
 // Centralized Error Handling Middleware (must be last middleware)
 app.use(errorHandler);

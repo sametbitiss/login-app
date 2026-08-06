@@ -16,7 +16,12 @@ const {
   StockLocation,
   StockLot,
   StockMovement,
-  StockCounting
+  StockCounting,
+  QualityInspection,
+  QualityNonConformance,
+  QualityCapa,
+  QualityEquipment,
+  QualityDocument
 } = require('../../models');
 
 async function seedInitialData() {
@@ -516,6 +521,179 @@ async function seedInitialData() {
           requesterName: 'Murat Kaya',
           notes: 'Kritik stok seviyesinin altına düştüğü için otomatik oluşturuldu.',
           createdBy: stockUser.id
+        }
+      ]);
+    }
+    // 13. Seed Quality Inspections
+    const inspectionCount = await QualityInspection.count();
+    const sampleStockItem = await StockItem.findOne();
+    const sampleSupplier = await Supplier.findOne();
+
+    if (inspectionCount === 0 && sampleStockItem) {
+      await QualityInspection.bulkCreate([
+        {
+          inspectionNo: 'IQC-2026-0001',
+          type: 'Incoming',
+          stockItemId: sampleStockItem.id,
+          lotNumber: 'LOT-2026-A101',
+          supplierId: sampleSupplier ? sampleSupplier.id : null,
+          sampleSize: 100,
+          passedQuantity: 98,
+          rejectedQuantity: 2,
+          decision: 'Accepted',
+          inspectorName: 'Selin Arslan (Kalite Uzmanı)',
+          defectCategory: 'Yüzey Çiziği',
+          notes: 'Çap ve tolerans ölçümleri uygun. %2 oranında hafif yüzey çizik tespit edildi, kabul edildi.'
+        },
+        {
+          inspectionNo: 'IPQC-2026-0001',
+          type: 'InProcess',
+          stockItemId: stockItem2 ? stockItem2.id : stockItem1.id,
+          lotNumber: 'LOT-2026-B202',
+          productionOrderId: 1,
+          sampleSize: 50,
+          passedQuantity: 45,
+          rejectedQuantity: 5,
+          decision: 'Conditional_Accept',
+          inspectorName: 'Oğuz Aydın (Üretim & Kalite)',
+          defectCategory: 'Çapak Kalıntısı',
+          notes: 'Freze operasyonu sonrası çapak kontrolü yapıldı. Çapak temizliği sonrası işleme devam edilecek.'
+        },
+        {
+          inspectionNo: 'FQC-2026-0001',
+          type: 'Final',
+          stockItemId: sampleStockItem.id,
+          lotNumber: 'LOT-2026-C303',
+          sampleSize: 200,
+          passedQuantity: 200,
+          rejectedQuantity: 0,
+          decision: 'Accepted',
+          inspectorName: 'Selin Arslan (Kalite Uzmanı)',
+          defectCategory: 'Yok',
+          notes: 'Final paketleme ve etiketleme muayenesi tamamlandı. Sevk onayı verildi.'
+        }
+      ]);
+    }
+
+    // 14. Seed Quality Non-Conformances (NCR)
+    const ncrCount = await QualityNonConformance.count();
+    if (ncrCount === 0 && sampleStockItem) {
+      const ncr1 = await QualityNonConformance.create({
+        ncrNo: 'NCR-2026-0001',
+        title: 'Tedarikçi Hammadde Tolerans Aşımı',
+        type: 'Supplier_Defect',
+        severity: 'Major',
+        status: 'Action_Required',
+        stockItemId: sampleStockItem.id,
+        lotNumber: 'LOT-2026-A101',
+        quantityAffected: 15,
+        detectedBy: 'Selin Arslan',
+        assignedTo: 'Satın Alma & Tedarikçi İlişkileri',
+        description: 'Gelen mil parçalarında çap ölçüsü 0.05mm tolerans dışı çıkmıştır.',
+        disposition: 'ReturnToSupplier'
+      });
+
+      // Seed CAPA for this NCR
+      const capaCount = await QualityCapa.count();
+      if (capaCount === 0) {
+        await QualityCapa.create({
+          capaNo: 'CAPA-2026-0001',
+          ncrId: ncr1.id,
+          title: 'Tedarikçi Talaşlı İmalat Kalibrasyon Kontrolü',
+          rootCauseMethod: '5_Why',
+          rootCauseDescription: 'Tedarikçi CNC tezgahındaki kesici uç aşınması zamanında fark edilmediği için ölçü kaçıklığı oluşmuş.',
+          correctiveAction: 'Hatalı parti tedarikçiye iade edildi ve yenisi talep edildi.',
+          preventiveAction: 'Tedarikçiden her parti sevkiyat öncesi CNC takım ölçüm raporu (CMM) talep edilecek.',
+          targetDate: '2026-08-25',
+          status: 'In_Progress',
+          assignedTo: 'Kalite Güvence Müdürü',
+          verifiedBy: 'Selin Arslan'
+        });
+      }
+    }
+
+    // 15. Seed Quality Equipment (Kalibrasyon)
+    const equipCount = await QualityEquipment.count();
+    if (equipCount === 0) {
+      await QualityEquipment.bulkCreate([
+        {
+          equipmentCode: 'CAL-001',
+          name: 'Dijital Kumpas 0-150mm',
+          category: 'Dimension',
+          brandModel: 'Mitutoyo 500-196-30',
+          serialNo: 'MT-8849201',
+          calibrationPeriodMonths: 12,
+          lastCalibrationDate: '2025-09-10',
+          nextCalibrationDate: '2026-09-10',
+          status: 'Valid',
+          calibrationLab: 'TÜBİTAK UME Kalibrasyon Lab',
+          notes: 'İmalat sahası hassas ölçümlerinde kullanılmaktadır.'
+        },
+        {
+          equipmentCode: 'CAL-002',
+          name: 'Hassas Dijital Terazi 0-5kg',
+          category: 'Weight',
+          brandModel: 'Sartorius Entris II',
+          serialNo: 'SAR-2024-991',
+          calibrationPeriodMonths: 6,
+          lastCalibrationDate: '2026-02-15',
+          nextCalibrationDate: '2026-08-15',
+          status: 'Due_Soon',
+          calibrationLab: 'Akredite Kalibrasyon Merkezi',
+          notes: 'Laboratuvar numune tartımında kullanılır, kalibrasyon periyodu yaklaşıyor.'
+        },
+        {
+          equipmentCode: 'CAL-003',
+          name: 'Dış Çap Mikrometresi 0-25mm',
+          category: 'Dimension',
+          brandModel: 'Mitutoyo 103-137',
+          serialNo: 'MT-332910',
+          calibrationPeriodMonths: 12,
+          lastCalibrationDate: '2024-05-01',
+          nextCalibrationDate: '2025-05-01',
+          status: 'Expired',
+          calibrationLab: 'TÜBİTAK UME',
+          notes: 'Kalibrasyon süresi doldu, kullanım dışı etiketlendi.'
+        }
+      ]);
+    }
+
+    // 16. Seed Quality Documents (ISO Kalite Belgeleri)
+    const docCount = await QualityDocument.count();
+    if (docCount === 0) {
+      await QualityDocument.bulkCreate([
+        {
+          docCode: 'PR-KAL-001',
+          title: 'Giriş Kalite Kontrol Prosedürü',
+          category: 'Procedure',
+          revisionNo: 'Rev.03',
+          effectiveDate: '2026-01-15',
+          owner: 'Selin Arslan (Kalite Yöneticisi)',
+          status: 'Active',
+          fileUrl: '/docs/PR-KAL-001.pdf',
+          description: 'Tedarikçilerden gelen tüm malzeme ve parçaların kabul kıstaslarını kapsar.'
+        },
+        {
+          docCode: 'TL-KAL-005',
+          title: 'Üretim İçi (Proses) Muayene Talimatı',
+          category: 'Instruction',
+          revisionNo: 'Rev.02',
+          effectiveDate: '2026-03-01',
+          owner: 'Oğuz Aydın',
+          status: 'Active',
+          fileUrl: '/docs/TL-KAL-005.pdf',
+          description: 'Freze ve torna operasyonlarında ilk parça onayı ve periyodik ölçüm adımları.'
+        },
+        {
+          docCode: 'FR-KAL-012',
+          title: 'Uygunsuzluk ve Karantina Takip Formu (NCR)',
+          category: 'Form',
+          revisionNo: 'Rev.01',
+          effectiveDate: '2026-02-10',
+          owner: 'Kalite Birimi',
+          status: 'Active',
+          fileUrl: '/docs/FR-KAL-012.pdf',
+          description: 'Hatalı malzemelerin fiziki karantinaya alınması ve bildirim süreçleri.'
         }
       ]);
     }

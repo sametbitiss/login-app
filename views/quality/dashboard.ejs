@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalite Kontrol & Güvence Analitiği — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .qc-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .qc-kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.2s ease;
+    }
+    .qc-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+    .qc-kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+    .qc-kpi-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      background: rgba(99, 102, 241, 0.12);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    .qc-kpi-val { font-size: 1.6rem; font-weight: 900; color: var(--text-primary); line-height: 1; }
+    .qc-kpi-lbl { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-top: 4px; }
+
+    .qc-ops-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .qc-op-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      text-decoration: none;
+      display: block;
+      transition: all 0.25s ease;
+    }
+    .qc-op-card:hover {
+      transform: translateY(-3px);
+      border-color: #6366f1;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+    }
+    .qc-op-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      background: rgba(99, 102, 241, 0.15);
+      margin-bottom: 14px;
+    }
+    .qc-op-title { font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+    .qc-op-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; }
+
+    .badge-accepted { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 0.75rem; }
+    .badge-rejected { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 0.75rem; }
+    .badge-conditional { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 0.75rem; }
+  </style>
+</head>
+<body class="module-body">
+  <!-- Module Sidebar -->
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">🛡️ KALİTE KONTROL & GÜVENCE</div>
+
+      <div class="mss-group-title">📊 KONTROL PANELİ</div>
+      <div class="mss-sub">
+        <a href="/quality/analytics" class="mss-sub-link active">📊 Kalite Analitiği & Özet</a>
+      </div>
+
+      <div class="mss-group-title">🔍 MUAYENE & KONTROL</div>
+      <div class="mss-sub">
+        <a href="/quality/inspections" class="mss-sub-link">📥 Giriş / Proses / Final Muayeneleri</a>
+        <a href="/quality/inspections/add" class="mss-sub-link">➕ Yeni Muayene Kaydı</a>
+      </div>
+
+      <div class="mss-group-title">⚠️ UYGUNSUZLUK & AKSİYON</div>
+      <div class="mss-sub">
+        <a href="/quality/ncr" class="mss-sub-link">⚠️ Uygunsuzluk Yönetimi (NCR)</a>
+        <a href="/quality/ncr/add" class="mss-sub-link">➕ Yeni NCR Kaydı</a>
+        <a href="/quality/capa" class="mss-sub-link">🛠️ Düzeltici & Önleyici Faaliyet (CAPA)</a>
+      </div>
+
+      <div class="mss-group-title">🌳 İZLENEBİLİRLİK & KALİBRASYON</div>
+      <div class="mss-sub">
+        <a href="/quality/traceability" class="mss-sub-link">🌳 Lot/Seri Soyağacı İzlenebilirlik</a>
+        <a href="/quality/equipment" class="mss-sub-link">📏 Ölçüm Cihazı Kalibrasyon Takibi</a>
+        <a href="/quality/documents" class="mss-sub-link">📜 ISO Kalite Belgeleri</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Area -->
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <a href="/production" class="mt-link">Üretim Planlama</a>
+        <a href="/quality" class="mt-link active">Kalite Kontrol</a>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <!-- Sub-Nav Bar -->
+      <div class="module-subnav">
+        <a href="/quality/analytics" class="msn-link active">📊 Özet Panel</a>
+        <a href="/quality/inspections" class="msn-link">🔍 Muayene Kayıtları</a>
+        <a href="/quality/ncr" class="msn-link">⚠️ Uygunsuzluk (NCR)</a>
+        <a href="/quality/capa" class="msn-link">🛠️ Aksiyon (CAPA)</a>
+        <a href="/quality/traceability" class="msn-link">🌳 Lot İzlenebilirlik</a>
+        <a href="/quality/equipment" class="msn-link">📏 Kalibrasyon Takibi</a>
+        <a href="/quality/documents" class="msn-link">📜 ISO Belgeleri</a>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <h1>Kalite Kontrol ve Güvence Yönetim Özeti</h1>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Muayene kabul oranları, aktif NCR/CAPA aksiyonları, kalibrasyon periyotları ve uçtan uca lot izlenebilirliği.</p>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="qc-kpi-grid">
+        <div class="qc-kpi-card">
+          <div class="qc-kpi-icon" style="background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.3);">✓</div>
+          <div>
+            <div class="qc-kpi-val" style="color: #34d399;">%<%= metrics.passRate %></div>
+            <div class="qc-kpi-lbl">Kalite Muayene Kabul Oranı</div>
+          </div>
+        </div>
+        <div class="qc-kpi-card">
+          <div class="qc-kpi-icon">🔍</div>
+          <div>
+            <div class="qc-kpi-val"><%= metrics.totalInspections %></div>
+            <div class="qc-kpi-lbl">Toplam Muayene Kaydı</div>
+          </div>
+        </div>
+        <div class="qc-kpi-card">
+          <div class="qc-kpi-icon" style="background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3);">⚠️</div>
+          <div>
+            <div class="qc-kpi-val" style="color: #f87171;"><%= metrics.openNcrs %></div>
+            <div class="qc-kpi-lbl">Açık NCR Uygunsuzluğu</div>
+          </div>
+        </div>
+        <div class="qc-kpi-card">
+          <div class="qc-kpi-icon" style="background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3);">📏</div>
+          <div>
+            <div class="qc-kpi-val" style="color: #fbbf24;"><%= metrics.dueCalibrations %></div>
+            <div class="qc-kpi-lbl">Kalibrasyonu Yaklaşan / Dolmuş Cihaz</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Operations Grid -->
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">⚡ Kalite Kontrol İşlemleri & Hızlı Modüller</h3>
+      <div class="qc-ops-grid">
+        <a href="/quality/inspections" class="qc-op-card">
+          <div class="qc-op-icon">🔍</div>
+          <div class="qc-op-title">Giriş / Proses / Final Muayeneleri</div>
+          <div class="qc-op-desc">Tedarikçi hammaddesi, üretim içi operasyon ve sevk öncesi nihai ürün kalite muayeneleri.</div>
+        </a>
+
+        <a href="/quality/ncr" class="qc-op-card">
+          <div class="qc-op-icon" style="background: rgba(239,68,68,0.15); color: #f87171;">⚠️</div>
+          <div class="qc-op-title">Uygunsuzluk Yönetimi (NCR)</div>
+          <div class="qc-op-desc">Hatalı parça, süreç sapması ve müşteri iadelerinin kaydı, karantina ve fiziki takibi.</div>
+        </a>
+
+        <a href="/quality/capa" class="qc-op-card">
+          <div class="qc-op-icon" style="background: rgba(139,92,246,0.15); color: #a78bfa;">🛠️</div>
+          <div class="qc-op-title">Düzeltici & Önleyici Faaliyet (CAPA)</div>
+          <div class="qc-op-desc">5-Why ve Balık Kılçığı yöntemi ile hatanın kök neden analizi ve aksiyon takibi.</div>
+        </a>
+
+        <a href="/quality/traceability" class="qc-op-card">
+          <div class="qc-op-icon" style="background: rgba(16,185,129,0.15); color: #34d399;">🌳</div>
+          <div class="qc-op-title">Lot/Seri İzlenebilirlik Soyağacı</div>
+          <div class="qc-op-desc">Tedarikçi İrsaliyesi ➔ IQC Muayenesi ➔ Üretim İş Emri ➔ FQC ➔ Müşteri Sevkiyatı geriye dönük takibi.</div>
+        </a>
+
+        <a href="/quality/equipment" class="qc-op-card">
+          <div class="qc-op-icon" style="background: rgba(245,158,11,0.15); color: #fbbf24;">📏</div>
+          <div class="qc-op-title">Ölçüm Cihazı Kalibrasyon Takibi</div>
+          <div class="qc-op-desc">Kumpas, terazi ve mikrometrelerin kalibrasyon geçerlilik periyotları ve muayene kayıtları.</div>
+        </a>
+
+        <a href="/quality/documents" class="qc-op-card">
+          <div class="qc-op-icon" style="background: rgba(14,165,233,0.15); color: #38bdf8;">📜</div>
+          <div class="qc-op-title">ISO Kalite Belge & Doküman Yönetimi</div>
+          <div class="qc-op-desc">ISO prosedürleri, talimatlar, kalite formları ve dijital doküman revizyon arşivi.</div>
+        </a>
+      </div>
+
+      <!-- Recent Inspections Table -->
+      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; box-shadow: var(--shadow-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin: 0;">Son Muayene Kayıtları</h3>
+          <a href="/quality/inspections" style="color: #818cf8; text-decoration: none; font-size: 0.85rem; font-weight: 700;">Tümünü Gör →</a>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.78rem;">
+              <th style="padding: 10px;">Muayene No</th>
+              <th style="padding: 10px;">Tip</th>
+              <th style="padding: 10px;">Malzeme / Parça</th>
+              <th style="padding: 10px;">Lot / Parti No</th>
+              <th style="padding: 10px;">Numune / Kabul</th>
+              <th style="padding: 10px;">Karar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recentInspections.forEach(insp => { %>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;">
+                <td style="padding: 12px 10px; font-weight: 700; color: #818cf8;"><%= insp.inspectionNo %></td>
+                <td style="padding: 12px 10px;">
+                  <% if (insp.type === 'Incoming') { %><span style="color: #38bdf8; font-weight: 700;">📥 Giriş (IQC)</span><% } %>
+                  <% if (insp.type === 'InProcess') { %><span style="color: #a78bfa; font-weight: 700;">🔄 Proses (IPQC)</span><% } %>
+                  <% if (insp.type === 'Final') { %><span style="color: #34d399; font-weight: 700;">🏁 Final (FQC)</span><% } %>
+                </td>
+                <td style="padding: 12px 10px; font-weight: 600;"><%= insp.stockItem ? insp.stockItem.name : '-' %></td>
+                <td style="padding: 12px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;"><%= insp.lotNumber || '-' %></td>
+                <td style="padding: 12px 10px;"><%= insp.sampleSize %> Numune / <%= insp.passedQuantity %> Kabul</td>
+                <td style="padding: 12px 10px;">
+                  <% if (insp.decision === 'Accepted') { %><span class="badge-accepted">✓ Kabul</span><% } %>
+                  <% if (insp.decision === 'Conditional_Accept') { %><span class="badge-conditional">⚡ Şartlı Kabul</span><% } %>
+                  <% if (insp.decision === 'Rejected') { %><span class="badge-rejected">✕ Red</span><% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    updateClock(); setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

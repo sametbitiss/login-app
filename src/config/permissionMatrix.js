@@ -44,8 +44,21 @@ const PERMISSION_MODULES = [
     ]
   },
   {
+    id: 'quality',
+    name: '🛡️ Kalite Kontrol & Güvence',
+    permissions: [
+      { key: 'quality_view', label: 'Kalite Analitiği & Özet Paneli', desc: 'Kalite kabul/ret oranları ve özet raporları izleme' },
+      { key: 'quality_inspection', label: 'Giriş, Proses ve Final Muayeneleri', desc: 'IQC, IPQC ve FQC muayene kayıtları ve karar verme' },
+      { key: 'quality_ncr', label: 'Uygunsuzluk Yönetimi (NCR)', desc: 'NCR açma, karantinalama ve fiziki karar belirleme' },
+      { key: 'quality_capa', label: 'Düzeltici ve Önleyici Faaliyet (CAPA)', desc: '5-Why kök neden analizi ve aksiyon planlama' },
+      { key: 'quality_traceability', label: 'Lot/Seri Soyağacı İzlenebilirlik', desc: 'Tedarikçi ➔ Üretim ➔ Müşteri uçtan uca lot takibi' },
+      { key: 'quality_equipment', label: 'Ölçüm Cihazı Kalibrasyon Takibi', desc: 'Kumpas/terazi kalibrasyon periyotları ve bakım takibi' },
+      { key: 'quality_documents', label: 'ISO Kalite Belgeleri & Dokümanlar', desc: 'ISO prosedürleri, talimatlar ve form arşivi' }
+    ]
+  },
+  {
     id: 'admin',
-    name: '🛡️ Sistem Yönetimi & Güvenlik',
+    name: '⚙️ Sistem Yönetimi & Güvenlik',
     permissions: [
       { key: 'admin_users', label: 'Kullanıcı Hesapları & Şifre Sıfırlama', desc: 'Sistem kullanıcılarını yönetme ve şifre değiştirme' },
       { key: 'admin_roles', label: 'Rol & Yetki Matrisi Yönetimi', desc: 'Hangi rolün hangi modülü görebileceğini belirleme' },

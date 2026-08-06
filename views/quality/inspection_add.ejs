@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yeni Kalite Muayene Kaydı — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+      max-width: 900px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.full-width {
+      grid-column: span 2;
+    }
+    .form-group label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+  </style>
+</head>
+<body class="module-body">
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">🛡️ KALİTE KONTROL & GÜVENCE</div>
+
+      <div class="mss-group-title">📊 KONTROL PANELİ</div>
+      <div class="mss-sub">
+        <a href="/quality/analytics" class="mss-sub-link">📊 Kalite Analitiği & Özet</a>
+      </div>
+
+      <div class="mss-group-title">🔍 MUAYENE & KONTROL</div>
+      <div class="mss-sub">
+        <a href="/quality/inspections" class="mss-sub-link">📥 Giriş / Proses / Final Muayeneleri</a>
+        <a href="/quality/inspections/add" class="mss-sub-link active">➕ Yeni Muayene Kaydı</a>
+      </div>
+
+      <div class="mss-group-title">⚠️ UYGUNSUZLUK & AKSİYON</div>
+      <div class="mss-sub">
+        <a href="/quality/ncr" class="mss-sub-link">⚠️ Uygunsuzluk Yönetimi (NCR)</a>
+        <a href="/quality/capa" class="mss-sub-link">🛠️ Düzeltici & Önleyici Faaliyet (CAPA)</a>
+      </div>
+
+      <div class="mss-group-title">🌳 İZLENEBİLİRLİK & KALİBRASYON</div>
+      <div class="mss-sub">
+        <a href="/quality/traceability" class="mss-sub-link">🌳 Lot/Seri Soyağacı İzlenebilirlik</a>
+        <a href="/quality/equipment" class="mss-sub-link">📏 Ölçüm Cihazı Kalibrasyon Takibi</a>
+        <a href="/quality/documents" class="mss-sub-link">📜 ISO Kalite Belgeleri</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <a href="/admin" class="mt-link">Sistem Yönetimi</a>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <a href="/production" class="mt-link">Üretim Planlama</a>
+        <a href="/quality" class="mt-link active">Kalite Kontrol</a>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+      <div class="page-header">
+        <div>
+          <h1>Yeni Kalite Muayene Kaydı Oluştur</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Giriş hammadde, proses içi operasyon veya final nihai ürün numune sonuçlarını girin.</p>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <form action="/quality/inspections/add" method="POST">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Muayene / Kontrol Tipi *</label>
+              <select name="type" required>
+                <option value="Incoming">📥 Giriş Kalite Kontrol (IQC)</option>
+                <option value="InProcess">🔄 Proses (Üretim İçi) Kontrol (IPQC)</option>
+                <option value="Final">🏁 Final (Son Ürün) Kontrolü (FQC)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Stok Malzemesi / Parça *</label>
+              <select name="stockItemId" required>
+                <% stockItems.forEach(item => { %>
+                  <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Lot / Parti veya Seri No *</label>
+              <input type="text" name="lotNumber" placeholder="Örn: LOT-2026-A101" required>
+            </div>
+
+            <div class="form-group">
+              <label>Tedarikçi (İsteğe Bağlı)</label>
+              <select name="supplierId">
+                <option value="">-- Seçiniz --</option>
+                <% suppliers.forEach(sup => { %>
+                  <option value="<%= sup.id %>"><%= sup.companyName %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Toplam Numune Miktarı *</label>
+              <input type="number" name="sampleSize" value="100" min="1" required>
+            </div>
+
+            <div class="form-group">
+              <label>Kabul Edilen Miktar *</label>
+              <input type="number" name="passedQuantity" value="98" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label>Ret Miktarı *</label>
+              <input type="number" name="rejectedQuantity" value="2" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label>Muayene Kararı *</label>
+              <select name="decision" required>
+                <option value="Accepted">✓ Kabul (Uygun)</option>
+                <option value="Conditional_Accept">⚡ Şartlı Kabul (Sapmalı)</option>
+                <option value="Rejected">✕ Red (Hatalı / Karantina)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Kalite Kontrolör / Uzman *</label>
+              <input type="text" name="inspectorName" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" required>
+            </div>
+
+            <div class="form-group">
+              <label>Hata Kategorisi / Tipi</label>
+              <input type="text" name="defectCategory" placeholder="Örn: Yüzey Çiziği, Çapak Kalıntısı, Ölçü Kaçıklığı">
+            </div>
+
+            <div class="form-group full-width">
+              <label>Muayene Notları ve Açıklama</label>
+              <textarea name="notes" rows="3" placeholder="Ölçüm sonuçları, tolerans değerleri ve ilave kalite notları..."></textarea>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <a href="/quality/inspections" class="btn-secondary" style="text-decoration: none; padding: 10px 20px;">İptal</a>
+            <button type="submit" class="btn-indigo-gradient" style="padding: 10px 24px; font-weight: 700; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; cursor: pointer;">
+              💾 Muayene Kaydını Kaydet
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    updateClock(); setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

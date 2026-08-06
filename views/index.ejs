@@ -85,6 +85,13 @@
               Üretim Planlama
             </a>
           <% } %>
+
+          <% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %>
+            <a href="/quality" class="nlink" id="nav-quality">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Kalite Kontrol
+            </a>
+          <% } %>
         </nav>
       </div>
 
@@ -181,7 +188,7 @@
         </div>
         <div class="kpi-chip-data">
           <span class="kpi-chip-label">Pasif Modül</span>
-          <span class="kpi-chip-value">1</span>
+          <span class="kpi-chip-value">0</span>
         </div>
       </div>
       <div class="kpi-chip">
@@ -381,17 +388,39 @@
         </div>
       <% } %>
 
-      <!-- 6. Kalite Kontrol Yönetimi (Pasif) -->
-      <div class="mod-card mod-card--coming" data-status="locked" id="card-quality">
-        <div class="mod-card-header">
-          <div class="mod-card-icon mod-card-icon--neutral">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <!-- 6. Kalite Kontrol Yönetimi (AKTİF) -->
+      <% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %>
+        <a href="/quality" class="mod-card mod-card--active" data-status="active" id="card-quality">
+          <div class="mod-card-glow mod-card-glow--indigo"></div>
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--indigo">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--active">
+              <span class="mod-badge-dot"></span>AKTİF
+            </span>
           </div>
-          <span class="mod-badge mod-badge--coming">ŞİMDİLİK PASİF</span>
+          <h3 class="mod-card-title">Kalite Kontrol</h3>
+          <p class="mod-card-desc">Giriş/Proses/Final muayeneleri, NCR uygunsuzluk, CAPA aksiyon, lot izlenebilirliği ve kalibrasyon</p>
+          <div class="mod-card-footer">
+            <span class="mod-card-action">Modüle Git <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+      <% } else { %>
+        <div class="mod-card mod-card--locked" data-status="locked" id="card-quality">
+          <div class="mod-card-header">
+            <div class="mod-card-icon mod-card-icon--neutral">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <span class="mod-badge mod-badge--locked">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              KISITLI
+            </span>
+          </div>
+          <h3 class="mod-card-title">Kalite Kontrol</h3>
+          <p class="mod-card-desc">Bu modüle erişmek için Kalite Yöneticisi veya Admin yetkisi gerekmektedir.</p>
         </div>
-        <h3 class="mod-card-title">Kalite Kontrol</h3>
-        <p class="mod-card-desc">Girdi kalite testleri, proses denetimleri, sapma yönetimi ve kalite standartları</p>
-      </div>
+      <% } %>
 
     </div>
 

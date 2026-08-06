@@ -179,7 +179,7 @@
         <a href="/stock" class="mt-link active">Stok & Depo</a>
         <a href="/sales" class="mt-link">Satış Yönetimi</a>
         <a href="/purchase" class="mt-link">Satın Alma</a>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %><% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %><a href="/quality" class="mt-link">Kalite Kontrol</a><% } %>
       </div>
       <div class="mt-right">
         <span class="mt-time" id="liveTime"></span>
