@@ -27,8 +27,9 @@ router.post('/users/:id/delete', adminController.deleteUser);
 router.get('/roles', adminController.renderRoles);
 router.post('/roles', adminController.updateRoles);
 
-// System Settings
+// System Settings & Audit Logs
 router.get('/settings', adminController.renderSettings);
 router.post('/settings', adminController.updateSettings);
+router.get('/logs', adminController.renderLogs);
 
 module.exports = router;

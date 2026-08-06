@@ -15,7 +15,21 @@ const validate = (validateFn) => {
         ip: req.ip,
         user: req.user ? req.user.username : 'Anonymous'
       });
-      throw new ValidationError('Gönderilen form verilerinde hatalar mevcut.', errors);
+
+      if (req.originalUrl.includes('/admin/users/add')) {
+        const { ALL_ROLES } = require('../middleware/rbacMiddleware');
+        const adminController = require('../controllers/adminController');
+        return res.render('admin/add_user', {
+          user: req.user,
+          error: errors.join(' '),
+          ALL_ROLES,
+          DEPARTMENTS: adminController.DEPARTMENTS,
+          DEPARTMENT_TITLES: adminController.DEPARTMENT_TITLES,
+          DEPARTMENT_ROLES: adminController.DEPARTMENT_ROLES
+        });
+      }
+
+      throw new ValidationError(errors.join(' '), errors);
     }
     next();
   };

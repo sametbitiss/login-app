@@ -31,6 +31,7 @@
       <div class="mss-group-title">⚙️ SİSTEM & GÜVENLİK AYARLARI</div>
       <div class="mss-sub">
         <a href="/admin/settings" class="mss-sub-link">⚙️ Sistem Parametreleri</a>
+        <a href="/admin/logs" class="mss-sub-link">📜 İşlem Günlüğü (Audit Log)</a>
       </div>
     </div>
 
@@ -50,7 +51,7 @@
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
-        <a href="/admin" class="mt-link active">Sistem Yönetimi</a>
+        <a href="/admin" class="mt-link active">Sistem Yönetimi</a><a href="/admin/logs" class="mt-link">📜 İşlem Logları</a>
         <a href="/stock" class="mt-link">Stok & Depo</a>
         <a href="/sales" class="mt-link">Satış Yönetimi</a>
         <a href="/purchase" class="mt-link">Satın Alma</a>
@@ -72,6 +73,7 @@
         <a href="/admin/users/add" class="msn-link active">➕ Yeni Kullanıcı Ekle</a>
         <a href="/admin/roles" class="msn-link">🔐 Rol & Yetki Matrisi</a>
         <a href="/admin/settings" class="msn-link">⚙️ Sistem Ayarları</a>
+        <a href="/admin/logs" class="msn-link">📜 İşlem Günlüğü (Audit Log)</a>
       </div>
 
       <div class="page-header">
@@ -182,8 +184,11 @@
               </div>
 
               <div class="input-group">
-                <label for="title">Unvan / Pozisyon</label>
-                <input type="text" id="title" name="title" placeholder="Örn: Depo Sorumlusu, Kıdemli Satış Temsilcisi">
+                <label for="title">Unvan / Pozisyon <span class="req-star">*</span></label>
+                <select id="title" name="title" required>
+                  <option value="" disabled selected>-- Önce Departman Seçiniz --</option>
+                </select>
+                <span class="field-error-msg">Unvan seçilmesi zorunludur.</span>
               </div>
 
               <div class="input-group">
@@ -386,6 +391,43 @@
     });
 
     updateTabBadges();
+
+    // Dynamic Department ➔ Titles & Allowed ERP Roles dropdown filtering
+    const deptTitlesMap = <%- JSON.stringify(DEPARTMENT_TITLES) %>;
+    const deptRolesMap = <%- JSON.stringify(DEPARTMENT_ROLES) %>;
+    const deptSelect = document.getElementById('department');
+    const titleSelect = document.getElementById('title');
+    const roleSelect = document.getElementById('role');
+
+    if (deptSelect) {
+      deptSelect.addEventListener('change', function() {
+        const selectedDept = this.value;
+
+        // 1. Update Title Select Options
+        if (titleSelect) {
+          titleSelect.innerHTML = '<option value="" disabled selected>-- Unvan Seçiniz --</option>';
+          const titles = deptTitlesMap[selectedDept] || ['Uzman Personel', 'Yönetici', 'Sorumlu'];
+          titles.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            titleSelect.appendChild(opt);
+          });
+        }
+
+        // 2. Update Role Select Options (Strictly Correlated to Department!)
+        if (roleSelect) {
+          roleSelect.innerHTML = '<option value="" disabled selected>-- Rol Yetkisi Seçiniz --</option>';
+          const roles = deptRolesMap[selectedDept] || [{ key: 'Employee', label: '👤 Personel' }];
+          roles.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.key;
+            opt.textContent = r.label;
+            roleSelect.appendChild(opt);
+          });
+        }
+      });
+    }
   </script>
 </body>
 </html>

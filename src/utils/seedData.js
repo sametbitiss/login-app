@@ -21,7 +21,8 @@ const {
   QualityNonConformance,
   QualityCapa,
   QualityEquipment,
-  QualityDocument
+  QualityDocument,
+  AuditLog
 } = require('../../models');
 
 async function seedInitialData() {
@@ -694,6 +695,76 @@ async function seedInitialData() {
           status: 'Active',
           fileUrl: '/docs/FR-KAL-012.pdf',
           description: 'Hatalı malzemelerin fiziki karantinaya alınması ve bildirim süreçleri.'
+        }
+      ]);
+    }
+
+    // 17. Seed Audit Logs
+    const logCount = await AuditLog.count();
+    if (logCount === 0) {
+      await AuditLog.bulkCreate([
+        {
+          userId: 1,
+          username: 'admin',
+          action: 'UPDATE',
+          entity: 'SystemSetting',
+          entityId: '1',
+          details: 'Ahmet Yılmaz (admin) — Sistem güvenlik parametresi "maintenance_mode" pasif konumuna alındı.',
+          ipAddress: '127.0.0.1'
+        },
+        {
+          userId: 2,
+          username: 'stok_yoneticisi',
+          action: 'CREATE',
+          entity: 'StockItem',
+          entityId: '101',
+          details: 'Murat Kaya (stok_yoneticisi) — STK-0001 (Paslanmaz Çelik Sac 2mm) yeni envanter kartı oluşturdu.',
+          ipAddress: '192.168.1.45'
+        },
+        {
+          userId: 3,
+          username: 'satis_yoneticisi',
+          action: 'CREATE',
+          entity: 'SaleOrder',
+          entityId: '201',
+          details: 'Selin Demir (satis_yoneticisi) — SATIS-2026-0001 numaralı Bosch Sanayi müşterisi siparişini onayladı.',
+          ipAddress: '192.168.1.72'
+        },
+        {
+          userId: 4,
+          username: 'satinalma_yoneticisi',
+          action: 'CREATE',
+          entity: 'PurchaseOrder',
+          entityId: '301',
+          details: 'Caner Öztürk (satinalma_yoneticisi) — PO-2026-001 numaralı Borusan Çelik satın alma siparişini yayınladı.',
+          ipAddress: '192.168.1.88'
+        },
+        {
+          userId: 5,
+          username: 'uretim_yoneticisi',
+          action: 'UPDATE',
+          entity: 'ProductionOrder',
+          entityId: '401',
+          details: 'Oğuz Aydın (uretim_yoneticisi) — URETIM-2026-001 CNC Torna iş emri durumunu "Üretimde" olarak güncelledi.',
+          ipAddress: '192.168.1.112'
+        },
+        {
+          userId: 1,
+          username: 'admin',
+          action: 'CREATE',
+          entity: 'User',
+          entityId: '5',
+          details: 'Ahmet Yılmaz (admin) — Zeynep Kaya (@ik_yöneticisi) adında yeni kurumsal kullanıcı hesabı tanımladı.',
+          ipAddress: '127.0.0.1'
+        },
+        {
+          userId: 2,
+          username: 'stok_yoneticisi',
+          action: 'UPDATE',
+          entity: 'StockLot',
+          entityId: 'LOT-2026-A101',
+          details: 'Murat Kaya (stok_yoneticisi) — LOT-2026-A101 partisini Hammadde Ambarından Üretim Karantina Bölgesine sevk etti.',
+          ipAddress: '192.168.1.45'
         }
       ]);
     }

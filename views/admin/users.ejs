@@ -31,6 +31,7 @@
       <div class="mss-group-title">⚙️ SİSTEM & GÜVENLİK AYARLARI</div>
       <div class="mss-sub">
         <a href="/admin/settings" class="mss-sub-link">⚙️ Sistem Parametreleri</a>
+        <a href="/admin/logs" class="mss-sub-link">📜 İşlem Günlüğü (Audit Log)</a>
       </div>
     </div>
 
@@ -73,6 +74,7 @@
         <a href="/admin/users/add" class="msn-link">➕ Yeni Kullanıcı Ekle</a>
         <a href="/admin/roles" class="msn-link">🔐 Rol & Yetki Matrisi</a>
         <a href="/admin/settings" class="msn-link">⚙️ Sistem Ayarları</a>
+        <a href="/admin/logs" class="msn-link">📜 İşlem Günlüğü (Audit Log)</a>
       </div>
 
       <div class="page-header">
@@ -86,69 +88,119 @@
         </a>
       </div>
 
-      <div class="table-wrapper">
-        <table class="data-table">
+      <!-- Quick Admin Cards Grid featuring Log Card -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px;">
+        
+        <a href="/admin/users" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.2s;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">👥</div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">Kullanıcı Hesapları</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);"><%= users.length %> Kayıtlı Personel</div>
+          </div>
+        </a>
+
+        <a href="/admin/users/add" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.2s;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">➕</div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">Yeni Kullanıcı Ekle</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Personel Hesabı Aç</div>
+          </div>
+        </a>
+
+        <a href="/admin/roles" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.2s;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(139, 92, 246, 0.15); color: #a78bfa; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🔐</div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">Rol & Yetki Matrisi</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">RBAC İzin Modeli</div>
+          </div>
+        </a>
+
+        <a href="/admin/settings" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.2s;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">⚙️</div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">Sistem Ayarları</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Güvenlik & Parametreler</div>
+          </div>
+        </a>
+
+        <a href="/admin/logs" style="background: var(--bg-surface); border: 1.5px solid rgba(99, 102, 241, 0.4); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(99, 102, 241, 0.2); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">📜</div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--indigo);">Sistem Log Kartı</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Canlı Audit Günlüğü</div>
+          </div>
+        </a>
+
+      </div>
+
+      <div class="table-wrapper" style="overflow-x: auto; max-width: 100%; border-radius: 16px; background: var(--bg-surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.83rem;">
           <thead>
-            <tr>
-              <th>ID</th>
-              <th>Kullanıcı / Personel</th>
-              <th>Departman & Unvan</th>
-              <th>İletişim Bilgileri</th>
-              <th>ERP Rol Yetkisi</th>
-              <th>Hesap Durumu</th>
-              <th>Kayıt Tarihi</th>
-              <th>Aksiyonlar</th>
+            <tr style="border-bottom: 2px solid var(--border); background: rgba(255,255,255,0.02);">
+              <th style="padding: 12px 8px; width: 45px; text-align: center;">ID</th>
+              <th style="padding: 12px 10px;">Kullanıcı / Personel</th>
+              <th style="padding: 12px 10px;">Çalıştığı Departman</th>
+              <th style="padding: 12px 10px;">Unvan</th>
+              <th style="padding: 12px 10px;">İletişim Bilgileri</th>
+              <th style="padding: 12px 10px;">ERP Rol Yetkisi</th>
+              <th style="padding: 12px 8px; text-align: center;">Hesap Durumu</th>
+              <th style="padding: 12px 8px; text-align: center;">Kayıt Tarihi</th>
+              <th style="padding: 12px 8px; text-align: center; width: 150px;">Aksiyonlar</th>
             </tr>
           </thead>
           <tbody>
             <% users.forEach(u => { %>
-              <tr>
-                <td>#<%= u.id %></td>
-                <td>
-                  <div style="font-weight: 700; color: var(--text-main);"><%= u.firstName ? u.firstName + ' ' + u.lastName : u.username %></div>
-                  <div style="font-size: 0.775rem; color: var(--indigo); font-family: 'JetBrains Mono', monospace;">@<%= u.username %></div>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 10px 8px; text-align: center; font-weight: 700; color: var(--text-muted);">#<%= u.id %></td>
+                <td style="padding: 10px 10px;">
+                  <div style="font-weight: 700; color: var(--text-main); line-height: 1.2;"><%= u.firstName ? u.firstName + ' ' + u.lastName : u.username %></div>
+                  <div style="font-size: 0.75rem; color: var(--indigo); font-family: 'JetBrains Mono', monospace; margin-top: 2px;">@<%= u.username %></div>
                 </td>
-                <td>
-                  <span style="font-weight: 600; display: block;"><%= u.department || 'Genel' %></span>
-                  <span style="font-size: 0.775rem; color: var(--text-muted);"><%= u.title || 'Personel' %></span>
+                <td style="padding: 10px 10px;">
+                  <span style="background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.25); padding: 4px 8px; border-radius: 10px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                    🏢 <%= u.department || 'Genel' %>
+                  </span>
                 </td>
-                <td>
-                  <div style="font-size: 0.825rem;"><%= u.email || '—' %></div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);"><%= u.phone || '—' %></div>
+                <td style="padding: 10px 10px;">
+                  <span style="font-weight: 600; color: var(--text-main); font-size: 0.82rem;"><%= u.title || 'Personel' %></span>
                 </td>
-                <td>
+                <td style="padding: 10px 10px;">
+                  <div style="font-size: 0.8rem; word-break: break-all;"><%= u.email || '—' %></div>
+                  <div style="font-size: 0.73rem; color: var(--text-muted); margin-top: 2px;"><%= u.phone || '—' %></div>
+                </td>
+                <td style="padding: 10px 10px;">
                   <% if (u.role === 'Admin') { %>
-                    <span class="status-pill status-approved">🛡️ Sistem Yöneticisi</span>
+                    <span class="status-pill status-approved" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">🛡️ Sistem Yöneticisi</span>
                   <% } else if (u.role === 'Stock_Manager') { %>
-                    <span class="status-pill status-onleave">📦 Stok Yöneticisi</span>
+                    <span class="status-pill status-onleave" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">📦 Stok Yöneticisi</span>
                   <% } else if (u.role === 'Sales_Manager') { %>
-                    <span class="status-pill status-active">🛍️ Satış Yöneticisi</span>
+                    <span class="status-pill status-active" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">🛍️ Satış Yöneticisi</span>
                   <% } else if (u.role === 'Purchase_Manager') { %>
-                    <span class="status-pill status-approved">💳 Satın Alma Yöneticisi</span>
+                    <span class="status-pill status-approved" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">💳 Satın Alma Yöneticisi</span>
                   <% } else { %>
-                    <span class="status-pill status-pending">👤 <%= ALL_ROLES[u.role] || u.role %></span>
+                    <span class="status-pill status-pending" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">👤 <%= ALL_ROLES[u.role] || u.role %></span>
                   <% } %>
                 </td>
-                <td>
+                <td style="padding: 10px 8px; text-align: center;">
                   <% if (u.status === 'Active') { %>
-                    <span class="status-pill status-active">● Aktif</span>
+                    <span class="status-pill status-active" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">● Aktif</span>
                   <% } else if (u.status === 'Suspended') { %>
-                    <span class="status-pill status-rejected">● Donduruldu</span>
+                    <span class="status-pill status-rejected" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">● Donduruldu</span>
                   <% } else { %>
-                    <span class="status-pill status-pending">● Pasif</span>
+                    <span class="status-pill status-pending" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">● Pasif</span>
                   <% } %>
                 </td>
-                <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(u.createdAt).toLocaleDateString('tr-TR') %></td>
-                <td>
-                  <div style="display: flex; gap: 0.4rem; align-items: center;">
-                    <a href="/admin/users/<%= u.id %>" class="btn btn-sm btn-secondary" title="Detaylı Düzenle">
+                <td style="padding: 10px 8px; text-align: center; font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;"><%= new Date(u.createdAt).toLocaleDateString('tr-TR') %></td>
+                <td style="padding: 10px 8px; text-align: center;">
+                  <div style="display: flex; gap: 4px; justify-content: center; align-items: center; flex-wrap: nowrap;">
+                    <a href="/admin/users/<%= u.id %>" class="btn btn-sm btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;" title="Detaylı Düzenle">
                       ✏️ Düzenle
                     </a>
                     
                     <% if (u.id !== user.id) { %>
-                      <form action="/admin/users/<%= u.id %>/status" method="POST" style="display:inline;">
+                      <form action="/admin/users/<%= u.id %>/status" method="POST" style="display:inline; margin:0;">
                         <input type="hidden" name="status" value="<%= u.status === 'Active' ? 'Inactive' : 'Active' %>">
-                        <button type="submit" class="btn btn-sm <%= u.status === 'Active' ? 'btn-danger' : 'btn-success' %>">
+                        <button type="submit" class="btn btn-sm <%= u.status === 'Active' ? 'btn-danger' : 'btn-success' %>" style="padding: 4px 8px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">
                           <%= u.status === 'Active' ? 'Pasifleştir' : 'Aktifleştir' %>
                         </button>
                       </form>

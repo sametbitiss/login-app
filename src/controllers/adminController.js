@@ -5,17 +5,99 @@ const asyncHandler = require('../utils/asyncHandler');
 const { NotFoundError, ValidationError } = require('../utils/appError');
 const { ALL_ROLES } = require('../middleware/rbacMiddleware');
 
-const DEPARTMENTS = [
-  'Sistem Yönetimi',
-  'Stok & Depo Yönetimi',
-  'Satış Yönetimi',
-  'Satın Alma Yönetimi',
-  'Üretim Planlama',
-  'Kalite Kontrol',
-  'İnsan Kaynakları',
-  'Finans & Muhasebe',
-  'Genel'
-];
+const DEPARTMENT_TITLES = {
+  'Bilgi Teknolojileri & BT': [
+    'Sistem Yöneticisi (Admin)',
+    'Sistem & Ağ Uzmanı',
+    'Yazılım Geliştirici Uzmanı',
+    'Veritabanı Yöneticisi (DBA)',
+    'BT Destek Sorumlusu'
+  ],
+  'Yönetim Kurulu & Genel Müdürlük': [
+    'Genel Müdür',
+    'Yönetim Kurulu Başkanı',
+    'Genel Müdür Yardımcısı',
+    'Genel Sekreter / Asistan'
+  ],
+  'Stok & Depo Lojistik Yönetimi': [
+    'Envanter & Depo Müdürü',
+    'Ambar Şefi / Sorumlusu',
+    'Lojistik Uzmanı',
+    'Depo Sevkiyat & Sayım Elemanı'
+  ],
+  'Satış & Pazarlama Direktörlüğü': [
+    'Kıdemli Satış Yöneticisi',
+    'Müşteri İlişkileri (CRM) Uzmanı',
+    'Bölge Satış Müdürü',
+    'Pazarlama & Dijital Saha Sorumlusu'
+  ],
+  'Satın Alma & Tedarik Zinciri': [
+    'Satın Alma Müdürü',
+    'Tedarik Zinciri Uzmanı',
+    'Satın Alma Sorumlusu',
+    'İrsaliye & Mal Kabul Elemanı'
+  ],
+  'Üretim & İmalat Planlama': [
+    'Üretim Müdürü',
+    'Planlama Mühendisi (MRP)',
+    'Vardiya Amiri',
+    'CNC & Tezgah Operatörü'
+  ],
+  'İnsan Kaynakları': [
+    'İnsan Kaynakları Yöneticisi',
+    'İKK & İşe Alım Uzmanı',
+    'Bordro & Özlük İşleri Sorumlusu'
+  ],
+  'Kalite Kontrol & Güvence': [
+    'Kalite Güvence Yöneticisi',
+    'Giriş Kalite Kontrolör (IQC)',
+    'Proses & Final Kontrol Uzmanı (IPQC/FQC)'
+  ],
+  'Kurumsal Operasyonlar': [
+    'Operasyon Müdürü',
+    'Operasyon Uzmanı',
+    'Ofis Yöneticisi'
+  ]
+};
+
+const DEPARTMENT_ROLES = {
+  'Bilgi Teknolojileri & BT': [
+    { key: 'Admin', label: '🛡️ Sistem Yöneticisi (Admin)' },
+    { key: 'Employee', label: '👤 Personel / BT Uzmanı' }
+  ],
+  'Yönetim Kurulu & Genel Müdürlük': [
+    { key: 'Admin', label: '🛡️ Sistem Yöneticisi (Admin)' },
+    { key: 'Employee', label: '👤 Personel / Yönetici' }
+  ],
+  'Stok & Depo Lojistik Yönetimi': [
+    { key: 'Stock_Manager', label: '📦 Stok Yöneticisi' },
+    { key: 'Employee', label: '👤 Personel / Depo Görevlisi' }
+  ],
+  'Satış & Pazarlama Direktörlüğü': [
+    { key: 'Sales_Manager', label: '🛍️ Satış Yöneticisi' },
+    { key: 'Employee', label: '👤 Personel / Satış Temsilcisi' }
+  ],
+  'Satın Alma & Tedarik Zinciri': [
+    { key: 'Purchase_Manager', label: '💳 Satın Alma Yöneticisi' },
+    { key: 'Employee', label: '👤 Personel / Satın Alma Uzmanı' }
+  ],
+  'Üretim & İmalat Planlama': [
+    { key: 'Production_Manager', label: '🏭 Üretim Müdürü' },
+    { key: 'Employee', label: '👤 Personel / Üretim Elemanı' }
+  ],
+  'İnsan Kaynakları': [
+    { key: 'Employee', label: '👤 Personel / HR Sorumlusu' }
+  ],
+  'Kalite Kontrol & Güvence': [
+    { key: 'Quality_Manager', label: '🔬 Kalite Kontrol Yöneticisi' },
+    { key: 'Employee', label: '👤 Personel / Kalite Kontrolör' }
+  ],
+  'Kurumsal Operasyonlar': [
+    { key: 'Employee', label: '👤 Personel / Operasyon' }
+  ]
+};
+
+const DEPARTMENTS = Object.keys(DEPARTMENT_TITLES);
 
 class AdminController {
   renderDashboard = asyncHandler(async (req, res) => {
@@ -35,11 +117,11 @@ class AdminController {
 
   listUsers = asyncHandler(async (req, res) => {
     const users = await userRepository.findAll();
-    res.render('admin/users', { user: req.user, users, ALL_ROLES, DEPARTMENTS });
+    res.render('admin/users', { user: req.user, users, ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
   });
 
   renderAddUser = asyncHandler(async (req, res) => {
-    res.render('admin/add_user', { user: req.user, error: null, ALL_ROLES, DEPARTMENTS });
+    res.render('admin/add_user', { user: req.user, error: null, ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
   });
 
   addUser = asyncHandler(async (req, res) => {
@@ -47,7 +129,7 @@ class AdminController {
 
     const existingUser = await userRepository.findByUsername(username);
     if (existingUser) {
-      return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı zaten alınmış.', ALL_ROLES, DEPARTMENTS });
+      return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı zaten alınmış.', ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -81,7 +163,21 @@ class AdminController {
       targetUser,
       ALL_ROLES,
       DEPARTMENTS,
+      DEPARTMENT_TITLES,
+      DEPARTMENT_ROLES,
       successMessage: req.query.success || null
+    });
+  });
+
+  renderLogs = asyncHandler(async (req, res) => {
+    const { action, entity, search } = req.query;
+    const logs = await logService.getRecentLogs(150, { action, entity, search });
+    res.render('admin/logs', {
+      user: req.user,
+      logs,
+      queryAction: action || '',
+      queryEntity: entity || '',
+      searchQuery: search || ''
     });
   });
 
