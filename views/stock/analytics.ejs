@@ -8,13 +8,121 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    .card-metric { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); }
+    .card-metric { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); transition: transform 0.2s, box-shadow 0.2s; }
+    .card-metric:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
     .card-metric span { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 8px; letter-spacing: 0.05em; }
     .card-metric strong { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
     .chart-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow-md); }
     .chart-box h3 { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0 0 20px 0; }
+
+    /* Custom Tables Design for Analytics Cards */
+    .fancy-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+    .fancy-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    .fancy-card--danger::before { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+    .fancy-card--indigo::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+
+    .fancy-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .fancy-card-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .fancy-card-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .fancy-card-badge--danger { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .fancy-card-badge--indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+
+    .fancy-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+    .fancy-table th {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 8px 14px;
+      text-align: left;
+      border: none;
+    }
+    .fancy-table tbody tr {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .fancy-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: scale(1.01);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .fancy-table td {
+      padding: 12px 14px;
+      font-size: 0.875rem;
+      border: none;
+      vertical-align: middle;
+    }
+    .fancy-table td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+    .fancy-table td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+    /* Progress bar inside table */
+    .stock-progress-wrap { width: 100px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .stock-progress-bar { height: 100%; background: #f43f5e; border-radius: 4px; }
+
+    .tag-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .mov-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .mov-pill--in { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .mov-pill--out { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .mov-pill--transfer { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
   </style>
 </head>
 <body class="module-body">
@@ -133,74 +241,124 @@
         </div>
       </div>
 
-      <!-- Tables -->
+      <!-- High-End Visual Tables Section -->
       <div class="grid-2">
-        <div class="chart-box">
-          <h3>🚨 Asgari Seviye Altındaki Malzemeler</h3>
-          <div class="table-wrapper">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Malzeme</th>
-                  <th>Mevcut</th>
-                  <th>Asgari (Min)</th>
-                  <th>Aksiyon</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (!lowStockItems || lowStockItems.length === 0) { %>
-                  <tr><td colspan="4" class="text-center text-muted">Kritik seviyede malzeme yok.</td></tr>
-                <% } else { %>
-                  <% lowStockItems.slice(0, 5).forEach(item => { %>
-                    <tr>
-                      <td><strong style="color: var(--text-primary);"><%= item.name %></strong></td>
-                      <td><span class="badge bg-danger" style="color: var(--rose);"><%= item.currentStock %> <%= item.unit %></span></td>
-                      <td><%= item.minStock %> <%= item.unit %></td>
-                      <td><a href="/stock/alerts" class="btn btn-sm btn-secondary">Talep Oluştur</a></td>
-                    </tr>
-                  <% }); %>
-                <% } %>
-              </tbody>
-            </table>
+        <!-- 1. Asgari Seviye Altındaki Malzemeler -->
+        <div class="fancy-card fancy-card--danger">
+          <div class="fancy-card-header">
+            <div class="fancy-card-title">
+              <span>🚨 Asgari Seviye Altındaki Malzemeler</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="fancy-card-badge fancy-card-badge--danger"><%= lowStockItems ? lowStockItems.length : 0 %> Kritik Uarı</span>
+              <a href="/stock/alerts" style="color: var(--indigo); font-size: 0.8rem; font-weight: 700; text-decoration: none;">Tümünü Gör →</a>
+            </div>
           </div>
+
+          <table class="fancy-table">
+            <thead>
+              <tr>
+                <th>Kod / Malzeme</th>
+                <th>Mevcut / Min</th>
+                <th>Eksik Miktar</th>
+                <th style="text-align: right;">Aksiyon</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!lowStockItems || lowStockItems.length === 0) { %>
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">Kritik seviyede malzeme yok. 🎉</td></tr>
+              <% } else { %>
+                <% lowStockItems.slice(0, 5).forEach(item => { %>
+                  <% const current = parseFloat(item.currentStock || 0); %>
+                  <% const min = parseFloat(item.minStock || 0); %>
+                  <% const missing = Math.max(0, min - current).toFixed(2); %>
+                  <% const ratio = min > 0 ? Math.min(100, Math.round((current / min) * 100)) : 0; %>
+                  <tr>
+                    <td>
+                      <span class="tag-code"><%= item.stockCode %></span>
+                      <div style="font-weight: 700; color: var(--text-primary); margin-top: 2px;"><%= item.name %></div>
+                    </td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                        <strong style="color: var(--rose); font-size: 0.9rem;"><%= item.currentStock %> <%= item.unit %></strong>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">/ <%= item.minStock %></span>
+                      </div>
+                      <div class="stock-progress-wrap">
+                        <div class="stock-progress-bar" style="width: <%= ratio %>%;"></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span style="background: rgba(244,63,94,0.12); color: #f43f5e; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(244,63,94,0.25);">
+                        +<%= missing > 0 ? missing : 10 %> <%= item.unit %>
+                      </span>
+                    </td>
+                    <td style="text-align: right;">
+                      <a href="/stock/alerts" class="btn btn-sm" style="font-size: 0.75rem; padding: 6px 12px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: none; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block;">
+                        📩 Talep Aç
+                      </a>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
         </div>
 
-        <div class="chart-box">
-          <h3>📋 Son Stok Hareketleri</h3>
-          <div class="table-wrapper">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Hareket No</th>
-                  <th>Malzeme</th>
-                  <th>Miktar</th>
-                  <th>Tip</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (!movements || movements.length === 0) { %>
-                  <tr><td colspan="4" class="text-center text-muted">Stok hareketi yok.</td></tr>
-                <% } else { %>
-                  <% movements.forEach(m => { %>
-                    <tr>
-                      <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= m.movementNo %></strong></td>
-                      <td><%= m.stockItem ? m.stockItem.name : '—' %></td>
-                      <td><strong><%= m.quantity %></strong></td>
-                      <td>
-                        <% if (m.movementType === 'Inbound') { %>
-                          <span class="status-pill status-active">📥 Giriş</span>
-                        <% } else if (m.movementType === 'Outbound') { %>
-                          <span class="status-pill status-rejected">📤 Çıkış</span>
-                        <% } else { %>
-                          <span class="status-pill status-approved">🔄 Transfer</span>
-                        <% } %>
-                      </td>
-                    </tr>
-                  <% }); %>
-                <% } %>
-              </tbody>
-            </table>
+        <!-- 2. Son Stok Hareketleri -->
+        <div class="fancy-card fancy-card--indigo">
+          <div class="fancy-card-header">
+            <div class="fancy-card-title">
+              <span>⚡ Son Stok Hareketleri</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="fancy-card-badge fancy-card-badge--indigo"><%= movements ? movements.length : 0 %> İşlem</span>
+              <a href="/stock/transfers" style="color: var(--indigo); font-size: 0.8rem; font-weight: 700; text-decoration: none;">Tümünü Gör →</a>
+            </div>
           </div>
+
+          <table class="fancy-table">
+            <thead>
+              <tr>
+                <th>Hareket Kodu</th>
+                <th>Malzeme Adı</th>
+                <th>Miktar</th>
+                <th style="text-align: right;">İşlem Tipi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!movements || movements.length === 0) { %>
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">Henüz stok hareketi gerçekleşmedi.</td></tr>
+              <% } else { %>
+                <% movements.slice(0, 5).forEach(m => { %>
+                  <tr>
+                    <td>
+                      <span class="tag-code"><%= m.movementNo %></span>
+                      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;"><%= new Date(m.createdAt).toLocaleDateString('tr-TR') %></div>
+                    </td>
+                    <td>
+                      <strong style="color: var(--text-primary); font-size: 0.875rem;"><%= m.stockItem ? m.stockItem.name : '—' %></strong>
+                      <% if (m.notes) { %>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 140px;"><%= m.notes %></div>
+                      <% } %>
+                    </td>
+                    <td>
+                      <strong style="color: var(--text-primary); font-size: 0.9rem;"><%= m.quantity %></strong>
+                      <span style="font-size: 0.75rem; color: var(--text-muted);"><%= m.stockItem ? m.stockItem.unit : '' %></span>
+                    </td>
+                    <td style="text-align: right;">
+                      <% if (m.movementType === 'Inbound') { %>
+                        <span class="mov-pill mov-pill--in">📥 Giriş</span>
+                      <% } else if (m.movementType === 'Outbound') { %>
+                        <span class="mov-pill mov-pill--out">📤 Çıkış</span>
+                      <% } else { %>
+                        <span class="mov-pill mov-pill--transfer">🔄 Transfer</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
         </div>
       </div>
     </main>
