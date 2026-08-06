@@ -6,6 +6,115 @@
   <title>Yeni Satın Alma Siparişi — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+
+    .form-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .aesthetic-group { margin-bottom: 16px; }
+    .aesthetic-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .aesthetic-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      padding: 12px 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .aesthetic-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+    }
+    .aesthetic-input[readonly] {
+      background: #090d16;
+      border-color: #334155;
+      color: #818cf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      cursor: not-allowed;
+    }
+    .aesthetic-input::placeholder { color: #475569; }
+
+    .btn-indigo-gradient {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+
+    .total-preview-card {
+      background: #0b1329;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 20px 24px;
+      border-radius: 14px;
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -52,25 +161,35 @@
       <div class="page-header">
         <div>
           <h1>Yeni Satın Alma Siparişi Oluştur</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Seçilen tedarikçiye verilmek üzere resmi satın alma siparişi hazırlayın.</p>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Seçilen tedarikçiye verilmek üzere resmi satın alma siparişi hazırlayın.</p>
         </div>
-        <a href="/purchase/orders" class="btn btn-secondary">← Sipariş Listesine Dön</a>
+        <a href="/purchase/orders" class="btn btn-secondary" style="border-radius: 10px;">← Sipariş Listesine Dön</a>
       </div>
 
       <% if (error) { %>
-        <div style="background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose); padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-weight: 600;">⚠️ <%= error %></div>
+        <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+          <span>⚠️</span> <%= error %>
+        </div>
       <% } %>
 
-      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md);">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon">📦</div>
+          <div>
+            <div class="form-card-title">Resmi Satın Alma Sipariş Formu (PO)</div>
+            <div class="form-card-sub">Tedarikçi bilgileri, sipariş kalemleri, iskonto, KDV ve ödeme vadesi hesaplamaları</div>
+          </div>
+        </div>
+
         <form action="/purchase/orders/add" method="POST">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="form-group">
-              <label class="form-label">Sipariş No</label>
-              <input type="text" name="orderNo" value="<%= nextOrderNo %>" class="form-control" readonly>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Sipariş No (Otomatik)</label>
+              <input type="text" name="orderNo" value="<%= nextOrderNo %>" class="aesthetic-input" readonly>
             </div>
-            <div class="form-group">
-              <label class="form-label">Tedarikçi Seçin *</label>
-              <select name="supplierId" class="form-control" id="supplierSelect" onchange="onSupplierChange(this)" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Tedarikçi Seçin *</label>
+              <select name="supplierId" class="aesthetic-input" id="supplierSelect" onchange="onSupplierChange(this)" required style="cursor: pointer;">
                 <option value="">— Tedarikçi Kartı Seçin —</option>
                 <% if (suppliers && suppliers.length > 0) { %>
                   <% suppliers.forEach(sup => { %>
@@ -82,47 +201,47 @@
               </select>
               <input type="hidden" name="supplierName" id="supplierNameInput">
             </div>
-            <div class="form-group">
-              <label class="form-label">Tedarikçi Vergi No</label>
-              <input type="text" name="supplierTaxNo" id="supplierTaxNoInput" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Tedarikçi Vergi No</label>
+              <input type="text" name="supplierTaxNo" id="supplierTaxNoInput" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Tedarikçi İletişim Kişisi</label>
-              <input type="text" name="supplierContactPerson" id="supplierContactInput" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Tedarikçi İletişim Kişisi</label>
+              <input type="text" name="supplierContactPerson" id="supplierContactInput" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Satın Alınacak Malzeme / Stok Kartı *</label>
-              <select name="stockItemId" class="form-control" id="stockSelect" onchange="onStockChange(this)" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Satın Alınacak Malzeme / Stok Kartı *</label>
+              <select name="stockItemId" class="aesthetic-input" id="stockSelect" onchange="onStockChange(this)" required style="cursor: pointer;">
                 <option value="">— Stok Kartı Seçin —</option>
                 <% stockItems.forEach(item => { %>
                   <option value="<%= item.id %>" data-price="<%= item.purchasePrice || 0 %>" data-unit="<%= item.unit %>"><%= item.stockCode %> — <%= item.name %> (<%= item.category %>)</option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Miktar *</label>
-              <input type="number" name="quantity" id="quantityInput" value="100" min="1" step="0.01" class="form-control" required oninput="calcTotals()">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Miktar *</label>
+              <input type="number" name="quantity" id="quantityInput" value="100" min="1" step="0.01" class="aesthetic-input" required oninput="calcTotals()">
             </div>
-            <div class="form-group">
-              <label class="form-label">Birim Alış Fiyatı (TL) *</label>
-              <input type="number" name="unitPrice" id="unitPriceInput" value="0.00" min="0" step="0.01" class="form-control" required oninput="calcTotals()">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Birim Alış Fiyatı (TL) *</label>
+              <input type="number" name="unitPrice" id="unitPriceInput" value="0.00" min="0" step="0.01" class="aesthetic-input" required oninput="calcTotals()">
             </div>
-            <div class="form-group">
-              <label class="form-label">İskonto Oranı (%)</label>
-              <input type="number" name="discountRate" id="discountRateInput" value="0" min="0" max="100" step="0.1" class="form-control" oninput="calcTotals()">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">İskonto Oranı (%)</label>
+              <input type="number" name="discountRate" id="discountRateInput" value="0" min="0" max="100" step="0.1" class="aesthetic-input" oninput="calcTotals()">
             </div>
-            <div class="form-group">
-              <label class="form-label">KDV Oranı (%)</label>
-              <select name="taxRate" id="taxRateSelect" class="form-control" onchange="calcTotals()">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">KDV Oranı (%)</label>
+              <select name="taxRate" id="taxRateSelect" class="aesthetic-input" onchange="calcTotals()" style="cursor: pointer;">
                 <option value="20">KDV %20</option>
                 <option value="10">KDV %10</option>
                 <option value="1">KDV %1</option>
                 <option value="0">KDV %0 (Muaf)</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Ödeme Koşulu</label>
-              <select name="paymentTerm" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Ödeme Vadesi / Koşulu</label>
+              <select name="paymentTerm" class="aesthetic-input" style="cursor: pointer;">
                 <option value="Vadeli_30">30 Gün Vadeli</option>
                 <option value="Vadeli_60">60 Gün Vadeli</option>
                 <option value="Vadeli_90">90 Gün Vadeli</option>
@@ -130,25 +249,28 @@
                 <option value="Kredi_Karti">Kredi Kartı</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Sipariş Tarihi</label>
-              <input type="date" name="orderDate" value="<%= new Date().toISOString().split('T')[0] %>" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Sipariş Tarihi</label>
+              <input type="date" name="orderDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Beklenen Teslimat Tarihi</label>
-              <input type="date" name="expectedDeliveryDate" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Beklenen Teslimat Tarihi</label>
+              <input type="date" name="expectedDeliveryDate" class="aesthetic-input">
             </div>
           </div>
 
-          <!-- Total summary -->
-          <div style="background: var(--bg-elevated); padding: 20px; border-radius: 12px; margin-top: 24px; border: 1px solid var(--border);">
-            <div style="font-size: 0.9rem; color: var(--text-secondary);">Tahmini Genel Toplam: <strong id="totalPreview" style="font-size: 1.3rem; color: var(--rose); margin-left: 8px;">0.00 TL</strong></div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">* 50.000 TL üzerindeki satın almalar otomatik olarak Yönetsel Onay Paneline düşer.</div>
+          <!-- Total summary preview -->
+          <div class="total-preview-card">
+            <div>
+              <div style="font-size: 0.85rem; color: #94a3b8; font-weight: 700;">Tahmini Genel Toplam (KDV Dahil):</div>
+              <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">* 50.000 TL üzerindeki satın almalar otomatik olarak Yönetsel Onay Paneline düşer.</div>
+            </div>
+            <strong id="totalPreview" style="font-size: 1.5rem; color: #34d399; font-weight: 800;">0.00 TL</strong>
           </div>
 
-          <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn">📦 Siparişi Oluştur</button>
-            <a href="/purchase/orders" class="btn btn-secondary">İptal</a>
+          <div style="display: flex; gap: 14px; margin-top: 20px;">
+            <button type="submit" class="btn-indigo-gradient">📦 Satın Alma Siparişini Oluştur</button>
+            <a href="/purchase/orders" class="btn btn-secondary" style="border-radius: 10px; padding: 12px 20px;">İptal</a>
           </div>
         </form>
       </div>

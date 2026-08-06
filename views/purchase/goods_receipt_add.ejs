@@ -6,6 +6,104 @@
   <title>Yeni Mal Kabul Fişi (GRN) — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+    }
+
+    .form-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .aesthetic-group { margin-bottom: 16px; }
+    .aesthetic-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .aesthetic-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      padding: 12px 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .aesthetic-input:focus {
+      outline: none;
+      border-color: #10b981;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+    }
+    .aesthetic-input[readonly] {
+      background: #090d16;
+      border-color: #334155;
+      color: #34d399;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      cursor: not-allowed;
+    }
+    .aesthetic-input::placeholder { color: #475569; }
+
+    .btn-emerald-gradient {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-emerald-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -52,25 +150,35 @@
       <div class="page-header">
         <div>
           <h1>Yeni Mal Kabul ve İrsaliye Eşleştirme</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Depoya gelen siparişi irsaliye numarası ile eşleştirerek stok girişini yapın.</p>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Depoya gelen siparişi irsaliye numarası ile eşleştirerek stok girişini yapın.</p>
         </div>
-        <a href="/purchase/goods-receipt" class="btn btn-secondary">← Mal Kabul Listesine Dön</a>
+        <a href="/purchase/goods-receipt" class="btn btn-secondary" style="border-radius: 10px;">← Mal Kabul Listesine Dön</a>
       </div>
 
       <% if (error) { %>
-        <div style="background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose); padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-weight: 600;">⚠️ <%= error %></div>
+        <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+          <span>⚠️</span> <%= error %>
+        </div>
       <% } %>
 
-      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md);">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon">🚛</div>
+          <div>
+            <div class="form-card-title">Mal Kabul (GRN) ve İrsaliye Eşleştirme Formu</div>
+            <div class="form-card-sub">Gelen ambar teslimatı, miktar eşleştirme ve kalite onay muayenesi</div>
+          </div>
+        </div>
+
         <form action="/purchase/goods-receipt/add" method="POST">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="form-group">
-              <label class="form-label">GRN No</label>
-              <input type="text" name="grnNo" value="<%= nextGrnNo %>" class="form-control" readonly>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">GRN No (Otomatik)</label>
+              <input type="text" name="grnNo" value="<%= nextGrnNo %>" class="aesthetic-input" readonly>
             </div>
-            <div class="form-group">
-              <label class="form-label">İlgili Satın Alma Siparişi *</label>
-              <select name="purchaseOrderId" class="form-control" id="poSelect" onchange="onPoSelected(this)" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">İlgili Satın Alma Siparişi *</label>
+              <select name="purchaseOrderId" class="aesthetic-input" id="poSelect" onchange="onPoSelected(this)" required style="cursor: pointer;">
                 <option value="">— Açık Sipariş Seçin —</option>
                 <% orders.forEach(po => { %>
                   <option value="<%= po.id %>" data-itemid="<%= po.stockItemId %>" data-qty="<%= po.quantity %>" data-supid="<%= po.supplierId %>">
@@ -81,50 +189,50 @@
               <input type="hidden" name="stockItemId" id="stockItemIdInput">
               <input type="hidden" name="supplierId" id="supplierIdInput">
             </div>
-            <div class="form-group">
-              <label class="form-label">Tedarikçi İrsaliye Numarası *</label>
-              <input type="text" name="deliveryNoteNo" placeholder="Örn: IRS-2026-8842" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Tedarikçi İrsaliye Numarası *</label>
+              <input type="text" name="deliveryNoteNo" placeholder="Örn: IRS-2026-8842" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Kabul Tarihi</label>
-              <input type="date" name="receiptDate" value="<%= new Date().toISOString().split('T')[0] %>" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Kabul Tarihi</label>
+              <input type="date" name="receiptDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Sipariş Edilen Miktar</label>
-              <input type="number" name="orderedQuantity" id="orderedQtyInput" class="form-control" readonly>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Sipariş Edilen Miktar</label>
+              <input type="number" name="orderedQuantity" id="orderedQtyInput" class="aesthetic-input" readonly>
             </div>
-            <div class="form-group">
-              <label class="form-label">Fiilen Teslim Alınan Miktar *</label>
-              <input type="number" name="receivedQuantity" id="receivedQtyInput" min="1" step="0.01" class="form-control" required oninput="calcAccepted()">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Fiilen Teslim Alınan Miktar *</label>
+              <input type="number" name="receivedQuantity" id="receivedQtyInput" min="1" step="0.01" class="aesthetic-input" required oninput="calcAccepted()">
             </div>
-            <div class="form-group">
-              <label class="form-label">Kalite Kontrol Sonucu</label>
-              <select name="qualityStatus" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Kalite Kontrol Sonucu</label>
+              <select name="qualityStatus" class="aesthetic-input" style="cursor: pointer;">
                 <option value="Approved">Approved (Kalite Onaylı - Eksiksiz)</option>
                 <option value="Pending_Inspection">Pending (Kontrol Edilecek)</option>
                 <option value="Rejected">Rejected (Reddedildi)</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Kabul Edilen Miktar (Stoklara Girecek)</label>
-              <input type="number" name="acceptedQuantity" id="acceptedQtyInput" min="0" step="0.01" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Kabul Edilen Miktar (Stoklara Girecek)</label>
+              <input type="number" name="acceptedQuantity" id="acceptedQtyInput" min="0" step="0.01" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Teslim Alınan Depo / Raf</label>
-              <input type="text" name="warehouseLocation" placeholder="Depo-A (Hammadde Ambarı)" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Teslim Alınan Depo / Raf</label>
+              <input type="text" name="warehouseLocation" placeholder="Örn: Depo-A (Hammadde Ambarı)" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Mal Kabul Sorumlusu / Muayene Eden</label>
-              <input type="text" name="inspectorName" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Mal Kabul Sorumlusu / Muayene Eden</label>
+              <input type="text" name="inspectorName" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" class="aesthetic-input">
             </div>
           </div>
-          <div class="form-group" style="margin-top: 16px;">
-            <label class="form-label">Kalite Kontrol & Kabul Notları</label>
-            <textarea name="qualityNotes" class="form-control" rows="2" placeholder="Hasarlı koli yok, ambalaj sağlam teslim alındı..."></textarea>
+          <div class="aesthetic-group" style="margin-top: 6px;">
+            <label class="aesthetic-label">Kalite Kontrol & Kabul Notları</label>
+            <textarea name="qualityNotes" class="aesthetic-input" rows="3" placeholder="Ambalaj durumu, koli adedi, irsaliye uyum notları..."></textarea>
           </div>
-          <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn">🚛 Mal Kabul Fişini Kaydet & Stok Girişini Yap</button>
-            <a href="/purchase/goods-receipt" class="btn btn-secondary">İptal</a>
+          <div style="display: flex; gap: 14px; margin-top: 14px;">
+            <button type="submit" class="btn-emerald-gradient">🚛 Mal Kabul Fişini Kaydet & Stok Girişini Yap</button>
+            <a href="/purchase/goods-receipt" class="btn btn-secondary" style="border-radius: 10px; padding: 12px 20px;">İptal</a>
           </div>
         </form>
       </div>

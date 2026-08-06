@@ -6,6 +6,104 @@
   <title>Yeni Satın Alma Talebi — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+
+    .form-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .aesthetic-group { margin-bottom: 16px; }
+    .aesthetic-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .aesthetic-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      padding: 12px 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .aesthetic-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+    }
+    .aesthetic-input[readonly] {
+      background: #090d16;
+      border-color: #334155;
+      color: #818cf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      cursor: not-allowed;
+    }
+    .aesthetic-input::placeholder { color: #475569; }
+
+    .btn-indigo-gradient {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+  </style>
 </head>
 <body class="module-body">
 
@@ -74,46 +172,56 @@
       <div class="page-header">
         <div>
           <h1>Yeni Satın Alma Talebi</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Departmanınız için malzeme/hizmet talebi oluşturun.</p>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Departmanınız için malzeme/hizmet talebi oluşturun.</p>
         </div>
-        <a href="/purchase/requisitions" class="btn btn-secondary">← Talep Listesine Dön</a>
+        <a href="/purchase/requisitions" class="btn btn-secondary" style="border-radius: 10px;">← Talep Listesine Dön</a>
       </div>
 
       <% if (error) { %>
-        <div style="background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose); padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-weight: 600;">⚠️ <%= error %></div>
+        <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+          <span>⚠️</span> <%= error %>
+        </div>
       <% } %>
 
-      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md);">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon">📩</div>
+          <div>
+            <div class="form-card-title">Yeni Satın Alma Talebi Oluştur</div>
+            <div class="form-card-sub">Departman malzeme/hizmet talep formu ve aciliyet derecesi tanımı</div>
+          </div>
+        </div>
+
         <form action="/purchase/requisitions/add" method="POST">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="form-group">
-              <label class="form-label">Talep No</label>
-              <input type="text" name="requisitionNo" value="<%= nextReqNo %>" class="form-control" readonly>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Talep No (Otomatik)</label>
+              <input type="text" name="requisitionNo" value="<%= nextReqNo %>" class="aesthetic-input" readonly>
             </div>
-            <div class="form-group">
-              <label class="form-label">Kaynak Modül</label>
-              <select name="sourceModule" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Kaynak Modül</label>
+              <select name="sourceModule" class="aesthetic-input" style="cursor: pointer;">
                 <option value="Manual">Manuel Talep</option>
                 <option value="Stock">Stok Modülü</option>
                 <option value="Production">Üretim Modülü</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Talep Edilen Malzeme *</label>
-              <select name="stockItemId" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Talep Edilen Malzeme *</label>
+              <select name="stockItemId" class="aesthetic-input" required style="cursor: pointer;">
                 <option value="">— Malzeme Seçin —</option>
                 <% stockItems.forEach(item => { %>
                   <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %></option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Talep Edilen Miktar *</label>
-              <input type="number" name="requestedQuantity" value="<%= formData.requestedQuantity || 1 %>" min="1" step="0.01" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Talep Edilen Miktar *</label>
+              <input type="number" name="requestedQuantity" value="<%= formData.requestedQuantity || 1 %>" min="1" step="0.01" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Birim</label>
-              <select name="unit" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Birim</label>
+              <select name="unit" class="aesthetic-input" style="cursor: pointer;">
                 <option value="Adet">Adet</option>
                 <option value="Kg">Kg</option>
                 <option value="Lt">Litre</option>
@@ -121,26 +229,26 @@
                 <option value="Paket">Paket</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Aciliyet Derecesi</label>
-              <select name="urgency" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Aciliyet Derecesi</label>
+              <select name="urgency" class="aesthetic-input" style="cursor: pointer;">
                 <option value="Normal">Normal</option>
                 <option value="High">Yüksek</option>
                 <option value="Urgent">Acil</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Talep Eden Kişi</label>
-              <input type="text" name="requesterName" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" class="form-control">
+            <div class="aesthetic-group" style="grid-column: span 2;">
+              <label class="aesthetic-label">Talep Eden Personel</label>
+              <input type="text" name="requesterName" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" class="aesthetic-input">
             </div>
           </div>
-          <div class="form-group" style="margin-top: 16px;">
-            <label class="form-label">Gerekçe / Açıklama</label>
-            <textarea name="notes" class="form-control" rows="3" placeholder="Bu talebin gerekçesini yazın..."><%= formData.notes || '' %></textarea>
+          <div class="aesthetic-group" style="margin-top: 6px;">
+            <label class="aesthetic-label">Gerekçe / Açıklama Notları</label>
+            <textarea name="notes" class="aesthetic-input" rows="3" placeholder="Bu satın alma talebinin gerekçesini ve kullanım amacını açıklayın..."><%= formData.notes || '' %></textarea>
           </div>
-          <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn">📩 Talebi Gönder</button>
-            <a href="/purchase/requisitions" class="btn btn-secondary">İptal</a>
+          <div style="display: flex; gap: 14px; margin-top: 14px;">
+            <button type="submit" class="btn-indigo-gradient">📩 Satın Alma Talebini Gönder</button>
+            <a href="/purchase/requisitions" class="btn btn-secondary" style="border-radius: 10px; padding: 12px 20px;">İptal</a>
           </div>
         </form>
       </div>
