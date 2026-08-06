@@ -10,6 +10,29 @@ const { ALL_ROLES } = require('../middleware/rbacMiddleware');
 const CATEGORIES = ['Hammadde', 'Yarı_Mamul', 'Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal'];
 
 class StockController {
+  // 0. STOCK ANALYTICS DASHBOARD
+  showAnalytics = asyncHandler(async (req, res) => {
+    const stockItems = await stockRepository.findAll();
+    const stats = await stockRepository.getStats();
+    const warehouses = await stockRepository.findAllWarehouses();
+    const lowStockItems = await stockRepository.getLowStockAlerts();
+    const valuationReport = await stockValuationService.calculateValuation();
+    const movements = await stockRepository.findAllMovements();
+
+    res.render('stock/analytics', {
+      user: req.user,
+      stockItems,
+      stats,
+      warehouses,
+      lowStockItems,
+      valuationReport,
+      movements: movements.slice(0, 5),
+      CATEGORIES,
+      ALL_ROLES,
+      activeSubTab: 'analytics'
+    });
+  });
+
   // 1. STOCK ITEMS MANAGEMENT
   listItems = asyncHandler(async (req, res) => {
     const { search, category, status } = req.query;

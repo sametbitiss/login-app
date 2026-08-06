@@ -5,6 +5,10 @@ const {
   StockItem,
   SaleOrder,
   PurchaseOrder,
+  Supplier,
+  PurchaseRfq,
+  GoodsReceipt,
+  PurchaseRequisition,
   ProductionOrder,
   BOMItem,
   RoutingOperation,
@@ -371,6 +375,147 @@ async function seedInitialData() {
           unit: 'Adet',
           scrapPercentage: 2.0,
           notes: '1 adet şasi gövdesi için 1 adet paslanmaz sac plaka kesilir.'
+        }
+      ]);
+    }
+    // 9. Seed Sample Suppliers if empty
+    const supplierCount = await Supplier.count();
+    let sup1, sup2;
+    if (supplierCount === 0) {
+      sup1 = await Supplier.create({
+        supplierCode: 'TED-2026-0001',
+        companyName: 'Norm Bağlantı Elemanları San. ve Tic. A.Ş.',
+        taxNo: '6320987654',
+        taxOffice: 'İzmir Atatürk',
+        contactPerson: 'Mehmet Kaplan',
+        email: 'siparis@normcivata.com.tr',
+        phone: '+90 (232) 376 0000',
+        city: 'İzmir',
+        paymentTerm: 'Vadeli_60',
+        category: 'Hammadde',
+        performanceScore: 4.8,
+        onTimeDeliveryRate: 97.5,
+        qualityScore: 99.0,
+        status: 'Active',
+        createdBy: purchaseUser.id
+      });
+
+      sup2 = await Supplier.create({
+        supplierCode: 'TED-2026-0002',
+        companyName: 'Erdemir Çelik A.Ş.',
+        taxNo: '3450912384',
+        taxOffice: 'Zonguldak Ereğli',
+        contactPerson: 'Ayşe Yıldız',
+        email: 'satis@erdemir.com.tr',
+        phone: '+90 (372) 323 0000',
+        city: 'Zonguldak',
+        paymentTerm: 'Vadeli_30',
+        category: 'Hammadde',
+        performanceScore: 4.6,
+        onTimeDeliveryRate: 94.0,
+        qualityScore: 98.5,
+        status: 'Active',
+        createdBy: purchaseUser.id
+      });
+    } else {
+      sup1 = await Supplier.findOne({ where: { supplierCode: 'TED-2026-0001' } });
+      sup2 = await Supplier.findOne({ where: { supplierCode: 'TED-2026-0002' } });
+    }
+
+    // 10. Seed Sample RFQs if empty
+    const rfqCount = await PurchaseRfq.count();
+    if (rfqCount === 0 && stockItem1 && sup1) {
+      await PurchaseRfq.bulkCreate([
+        {
+          rfqNo: 'RFQ-2026-0001',
+          supplierId: sup1.id,
+          supplierName: sup1.companyName,
+          stockItemId: stockItem1.id,
+          requestedQuantity: 2000,
+          offeredUnitPrice: 4.20,
+          offeredTotalPrice: 8400.00,
+          currency: 'TRY',
+          deliveryDays: 5,
+          paymentTerm: 'Vadeli_60',
+          validUntil: '2026-08-30',
+          qualityNote: 'TSE Paslanmazlık Garantili',
+          status: 'Received',
+          isWinner: false,
+          requestedBy: 'Caner Öztürk',
+          createdBy: purchaseUser.id
+        },
+        {
+          rfqNo: 'RFQ-2026-0002',
+          supplierId: sup2 ? sup2.id : null,
+          supplierName: sup2 ? sup2.companyName : 'Erdemir Çelik A.Ş.',
+          stockItemId: stockItem3 ? stockItem3.id : stockItem1.id,
+          requestedQuantity: 500,
+          offeredUnitPrice: 440.00,
+          offeredTotalPrice: 220000.00,
+          currency: 'TRY',
+          deliveryDays: 10,
+          paymentTerm: 'Vadeli_30',
+          validUntil: '2026-08-25',
+          qualityNote: '304 Kalite Lazer Kesime Uygun Plaka',
+          status: 'Accepted',
+          isWinner: true,
+          requestedBy: 'Caner Öztürk',
+          createdBy: purchaseUser.id
+        }
+      ]);
+    }
+
+    // 11. Seed Sample Goods Receipts (GRN) if empty
+    const grnCount = await GoodsReceipt.count();
+    const firstPo = await PurchaseOrder.findOne();
+    if (grnCount === 0 && firstPo && stockItem1) {
+      await GoodsReceipt.create({
+        grnNo: 'GRN-2026-0001',
+        purchaseOrderId: firstPo.id,
+        supplierId: sup1 ? sup1.id : null,
+        stockItemId: stockItem1.id,
+        orderedQuantity: firstPo.quantity,
+        receivedQuantity: firstPo.quantity,
+        acceptedQuantity: firstPo.quantity,
+        rejectedQuantity: 0,
+        receiptDate: '2026-08-05',
+        deliveryNoteNo: 'IRS-2026-9901',
+        qualityStatus: 'Approved',
+        inspectorName: 'Murat Kaya',
+        qualityNotes: 'Sertifika ve miktar kontrolü yapıldı, uygun.',
+        warehouseLocation: 'Depo-A (Hammadde Ambarı)',
+        status: 'Completed',
+        createdBy: purchaseUser.id
+      });
+    }
+
+    // 12. Seed Sample Purchase Requisitions if empty
+    const reqCount = await PurchaseRequisition.count();
+    if (reqCount === 0 && stockItem1) {
+      await PurchaseRequisition.bulkCreate([
+        {
+          requisitionNo: 'TALEP-2026-0001',
+          sourceModule: 'Production',
+          stockItemId: stockItem1.id,
+          requestedQuantity: 500,
+          unit: 'Adet',
+          urgency: 'Urgent',
+          status: 'Pending',
+          requesterName: 'Oğuz Aydın',
+          notes: 'Üretim Emri URETIM-2026-0001 için eksik hammadde tamamlanacak.',
+          createdBy: productionUser.id
+        },
+        {
+          requisitionNo: 'TALEP-2026-0002',
+          sourceModule: 'Stock',
+          stockItemId: stockItem3 ? stockItem3.id : stockItem1.id,
+          requestedQuantity: 100,
+          unit: 'Adet',
+          urgency: 'Normal',
+          status: 'Approved',
+          requesterName: 'Murat Kaya',
+          notes: 'Kritik stok seviyesinin altına düştüğü için otomatik oluşturuldu.',
+          createdBy: stockUser.id
         }
       ]);
     }

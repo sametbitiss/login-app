@@ -3,252 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RF El Terminali & Barkod / Karekod Okuyucu — Enterprise ERP</title>
+  <title>RF El Terminali & Barkod Okuyucu Modu — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    .terminal-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-    @media (max-width: 768px) {
-      .terminal-container {
-        grid-template-columns: 1fr;
-      }
-    }
-    .terminal-card {
-      background: #0f172a;
-      border: 2px solid var(--indigo);
-      border-radius: var(--radius-md);
-      padding: 2rem;
-      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
-    }
-    .barcode-input {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.35rem;
-      text-align: center;
-      letter-spacing: 2px;
-      padding: 0.85rem;
-      background: #020617;
-      border: 2px solid var(--emerald);
-      color: #38bdf8;
-      border-radius: var(--radius-sm);
-      width: 100%;
-    }
-    .qr-card {
-      background: #020617;
-      border: 1px dashed var(--border);
-      border-radius: var(--radius-sm);
-      padding: 1.5rem;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .qr-visual {
-      background: #fff;
-      padding: 12px;
-      border-radius: 8px;
-      display: inline-block;
-      margin-bottom: 1rem;
-    }
+    .terminal-box { background: #0f172a; border: 2px solid var(--indigo); border-radius: 20px; padding: 32px; max-width: 600px; margin: 0 auto; box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2); }
+    .terminal-screen { background: #020617; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; }
+    .terminal-scan-input { background: #0f172a; border: 2px solid var(--emerald); color: #fff; font-size: 1.2rem; font-family: 'JetBrains Mono', monospace; width: 100%; padding: 14px; border-radius: 10px; margin-bottom: 16px; text-align: center; }
+    .terminal-scan-input:focus { outline: none; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
   </style>
 </head>
 <body class="module-body">
-
   <aside class="module-sidebar">
-    <div class="module-sidebar-brand">
-      <a href="/" class="msb-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient></defs></svg>
-        <span>Enterprise ERP</span>
-      </a>
-    </div>
-
+    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
     <div class="module-sidebar-section">
-      <div class="mss-label">STOK & DEPO</div>
-      <a href="/stock" class="mss-link active">Stok Yönetimi</a>
+      <div class="mss-label">📦 STOK & DEPO YÖNETİMİ</div>
+      <div class="mss-group-title">📊 DASHBOARD & RAPORLAR</div>
+      <div class="mss-sub">
+        <a href="/stock/analytics" class="mss-sub-link">📊 Stok Analitiği</a>
+        <a href="/stock/alerts" class="mss-sub-link">🚨 Min/Max & Kritik Stok</a>
+        <a href="/stock/valuation" class="mss-sub-link">💰 Stok Maliyetlendirme</a>
+      </div>
+      <div class="mss-group-title">📦 MALZEME & LOKASYON</div>
       <div class="mss-sub">
         <a href="/stock/items" class="mss-sub-link">📦 Stok Kartları</a>
         <a href="/stock/warehouses" class="mss-sub-link">🏬 Depo & Lokasyonlar</a>
         <a href="/stock/lots" class="mss-sub-link">🏷️ Lot & Seri Numaraları</a>
-        <a href="/stock/transfers" class="mss-sub-link">🔄 Transfer & Hareketler</a>
+      </div>
+      <div class="mss-group-title">🔄 DEPO OPERASYONLARI</div>
+      <div class="mss-sub">
         <a href="/stock/goods-receipt" class="mss-sub-link">📥 Mal Kabul & Giriş</a>
         <a href="/stock/dispatch" class="mss-sub-link">📤 Sevkiyat & Çıkış</a>
+        <a href="/stock/transfers" class="mss-sub-link">🔄 Transfer & Hareketler</a>
         <a href="/stock/counting" class="mss-sub-link">📋 Envanter Sayımı</a>
-        <a href="/stock/alerts" class="mss-sub-link">🚨 Min/Max Uyarısı</a>
-        <a href="/stock/valuation" class="mss-sub-link">💰 Stok Maliyetlendirme</a>
         <a href="/stock/terminal" class="mss-sub-link active">📱 RF El Terminali</a>
       </div>
     </div>
-
-    <div class="module-sidebar-user">
-      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
-      <div class="msu-meta">
-        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
-        <span><%= ALL_ROLES[user.role] || user.role %></span>
-      </div>
-    </div>
+    <div class="module-sidebar-user"><div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div><div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div></div>
   </aside>
 
   <div class="module-main">
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
-        <% if (user.role === 'Admin') { %>
-          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
-          <a href="/stock" class="mt-link active">Stok & Depo</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
-          <a href="/sales" class="mt-link">Satış Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Purchase_Manager') { %>
-          <a href="/purchase" class="mt-link">Satın Alma</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
-          <a href="/production" class="mt-link">Üretim Planlama</a>
-        <% } %>
+        <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
+        <a href="/stock" class="mt-link active">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link">Satın Alma</a>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %>
       </div>
-      <div class="mt-right">
-        <span class="mt-time" id="liveTime"></span>
-        <a href="/logout" class="mt-logout" title="Çıkış">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </a>
-      </div>
+      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
     </header>
 
     <main class="module-content">
-      <!-- Sub-Nav Bar -->
       <div class="module-subnav">
-        <a href="/stock/items" class="msn-link">📦 Malzeme Kartları</a>
-        <a href="/stock/warehouses" class="msn-link">🏬 Depolar & Lokasyonlar</a>
-        <a href="/stock/lots" class="msn-link">🏷️ Lot / Parti & Seri No</a>
-        <a href="/stock/transfers" class="msn-link">🔄 Transferler & Hareketler</a>
-        <a href="/stock/goods-receipt" class="msn-link">📥 Mal Kabul & Giriş</a>
-        <a href="/stock/dispatch" class="msn-link">📤 Sevkiyat & Çıkış</a>
-        <a href="/stock/counting" class="msn-link">📋 Envanter Sayımı</a>
-        <a href="/stock/alerts" class="msn-link">🚨 Min/Max & Kritik Stok</a>
-        <a href="/stock/valuation" class="msn-link">💰 Stok Maliyetlendirme (FIFO)</a>
+        <a href="/stock/analytics" class="msn-link">📊 Analitik</a>
+        <a href="/stock/alerts" class="msn-link">🚨 Kritik Stok</a>
+        <a href="/stock/valuation" class="msn-link">💰 Maliyetlendirme</a>
+        <a href="/stock/items" class="msn-link">📦 Stok Kartları</a>
+        <a href="/stock/warehouses" class="msn-link">🏬 Depolar</a>
+        <a href="/stock/lots" class="msn-link">🏷️ Lot & Seri No</a>
+        <a href="/stock/goods-receipt" class="msn-link">📥 Mal Kabul</a>
+        <a href="/stock/dispatch" class="msn-link">📤 Sevkiyat</a>
+        <a href="/stock/transfers" class="msn-link">🔄 Transferler</a>
+        <a href="/stock/counting" class="msn-link">📋 Sayım</a>
         <a href="/stock/terminal" class="msn-link active">📱 RF El Terminali</a>
       </div>
 
-      <div class="page-header" style="justify-content: center; text-align: center;">
+      <div class="page-header">
         <div>
-          <h1>📱 Dinamik RF El Terminali & Barkod / Karekod Saha Ekranı</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Seçilen her ürün için anında dinamik karekod / barkod üretimi ve ambar lokasyon sorgulaması.</p>
+          <h1>RF El Terminali ve Barkod / Karekod Simülatörü</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Kağıtsız depo operasyonları: Barkod okutma, seri numarası doğrulama ve hızlı mal kabul/toplama.</p>
         </div>
       </div>
 
-      <div class="terminal-container">
-        <!-- Terminal Controls -->
-        <div class="terminal-card">
-          <div style="text-align: center; margin-bottom: 1.5rem;">
-            <div style="font-size: 2.2rem; margin-bottom: 0.25rem;">📷 📱</div>
-            <h2 style="color: #fff; font-size: 1.2rem;">Saha Barkod Okuyucu</h2>
-            <p style="color: var(--text-muted); font-size: 0.8rem;">Malzeme seçin veya okuyucu ile barkod yazın.</p>
-          </div>
+      <div class="terminal-box">
+        <div style="text-align: center; color: var(--emerald); font-family: 'JetBrains Mono', monospace; font-weight: 700; margin-bottom: 12px;">📱 DEPO EL TERMINALI (CONNECTED)</div>
 
-          <div style="margin-bottom: 1.25rem;">
-            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Sistemden Malzeme Seçin:</label>
-            <select id="stockSelector" style="width: 100%; padding: 12px; font-size: 0.95rem; background: #020617; border: 1px solid var(--border); color: #fff; border-radius: 6px;" onchange="updateProductDetails(this.value)">
-              <% stockItems.forEach((item, index) => { %>
-                <option value="<%= item.id %>" <%= index === 0 ? 'selected' : '' %>>
-                  [<%= item.stockCode %>] <%= item.name %>
-                </option>
-              <% }); %>
-            </select>
-          </div>
+        <input type="text" id="barcodeScannerInput" placeholder="[BARKOD VEYA STOK KODU OKUTUN]" class="terminal-scan-input" autofocus onkeydown="if(event.key==='Enter') scanBarcode()">
 
-          <div>
-            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Okunan Barkod / Karekod No:</label>
-            <input type="text" id="barcodeScannerInput" class="barcode-input" placeholder="869..." oninput="onManualBarcodeChange(this.value)">
-          </div>
+        <div class="terminal-screen" id="terminalResult">
+          <div style="color: #94a3b8; text-align: center;">Barkod okutulması bekleniyor...<br><span style="font-size: 0.8rem; color: #64748b;">(Aşağıdaki listeden tıklayarak hızlı test edebilirsiniz)</span></div>
         </div>
 
-        <!-- Dynamic QR & Product Card -->
-        <div class="qr-card">
-          <div class="qr-visual" id="qrVisual">
-            <svg id="qrSvg" width="120" height="120" viewBox="0 0 100 100" fill="none">
-              <!-- Dynamic QR Visual representation -->
-              <rect width="100" height="100" fill="#fff"/>
-              <rect x="10" y="10" width="25" height="25" fill="#000"/>
-              <rect x="15" y="15" width="15" height="15" fill="#fff"/>
-              <rect x="18" y="18" width="9" height="9" fill="#000"/>
-              
-              <rect x="65" y="10" width="25" height="25" fill="#000"/>
-              <rect x="70" y="15" width="15" height="15" fill="#fff"/>
-              <rect x="73" y="18" width="9" height="9" fill="#000"/>
-              
-              <rect x="10" y="65" width="25" height="25" fill="#000"/>
-              <rect x="15" y="70" width="15" height="15" fill="#fff"/>
-              <rect x="18" y="73" width="9" height="9" fill="#000"/>
-
-              <rect x="42" y="12" width="12" height="12" fill="#000"/>
-              <rect x="42" y="42" width="16" height="16" fill="#000"/>
-              <rect x="65" y="65" width="20" height="20" fill="#000"/>
-              <rect x="70" y="70" width="8" height="8" fill="#fff"/>
-            </svg>
-          </div>
-
-          <div id="productInfoCard" style="width: 100%; text-align: left;">
-            <!-- Rendered by JS -->
-          </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">🔍 Hızlı Test için Kayıtlı Stok Barkodları:</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <% stockItems.forEach(item => { %>
+            <button onclick="fillBarcode('<%= item.barcode || item.stockCode %>')" class="btn btn-sm btn-secondary" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
+              🏷️ <%= item.stockCode %> (<%= item.name %>)
+            </button>
+          <% }); %>
         </div>
       </div>
     </main>
   </div>
 
   <script>
-    const stockItemsData = <%- JSON.stringify(stockItems) %>;
+    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    updateClock(); setInterval(updateClock, 1000);
 
-    function updateProductDetails(itemId) {
-      const item = stockItemsData.find(i => i.id == itemId) || stockItemsData[0];
-      if (!item) return;
+    const items = <%- JSON.stringify(stockItems) %>;
 
-      document.getElementById('barcodeScannerInput').value = item.barcode || item.stockCode;
-
-      const card = document.getElementById('productInfoCard');
-      card.innerHTML = `
-        <div style="font-size: 0.8rem; color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-weight: 700;">${item.stockCode}</div>
-        <h3 style="font-size: 1.15rem; color: #fff; font-weight: 700; margin: 4px 0;">${item.name}</h3>
-        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">Barkod: <strong style="color: #38bdf8;">${item.barcode || '—'}</strong></div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem; background: #0b1329; padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-          <div>Mevcut Stok: <strong style="color: var(--emerald);">${item.currentStock} ${item.unit}</strong></div>
-          <div>Kategori: <strong>${item.category}</strong></div>
-          <div>Lokasyon: <strong>${item.warehouseLocation || 'Ana Depo'}</strong></div>
-          <div>Tedarikçi: <strong>${item.supplier || '—'}</strong></div>
-          <div>Alış Fiyatı: <strong>${item.purchasePrice} ${item.currency || 'TRY'}</strong></div>
-          <div>Min/Max: <strong>${item.minStock} / ${item.maxStock}</strong></div>
-        </div>
-      `;
+    function fillBarcode(code) {
+      document.getElementById('barcodeScannerInput').value = code;
+      scanBarcode();
     }
 
-    function onManualBarcodeChange(val) {
-      const item = stockItemsData.find(i => i.barcode === val.trim() || i.stockCode === val.trim());
-      if (item) {
-        document.getElementById('stockSelector').value = item.id;
-        updateProductDetails(item.id);
+    function scanBarcode() {
+      const code = document.getElementById('barcodeScannerInput').value.trim().toUpperCase();
+      const resEl = document.getElementById('terminalResult');
+      if (!code) return;
+
+      const found = items.find(i => (i.barcode && i.barcode.toUpperCase() === code) || i.stockCode.toUpperCase() === code);
+
+      if (found) {
+        resEl.innerHTML = `
+          <div style="color: #4ade80; font-weight: bold; margin-bottom: 8px;">✅ ÜRÜN BULUNDU!</div>
+          <div style="color: #f8fafc; font-size: 1.1rem; font-weight: bold;">${found.name}</div>
+          <div style="color: #94a3b8;">Kod: <span style="color: #38bdf8;">${found.stockCode}</span> | Barkod: ${found.barcode || '—'}</div>
+          <div style="color: #94a3b8; margin-top: 4px;">Mevcut Stok: <strong style="color: #facc15; font-size: 1.1rem;">${found.currentStock} ${found.unit}</strong></div>
+          <div style="color: #94a3b8;">Lokasyon: <span style="color: #a78bfa;">${found.warehouseLocation || 'Depo-A (Hammadde)'}</span></div>
+          <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <button onclick="alert('Depo Giriş İrsaliyesi Tamamlandı!')" class="btn btn-sm btn-success">+ Stok Ekle (+10)</button>
+            <button onclick="alert('Depo Çıkış / Picking Yapıldı!')" class="btn btn-sm" style="background: var(--rose);">- Stok Çıkar (-1)</button>
+          </div>
+        `;
+      } else {
+        resEl.innerHTML = `
+          <div style="color: #f87171; font-weight: bold;">❌ BARKOD BULUNAMADI!</div>
+          <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">'${code}' kodlu ürün sistemde bulunamadı. Lütfen yeni stok kartı tanımlayın.</div>
+        `;
       }
     }
-
-    // Initial load
-    if (stockItemsData.length > 0) {
-      updateProductDetails(stockItemsData[0].id);
-    }
-
-    function updateClock() {
-      const now = new Date();
-      const el = document.getElementById('liveTime');
-      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
   </script>
 </body>
 </html>

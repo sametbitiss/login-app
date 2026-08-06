@@ -3,148 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kritik Stok & Min/Max Uyarısı — Enterprise ERP</title>
+  <title>Kritik Stok & Min/Max Uyarı Yönetimi — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="module-body">
-
   <aside class="module-sidebar">
-    <div class="module-sidebar-brand">
-      <a href="/" class="msb-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient></defs></svg>
-        <span>Enterprise ERP</span>
-      </a>
-    </div>
-
+    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
     <div class="module-sidebar-section">
-      <div class="mss-label">STOK & DEPO</div>
-      <a href="/stock" class="mss-link active">Stok Yönetimi</a>
+      <div class="mss-label">📦 STOK & DEPO YÖNETİMİ</div>
+      <div class="mss-group-title">📊 DASHBOARD & RAPORLAR</div>
+      <div class="mss-sub">
+        <a href="/stock/analytics" class="mss-sub-link">📊 Stok Analitiği</a>
+        <a href="/stock/alerts" class="mss-sub-link active">🚨 Min/Max & Kritik Stok</a>
+        <a href="/stock/valuation" class="mss-sub-link">💰 Stok Maliyetlendirme</a>
+      </div>
+      <div class="mss-group-title">📦 MALZEME & LOKASYON</div>
       <div class="mss-sub">
         <a href="/stock/items" class="mss-sub-link">📦 Stok Kartları</a>
         <a href="/stock/warehouses" class="mss-sub-link">🏬 Depo & Lokasyonlar</a>
         <a href="/stock/lots" class="mss-sub-link">🏷️ Lot & Seri Numaraları</a>
-        <a href="/stock/transfers" class="mss-sub-link">🔄 Transfer & Hareketler</a>
+      </div>
+      <div class="mss-group-title">🔄 DEPO OPERASYONLARI</div>
+      <div class="mss-sub">
         <a href="/stock/goods-receipt" class="mss-sub-link">📥 Mal Kabul & Giriş</a>
         <a href="/stock/dispatch" class="mss-sub-link">📤 Sevkiyat & Çıkış</a>
+        <a href="/stock/transfers" class="mss-sub-link">🔄 Transfer & Hareketler</a>
         <a href="/stock/counting" class="mss-sub-link">📋 Envanter Sayımı</a>
-        <a href="/stock/alerts" class="mss-sub-link active">🚨 Min/Max Uyarısı</a>
-        <a href="/stock/valuation" class="mss-sub-link">💰 Stok Maliyetlendirme</a>
         <a href="/stock/terminal" class="mss-sub-link">📱 RF El Terminali</a>
       </div>
     </div>
-
-    <div class="module-sidebar-user">
-      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
-      <div class="msu-meta">
-        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
-        <span><%= ALL_ROLES[user.role] || user.role %></span>
-      </div>
-    </div>
+    <div class="module-sidebar-user"><div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div><div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div></div>
   </aside>
 
   <div class="module-main">
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
-        <% if (user.role === 'Admin') { %>
-          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
-          <a href="/stock" class="mt-link active">Stok & Depo</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
-          <a href="/sales" class="mt-link">Satış Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Purchase_Manager') { %>
-          <a href="/purchase" class="mt-link">Satın Alma</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
-          <a href="/production" class="mt-link">Üretim Planlama</a>
-        <% } %>
+        <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
+        <a href="/stock" class="mt-link active">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link">Satın Alma</a>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %>
       </div>
-      <div class="mt-right">
-        <span class="mt-time" id="liveTime"></span>
-        <a href="/logout" class="mt-logout" title="Çıkış">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </a>
-      </div>
+      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
     </header>
 
     <main class="module-content">
-      <!-- Sub-Nav Bar -->
       <div class="module-subnav">
-        <a href="/stock/items" class="msn-link">📦 Malzeme Kartları</a>
-        <a href="/stock/warehouses" class="msn-link">🏬 Depolar & Lokasyonlar</a>
-        <a href="/stock/lots" class="msn-link">🏷️ Lot / Parti & Seri No</a>
-        <a href="/stock/transfers" class="msn-link">🔄 Transferler & Hareketler</a>
-        <a href="/stock/goods-receipt" class="msn-link">📥 Mal Kabul & Giriş</a>
-        <a href="/stock/dispatch" class="msn-link">📤 Sevkiyat & Çıkış</a>
-        <a href="/stock/counting" class="msn-link">📋 Envanter Sayımı</a>
-        <a href="/stock/alerts" class="msn-link active">🚨 Min/Max & Kritik Stok</a>
-        <a href="/stock/valuation" class="msn-link">💰 Stok Maliyetlendirme (FIFO)</a>
+        <a href="/stock/analytics" class="msn-link">📊 Analitik</a>
+        <a href="/stock/alerts" class="msn-link active">🚨 Kritik Stok</a>
+        <a href="/stock/valuation" class="msn-link">💰 Maliyetlendirme</a>
+        <a href="/stock/items" class="msn-link">📦 Stok Kartları</a>
+        <a href="/stock/warehouses" class="msn-link">🏬 Depolar</a>
+        <a href="/stock/lots" class="msn-link">🏷️ Lot & Seri No</a>
+        <a href="/stock/goods-receipt" class="msn-link">📥 Mal Kabul</a>
+        <a href="/stock/dispatch" class="msn-link">📤 Sevkiyat</a>
+        <a href="/stock/transfers" class="msn-link">🔄 Transferler</a>
+        <a href="/stock/counting" class="msn-link">📋 Sayım</a>
         <a href="/stock/terminal" class="msn-link">📱 RF El Terminali</a>
       </div>
 
       <div class="page-header">
         <div>
-          <h1>Kritik Stok & Asgari/Azami Seviye Uyarısı</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Minimum stok seviyesinin altına düşen malzemeler ve Satın Alma Departmanına talep iletme.</p>
+          <h1>Kritik Stok ve Min/Max Seviye Uyarı Paneli</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Asgari stok seviyesinin altına düşen malzemeler ve otomatik satın alma talebi oluşturma.</p>
         </div>
       </div>
 
       <% if (successMsg) { %>
-        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--emerald); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-weight: 600;">
-          ✅ <%= successMsg %>
-        </div>
+        <div style="background: var(--emerald-soft); color: var(--emerald); border: 1px solid var(--emerald); padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-weight: 600;">✅ <%= successMsg %></div>
       <% } %>
 
-      <!-- Create Purchase Requisition Panel -->
-      <div class="form-panel" style="margin-bottom: 1.75rem;">
-        <h3 style="color: var(--amber); font-size: 1.05rem; margin-bottom: 1rem;">📨 Satın Alma Departmanına Stok İhtiyaç Talebi Gönder</h3>
-        
-        <form action="/stock/alerts/requisition" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
-          <div class="form-grid form-grid--3">
-            <div class="input-group">
-              <label for="stockItemId">Talep Edilen Kritik Malzeme <span class="req-star">*</span></label>
-              <select id="stockItemId" name="stockItemId" required>
-                <option value="" disabled selected>-- Malzeme Seçiniz --</option>
-                <% lowStockItems.forEach(item => { %>
-                  <option value="<%= item.id %>">[<%= item.stockCode %>] <%= item.name %> (Stok: <%= item.currentStock %> <%= item.unit %>)</option>
-                <% }); %>
-              </select>
-            </div>
-
-            <div class="input-group">
-              <label for="requestedQuantity">Talep Edilen Miktar <span class="req-star">*</span></label>
-              <input type="number" id="requestedQuantity" name="requestedQuantity" step="1" min="1" value="500" required placeholder="Örn: 500">
-            </div>
-
-            <div class="input-group">
-              <label for="urgency">Aciliyet Derecesi <span class="req-star">*</span></label>
-              <select id="urgency" name="urgency" required>
-                <option value="Normal">Normal</option>
-                <option value="High">Yüksek</option>
-                <option value="Urgent">Acil (Kritik Stok)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="notes">Satın Alma Notu / Talep Gerekçesi</label>
-            <input type="text" id="notes" name="notes" placeholder="Örn: Stok kritik seviyenin altına düştü. Üretim aksamaması için satın alma talebi iletildi.">
-          </div>
-
-          <button type="submit" class="btn btn-warning" style="align-self: flex-start;">
-            📨 Satın Alma Talebi Oluştur
-          </button>
-        </form>
-      </div>
-
-      <!-- Critical Stock Items Table -->
       <div class="table-wrapper" style="margin-bottom: 2rem;">
-        <h3 style="color: var(--rose); font-size: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-weight: 700;">
-          🚨 Asgari Limit Altındaki Kritik Stoklar (<%= lowStockItems ? lowStockItems.length : 0 %>)
+        <h3 style="color: var(--rose); font-size: 1.05rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-weight: 700;">
+          🚨 Asgari Stok Seviyesi Altındaki Malzemeler (<%= lowStockItems.length %>)
         </h3>
         <table class="data-table">
           <thead>
@@ -152,93 +83,37 @@
               <th>Stok Kodu</th>
               <th>Malzeme Adı</th>
               <th>Kategori</th>
-              <th>Mevcut Depo Stoğu</th>
-              <th>Asgari Stok (Min)</th>
-              <th>Azami Stok (Max)</th>
-              <th>Tedarikçi</th>
-              <th>Durum</th>
+              <th>Mevcut Stok</th>
+              <th>Min Stok</th>
+              <th>Eksik Miktar</th>
+              <th>Ana Tedarikçi</th>
+              <th>Aksiyon</th>
             </tr>
           </thead>
           <tbody>
-            <% if (lowStockItems && lowStockItems.length > 0) { %>
+            <% if (lowStockItems.length === 0) { %>
+              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Kritik stok seviyesinin altında malzeme bulunmamaktadır. Tüm stoklar güvenli seviyede! 🎉</td></tr>
+            <% } else { %>
               <% lowStockItems.forEach(item => { %>
+                <% const missing = (parseFloat(item.minStock || 0) - parseFloat(item.currentStock)).toFixed(2); %>
                 <tr>
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= item.stockCode %></strong></td>
-                  <td><strong style="color: var(--text-main);"><%= item.name %></strong></td>
+                  <td><strong style="color: var(--text-primary);"><%= item.name %></strong></td>
                   <td><span class="status-pill status-approved"><%= item.category %></span></td>
+                  <td><strong style="color: var(--rose);"><%= item.currentStock %> <%= item.unit %></strong></td>
+                  <td><%= item.minStock %> <%= item.unit %></td>
+                  <td><strong style="color: var(--amber);">+<%= missing > 0 ? missing : 10 %> <%= item.unit %></strong></td>
+                  <td><%= item.supplier || 'Ana Tedarikçi A.Ş.' %></td>
                   <td>
-                    <strong style="font-size: 1.05rem; color: var(--rose);">
-                      <%= item.currentStock %> <%= item.unit %>
-                    </strong>
-                  </td>
-                  <td><strong><%= item.minStock %> <%= item.unit %></strong></td>
-                  <td><%= item.maxStock %> <%= item.unit %></td>
-                  <td><span style="font-size: 0.85rem; color: var(--text-secondary);"><%= item.supplier || '—' %></span></td>
-                  <td><span class="status-pill status-rejected">🚨 Stok Açığı</span></td>
-                </tr>
-              <% }) %>
-            <% } else { %>
-              <tr>
-                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                  Tebrikler! Asgari seviyenin altında kalan herhangi bir kritik stok kalemi bulunmamaktadır.
-                </td>
-              </tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Sent Requisitions Table -->
-      <div class="table-wrapper">
-        <h3 style="color: var(--indigo); font-size: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-weight: 700;">
-          📨 Satın Alma Departmanına Gönderilmiş Talepler (<%= requisitions ? requisitions.length : 0 %>)
-        </h3>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Talep No</th>
-              <th>Malzeme Kodu & Adı</th>
-              <th>Talep Edilen Miktar</th>
-              <th>Aciliyet</th>
-              <th>Talep Eden</th>
-              <th>Tarih</th>
-              <th>Tedarik Durumu</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (requisitions && requisitions.length > 0) { %>
-              <% requisitions.forEach(reqItem => { %>
-                <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= reqItem.requisitionNo %></strong></td>
-                  <td>
-                    <strong style="color: var(--text-main);"><%= reqItem.stockItem ? reqItem.stockItem.name : '—' %></strong>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= reqItem.stockItem ? reqItem.stockItem.stockCode : '' %></div>
-                  </td>
-                  <td><strong><%= reqItem.requestedQuantity %> <%= reqItem.stockItem ? reqItem.stockItem.unit : 'Adet' %></strong></td>
-                  <td>
-                    <% if (reqItem.urgency === 'Urgent') { %>
-                      <span class="status-pill status-rejected">🚨 Acil</span>
-                    <% } else { %>
-                      <span class="status-pill status-approved">Normal</span>
-                    <% } %>
-                  </td>
-                  <td><%= reqItem.requesterName %></td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(reqItem.createdAt).toLocaleDateString('tr-TR') %></td>
-                  <td>
-                    <% if (reqItem.status === 'Ordered') { %>
-                      <span class="status-pill status-active">✅ Satın Alma Siparişine Dönüştü</span>
-                    <% } else { %>
-                      <span class="status-pill status-pending">⏳ Satın Alma Onayı Bekliyor</span>
-                    <% } %>
+                    <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
+                      <input type="hidden" name="stockItemId" value="<%= item.id %>">
+                      <input type="hidden" name="requestedQuantity" value="<%= missing > 0 ? missing : 10 %>">
+                      <input type="hidden" name="urgency" value="Urgent">
+                      <button type="submit" class="btn btn-sm btn-success">📩 Otomatik Satın Alma Talebi Aç</button>
+                    </form>
                   </td>
                 </tr>
-              <% }) %>
-            <% } else { %>
-              <tr>
-                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                  Henüz gönderilmiş herhangi bir satın alma talebi bulunmamaktadır.
-                </td>
-              </tr>
+              <% }); %>
             <% } %>
           </tbody>
         </table>
@@ -247,13 +122,8 @@
   </div>
 
   <script>
-    function updateClock() {
-      const now = new Date();
-      const el = document.getElementById('liveTime');
-      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
+    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    updateClock(); setInterval(updateClock, 1000);
   </script>
 </body>
 </html>

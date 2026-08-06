@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Satın Alma Siparişleri — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="module-body">
 
@@ -19,15 +19,25 @@
     </div>
 
     <div class="module-sidebar-section">
-      <div class="mss-label">SATIN ALMA YÖNETİMİ</div>
-      <a href="/purchase/orders" class="mss-link active">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
-        Satın Alma Siparişi
-      </a>
+      <div class="mss-label">🛒 SATIN ALMA YÖNETİMİ</div>
+
+      <div class="mss-group-title">📊 DASHBOARD & ONAY</div>
       <div class="mss-sub">
-        <a href="/purchase/orders" class="mss-sub-link active">📋 Satın Alma Siparişleri Listesi</a>
-        <a href="/purchase/orders/add" class="mss-sub-link">➕ Yeni Sipariş Ekle</a>
-        <a href="/purchase/orders#requisitions" class="mss-sub-link">📩 Gelen Stok Talepleri</a>
+        <a href="/purchase/analytics" class="mss-sub-link">📊 Satın Alma Analitiği</a>
+        <a href="/purchase/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+      </div>
+
+      <div class="mss-group-title">📋 SATIN ALMA OPERASYONLARI</div>
+      <div class="mss-sub">
+        <a href="/purchase/requisitions" class="mss-sub-link">📩 Satın Alma Talepleri</a>
+        <a href="/purchase/rfq" class="mss-sub-link">📨 Teklif Yönetimi (RFQ)</a>
+        <a href="/purchase/orders" class="mss-sub-link active">📦 Satın Alma Siparişleri</a>
+        <a href="/purchase/goods-receipt" class="mss-sub-link">🚛 Mal Kabul (GRN)</a>
+      </div>
+
+      <div class="mss-group-title">🏭 TEDARİKÇİ YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/purchase/suppliers" class="mss-sub-link">🏢 Tedarikçi Kartları</a>
       </div>
     </div>
 
@@ -67,14 +77,25 @@
 
     <!-- Content -->
     <main class="module-content">
+      <!-- Sub-Nav Bar -->
+      <div class="module-subnav">
+        <a href="/purchase/analytics" class="msn-link">📊 Analitik</a>
+        <a href="/purchase/approvals" class="msn-link">⚡ Onaylar</a>
+        <a href="/purchase/requisitions" class="msn-link">📩 Talepler</a>
+        <a href="/purchase/rfq" class="msn-link">📨 RFQ</a>
+        <a href="/purchase/orders" class="msn-link active">📦 Siparişler</a>
+        <a href="/purchase/goods-receipt" class="msn-link">🚛 Mal Kabul</a>
+        <a href="/purchase/suppliers" class="msn-link">🏢 Tedarikçiler</a>
+      </div>
+
       <div class="page-header">
         <div>
-          <h1>Satın Alma Siparişleri</h1>
+          <h1>Satın Alma Siparişleri (PO)</h1>
           <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Tedarikçi siparişlerini, hammadde girdilerini ve alış bütçenizi yönetin.</p>
         </div>
         <a href="/purchase/orders/add" class="btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Yeni Satın Alma Ekle
+          Yeni Satın Alma Siparişi Ekle
         </a>
       </div>
 
@@ -210,76 +231,11 @@
                     <% } %>
                   </td>
                   <td>
-                    <a href="/purchase/orders/<%= order.id %>/edit" class="btn btn-sm btn-secondary" style="white-space: nowrap;">✏️ Detay / Düzenle</a>
+                    <a href="/purchase/orders/<%= order.id %>/detail" class="btn btn-sm btn-secondary" style="white-space: nowrap;">🔍 Gör / Form</a>
+                    <a href="/purchase/orders/<%= order.id %>/edit" class="btn btn-sm btn-secondary" style="white-space: nowrap; margin-left: 4px;">✏️ Düzenle</a>
                   </td>
                 </tr>
               <% }); %>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Incoming Requisitions Table -->
-      <div class="table-wrapper" style="margin-top: 2rem;">
-        <h3 style="color: var(--indigo); font-size: 1.05rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-weight: 700;">
-          📨 Stok & Üretim Modüllerinden Gelen Satın Alma Talepleri (<%= requisitions ? requisitions.length : 0 %>)
-        </h3>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Talep No</th>
-              <th>Kaynak Modül</th>
-              <th>Talep Edilen Malzeme</th>
-              <th>Miktar</th>
-              <th>Aciliyet</th>
-              <th>Talep Eden</th>
-              <th>Gerekçe / Not</th>
-              <th>Aksiyon</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (requisitions && requisitions.length > 0) { %>
-              <% requisitions.forEach(reqItem => { %>
-                <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= reqItem.requisitionNo %></strong></td>
-                  <td>
-                    <% if (reqItem.sourceModule === 'Stock') { %>
-                      <span class="status-pill status-approved">📦 Stok Modülü (Min/Max)</span>
-                    <% } else { %>
-                      <span class="status-pill status-onleave">🏭 Üretim Modülü (MRP)</span>
-                    <% } %>
-                  </td>
-                  <td>
-                    <strong style="color: var(--text-main);"><%= reqItem.stockItem ? reqItem.stockItem.name : '—' %></strong>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= reqItem.stockItem ? reqItem.stockItem.stockCode : '' %></div>
-                  </td>
-                  <td><strong><%= reqItem.requestedQuantity %> <%= reqItem.stockItem ? reqItem.stockItem.unit : 'Adet' %></strong></td>
-                  <td>
-                    <% if (reqItem.urgency === 'Urgent') { %>
-                      <span class="status-pill status-rejected">🚨 Acil</span>
-                    <% } else { %>
-                      <span class="status-pill status-approved">Normal</span>
-                    <% } %>
-                  </td>
-                  <td><%= reqItem.requesterName %></td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= reqItem.notes || '—' %></td>
-                  <td>
-                    <% if (reqItem.status !== 'Ordered') { %>
-                      <form action="/purchase/requisitions/<%= reqItem.id %>/convert" method="POST">
-                        <button type="submit" class="btn btn-sm btn-success">💳 Siparişe Dönüştür</button>
-                      </form>
-                    <% } else { %>
-                      <span class="status-pill status-active">✓ Sipariş Olusturuldu</span>
-                    <% } %>
-                  </td>
-                </tr>
-              <% }); %>
-            <% } else { %>
-              <tr>
-                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                  Henüz onay bekleyen gelen satın alma talebi bulunmamaktadır.
-                </td>
-              </tr>
             <% } %>
           </tbody>
         </table>

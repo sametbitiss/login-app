@@ -37,7 +37,7 @@ class PurchaseController {
   renderAddOrder = asyncHandler(async (req, res) => {
     const nextOrderNo = await purchaseService.getNextOrderNo();
     const stockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal'] } },
+      where: { status: 'Active' },
       order: [['name', 'ASC']]
     });
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
@@ -82,10 +82,10 @@ class PurchaseController {
       res.redirect('/purchase/orders');
     } catch (err) {
       const nextOrderNo = await purchaseService.getNextOrderNo();
-      const stockItems = await StockItem.findAll({
-        where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal'] } },
-        order: [['name', 'ASC']]
-      });
+    const stockItems = await StockItem.findAll({
+      where: { status: 'Active' },
+      order: [['name', 'ASC']]
+    });
       const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
 
       res.render('purchase/add', {
@@ -287,7 +287,7 @@ class PurchaseController {
   renderAddRfq = asyncHandler(async (req, res) => {
     const nextRfqNo = await purchaseService.getNextRfqNo();
     const stockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal'] } },
+      where: { status: 'Active' },
       order: [['name', 'ASC']]
     });
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });

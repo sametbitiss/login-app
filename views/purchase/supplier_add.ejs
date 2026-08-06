@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Satın Alma Siparişi Düzenle — <%= order.orderNo %></title>
+  <title>Yeni Tedarikçi Kartı — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -21,11 +21,11 @@
       <div class="mss-sub">
         <a href="/purchase/requisitions" class="mss-sub-link">📩 Satın Alma Talepleri</a>
         <a href="/purchase/rfq" class="mss-sub-link">📨 Teklif Yönetimi (RFQ)</a>
-        <a href="/purchase/orders" class="mss-sub-link active">📦 Satın Alma Siparişleri</a>
+        <a href="/purchase/orders" class="mss-sub-link">📦 Satın Alma Siparişleri</a>
         <a href="/purchase/goods-receipt" class="mss-sub-link">🚛 Mal Kabul (GRN)</a>
       </div>
       <div class="mss-group-title">🏭 TEDARİKÇİ YÖNETİMİ</div>
-      <div class="mss-sub"><a href="/purchase/suppliers" class="mss-sub-link">🏢 Tedarikçi Kartları</a></div>
+      <div class="mss-sub"><a href="/purchase/suppliers" class="mss-sub-link active">🏢 Tedarikçi Kartları</a></div>
     </div>
     <div class="module-sidebar-user"><div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div><div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div></div>
   </aside>
@@ -45,16 +45,16 @@
       <div class="module-subnav">
         <a href="/purchase/analytics" class="msn-link">📊 Analitik</a><a href="/purchase/approvals" class="msn-link">⚡ Onaylar</a>
         <a href="/purchase/requisitions" class="msn-link">📩 Talepler</a><a href="/purchase/rfq" class="msn-link">📨 RFQ</a>
-        <a href="/purchase/orders" class="msn-link active">📦 Siparişler</a><a href="/purchase/goods-receipt" class="msn-link">🚛 Mal Kabul</a>
-        <a href="/purchase/suppliers" class="msn-link">🏢 Tedarikçiler</a>
+        <a href="/purchase/orders" class="msn-link">📦 Siparişler</a><a href="/purchase/goods-receipt" class="msn-link">🚛 Mal Kabul</a>
+        <a href="/purchase/suppliers" class="msn-link active">🏢 Tedarikçiler</a>
       </div>
 
       <div class="page-header">
         <div>
-          <h1>Satın Alma Siparişi Düzenle: <%= order.orderNo %></h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sipariş detaylarını ve durum bilgisini güncelleyin.</p>
+          <h1>Yeni Tedarikçi Kartı Oluştur</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sistemde kullanılacak yeni tedarikçinin ticari ve iletişim bilgilerini tanımlayın.</p>
         </div>
-        <a href="/purchase/orders" class="btn btn-secondary">← Sipariş Listesine Dön</a>
+        <a href="/purchase/suppliers" class="btn btn-secondary">← Tedarikçi Listesine Dön</a>
       </div>
 
       <% if (error) { %>
@@ -62,63 +62,68 @@
       <% } %>
 
       <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md);">
-        <form action="/purchase/orders/<%= order.id %>/edit" method="POST">
+        <form action="/purchase/suppliers/add" method="POST">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="form-group">
-              <label class="form-label">Sipariş No</label>
-              <input type="text" value="<%= order.orderNo %>" class="form-control" readonly>
+              <label class="form-label">Tedarikçi Kodu</label>
+              <input type="text" name="supplierCode" value="<%= nextCode %>" class="form-control" readonly>
             </div>
             <div class="form-group">
-              <label class="form-label">Tedarikçi Unvanı</label>
-              <input type="text" name="supplierName" value="<%= order.supplierName %>" class="form-control" required>
+              <label class="form-label">Ticari Unvan / Şirket Adı *</label>
+              <input type="text" name="companyName" placeholder="Örn: ABC Demir Çelik San. ve Tic. A.Ş." class="form-control" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Sipariş Durumu</label>
-              <select name="status" class="form-control">
-                <option value="Ordered" <%= order.status === 'Ordered' ? 'selected' : '' %>>Ordered (Sipariş Verildi)</option>
-                <option value="Pending_Approval" <%= order.status === 'Pending_Approval' ? 'selected' : '' %>>Pending_Approval (Onay Bekliyor)</option>
-                <option value="Partial_Received" <%= order.status === 'Partial_Received' ? 'selected' : '' %>>Partial_Received (Kısmi Teslim)</option>
-                <option value="Received" <%= order.status === 'Received' ? 'selected' : '' %>>Received (Teslim Alındı / Stok Güncelle)</option>
-                <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled (İptal)</option>
+              <label class="form-label">Vergi Dairesi</label>
+              <input type="text" name="taxOffice" placeholder="Örn: Kadıköy" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vergi Numarası</label>
+              <input type="text" name="taxNo" placeholder="10 Haneli Vergi No" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tedarikçi Kategorisi</label>
+              <select name="category" class="form-control">
+                <option value="Hammadde">Hammadde</option>
+                <option value="Yari_Mamul">Yarı Mamul</option>
+                <option value="Yedek_Parca">Yedek Parça / Ekipman</option>
+                <option value="Ambalaj">Ambalaj & Paketleme</option>
+                <option value="Hizmet">Hizmet & Danışmanlık</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Malzeme / Stok Kartı</label>
-              <select name="stockItemId" class="form-control" required>
-                <% stockItems.forEach(item => { %>
-                  <option value="<%= item.id %>" <%= order.stockItemId === item.id ? 'selected' : '' %>><%= item.stockCode %> — <%= item.name %></option>
-                <% }); %>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Miktar</label>
-              <input type="number" name="quantity" value="<%= order.quantity %>" min="1" step="0.01" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Birim Alış Fiyatı (TL)</label>
-              <input type="number" name="unitPrice" value="<%= order.unitPrice %>" min="0" step="0.01" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">İskonto Oranı (%)</label>
-              <input type="number" name="discountRate" value="<%= order.discountRate %>" min="0" max="100" step="0.1" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Ödeme Koşulu</label>
+              <label class="form-label">Ödeme Vadesi</label>
               <select name="paymentTerm" class="form-control">
-                <option value="Vadeli_30" <%= order.paymentTerm === 'Vadeli_30' ? 'selected' : '' %>>30 Gün Vadeli</option>
-                <option value="Vadeli_60" <%= order.paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
-                <option value="Vadeli_90" <%= order.paymentTerm === 'Vadeli_90' ? 'selected' : '' %>>90 Gün Vadeli</option>
-                <option value="Pesin" <%= order.paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin Ödeme</option>
+                <option value="Vadeli_30">30 Gün Vadeli</option>
+                <option value="Vadeli_60">60 Gün Vadeli</option>
+                <option value="Vadeli_90">90 Gün Vadeli</option>
+                <option value="Pesin">Peşin Ödeme</option>
+                <option value="Kredi_Karti">Kredi Kartı</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">İletişim Sorumlusu Adı</label>
+              <input type="text" name="contactPerson" placeholder="Örn: Mehmet Kaplan" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-Posta Adresi</label>
+              <input type="email" name="email" placeholder="siparis@tedarikci.com" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telefon Numarası</label>
+              <input type="text" name="phone" placeholder="+90 (212) 555 0000" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Şehir</label>
+              <input type="text" name="city" placeholder="İstanbul" class="form-control">
             </div>
           </div>
           <div class="form-group" style="margin-top: 16px;">
-            <label class="form-label">Notlar / Açıklama</label>
-            <textarea name="notes" class="form-control" rows="2"><%= order.notes || '' %></textarea>
+            <label class="form-label">Açık Adres</label>
+            <textarea name="address" class="form-control" rows="2" placeholder="Organize Sanayi Bölgesi..."></textarea>
           </div>
           <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn">💾 Değişiklikleri Kaydet</button>
-            <a href="/purchase/orders" class="btn btn-secondary">İptal</a>
+            <button type="submit" class="btn">🏢 Tedarikçi Kartını Kaydet</button>
+            <a href="/purchase/suppliers" class="btn btn-secondary">İptal</a>
           </div>
         </form>
       </div>

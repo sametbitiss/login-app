@@ -4,50 +4,56 @@ const stockController = require('../controllers/stockController');
 const { verifyToken } = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/rbacMiddleware');
 
-// Protect stock routes with JWT & RBAC (Admin, Stock_Manager)
-router.use(verifyToken, authorizeRoles('Admin', 'Stock_Manager'));
+// Protect stock routes with JWT & RBAC (All roles can access stock module)
+router.use(verifyToken);
+router.use(authorizeRoles('Admin', 'Stock_Manager', 'Sales_Manager', 'Purchase_Manager', 'Production_Manager', 'Quality_Manager', 'Employee'));
 
-// 1. Stock Items Routes
-router.get('/', stockController.listItems);
+// 0. Stock Module Root -> Redirects to Analytics Dashboard
+router.get('/', (req, res) => res.redirect('/stock/analytics'));
+
+// 1. Stock Analytics Dashboard
+router.get('/analytics', stockController.showAnalytics);
+
+// 2. Stock Items Routes
 router.get('/items', stockController.listItems);
 router.get('/add', stockController.renderAdd);
 router.get('/items/add', stockController.renderAdd);
 router.post('/add', stockController.addItem);
 router.post('/items/add', stockController.addItem);
 
-// 2. Multi-Warehouse & Locations Routes
+// 3. Multi-Warehouse & Locations Routes
 router.get('/warehouses', stockController.listWarehouses);
 router.post('/warehouses/add', stockController.addWarehouse);
 router.post('/locations/add', stockController.addLocation);
 
-// 3. Lot/Batch & Serial Number Routes
+// 4. Lot/Batch & Serial Number Routes
 router.get('/lots', stockController.listLots);
 router.post('/lots/add', stockController.addLot);
 
-// 4. Movements & Transfers Routes
+// 5. Movements & Transfers Routes
 router.get('/transfers', stockController.listTransfers);
 router.post('/transfers/add', stockController.addTransfer);
 
-// 5. Goods Receipt (Satın Alma Mal Kabul)
+// 6. Goods Receipt (Satın Alma Mal Kabul)
 router.get('/goods-receipt', stockController.listGoodsReceipt);
 router.post('/goods-receipt/:id/confirm', stockController.confirmGoodsReceipt);
 
-// 6. Dispatch (Sevkiyat & Çıkış)
+// 7. Dispatch (Sevkiyat & Çıkış)
 router.get('/dispatch', stockController.listDispatch);
 router.post('/dispatch/:id/confirm', stockController.confirmDispatch);
 
-// 7. Inventory Counting Routes
+// 8. Inventory Counting Routes
 router.get('/counting', stockController.listCounting);
 router.post('/counting/add', stockController.addCounting);
 
-// 8. Critical Stock & Min/Max Alerts Routes
+// 9. Critical Stock & Min/Max Alerts Routes
 router.get('/alerts', stockController.listAlerts);
 router.post('/alerts/requisition', stockController.createStockRequisition);
 
-// 9. Valuation (FIFO / Weighted Average) Routes
+// 10. Valuation (FIFO / Weighted Average) Routes
 router.get('/valuation', stockController.listValuation);
 
-// 10. Handheld Terminal / Barcode Scanner Routes
+// 11. Handheld Terminal / Barcode Scanner Routes
 router.get('/terminal', stockController.renderTerminal);
 
 module.exports = router;
