@@ -6,6 +6,150 @@
   <title>Yeni Stok Kartı Ekle — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Tab Container & Aesthetics */
+    .form-tabs-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .form-tabs-header {
+      display: flex;
+      gap: 12px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 28px;
+    }
+
+    .form-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 12px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .form-tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .form-tab-btn.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Ultra Aesthetic Input Styling */
+    .aesthetic-group {
+      margin-bottom: 22px;
+    }
+    .aesthetic-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .aesthetic-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      padding: 14px 16px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .aesthetic-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+    }
+    .aesthetic-input::placeholder {
+      color: #475569;
+    }
+    .aesthetic-input[readonly] {
+      background: #090d16;
+      border-color: #334155;
+      color: #818cf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      cursor: not-allowed;
+    }
+
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+    /* Footer Buttons */
+    .tab-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-nav-secondary {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-nav-secondary:hover {
+      color: #fff;
+      background: #334155;
+    }
+    .btn-submit-glow {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 14px 32px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-submit-glow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(16, 185, 129, 0.55);
+    }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -86,114 +230,208 @@
       <div class="page-header">
         <div>
           <h1>Yeni Stok Kartı Oluştur</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Yeni malzeme, hammadde veya mamul ürün tanımlayın.</p>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Sisteme yeni malzeme, hammadde veya mamul ürün tanımlayın.</p>
         </div>
-        <a href="/stock/items" class="btn btn-secondary">← Stok Listesine Dön</a>
+        <a href="/stock/items" class="btn btn-secondary" style="border-radius: 10px;">← Stok Kartları Listesi</a>
       </div>
 
       <% if (error) { %>
-        <div style="background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose); padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-weight: 600;">⚠️ <%= error %></div>
+        <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+          <span>⚠️</span> <%= error %>
+        </div>
       <% } %>
 
-      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md);">
-        <form action="/stock/items/add" method="POST">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="form-group">
-              <label class="form-label">Stok Kodu (Otomatik)</label>
-              <input type="text" name="stockCode" value="<%= nextCode %>" class="form-control" readonly style="background: var(--bg-elevated); cursor: not-allowed; opacity: 0.85; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--indigo);" title="Sistem tarafından otomatik sıradaki kod verilir">
-              <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; display: block;">🔒 Sıradaki benzersiz otomatik stok kodu</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Barkod Numarası</label>
-              <input type="text" name="barcode" placeholder="Örn: 8690123456789" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Malzeme / Ürün Adı *</label>
-              <input type="text" name="name" placeholder="Örn: Paslanmaz Çelik Cıvata M8x50" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Kategori *</label>
-              <select name="category" class="form-control" required>
-                <% CATEGORIES.forEach(cat => { %>
-                  <% const val = typeof cat === 'object' ? cat.value : cat; %>
-                  <% const lbl = typeof cat === 'object' ? cat.label : cat; %>
-                  <option value="<%= val %>"><%= lbl %></option>
-                <% }); %>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Ölçü Birimi *</label>
-              <select name="unit" class="form-control" required>
-                <option value="Adet">Adet</option>
-                <option value="Kg">Kilogram (Kg)</option>
-                <option value="Lt">Litre (Lt)</option>
-                <option value="Mt">Metre (Mt)</option>
-                <option value="M2">Metrekare (M²)</option>
-                <option value="M3">Metreküp (M³)</option>
-                <option value="Paket">Paket</option>
-                <option value="Koli">Koli</option>
-                <option value="Ton">Ton</option>
-                <option value="Set">Set</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Marka / Üretici</label>
-              <input type="text" name="brand" placeholder="Örn: Erdemir / Bosch" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Başlangıç Mevcut Stok</label>
-              <input type="number" name="currentStock" value="0" min="0" step="0.01" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Asgari Stok (Min Alert)</label>
-              <input type="number" name="minStock" value="10" min="0" step="0.01" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Azami Stok (Max)</label>
-              <input type="number" name="maxStock" value="1000" min="0" step="0.01" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Birim Alış Fiyatı (TL)</label>
-              <input type="number" name="purchasePrice" value="0.00" min="0" step="0.01" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Birim Satış Fiyatı (TL)</label>
-              <input type="number" name="salePrice" value="0.00" min="0" step="0.01" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">KDV Oranı (%)</label>
-              <select name="taxRate" class="form-control">
-                <option value="20">KDV %20</option>
-                <option value="10">KDV %10</option>
-                <option value="1">KDV %1</option>
-                <option value="0">KDV %0</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Varsayılan Depo / Raf Konumu</label>
-              <input type="text" name="warehouseLocation" placeholder="Örn: Depo-A / Raf-04" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Ana Tedarikçi</label>
-              <input type="text" name="supplier" placeholder="Örn: Norm Bağlantı Elemanları A.Ş." class="form-control">
+      <form action="/stock/items/add" method="POST" id="addStockForm">
+        <div class="form-tabs-container">
+          <!-- Interactive Tab Buttons Header -->
+          <div class="form-tabs-header">
+            <button type="button" class="form-tab-btn active" id="tabBtn-1" onclick="switchTab(1)">
+              <span>📦</span> 1. Temel Tanım
+            </button>
+            <button type="button" class="form-tab-btn" id="tabBtn-2" onclick="switchTab(2)">
+              <span>📊</span> 2. Stok Seviyeleri
+            </button>
+            <button type="button" class="form-tab-btn" id="tabBtn-3" onclick="switchTab(3)">
+              <span>💰</span> 3. Fiyat & Tedarik
+            </button>
+            <button type="button" class="form-tab-btn" id="tabBtn-4" onclick="switchTab(4)">
+              <span>📝</span> 4. Notlar & Açıklama
+            </button>
+          </div>
+
+          <!-- TAB 1: TEMEL TANIM -->
+          <div class="tab-content active" id="tabContent-1">
+            <div class="form-grid-3">
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>Stok Kodu (Otomatik)</span>
+                  <span style="color: #6366f1; font-size: 0.72rem;">🔒 KİLİTLİ KOD</span>
+                </label>
+                <input type="text" name="stockCode" value="<%= nextCode %>" class="aesthetic-input" readonly>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Barkod Numarası</label>
+                <input type="text" name="barcode" placeholder="Örn: 8690123456789" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Malzeme / Ürün Adı *</label>
+                <input type="text" name="name" placeholder="Örn: Paslanmaz Çelik Cıvata M8x50" class="aesthetic-input" required>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Kategori *</label>
+                <select name="category" class="aesthetic-input" required style="cursor: pointer;">
+                  <% CATEGORIES.forEach(cat => { %>
+                    <% const val = typeof cat === 'object' ? cat.value : cat; %>
+                    <% const lbl = typeof cat === 'object' ? cat.label : cat; %>
+                    <option value="<%= val %>"><%= lbl %></option>
+                  <% }); %>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Ölçü Birimi *</label>
+                <select name="unit" class="aesthetic-input" required style="cursor: pointer;">
+                  <option value="Adet">Adet</option>
+                  <option value="Kg">Kilogram (Kg)</option>
+                  <option value="Lt">Litre (Lt)</option>
+                  <option value="Mt">Metre (Mt)</option>
+                  <option value="M2">Metrekare (M²)</option>
+                  <option value="M3">Metreküp (M³)</option>
+                  <option value="Paket">Paket</option>
+                  <option value="Koli">Koli</option>
+                  <option value="Ton">Ton</option>
+                  <option value="Set">Set</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Marka / Üretici</label>
+                <input type="text" name="brand" placeholder="Örn: Erdemir / Bosch" class="aesthetic-input">
+              </div>
             </div>
           </div>
-          <div class="form-group" style="margin-top: 16px;">
-            <label class="form-label">Malzeme Açıklaması / Notlar</label>
-            <textarea name="description" class="form-control" rows="2" placeholder="Ürün teknik özellikleri..."></textarea>
+
+          <!-- TAB 2: STOK SEVİYELERİ -->
+          <div class="tab-content" id="tabContent-2">
+            <div class="form-grid-2">
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Başlangıç Mevcut Stok Miktarı</label>
+                <input type="number" name="currentStock" value="0" min="0" step="0.01" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>Asgari Stok Seviyesi (Min Alert) *</span>
+                  <span style="color: #f43f5e; font-size: 0.72rem;">🚨 UYARI LİMİTİ</span>
+                </label>
+                <input type="number" name="minStock" value="10" min="0" step="0.01" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Azami Stok Seviyesi (Max Limit)</label>
+                <input type="number" name="maxStock" value="1000" min="0" step="0.01" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Varsayılan Depo / Raf Konumu</label>
+                <input type="text" name="warehouseLocation" placeholder="Örn: Ankara Depo / Koridor-A / Raf-04" class="aesthetic-input">
+              </div>
+            </div>
           </div>
-          <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn">📦 Stok Kartını Kaydet</button>
-            <a href="/stock/items" class="btn btn-secondary">İptal</a>
+
+          <!-- TAB 3: FİYAT & TEDARİK -->
+          <div class="tab-content" id="tabContent-3">
+            <div class="form-grid-2">
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Birim Alış Fiyatı (TL)</label>
+                <input type="number" name="purchasePrice" value="0.00" min="0" step="0.01" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Birim Satış Fiyatı (TL)</label>
+                <input type="number" name="salePrice" value="0.00" min="0" step="0.01" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">KDV Oranı (%)</label>
+                <select name="taxRate" class="aesthetic-input" style="cursor: pointer;">
+                  <option value="20">KDV %20 (Genel Standard)</option>
+                  <option value="10">KDV %10 (Gıda / Hizmet)</option>
+                  <option value="1">KDV %1 (İndirimli)</option>
+                  <option value="0">KDV %0 (Muaf)</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Ana Tedarikçi Firma</label>
+                <input type="text" name="supplier" placeholder="Örn: Norm Bağlantı Elemanları A.Ş." class="aesthetic-input">
+              </div>
+            </div>
           </div>
-        </form>
-      </div>
+
+          <!-- TAB 4: NOTLAR & AÇIKLAMA -->
+          <div class="tab-content" id="tabContent-4">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Malzeme Teknik Açıklaması & Spesifikasyonlar</label>
+              <textarea name="description" class="aesthetic-input" rows="5" placeholder="Ürün teknik resim detayları, toleranslar veya imalat standartları..."></textarea>
+            </div>
+          </div>
+
+          <!-- TAB FOOTER NAVIGATION -->
+          <div class="tab-footer">
+            <div style="display: flex; gap: 12px;">
+              <button type="button" class="btn-nav-secondary" id="btnPrev" onclick="navigateTab(-1)" style="display: none;">← Önceki Adım</button>
+              <button type="button" class="btn-nav-secondary" id="btnNext" onclick="navigateTab(1)">Sonraki Adım →</button>
+            </div>
+
+            <button type="submit" class="btn-submit-glow">
+              <span>📦</span> Stok Kartını Kaydet ve Yayınla
+            </button>
+          </div>
+        </div>
+      </form>
     </main>
   </div>
 
   <script>
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
     updateClock(); setInterval(updateClock, 1000);
+
+    let currentTab = 1;
+    const totalTabs = 4;
+
+    function switchTab(tabIndex) {
+      currentTab = tabIndex;
+      for (let i = 1; i <= totalTabs; i++) {
+        const btn = document.getElementById(`tabBtn-${i}`);
+        const content = document.getElementById(`tabContent-${i}`);
+        if (i === tabIndex) {
+          btn.classList.add('active');
+          content.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+          content.classList.remove('active');
+        }
+      }
+      updateNavButtons();
+    }
+
+    function navigateTab(direction) {
+      const next = currentTab + direction;
+      if (next >= 1 && next <= totalTabs) {
+        switchTab(next);
+      }
+    }
+
+    function updateNavButtons() {
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      btnPrev.style.display = currentTab === 1 ? 'none' : 'inline-block';
+      btnNext.style.display = currentTab === totalTabs ? 'none' : 'inline-block';
+    }
   </script>
 </body>
 </html>

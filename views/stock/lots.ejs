@@ -6,6 +6,98 @@
   <title>Lot / Parti ve Seri Numarası İzlenebilirliği — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* High-End Form Card Styling */
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+
+    .form-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* Ultra Aesthetic Inputs */
+    .aesthetic-group { margin-bottom: 16px; }
+    .aesthetic-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .aesthetic-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      padding: 12px 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .aesthetic-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+    }
+    .aesthetic-input::placeholder { color: #475569; }
+
+    .btn-indigo-gradient {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -65,69 +157,90 @@
       <div class="page-header">
         <div>
           <h1>Lot / Parti ve Seri Numarası İzlenebilirliği</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Geri çağırma, son kullanma tarihi ve kalite güvencesi için lot/seri no takibi.</p>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Geri çağırma, son kullanma tarihi ve kalite güvencesi için lot/seri no takibi.</p>
         </div>
       </div>
 
       <!-- Add Lot Form -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); margin-bottom: 24px;">
-        <h3 style="font-size: 1.1rem; color: var(--indigo); margin-bottom: 16px;">🏷️ Yeni Lot / Parti veya Seri No Tanımla</h3>
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon">🏷️</div>
+          <div>
+            <div class="form-card-title">Yeni Lot / Parti veya Seri No Tanımla</div>
+            <div class="form-card-sub">Geri çağırma, kalite sertifikasyonu ve SKT izlenebilirliği tanımı</div>
+          </div>
+        </div>
+
         <form action="/stock/lots/add" method="POST">
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-            <div class="form-group">
-              <label class="form-label">Stok Kalemi *</label>
-              <select name="stockItemId" class="form-control" required>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Stok Kalemi *</label>
+              <select name="stockItemId" class="aesthetic-input" required style="cursor: pointer;">
                 <% stockItems.forEach(item => { %>
                   <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %></option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Bulunduğu Depo *</label>
-              <select name="warehouseId" class="form-control" required>
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Bulunduğu Depo *</label>
+              <select name="warehouseId" class="aesthetic-input" required style="cursor: pointer;">
                 <% warehouses.forEach(w => { %>
                   <option value="<%= w.id %>"><%= w.name %></option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Lot / Parti Numarası *</label>
-              <input type="text" name="lotNumber" placeholder="Örn: LOT-2026-08A" class="form-control" required>
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Lot / Parti Numarası *</label>
+              <input type="text" name="lotNumber" placeholder="Örn: LOT-2026-08A" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Seri Numarası (Varsa)</label>
-              <input type="text" name="serialNumber" placeholder="Örn: SN-994821034" class="form-control">
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Seri Numarası (Varsa)</label>
+              <input type="text" name="serialNumber" placeholder="Örn: SN-994821034" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Parti Miktarı *</label>
-              <input type="number" name="quantity" value="100" min="1" step="0.01" class="form-control" required>
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Parti Miktarı *</label>
+              <input type="number" name="quantity" value="100" min="1" step="0.01" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Üretim Tarihi</label>
-              <input type="date" name="productionDate" class="form-control">
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Üretim Tarihi</label>
+              <input type="date" name="productionDate" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Son Kullanma Tarihi (SKT)</label>
-              <input type="date" name="expirationDate" class="form-control">
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Son Kullanma Tarihi (SKT)</label>
+              <input type="date" name="expirationDate" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Kalite Durumu</label>
-              <select name="qualityStatus" class="form-control">
-                <option value="Approved">Approved (Onaylı)</option>
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Kalite Durumu</label>
+              <select name="qualityStatus" class="aesthetic-input" style="cursor: pointer;">
+                <option value="Approved">Approved (Kalite Onaylı)</option>
                 <option value="Pending">Pending (Karantinada / İncelemede)</option>
                 <option value="Rejected">Rejected (Hatalı / Red)</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Notlar</label>
-              <input type="text" name="notes" placeholder="Kalite sertifika no..." class="form-control">
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Kalite Sertifika No / Notlar</label>
+              <input type="text" name="notes" placeholder="ISO / Kalite sertifika no..." class="aesthetic-input">
             </div>
           </div>
-          <button type="submit" class="btn" style="margin-top: 16px;">🏷️ Lot / Seri No Kaydet</button>
+
+          <div style="margin-top: 12px;">
+            <button type="submit" class="btn-indigo-gradient">
+              🏷️ Lot / Seri Numarasını Kaydet
+            </button>
+          </div>
         </form>
       </div>
 
       <!-- Lot Table -->
+      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">📋 Tanımlı Lot ve Seri Numaraları Listesi</h3>
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
@@ -144,12 +257,12 @@
           </thead>
           <tbody>
             <% if (lots.length === 0) { %>
-              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Henüz kayıtlı lot/parti numarası bulunmamaktadır.</td></tr>
+              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Henüz kayıtlı lot/parti numarası bulunmamaktadır.</td></tr>
             <% } else { %>
               <% lots.forEach(lot => { %>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= lot.lotNumber %></strong></td>
-                  <td><%= lot.serialNumber || '—' %></td>
+                  <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; background: rgba(99,102,241,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(99,102,241,0.2);"><%= lot.lotNumber %></strong></td>
+                  <td><%= lot.serialNumber ? `<span style="font-family: 'JetBrains Mono', monospace;">${lot.serialNumber}</span>` : '—' %></td>
                   <td><strong style="color: var(--text-primary);"><%= lot.stockItem ? lot.stockItem.name : '—' %></strong></td>
                   <td><%= lot.warehouse ? lot.warehouse.name : '—' %></td>
                   <td><strong><%= lot.quantity %> <%= lot.stockItem ? lot.stockItem.unit : '' %></strong></td>
