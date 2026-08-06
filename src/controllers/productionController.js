@@ -1,6 +1,7 @@
 const productionRepository = require('../repositories/productionRepository');
 const stockRepository = require('../repositories/stockRepository');
 const mrpService = require('../services/mrpService');
+const productionService = require('../services/productionService');
 const asyncHandler = require('../utils/asyncHandler');
 const { NotFoundError, ValidationError } = require('../utils/appError');
 const { ALL_ROLES } = require('../middleware/rbacMiddleware');
@@ -15,6 +16,25 @@ const WORK_CENTERS = [
 ];
 
 class ProductionController {
+  // 0. DASHBOARD & ANALYTICS
+  showAnalytics = asyncHandler(async (req, res) => {
+    const orders = await productionRepository.findAll();
+    const stats = await productionRepository.getStats();
+    const capacityReport = await mrpService.calculateCapacityLoad();
+    const mrpResults = await mrpService.runMRP();
+
+    res.render('production/analytics', {
+      user: req.user,
+      orders,
+      stats,
+      capacityReport,
+      mrpResults: mrpResults.slice(0, 5),
+      WORK_CENTERS,
+      ALL_ROLES,
+      activeSubTab: 'analytics'
+    });
+  });
+
   // 1. WORK ORDERS LIST
   listOrders = asyncHandler(async (req, res) => {
     const { search, status, priority, workCenter } = req.query;
@@ -39,7 +59,7 @@ class ProductionController {
     const { StockItem } = require('../../models');
     const { Op } = require('sequelize');
     const stockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal', 'Yari_Mamul', 'Yarı_Mamul'] } },
       order: [['name', 'ASC']]
     });
     const nextWorkOrderNo = await productionRepository.generateWorkOrderNo();
@@ -50,7 +70,7 @@ class ProductionController {
       nextWorkOrderNo,
       WORK_CENTERS,
       ALL_ROLES,
-      activeSubTab: 'orders',
+      activeSubTab: 'add_order',
       error: null
     });
   });
@@ -72,7 +92,7 @@ class ProductionController {
       notes
     } = req.body;
 
-    const newOrder = await productionRepository.create({
+    await productionRepository.create({
       productionTitle,
       stockItemId,
       plannedQuantity: parseFloat(plannedQuantity) || 1,
@@ -104,6 +124,25 @@ class ProductionController {
     res.redirect('/production/orders');
   });
 
+  // 2. MATERIAL REQUIREMENTS PLANNING (MRP)
+  showMRP = asyncHandler(async (req, res) => {
+    const mrpResults = await mrpService.runMRP();
+    const successMsg = req.query.success === '1' ? 'Otomatik Satın Alma Talepleri başarıyla oluşturuldu ve Satın Alma departmanına iletildi.' : null;
+
+    res.render('production/mrp', {
+      user: req.user,
+      mrpResults,
+      successMsg,
+      ALL_ROLES,
+      activeSubTab: 'mrp'
+    });
+  });
+
+  executeMRP = asyncHandler(async (req, res) => {
+    const mrpResults = await mrpService.runMRP();
+    await mrpService.generateRequisitions(mrpResults, req.user);
+    res.redirect('/production/mrp?success=1');
+  });
 
   // 3. BOM (BILL OF MATERIALS)
   listBOM = asyncHandler(async (req, res) => {
@@ -112,12 +151,12 @@ class ProductionController {
     const bomItems = await productionRepository.findAllBOM();
 
     const finishedStockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal', 'Yarı_Mamul', 'Yari_Mamul'] } },
       order: [['name', 'ASC']]
     });
 
     const componentStockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yedek_Parca', 'Ambalaj'] } },
+      where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Yedek_Parca', 'Ambalaj'] } },
       order: [['name', 'ASC']]
     });
 
@@ -216,18 +255,14 @@ class ProductionController {
 
   updateMES = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { completedQuantity, scrapQuantity, actualHours, notes } = req.body;
+    const { completedQuantity, scrapQuantity } = req.body;
 
-    const updated = await productionRepository.updateMESData(id, {
-      completedQuantity,
-      scrapQuantity,
-      actualHours,
-      notes
-    }, req.user, req.ip);
-
-    if (!updated) {
-      throw new NotFoundError('İş emri bulunamadı.');
-    }
+    await productionService.recordProductionOutput(
+      id,
+      parseFloat(completedQuantity) || 0,
+      parseFloat(scrapQuantity) || 0,
+      req.user
+    );
 
     res.redirect('/production/mes');
   });

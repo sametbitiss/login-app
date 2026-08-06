@@ -8,174 +8,137 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="module-body">
-
   <aside class="module-sidebar">
-    <div class="module-sidebar-brand">
-      <a href="/" class="msb-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs></svg>
-        <span>Enterprise ERP</span>
-      </a>
-    </div>
-
+    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
     <div class="module-sidebar-section">
-      <div class="mss-label">ÜRETİM PLANLAMA</div>
-      <a href="/production/orders" class="mss-link active">Üretim Özellikleri</a>
+      <div class="mss-label">🏭 ÜRETİM & İMALAT YÖNETİMİ</div>
+      <div class="mss-group-title">📊 DASHBOARD & PERFORMANS</div>
       <div class="mss-sub">
-        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri Listesi</a>
+        <a href="/production/analytics" class="mss-sub-link">📊 Üretim Analitiği</a>
+      </div>
+      <div class="mss-group-title">⚙️ İMALAT & SİPARİŞ KONTROLÜ</div>
+      <div class="mss-sub">
+        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
         <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
-        <a href="/production/bom" class="mss-sub-link active">📜 Reçeteler (BOM)</a>
-        <a href="/production/routing" class="mss-sub-link">🔄 Rotalama & Operasyon</a>
-        <a href="/production/capacity" class="mss-sub-link">📊 Kapasite Planlama</a>
-        <a href="/production/mes" class="mss-sub-link">🏭 Üretim İzleme & MES</a>
+        <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
+      </div>
+      <div class="mss-group-title">📜 REÇETE & PROCESS MÜHENDİSLİĞİ</div>
+      <div class="mss-sub">
+        <a href="/production/bom" class="mss-sub-link active">📜 Üretim Reçeteleri (BOM)</a>
+        <a href="/production/routing" class="mss-sub-link">🛠️ Rotalama & Operasyonlar</a>
+      </div>
+      <div class="mss-group-title">🏭 KAPASİTE & SAHA TAKİBİ (MES)</div>
+      <div class="mss-sub">
+        <a href="/production/capacity" class="mss-sub-link">🏭 Kapasite Planlaması</a>
+        <a href="/production/mes" class="mss-sub-link">📱 MES Saha Terminali</a>
       </div>
     </div>
-
-    <div class="module-sidebar-user">
-      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
-      <div class="msu-meta">
-        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
-        <span><%= ALL_ROLES[user.role] || user.role %></span>
-      </div>
-    </div>
+    <div class="module-sidebar-user"><div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div><div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div></div>
   </aside>
 
   <div class="module-main">
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
-        <% if (user.role === 'Admin') { %>
-          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
-          <a href="/stock" class="mt-link">Stok & Depo</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
-          <a href="/sales" class="mt-link">Satış Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Purchase_Manager') { %>
-          <a href="/purchase" class="mt-link">Satın Alma</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
-          <a href="/production" class="mt-link active">Üretim Planlama</a>
-        <% } %>
+        <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link">Satın Alma</a><a href="/production" class="mt-link active">Üretim Planlama</a>
       </div>
-      <div class="mt-right">
-        <span class="mt-time" id="liveTime"></span>
-        <a href="/logout" class="mt-logout" title="Çıkış">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </a>
-      </div>
+      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
     </header>
 
     <main class="module-content">
-      <!-- Sub-Nav -->
       <div class="module-subnav">
+        <a href="/production/analytics" class="msn-link">📊 Analitik</a>
         <a href="/production/orders" class="msn-link">📋 İş Emirleri</a>
-        <a href="/production/bom" class="msn-link active">📜 Üretim Reçeteleri (BOM)</a>
-        <a href="/production/routing" class="msn-link">🔄 Rotalama & Operasyonlar</a>
-        <a href="/production/capacity" class="msn-link">📊 Kapasite Planlaması</a>
-        <a href="/production/mes" class="msn-link">🏭 Üretim İzleme & MES</a>
+        <a href="/production/orders/add" class="msn-link">➕ İş Emri Ekle</a>
+        <a href="/production/mrp" class="msn-link">⚡ MRP Hesaplama</a>
+        <a href="/production/bom" class="msn-link active">📜 Reçeteler (BOM)</a>
+        <a href="/production/routing" class="msn-link">🛠️ Rotalama</a>
+        <a href="/production/capacity" class="msn-link">🏭 Kapasite</a>
+        <a href="/production/mes" class="msn-link">📱 MES Terminali</a>
       </div>
 
       <div class="page-header">
         <div>
-          <h1>Üretim Reçeteleri (Bill of Materials - BOM)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Nihai ürünlerin imalatında kullanılacak hammadde, bileşen ve yarı mamul reçete ağacı.</p>
+          <h1>Üretim Reçeteleri Yönetimi (Bill of Materials - BOM)</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Bir ürünün oluşması için gerekli hammadde, bileşen ve fire oranlarının hiyerarşik tanımı.</p>
         </div>
       </div>
 
-      <!-- Add BOM Component Panel -->
-      <div class="form-panel" style="margin-bottom: 1.75rem;">
-        <h3 style="color: var(--indigo); font-size: 1.05rem; margin-bottom: 1rem;">➕ Reçeteye Yeni Bileşen / Hammadde Ekle</h3>
-        
-        <form action="/production/bom" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
-          <div class="form-grid form-grid--3">
-            <div class="input-group">
-              <label for="finishedStockItemId">Üretilecek Ürün (Nihai Mamul) <span class="req-star">*</span></label>
-              <select id="finishedStockItemId" name="finishedStockItemId" required>
-                <option value="" disabled selected>-- Üretilecek Ürün / Mamul Seçiniz --</option>
+      <!-- Add BOM Form -->
+      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); margin-bottom: 24px;">
+        <h3 style="font-size: 1.1rem; color: var(--indigo); margin-bottom: 16px;">📜 Reçeteye Yeni Bileşen / Hammadde Ekle</h3>
+        <form action="/production/bom" method="POST">
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">Üretilecek Mamul Ürün *</label>
+              <select name="finishedStockItemId" class="form-control" required>
                 <% finishedStockItems.forEach(item => { %>
-                  <option value="<%= item.id %>">[<%= item.stockCode %>] <%= item.name %> (<%= item.category %>)</option>
+                  <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %></option>
                 <% }); %>
               </select>
             </div>
-
-            <div class="input-group">
-              <label for="componentStockItemId">Kullanılacak Hammadde / Girdi <span class="req-star">*</span></label>
-              <select id="componentStockItemId" name="componentStockItemId" required>
-                <option value="" disabled selected>-- Hammadde / Girdi Seçiniz --</option>
-                <% componentStockItems.forEach(item => { %>
-                  <option value="<%= item.id %>">[<%= item.stockCode %>] <%= item.name %> (Stok: <%= item.currentStock %> <%= item.unit %>)</option>
+            <div class="form-group">
+              <label class="form-label">Gerekli Hammadde / Bileşen *</label>
+              <select name="componentStockItemId" class="form-control" required>
+                <% componentStockItems.forEach(comp => { %>
+                  <option value="<%= comp.id %>"><%= comp.stockCode %> — <%= comp.name %> (Stok: <%= comp.currentStock %> <%= comp.unit %>)</option>
                 <% }); %>
               </select>
             </div>
-
-            <div class="input-group">
-              <label for="quantityRequired">1 Birim İçin Gerekli Miktar <span class="req-star">*</span></label>
-              <input type="number" id="quantityRequired" name="quantityRequired" step="0.01" min="0.01" value="1.0" required>
+            <div class="form-group">
+              <label class="form-label">Birim İmalat Miktarı *</label>
+              <input type="number" name="quantityRequired" value="1.0" min="0.0001" step="0.0001" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tahmini Fire / Hurda (%)</label>
+              <input type="number" name="scrapPercentage" value="2.0" min="0" step="0.5" class="form-control">
             </div>
           </div>
-
-          <div class="form-grid form-grid--3">
-            <div class="input-group">
-              <label for="scrapPercentage">Tahmini Fire / Hurda Oranı (%)</label>
-              <input type="number" id="scrapPercentage" name="scrapPercentage" step="0.5" min="0" value="0.0" placeholder="Örn: 2.5">
-            </div>
-
-            <div class="input-group" style="grid-column: span 2;">
-              <label for="notes">Reçete Notu / İmalat Direktifi</label>
-              <input type="text" id="notes" name="notes" placeholder="Örn: Kesim sonrası pah kırma işlemi yapılmalıdır.">
-            </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label class="form-label">BOM Açıklaması / Spesifikasyon</label>
+            <input type="text" name="notes" placeholder="Örn: 2mm Paslanmaz Lazer Kesim Plaka..." class="form-control">
           </div>
-
-          <button type="submit" class="btn" style="align-self: flex-start;">
-            Reçete Bileşenini Ekle
-          </button>
+          <button type="submit" class="btn" style="margin-top: 16px;">📜 Reçete Bileşenini Kaydet</button>
         </form>
       </div>
 
-      <!-- BOM List Table -->
+      <!-- BOM Items Table -->
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Reçete No</th>
-              <th>Üretilecek Nihai Ürün</th>
-              <th>Kullanılan Bileşen / Hammadde</th>
-              <th>1 Birim İçin Miktar</th>
-              <th>Fire Oranı (%)</th>
-              <th>Tedarikçi & Alış Fiyatı</th>
-              <th>Reçete Notu</th>
+              <th>BOM Kodu</th>
+              <th>Üretilecek Mamul</th>
+              <th>Kullanılan Hammadde / Bileşen</th>
+              <th>Birim Gereksinim</th>
+              <th>Birim Alış Fiyatı</th>
+              <th>Tahmini Fire</th>
+              <th>Hesaplanan Birim Hammadde Maliyeti</th>
+              <th>Notlar</th>
             </tr>
           </thead>
           <tbody>
-            <% if (bomItems && bomItems.length > 0) { %>
+            <% if (bomItems.length === 0) { %>
+              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Henüz kayıtlı üretim reçetesi bulunmamaktadır.</td></tr>
+            <% } else { %>
               <% bomItems.forEach(b => { %>
+                <% const compPrice = b.componentItem ? parseFloat(b.componentItem.purchasePrice || 0) : 0; %>
+                <% const unitCost = (parseFloat(b.quantityRequired) * compPrice * (1 + (parseFloat(b.scrapPercentage || 0)/100))).toFixed(2); %>
                 <tr>
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= b.bomCode %></strong></td>
+                  <td><strong style="color: var(--text-primary);"><%= b.finishedProduct ? b.finishedProduct.name : '—' %></strong></td>
                   <td>
-                    <strong style="color: var(--text-main);"><%= b.finishedProduct ? b.finishedProduct.name : '—' %></strong>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= b.finishedProduct ? b.finishedProduct.stockCode : '' %></div>
-                  </td>
-                  <td>
-                    <strong style="color: var(--emerald);"><%= b.componentItem ? b.componentItem.name : '—' %></strong>
+                    <strong style="color: var(--cyan);"><%= b.componentItem ? b.componentItem.name : '—' %></strong>
                     <div style="font-size: 0.75rem; color: var(--text-muted);"><%= b.componentItem ? b.componentItem.stockCode : '' %></div>
                   </td>
-                  <td><strong><%= b.quantityRequired %> <%= b.componentItem ? b.componentItem.unit : 'Adet' %></strong></td>
-                  <td><%= b.scrapPercentage %>% Fire</td>
-                  <td>
-                    <div style="font-size: 0.8rem;"><%= b.componentItem ? b.componentItem.purchasePrice + ' ' + b.componentItem.currency : '—' %></div>
-                    <div style="font-size: 0.725rem; color: var(--text-muted);"><%= b.componentItem ? b.componentItem.supplier : '—' %></div>
-                  </td>
+                  <td><strong><%= b.quantityRequired %> <%= b.componentItem ? b.componentItem.unit : '' %></strong></td>
+                  <td><%= compPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</td>
+                  <td><%= b.scrapPercentage %>%</td>
+                  <td><strong style="color: var(--emerald);"><%= parseFloat(unitCost).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</strong></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= b.notes || '—' %></td>
                 </tr>
-              <% }) %>
-            <% } else { %>
-              <tr>
-                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                  Henüz tanımlı herhangi bir üretim reçetesi bileşeni bulunmamaktadır.
-                </td>
-              </tr>
+              <% }); %>
             <% } %>
           </tbody>
         </table>
@@ -184,13 +147,8 @@
   </div>
 
   <script>
-    function updateClock() {
-      const now = new Date();
-      const el = document.getElementById('liveTime');
-      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
+    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    updateClock(); setInterval(updateClock, 1000);
   </script>
 </body>
 </html>

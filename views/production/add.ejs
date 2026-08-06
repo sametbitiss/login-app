@@ -3,467 +3,146 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yeni Üretim İş Emri — Enterprise ERP</title>
+  <title>Yeni İş Emri Oluştur — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="module-body">
-
-  <!-- Module Sidebar -->
   <aside class="module-sidebar">
-    <div class="module-sidebar-brand">
-      <a href="/" class="msb-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs></svg>
-        <span>Enterprise ERP</span>
-      </a>
-    </div>
-
+    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
     <div class="module-sidebar-section">
-      <div class="mss-label">ÜRETİM PLANLAMA</div>
-      <a href="/production/orders" class="mss-link active">Üretim Özellikleri</a>
+      <div class="mss-label">🏭 ÜRETİM & İMALAT YÖNETİMİ</div>
+      <div class="mss-group-title">📊 DASHBOARD & PERFORMANS</div>
       <div class="mss-sub">
-        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri Listesi</a>
+        <a href="/production/analytics" class="mss-sub-link">📊 Üretim Analitiği</a>
+      </div>
+      <div class="mss-group-title">⚙️ İMALAT & SİPARİŞ KONTROLÜ</div>
+      <div class="mss-sub">
+        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
         <a href="/production/orders/add" class="mss-sub-link active">➕ Yeni İş Emri Ekle</a>
-        <a href="/production/bom" class="mss-sub-link">📜 Reçeteler (BOM)</a>
-        <a href="/production/routing" class="mss-sub-link">🔄 Rotalama & Operasyon</a>
-        <a href="/production/capacity" class="mss-sub-link">📊 Kapasite Planlama</a>
-        <a href="/production/mes" class="mss-sub-link">🏭 Üretim İzleme & MES</a>
+        <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
+      </div>
+      <div class="mss-group-title">📜 REÇETE & PROCESS MÜHENDİSLİĞİ</div>
+      <div class="mss-sub">
+        <a href="/production/bom" class="mss-sub-link">📜 Üretim Reçeteleri (BOM)</a>
+        <a href="/production/routing" class="mss-sub-link">🛠️ Rotalama & Operasyonlar</a>
+      </div>
+      <div class="mss-group-title">🏭 KAPASİTE & SAHA TAKİBİ (MES)</div>
+      <div class="mss-sub">
+        <a href="/production/capacity" class="mss-sub-link">🏭 Kapasite Planlaması</a>
+        <a href="/production/mes" class="mss-sub-link">📱 MES Saha Terminali</a>
       </div>
     </div>
-
-    <div class="module-sidebar-user">
-      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
-      <div class="msu-meta">
-        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
-        <span><%= ALL_ROLES[user.role] || user.role %></span>
-      </div>
-    </div>
+    <div class="module-sidebar-user"><div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div><div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div></div>
   </aside>
 
-  <!-- Main Area -->
   <div class="module-main">
-    <!-- Top Navbar -->
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
-        <% if (user.role === 'Admin') { %>
-          <a href="/admin" class="mt-link">Sistem Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
-          <a href="/stock" class="mt-link">Stok & Depo</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
-          <a href="/sales" class="mt-link">Satış Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Purchase_Manager') { %>
-          <a href="/purchase" class="mt-link">Satın Alma</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
-          <a href="/production" class="mt-link active">Üretim Planlama</a>
-        <% } %>
+        <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link">Satın Alma</a><a href="/production" class="mt-link active">Üretim Planlama</a>
       </div>
-      <div class="mt-right">
-        <span class="mt-time" id="liveTime"></span>
-        <a href="/logout" class="mt-logout" title="Çıkış">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </a>
-      </div>
+      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
     </header>
 
-    <!-- Content -->
     <main class="module-content">
+      <div class="module-subnav">
+        <a href="/production/analytics" class="msn-link">📊 Analitik</a>
+        <a href="/production/orders" class="msn-link">📋 İş Emirleri</a>
+        <a href="/production/orders/add" class="msn-link active">➕ İş Emri Ekle</a>
+        <a href="/production/mrp" class="msn-link">⚡ MRP Hesaplama</a>
+        <a href="/production/bom" class="msn-link">📜 Reçeteler (BOM)</a>
+        <a href="/production/routing" class="msn-link">🛠️ Rotalama</a>
+        <a href="/production/capacity" class="msn-link">🏭 Kapasite</a>
+        <a href="/production/mes" class="msn-link">📱 MES Terminali</a>
+      </div>
+
       <div class="page-header">
         <div>
-          <h1>Yeni Üretim İş Emri Oluştur</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Fabrika imalat planlama bilgilerini sekmelerden giriniz (* zorunludur).</p>
+          <h1>Yeni Üretim İş Emri Aç</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Mamul veya yarı mamul imalatı için fabrikayı yetkilendirin.</p>
         </div>
-        <a href="/production/orders" class="btn btn-secondary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Sipariş Listesine Dön
-        </a>
+        <a href="/production/orders" class="btn btn-secondary">← İş Emirleri Listesi</a>
       </div>
 
-      <% if (error) { %>
-        <div class="error" id="serverErrorBanner"><%= error %></div>
-      <% } %>
-
-      <!-- Dynamic Client Error Banner -->
-      <div class="error" id="clientErrorBanner" style="display: none; margin-bottom: 1.25rem;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="clientErrorMessage">Lütfen zorunlu (*) alanları eksiksiz doldurunuz.</span>
+      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md);">
+        <form action="/production/orders/add" method="POST">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+              <label class="form-label">İş Emri Numarası</label>
+              <input type="text" name="workOrderNo" value="<%= nextWorkOrderNo %>" class="form-control" readonly style="background: var(--bg-elevated); font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--indigo);">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Üretim Başlığı / Açıklama *</label>
+              <input type="text" name="productionTitle" placeholder="Örn: 50 Adet CNC Gövde Seri İmalatı" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Üretilecek Ürün / Mamul *</label>
+              <select name="stockItemId" class="form-control" required>
+                <% stockItems.forEach(item => { %>
+                  <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %> (Mevcut: <%= item.currentStock %> <%= item.unit %>)</option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hedeflenen Üretim Miktarı *</label>
+              <input type="number" name="plannedQuantity" value="10" min="1" step="0.01" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Birim</label>
+              <input type="text" name="unit" value="Adet" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Atanacak İş İstasyonu / İstasyon</label>
+              <select name="workCenter" class="form-control">
+                <% WORK_CENTERS.forEach(wc => { %>
+                  <option value="<%= wc %>"><%= wc %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Öncelik Seviyesi</label>
+              <select name="priority" class="form-control">
+                <option value="Normal">Normal</option>
+                <option value="High">⚡ Yüksek Öncelikli</option>
+                <option value="Urgent">🚨 Acil Üretim</option>
+                <option value="Low">Düşük Öncelikli</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tahmini Süre (Saat)</label>
+              <input type="number" name="estimatedHours" value="12" min="0" step="0.5" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Planlanan Başlangıç Tarihi *</label>
+              <input type="date" name="plannedStartDate" value="<%= new Date().toISOString().split('T')[0] %>" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Planlanan Bitiş Tarihi *</label>
+              <input type="date" name="plannedEndDate" value="<%= new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] %>" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Üretim Mühendisi / Sorumlu</label>
+              <input type="text" name="productionManager" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" class="form-control">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 16px;">
+            <label class="form-label">Üretim Notları & Özel İmalat Talimatları</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="Teknik resim revizyon no, özel toleranslar..."></textarea>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn">⚙️ İş Emrini Kaydet ve Başlat</button>
+            <a href="/production/orders" class="btn btn-secondary">İptal</a>
+          </div>
+        </form>
       </div>
-
-      <!-- Tabbed Production Order Form -->
-      <form action="/production/orders/add" method="POST" class="stock-form-container" id="productionOrderForm" novalidate>
-
-        <!-- Tab Header Bar -->
-        <div class="form-tabs-header">
-          <button type="button" class="tab-btn active" data-tab="tab-prod" id="tab-btn-prod">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V10l4-4 4 4v10"/><path d="M13 20V4l6 6v10"/></svg>
-            <span>1. Üretim & Ürün</span>
-            <span class="tab-badge tab-badge--req">*</span>
-          </button>
-
-          <button type="button" class="tab-btn" data-tab="tab-station" id="tab-btn-station">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>2. İş Merkezi & Süre</span>
-            <span class="tab-badge tab-badge--req">*</span>
-          </button>
-
-          <button type="button" class="tab-btn" data-tab="tab-dates" id="tab-btn-dates">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span>3. Zamanlama</span>
-            <span class="tab-badge tab-badge--req">*</span>
-          </button>
-
-          <button type="button" class="tab-btn" data-tab="tab-bom" id="tab-btn-bom">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            <span>4. Reçete (BOM) & Notlar</span>
-          </button>
-        </div>
-
-        <!-- Tab Body Panes -->
-        <div class="form-tabs-body">
-
-          <!-- Tab 1: Üretim & Ürün -->
-          <div class="tab-pane active" id="tab-prod">
-            <div class="tab-pane-title">🏭 Üretim İş Emri Başlığı & Üretilecek Nihai Ürün</div>
-            
-            <div class="form-grid form-grid--3">
-              <div class="input-group">
-                <label for="workOrderNo">İş Emri Numarası</label>
-                <input type="text" id="workOrderNo" value="<%= nextWorkOrderNo %>" disabled style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--indigo);">
-              </div>
-
-              <div class="input-group" style="grid-column: span 2;">
-                <label for="productionTitle">Üretim İş Emri Tanımı / Başlığı <span class="req-star">*</span></label>
-                <input type="text" id="productionTitle" name="productionTitle" required placeholder="Örn: Saç Kasa Montaj Üretimi Seri 4">
-                <span class="field-error-msg">Üretim başlığı girilmesi zorunludur.</span>
-              </div>
-            </div>
-
-            <div class="form-grid form-grid--3">
-              <div class="input-group" style="grid-column: span 2;">
-                <label for="stockItemId">Üretilecek Nihai Ürün / Stok Kartı <span class="req-star">*</span></label>
-                <select id="stockItemId" name="stockItemId" required>
-                  <option value="" disabled selected>-- Üretilecek Ürünü Seçiniz --</option>
-                  <% stockItems.forEach(item => { %>
-                    <option value="<%= item.id %>" data-unit="<%= item.unit %>">
-                      [<%= item.stockCode %>] <%= item.name %> — (Mevcut Stok: <%= item.currentStock %> <%= item.unit %>)
-                    </option>
-                  <% }); %>
-                </select>
-                <span class="field-error-msg">Nihai ürün seçilmesi zorunludur.</span>
-              </div>
-
-              <div class="input-group">
-                <label for="plannedQuantity">Planlanan Üretim Miktarı <span class="req-star">*</span></label>
-                <input type="number" id="plannedQuantity" name="plannedQuantity" step="1" min="1" value="10" required>
-                <span class="field-error-msg">Miktar 0'dan büyük olmalıdır.</span>
-              </div>
-            </div>
-
-            <div class="form-grid form-grid--3">
-              <div class="input-group">
-                <label for="unit">Üretim Birimi <span class="req-star">*</span></label>
-                <select id="unit" name="unit" required>
-                  <option value="Adet">Adet</option>
-                  <option value="Kg">Kg</option>
-                  <option value="Metre">Metre</option>
-                  <option value="Kutu">Kutu</option>
-                  <option value="Set">Set</option>
-                </select>
-              </div>
-
-              <div class="input-group">
-                <label for="priority">İş Emri Öncelik Seviyesi <span class="req-star">*</span></label>
-                <select id="priority" name="priority" required>
-                  <option value="Normal" selected>Normal</option>
-                  <option value="High">⚡ Yüksek</option>
-                  <option value="Urgent">🚨 Acil</option>
-                  <option value="Low">Düşük</option>
-                </select>
-              </div>
-
-              <div class="input-group">
-                <label for="status">Başlangıç Üretim Durumu <span class="req-star">*</span></label>
-                <select id="status" name="status" required>
-                  <option value="Planned" selected>📋 Planlandı (Taslak)</option>
-                  <option value="Approved">✓ Onaylandı (Serbest Bırakıldı)</option>
-                  <option value="In_Production">⚙️ Üretimde (Devam Ediyor)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tab 2: İş Merkezi & Süre -->
-          <div class="tab-pane" id="tab-station">
-            <div class="tab-pane-title">⚙️ İş Merkezi (İstasyon) & Tahmini İşçilik Süresi</div>
-
-            <div class="form-grid form-grid--3">
-              <div class="input-group" style="grid-column: span 2;">
-                <label for="workCenter">İş Merkezi / Üretim İstasyonu <span class="req-star">*</span></label>
-                <select id="workCenter" name="workCenter" required>
-                  <% WORK_CENTERS.forEach(wc => { %>
-                    <option value="<%= wc %>"><%= wc %></option>
-                  <% }); %>
-                </select>
-                <span class="field-error-msg">İş merkezi seçilmesi zorunludur.</span>
-              </div>
-
-              <div class="input-group">
-                <label for="estimatedHours">Tahmini İşçilik Süresi (Saat)</label>
-                <input type="number" id="estimatedHours" name="estimatedHours" step="0.5" min="0" value="8.0" placeholder="Örn: 12.5">
-              </div>
-            </div>
-
-            <div class="form-grid form-grid--2">
-              <div class="input-group">
-                <label for="productionManager">Sorumlu Üretim Mühendisi / Uzman</label>
-                <input type="text" id="productionManager" name="productionManager" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" placeholder="Ahmet Yılmaz">
-              </div>
-            </div>
-          </div>
-
-          <!-- Tab 3: Zamanlama -->
-          <div class="tab-pane" id="tab-dates">
-            <div class="tab-pane-title">📅 Planlanan Başlama ve Bitiş Zamanlaması</div>
-
-            <div class="form-grid form-grid--2">
-              <div class="input-group">
-                <label for="plannedStartDate">Planlanan Başlama Tarihi <span class="req-star">*</span></label>
-                <input type="date" id="plannedStartDate" name="plannedStartDate" required>
-                <span class="field-error-msg">Başlama tarihi zorunludur.</span>
-              </div>
-
-              <div class="input-group">
-                <label for="plannedEndDate">Planlanan Bitiş / Teslim Tarihi <span class="req-star">*</span></label>
-                <input type="date" id="plannedEndDate" name="plannedEndDate" required>
-                <span class="field-error-msg">Bitiş tarihi zorunludur.</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tab 4: Reçete & Notlar -->
-          <div class="tab-pane" id="tab-bom">
-            <div class="tab-pane-title">📜 Malzeme Reçetesi (BOM) & Üretim Direktifleri</div>
-
-            <div class="form-grid form-grid--1">
-              <div class="input-group">
-                <label for="bomNotes">Malzeme Reçetesi (Bill of Materials) Notları</label>
-                <textarea id="bomNotes" name="bomNotes" rows="4" placeholder="Üretimde kullanılacak ham maddeler (Örn: 2x STK-0001 Paslanmaz Çelik Cıvata, 1x Saç Levha)..."></textarea>
-              </div>
-
-              <div class="input-group">
-                <label for="notes">Özel Üretim Direktifleri & Notlar</label>
-                <textarea id="notes" name="notes" rows="3" placeholder="Operatörler için teknik notlar, kalite standartları veya özel direktifler..."></textarea>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Form Actions Footer -->
-        <div class="form-tabs-footer">
-          <div class="tab-step-btns">
-            <button type="button" class="btn btn-secondary btn-sm" id="btnPrevTab" style="display: none;">
-              ← Önceki Sekme
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" id="btnNextTab">
-              Sonraki Sekme →
-            </button>
-          </div>
-
-          <div class="form-submit-btns">
-            <button type="submit" class="btn btn-lg" id="btnSubmitForm">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Üretim İş Emrini Kaydet
-            </button>
-            <a href="/production/orders" class="btn btn-secondary btn-lg">İptal</a>
-          </div>
-        </div>
-
-      </form>
     </main>
   </div>
 
   <script>
-    // Live Clock & Date defaults
-    function updateClock() {
-      const now = new Date();
-      const el = document.getElementById('liveTime');
-      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const nextWeekStr = nextWeek.toISOString().split('T')[0];
-
-    document.getElementById('plannedStartDate').value = todayStr;
-    document.getElementById('plannedEndDate').value = nextWeekStr;
-
-    // Unit Syncing
-    const stockSelect = document.getElementById('stockItemId');
-    const unitSelect = document.getElementById('unit');
-
-    if (stockSelect) {
-      stockSelect.addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
-        const u = opt.getAttribute('data-unit');
-        if (u && unitSelect) {
-          for (let i = 0; i < unitSelect.options.length; i++) {
-            if (unitSelect.options[i].value === u) {
-              unitSelect.selectedIndex = i;
-              break;
-            }
-          }
-        }
-      });
-    }
-
-    // Tab Management
-    const form = document.getElementById('productionOrderForm');
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabPanes = document.querySelectorAll('.tab-pane');
-    const btnPrev = document.getElementById('btnPrevTab');
-    const btnNext = document.getElementById('btnNextTab');
-    const clientErrorBanner = document.getElementById('clientErrorBanner');
-    const clientErrorMessage = document.getElementById('clientErrorMessage');
-
-    let currentTabIndex = 0;
-
-    function switchTab(index) {
-      if (index < 0 || index >= tabBtns.length) return;
-      currentTabIndex = index;
-
-      tabBtns.forEach((btn, i) => btn.classList.toggle('active', i === index));
-      tabPanes.forEach((pane, i) => pane.classList.toggle('active', i === index));
-
-      btnPrev.style.display = index === 0 ? 'none' : 'inline-flex';
-      btnNext.style.display = index === tabBtns.length - 1 ? 'none' : 'inline-flex';
-    }
-
-    tabBtns.forEach((btn, idx) => {
-      btn.addEventListener('click', () => switchTab(idx));
-    });
-
-    btnPrev.addEventListener('click', () => switchTab(currentTabIndex - 1));
-
-    function validateTab(paneIndex) {
-      const pane = tabPanes[paneIndex];
-      if (!pane) return true;
-
-      const requiredInputs = pane.querySelectorAll('[required]');
-      let isValid = true;
-
-      requiredInputs.forEach(input => {
-        const val = input.value ? input.value.trim() : '';
-        if (!val) {
-          isValid = false;
-          input.classList.add('is-invalid');
-        } else {
-          input.classList.remove('is-invalid');
-        }
-      });
-
-      return isValid;
-    }
-
-    function updateTabBadges() {
-      tabPanes.forEach((pane, i) => {
-        const requiredInputs = pane.querySelectorAll('[required]');
-        if (requiredInputs.length === 0) return;
-
-        let paneValid = true;
-        requiredInputs.forEach(input => {
-          if (!input.value || !input.value.trim()) paneValid = false;
-        });
-
-        const badge = tabBtns[i].querySelector('.tab-badge');
-        if (badge) {
-          if (paneValid) {
-            badge.classList.remove('tab-badge--err');
-            badge.classList.add('tab-badge--ok');
-            badge.textContent = '✓';
-          } else {
-            badge.classList.remove('tab-badge--ok');
-            badge.classList.add('tab-badge--err');
-            badge.textContent = '!';
-          }
-        }
-      });
-    }
-
-    form.querySelectorAll('input, select, textarea').forEach(input => {
-      input.addEventListener('input', () => {
-        if (input.value && input.value.trim()) input.classList.remove('is-invalid');
-        updateTabBadges();
-      });
-      input.addEventListener('change', () => {
-        if (input.value && input.value.trim()) input.classList.remove('is-invalid');
-        updateTabBadges();
-      });
-    });
-
-    btnNext.addEventListener('click', () => {
-      const isCurrentValid = validateTab(currentTabIndex);
-      if (!isCurrentValid) {
-        clientErrorMessage.textContent = 'Lütfen bu sekmedeki zorunlu (*) alanları doldurunuz.';
-        clientErrorBanner.style.display = 'flex';
-        return;
-      }
-      clientErrorBanner.style.display = 'none';
-      switchTab(currentTabIndex + 1);
-    });
-
-    form.addEventListener('submit', (e) => {
-      form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-      let firstInvalidPaneIndex = -1;
-      let firstInvalidInput = null;
-      let missingFieldLabels = [];
-
-      tabPanes.forEach((pane, paneIndex) => {
-        const requiredInputs = pane.querySelectorAll('[required]');
-        requiredInputs.forEach(input => {
-          const val = input.value ? input.value.trim() : '';
-          if (!val) {
-            input.classList.add('is-invalid');
-            if (firstInvalidPaneIndex === -1) {
-              firstInvalidPaneIndex = paneIndex;
-              firstInvalidInput = input;
-            }
-            const label = input.closest('.input-group') ? input.closest('.input-group').querySelector('label') : null;
-            if (label) {
-              const labelClean = label.textContent.replace('*', '').trim();
-              if (!missingFieldLabels.includes(labelClean)) {
-                missingFieldLabels.push(labelClean);
-              }
-            }
-          }
-        });
-      });
-
-      updateTabBadges();
-
-      if (firstInvalidPaneIndex !== -1) {
-        e.preventDefault(); // STOP submission
-        switchTab(firstInvalidPaneIndex);
-        clientErrorMessage.textContent = `Kayıt Yapılamadı! Lütfen eksik olan zorunlu (*) alanları doldurunuz: ${missingFieldLabels.join(', ')}`;
-        clientErrorBanner.style.display = 'flex';
-
-        if (firstInvalidInput) {
-          setTimeout(() => firstInvalidInput.focus(), 150);
-        }
-      } else {
-        clientErrorBanner.style.display = 'none';
-      }
-    });
-
-    updateTabBadges();
+    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    updateClock(); setInterval(updateClock, 1000);
   </script>
 </body>
 </html>

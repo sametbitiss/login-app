@@ -6,16 +6,22 @@ const { authorizeRoles } = require('../middleware/rbacMiddleware');
 const validate = require('../validations/validator');
 const { validateProductionOrderCreate } = require('../validations/productionValidation');
 
-// Protect all production routes with JWT verification & RBAC (Admin, Production_Manager)
+// Protect all production routes with JWT verification & RBAC
 router.use(verifyToken, authorizeRoles('Admin', 'Production_Manager'));
 
+// 0. Dashboard & Analytics
+router.get('/', (req, res) => res.redirect('/production/analytics'));
+router.get('/analytics', productionController.showAnalytics);
+
 // 1. Work Orders Routes
-router.get('/', (req, res) => res.redirect('/production/orders'));
 router.get('/orders', productionController.listOrders);
 router.get('/orders/add', productionController.renderAddOrder);
 router.post('/orders/add', validate(validateProductionOrderCreate), productionController.addOrder);
 router.post('/orders/:id/status', productionController.updateOrderStatus);
 
+// 2. Material Requirements Planning (MRP) Routes
+router.get('/mrp', productionController.showMRP);
+router.post('/mrp/execute', productionController.executeMRP);
 
 // 3. BOM (Bill of Materials) Routes
 router.get('/bom', productionController.listBOM);
