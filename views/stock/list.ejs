@@ -124,7 +124,9 @@
           <select name="category" class="filter-select" onchange="this.form.submit()">
             <option value="">Tüm Kategoriler</option>
             <% CATEGORIES.forEach(cat => { %>
-              <option value="<%= cat %>" <%= filterCategory === cat ? 'selected' : '' %>><%= cat %></option>
+              <% const val = typeof cat === 'object' ? cat.value : cat; %>
+              <% const lbl = typeof cat === 'object' ? cat.label : cat; %>
+              <option value="<%= val %>" <%= filterCategory === val || (val === 'Yari_Mamul' && filterCategory === 'Yarı_Mamul') ? 'selected' : '' %>><%= lbl %></option>
             <% }); %>
           </select>
           <button type="submit" class="btn btn-sm">Filtrele</button>

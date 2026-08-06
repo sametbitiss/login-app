@@ -7,7 +7,16 @@ const asyncHandler = require('../utils/asyncHandler');
 const { NotFoundError, ValidationError } = require('../utils/appError');
 const { ALL_ROLES } = require('../middleware/rbacMiddleware');
 
-const CATEGORIES = ['Hammadde', 'Yarı_Mamul', 'Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal'];
+const CATEGORIES = [
+  { value: 'Hammadde', label: 'Hammadde' },
+  { value: 'Yari_Mamul', label: 'Yarı Mamul' },
+  { value: 'Mamul', label: 'Mamul' },
+  { value: 'Yedek_Parca', label: 'Yedek Parça' },
+  { value: 'Ambalaj', label: 'Ambalaj' },
+  { value: 'Ticari_Mal', label: 'Ticari Mal' },
+  { value: 'Hizmet', label: 'Hizmet' },
+  { value: 'Diger', label: 'Diğer' }
+];
 
 class StockController {
   // 0. STOCK ANALYTICS DASHBOARD
@@ -72,10 +81,28 @@ class StockController {
   addItem = asyncHandler(async (req, res) => {
     try {
       const nextStockCode = await stockRepository.getNextStockCode();
+      let category = req.body.category || 'Ticari_Mal';
+      if (category === 'Yarı_Mamul') category = 'Yari_Mamul';
+
+      const barcode = req.body.barcode && req.body.barcode.trim() !== '' ? req.body.barcode.trim() : null;
+      const brand = req.body.brand && req.body.brand.trim() !== '' ? req.body.brand.trim() : null;
+      const model = req.body.model && req.body.model.trim() !== '' ? req.body.model.trim() : null;
+      const description = req.body.description && req.body.description.trim() !== '' ? req.body.description.trim() : null;
+      const warehouseLocation = req.body.warehouseLocation && req.body.warehouseLocation.trim() !== '' ? req.body.warehouseLocation.trim() : null;
+      const supplier = req.body.supplier && req.body.supplier.trim() !== '' ? req.body.supplier.trim() : null;
+      const notes = req.body.notes && req.body.notes.trim() !== '' ? req.body.notes.trim() : null;
 
       await stockRepository.create({
         ...req.body,
-        stockCode: req.body.stockCode || nextStockCode,
+        category,
+        barcode,
+        brand,
+        model,
+        description,
+        warehouseLocation,
+        supplier,
+        notes,
+        stockCode: nextStockCode,
         currentStock: parseFloat(req.body.currentStock) || 0,
         minStock: parseFloat(req.body.minStock) || 0,
         maxStock: parseFloat(req.body.maxStock) || 0,
@@ -89,6 +116,19 @@ class StockController {
       const nextStockCode = await stockRepository.getNextStockCode();
       const warehouses = await stockRepository.findAllWarehouses();
 
+      let friendlyError = err.message;
+      if (err.name === 'SequelizeUniqueConstraintError' || err.name === 'SequelizeValidationError') {
+        if (err.errors && err.errors.length > 0) {
+          friendlyError = err.errors.map(e => {
+            if (e.path === 'stockCode') return 'Bu stok kodu zaten başka bir malzemede kullanılıyor.';
+            if (e.path === 'barcode') return 'Bu barkod numarası zaten başka bir malzemede kullanılıyor.';
+            return e.message;
+          }).join(' | ');
+        } else {
+          friendlyError = 'Girdiğiniz stok koda veya barkod numarası zaten kullanılmaktadır.';
+        }
+      }
+
       res.render('stock/add', {
         user: req.user,
         nextStockCode,
@@ -98,7 +138,7 @@ class StockController {
         ALL_ROLES,
         activeSubTab: 'items',
         formData: req.body,
-        error: err.message || 'Stok kartı eklenirken bir hata oluştu.'
+        error: friendlyError || 'Stok kartı eklenirken bir hata oluştu.'
       });
     }
   });

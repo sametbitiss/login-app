@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     category: {
-      type: DataTypes.ENUM('Hammadde', 'Yari_Mamul', 'Mamul', 'Ticari_Mal', 'Hizmet', 'Diger'),
+      type: DataTypes.ENUM('Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal', 'Hizmet', 'Diger'),
       allowNull: false,
       defaultValue: 'Ticari_Mal'
     },

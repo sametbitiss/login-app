@@ -15,8 +15,23 @@ class StockRepository {
   // --- 1. STOCK ITEMS METHODS ---
   async findAll(filters = {}) {
     const where = {};
-    if (filters.status) where.status = filters.status;
-    if (filters.category) where.category = filters.category;
+    const validCategories = ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal', 'Hizmet', 'Diger'];
+    const validStatuses = ['Active', 'Passive', 'Discontinued'];
+
+    if (filters.status && validStatuses.includes(filters.status)) {
+      where.status = filters.status;
+    }
+
+    if (filters.category) {
+      if (validCategories.includes(filters.category)) {
+        where.category = filters.category;
+      } else {
+        const alt = filters.category === 'Yarı_Mamul' ? 'Yari_Mamul' : filters.category === 'Yari_Mamul' ? 'Yarı_Mamul' : null;
+        if (alt && validCategories.includes(alt)) {
+          where.category = alt;
+        }
+      }
+    }
 
     if (filters.search) {
       where[Op.or] = [
@@ -123,10 +138,32 @@ class StockRepository {
   }
 
   async getNextStockCode() {
-    const lastItem = await StockItem.findOne({ order: [['id', 'DESC']] });
-    if (!lastItem) return 'STK-0001';
-    const lastNum = parseInt(lastItem.stockCode.replace('STK-', '')) || 0;
-    return `STK-${String(lastNum + 1).padStart(4, '0')}`;
+    const items = await StockItem.findAll({ attributes: ['stockCode'] });
+    let maxNum = 0;
+
+    for (const item of items) {
+      if (item.stockCode) {
+        const matches = item.stockCode.match(/\d+/g);
+        if (matches) {
+          const num = parseInt(matches[matches.length - 1], 10);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
+        }
+      }
+    }
+
+    let nextNum = maxNum + 1;
+    let nextCode = `STK-${String(nextNum).padStart(4, '0')}`;
+
+    let attempts = 0;
+    while (await StockItem.findOne({ where: { stockCode: nextCode } }) && attempts < 100) {
+      nextNum++;
+      nextCode = `STK-${String(nextNum).padStart(4, '0')}`;
+      attempts++;
+    }
+
+    return nextCode;
   }
 
   // --- 2. MULTI-WAREHOUSE & LOCATION METHODS ---
