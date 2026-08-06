@@ -6,7 +6,7 @@ const { authorizeRoles } = require('../middleware/rbacMiddleware');
 
 // Protect all sales routes with JWT verification & RBAC
 router.use(verifyToken);
-router.use(authorizeRoles('Admin', 'Sales_Manager', 'Stock_Manager', 'Purchase_Manager', 'Production_Manager', 'Quality_Manager', 'Employee'));
+router.use(authorizeRoles('Admin', 'Sales_Manager', 'Stock_Manager'));
 
 // 0. Sales Module Root -> Redirects to Analytics Dashboard as requested
 router.get('/', (req, res) => res.redirect('/sales/analytics'));

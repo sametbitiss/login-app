@@ -171,6 +171,43 @@ class UserRepository {
       ipAddress
     });
   }
+
+  async getPermissionMatrix() {
+    const { DEFAULT_ROLE_MATRIX } = require('../config/permissionMatrix');
+    const setting = await SystemSetting.findOne({ where: { key: 'role_permission_matrix' } });
+    if (setting && setting.value) {
+      try {
+        return JSON.parse(setting.value);
+      } catch (e) {}
+    }
+    return DEFAULT_ROLE_MATRIX;
+  }
+
+  async savePermissionMatrix(matrix, currentUser = null, ipAddress = null) {
+    let setting = await SystemSetting.findOne({ where: { key: 'role_permission_matrix' } });
+    const val = JSON.stringify(matrix);
+    if (setting) {
+      setting.value = val;
+      await setting.save();
+    } else {
+      await SystemSetting.create({
+        key: 'role_permission_matrix',
+        value: val,
+        description: 'Rol ve yetki matrisi tanımı',
+        category: 'Security'
+      });
+    }
+
+    await logService.logCrud({
+      userId: currentUser ? currentUser.id : null,
+      username: currentUser ? currentUser.username : 'System',
+      action: 'UPDATE',
+      entity: 'SystemSetting',
+      entityId: 'role_permission_matrix',
+      details: { action: 'Updated Role Permission Matrix' },
+      ipAddress
+    });
+  }
 }
 
 module.exports = new UserRepository();

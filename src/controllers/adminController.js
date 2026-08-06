@@ -18,6 +18,21 @@ const DEPARTMENTS = [
 ];
 
 class AdminController {
+  renderDashboard = asyncHandler(async (req, res) => {
+    const users = await userRepository.findAll();
+    const settings = await userRepository.getAllSettings();
+    const userCount = users.length;
+    const activeUsersCount = users.filter(u => u.status === 'Active').length;
+
+    res.render('admin/dashboard', {
+      user: req.user,
+      users,
+      userCount,
+      activeUsersCount,
+      settings
+    });
+  });
+
   listUsers = asyncHandler(async (req, res) => {
     const users = await userRepository.findAll();
     res.render('admin/users', { user: req.user, users, ALL_ROLES, DEPARTMENTS });
@@ -146,7 +161,7 @@ class AdminController {
     res.redirect('/admin/users');
   });
 
-  // --- SYSTEM SETTINGS ---
+  // --- SYSTEM SETTINGS & PERMISSIONS ---
   renderSettings = asyncHandler(async (req, res) => {
     const settings = await userRepository.getAllSettings();
     res.render('admin/settings', { user: req.user, settings });
@@ -155,6 +170,39 @@ class AdminController {
   updateSettings = asyncHandler(async (req, res) => {
     await userRepository.updateSettings(req.body, req.user, req.ip);
     res.redirect('/admin/settings');
+  });
+
+  renderRoles = asyncHandler(async (req, res) => {
+    const { PERMISSION_MODULES } = require('../config/permissionMatrix');
+    const matrix = await userRepository.getPermissionMatrix();
+    const roleKeys = Object.keys(ALL_ROLES);
+    res.render('admin/roles', {
+      user: req.user,
+      ALL_ROLES,
+      roleKeys,
+      PERMISSION_MODULES,
+      matrix,
+      successMessage: req.query.success || null
+    });
+  });
+
+  updateRoles = asyncHandler(async (req, res) => {
+    const { PERMISSION_MODULES } = require('../config/permissionMatrix');
+    const roleKeys = Object.keys(ALL_ROLES);
+    const newMatrix = {};
+
+    for (const role of roleKeys) {
+      newMatrix[role] = {};
+      for (const mod of PERMISSION_MODULES) {
+        for (const p of mod.permissions) {
+          const fieldKey = `perm_${role}_${p.key}`;
+          newMatrix[role][p.key] = req.body[fieldKey] === 'on' || req.body[fieldKey] === 'true';
+        }
+      }
+    }
+
+    await userRepository.savePermissionMatrix(newMatrix, req.user, req.ip);
+    res.redirect('/admin/roles?success=Rol+ve+yetki+matrisi+başarıyla+güncellendi.');
   });
 }
 

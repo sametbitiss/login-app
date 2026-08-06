@@ -3,12 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Yönetimi — Enterprise ERP</title>
+  <title>Sistem Yönetim Özeti — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .exec-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .exec-kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .exec-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+    .exec-kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+    .exec-kpi-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      background: rgba(99, 102, 241, 0.12);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    .exec-kpi-val { font-size: 1.6rem; font-weight: 900; color: var(--text-primary); line-height: 1; }
+    .exec-kpi-lbl { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-top: 4px; }
+
+    .ops-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .op-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      text-decoration: none;
+      display: block;
+      transition: all 0.25 ease;
+      position: relative;
+    }
+    .op-card:hover {
+      transform: translateY(-3px);
+      border-color: #6366f1;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+    }
+    .op-card-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      background: rgba(99, 102, 241, 0.15);
+      margin-bottom: 14px;
+    }
+    .op-card-title { font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+    .op-card-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; }
+  </style>
 </head>
 <body class="module-body">
-
   <!-- Module Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
@@ -19,20 +94,26 @@
     </div>
 
     <div class="module-sidebar-section">
-      <div class="mss-label">SİSTEM YÖNETİMİ</div>
-      <a href="/admin" class="mss-link active">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Admin Paneli
-      </a>
+      <div class="mss-label">🛡️ SİSTEM YÖNETİMİ & GÜVENLİK</div>
+
+      <div class="mss-group-title">📊 KONTROL PANELİ & ANALİTİK</div>
       <div class="mss-sub">
-        <a href="/admin/users" class="mss-sub-link">👥 Kullanıcı Yönetimi</a>
-        <a href="/admin/users/add" class="mss-sub-link">➕ Yeni Kullanıcı</a>
-        <a href="/admin/settings" class="mss-sub-link">🛠️ Sistem Ayarları</a>
-        <a href="/admin/logs" class="mss-sub-link">📜 Sistem Logları</a>
+        <a href="/admin" class="mss-sub-link active">📊 Yönetim Özeti</a>
+      </div>
+
+      <div class="mss-group-title">👥 KULLANICI & ROL YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/admin/users" class="mss-sub-link">👥 Kullanıcı Hesapları</a>
+        <a href="/admin/users/add" class="mss-sub-link">➕ Yeni Kullanıcı Ekle</a>
+        <a href="/admin/roles" class="mss-sub-link">🔐 Rol & Yetki Matrisi</a>
+      </div>
+
+      <div class="mss-group-title">⚙️ SİSTEM & GÜVENLİK AYARLARI</div>
+      <div class="mss-sub">
+        <a href="/admin/settings" class="mss-sub-link">⚙️ Sistem Parametreleri</a>
       </div>
     </div>
 
-    <!-- Sidebar User -->
     <div class="module-sidebar-user">
       <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
       <div class="msu-meta">
@@ -44,13 +125,14 @@
 
   <!-- Main Area -->
   <div class="module-main">
-    <!-- Top Navbar -->
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
         <a href="/admin" class="mt-link active">Sistem Yönetimi</a>
         <a href="/stock" class="mt-link">Stok & Depo</a>
         <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <a href="/production" class="mt-link">Üretim Planlama</a>
       </div>
       <div class="mt-right">
         <span class="mt-time" id="liveTime"></span>
@@ -60,97 +142,100 @@
       </div>
     </header>
 
-    <!-- Content -->
     <main class="module-content">
+      <!-- Sub-Nav Bar -->
+      <div class="module-subnav">
+        <a href="/admin" class="msn-link active">📊 Yönetim Özeti</a>
+        <a href="/admin/users" class="msn-link">👥 Kullanıcı Hesapları</a>
+        <a href="/admin/users/add" class="msn-link">➕ Yeni Kullanıcı Ekle</a>
+        <a href="/admin/roles" class="msn-link">🔐 Rol & Yetki Matrisi</a>
+        <a href="/admin/settings" class="msn-link">⚙️ Sistem Ayarları</a>
+      </div>
+
       <div class="page-header">
         <div>
-          <h1>Sistem Yönetim Paneli</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Kurumsal kullanıcılar, güvenlik ilkeleri, sistem ayarları ve canlı audit loglar.</p>
+          <h1>Kurumsal Sistem Yönetim Özeti</h1>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Canlı sistem durumu, aktif kullanıcı metrikleri, yetkilendirme mimarisi ve güvenlik parametreleri.</p>
         </div>
       </div>
 
-      <!-- Admin KPI Cards -->
-      <div class="kpi-strip">
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--indigo">👥</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Kayıtlı Kullanıcılar</span>
-            <span class="kpi-chip-value"><%= userCount %></span>
+      <!-- Executive KPI Cards -->
+      <div class="exec-kpi-grid">
+        <div class="exec-kpi-card">
+          <div class="exec-kpi-icon">👥</div>
+          <div>
+            <div class="exec-kpi-val"><%= userCount %></div>
+            <div class="exec-kpi-lbl">Toplam Kayıtlı Kullanıcı</div>
           </div>
         </div>
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--emerald">✅</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Aktif Kullanıcı</span>
-            <span class="kpi-chip-value"><%= activeUsersCount %></span>
+        <div class="exec-kpi-card">
+          <div class="exec-kpi-icon" style="background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.3);">✅</div>
+          <div>
+            <div class="exec-kpi-val" style="color: #34d399;"><%= activeUsersCount %></div>
+            <div class="exec-kpi-lbl">Aktif Personel Hesabı</div>
           </div>
         </div>
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--amber">🛡️</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Güvenlik</span>
-            <span class="kpi-chip-value">JWT + RBAC</span>
+        <div class="exec-kpi-card">
+          <div class="exec-kpi-icon" style="background: rgba(14,165,233,0.15); color: #38bdf8; border-color: rgba(14,165,233,0.3);">🛡️</div>
+          <div>
+            <div class="exec-kpi-val" style="font-size: 1.1rem; color: #38bdf8; font-family: 'JetBrains Mono', monospace;">JWT + RBAC</div>
+            <div class="exec-kpi-lbl">Rol Tabanlı Yetki Mimarisi</div>
           </div>
         </div>
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--rose">🛠️</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Sistem Ayarları</span>
-            <span class="kpi-chip-value"><%= settings ? settings.length : 0 %></span>
+        <div class="exec-kpi-card">
+          <div class="exec-kpi-icon" style="background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3);">⚙️</div>
+          <div>
+            <div class="exec-kpi-val" style="color: #fbbf24;"><%= settings ? settings.length : 0 %></div>
+            <div class="exec-kpi-lbl">Sistem Parametresi</div>
           </div>
         </div>
       </div>
 
       <!-- Operations Grid -->
-      <h3 style="margin: 1.5rem 0 1rem; font-size: 1.1rem;">Sistem Yönetim İşlemleri</h3>
-      <div class="modules-grid">
-        <a href="/admin/users" class="mod-card mod-card--active">
-          <div class="mod-card-glow mod-card-glow--indigo"></div>
-          <div class="mod-card-header">
-            <div class="mod-card-icon mod-card-icon--indigo">👥</div>
-          </div>
-          <h3 class="mod-card-title">Kullanıcı & Rol Yönetimi</h3>
-          <p class="mod-card-desc">Hesapları aktifleştirin/dondurun, şifre sıfırlayın ve sistem rollerini düzenleyin.</p>
+      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">⚡ Sistem Yönetim İşlemleri ve Erişim Hızlı Linkleri</h3>
+      <div class="ops-grid">
+        <a href="/admin/users" class="op-card">
+          <div class="op-card-icon">👥</div>
+          <div class="op-card-title">Kullanıcı Hesapları Yönetimi</div>
+          <div class="op-card-desc">Sistem kullanıcılarını listeleyin, hesap durumlarını dondurun veya şifrelerini sıfırlayın.</div>
         </a>
 
-        <a href="/admin/settings" class="mod-card mod-card--active">
-          <div class="mod-card-glow mod-card-glow--emerald"></div>
-          <div class="mod-card-header">
-            <div class="mod-card-icon mod-card-icon--emerald">🛠️</div>
-          </div>
-          <h3 class="mod-card-title">Kurumsal Sistem Ayarları</h3>
-          <p class="mod-card-desc">Şirket unvanı, oturum zaman aşımı periyodu, şifre kuralları ve bakım modunu yönetin.</p>
+        <a href="/admin/users/add" class="op-card">
+          <div class="op-card-icon" style="background: rgba(16,185,129,0.15); color: #34d399;">➕</div>
+          <div class="op-card-title">Yeni Kullanıcı Hesabı Ekle</div>
+          <div class="op-card-desc">Departman, unvan ve sistem rolü belirleyerek yeni kurumsal personel hesabı açın.</div>
         </a>
 
-        <a href="/admin/logs" class="mod-card mod-card--active">
-          <div class="mod-card-glow mod-card-glow--cyan"></div>
-          <div class="mod-card-header">
-            <div class="mod-card-icon mod-card-icon--cyan">📜</div>
-          </div>
-          <h3 class="mod-card-title">Canlı Audit & Güvenlik Logları</h3>
-          <p class="mod-card-desc">Veritabanında gerçekleşen tüm ekleme, silme, güncelleme ve erişim kayıtlarını süzün.</p>
+        <a href="/admin/roles" class="op-card">
+          <div class="op-card-icon" style="background: rgba(139,92,246,0.15); color: #a78bfa;">🔐</div>
+          <div class="op-card-title">Rol ve Yetki Matrisi</div>
+          <div class="op-card-desc">Hangi kullanıcı rolünün hangi ERP modüllerini ve ekranlarını görebileceğini yönetin.</div>
         </a>
 
-        <a href="/stock" class="mod-card mod-card--active">
-          <div class="mod-card-glow mod-card-glow--rose"></div>
-          <div class="mod-card-header">
-            <div class="mod-card-icon mod-card-icon--rose">📦</div>
-          </div>
-          <h3 class="mod-card-title">Stok & Depo Yönetimi</h3>
-          <p class="mod-card-desc">Stok kartları ekleyin, güncelleyin ve envanter stok miktarlarını izleyin.</p>
+        <a href="/admin/settings" class="op-card">
+          <div class="op-card-icon" style="background: rgba(245,158,11,0.15); color: #fbbf24;">⚙️</div>
+          <div class="op-card-title">Sistem Parametreleri</div>
+          <div class="op-card-desc">Oturum zaman aşımı, şifre kuralları, şirket unvanı ve çalışma ayarlarını düzenleyin.</div>
+        </a>
+
+        <a href="/stock" class="op-card">
+          <div class="op-card-icon" style="background: rgba(6,182,212,0.15); color: #22d3ee;">📦</div>
+          <div class="op-card-title">Stok & Depo Modülü</div>
+          <div class="op-card-desc">Envanter stok kartları, depolar arası sevk, sayım fişleri ve envanter analitiği.</div>
+        </a>
+
+        <a href="/production" class="op-card">
+          <div class="op-card-icon" style="background: rgba(236,72,153,0.15); color: #f472b6;">🏭</div>
+          <div class="op-card-title">Üretim Planlama Modülü</div>
+          <div class="op-card-desc">Fabrika iş emirleri, MRP malzeme ihtiyaç motoru, ürün reçeteleri (BOM) ve rotalama.</div>
         </a>
       </div>
     </main>
   </div>
 
   <script>
-    function updateClock() {
-      const now = new Date();
-      const el = document.getElementById('liveTime');
-      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
+    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    updateClock(); setInterval(updateClock, 1000);
   </script>
 </body>
 </html>

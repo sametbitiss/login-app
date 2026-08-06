@@ -23,6 +23,10 @@ router.post('/users/:id/status', adminController.toggleUserStatus);
 router.post('/users/:id/reset-password', adminController.resetUserPassword);
 router.post('/users/:id/delete', adminController.deleteUser);
 
+// Role & Permission Matrix Management
+router.get('/roles', adminController.renderRoles);
+router.post('/roles', adminController.updateRoles);
+
 // System Settings
 router.get('/settings', adminController.renderSettings);
 router.post('/settings', adminController.updateSettings);

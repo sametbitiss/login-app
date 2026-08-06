@@ -6,7 +6,7 @@ const { authorizeRoles } = require('../middleware/rbacMiddleware');
 
 // Protect all purchase routes with JWT verification & RBAC
 router.use(verifyToken);
-router.use(authorizeRoles('Admin', 'Purchase_Manager', 'Sales_Manager', 'Stock_Manager', 'Production_Manager', 'Quality_Manager', 'Employee'));
+router.use(authorizeRoles('Admin', 'Purchase_Manager', 'Stock_Manager'));
 
 // 0. Purchase Module Root -> Redirects to Analytics Dashboard
 router.get('/', (req, res) => res.redirect('/purchase/analytics'));

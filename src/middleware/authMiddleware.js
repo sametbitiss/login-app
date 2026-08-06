@@ -61,6 +61,7 @@ module.exports = {
       res.locals.user = activeUser;
       next();
     } catch (err) {
+      console.error('JWT VERIFY ERROR:', err.message, err.stack);
       logger.security('Invalid or Expired JWT Token Attempt', { ip: req.ip, path: req.originalUrl });
       res.clearCookie('token');
       if (req.xhr || req.path.startsWith('/api')) {

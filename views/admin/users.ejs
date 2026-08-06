@@ -19,15 +19,18 @@
     </div>
 
     <div class="module-sidebar-section">
-      <div class="mss-label">SİSTEM YÖNETİMİ</div>
-      <a href="/admin/users" class="mss-link active">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Admin Paneli
-      </a>
+      <div class="mss-label">🛡️ SİSTEM YÖNETİMİ & GÜVENLİK</div>
+
+      <div class="mss-group-title">👥 KULLANICI & ROL YÖNETİMİ</div>
       <div class="mss-sub">
-        <a href="/admin/users" class="mss-sub-link active">👥 Kullanıcı Yönetimi</a>
-        <a href="/admin/users/add" class="mss-sub-link">➕ Yeni Kullanıcı</a>
-        <a href="/admin/settings" class="mss-sub-link">🛠️ Sistem Ayarları</a>
+        <a href="/admin/users" class="mss-sub-link active">👥 Kullanıcı Hesapları</a>
+        <a href="/admin/users/add" class="mss-sub-link">➕ Yeni Kullanıcı Ekle</a>
+        <a href="/admin/roles" class="mss-sub-link">🔐 Rol & Yetki Matrisi</a>
+      </div>
+
+      <div class="mss-group-title">⚙️ SİSTEM & GÜVENLİK AYARLARI</div>
+      <div class="mss-sub">
+        <a href="/admin/settings" class="mss-sub-link">⚙️ Sistem Parametreleri</a>
       </div>
     </div>
 
@@ -36,7 +39,7 @@
       <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
       <div class="msu-meta">
         <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
-        <span><%= ALL_ROLES[user.role] || user.role %></span>
+        <span><%= user.role %></span>
       </div>
     </div>
   </aside>
@@ -47,10 +50,11 @@
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
-        <a href="/admin/users" class="mt-link active">Sistem Yönetimi</a>
+        <a href="/admin" class="mt-link active">Sistem Yönetimi</a>
         <a href="/stock" class="mt-link">Stok & Depo</a>
         <a href="/sales" class="mt-link">Satış Yönetimi</a>
         <a href="/purchase" class="mt-link">Satın Alma</a>
+        <a href="/production" class="mt-link">Üretim Planlama</a>
       </div>
       <div class="mt-right">
         <span class="mt-time" id="liveTime"></span>
@@ -62,6 +66,14 @@
 
     <!-- Content -->
     <main class="module-content">
+      <!-- Sub-Nav Bar -->
+      <div class="module-subnav">
+        <a href="/admin/users" class="msn-link active">👥 Kullanıcı Hesapları</a>
+        <a href="/admin/users/add" class="msn-link">➕ Yeni Kullanıcı Ekle</a>
+        <a href="/admin/roles" class="msn-link">🔐 Rol & Yetki Matrisi</a>
+        <a href="/admin/settings" class="msn-link">⚙️ Sistem Ayarları</a>
+      </div>
+
       <div class="page-header">
         <div>
           <h1>Kullanıcı Hesabı & Profil Yönetimi</h1>
