@@ -6,6 +6,96 @@
   <title>Üretim Reçeteleri (BOM) — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+
+    .form-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .aesthetic-group { margin-bottom: 16px; }
+    .aesthetic-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .aesthetic-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      padding: 12px 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .aesthetic-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+    }
+    .aesthetic-input::placeholder { color: #475569; }
+
+    .btn-indigo-gradient {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -61,49 +151,59 @@
       <div class="page-header">
         <div>
           <h1>Üretim Reçeteleri Yönetimi (Bill of Materials - BOM)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Bir ürünün oluşması için gerekli hammadde, bileşen ve fire oranlarının hiyerarşik tanımı.</p>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Bir ürünün oluşması için gerekli hammadde, bileşen ve fire oranlarının hiyerarşik tanımı.</p>
         </div>
       </div>
 
       <!-- Add BOM Form -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); margin-bottom: 24px;">
-        <h3 style="font-size: 1.1rem; color: var(--indigo); margin-bottom: 16px;">📜 Reçeteye Yeni Bileşen / Hammadde Ekle</h3>
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon">📜</div>
+          <div>
+            <div class="form-card-title">Reçeteye Yeni Bileşen / Hammadde Ekle</div>
+            <div class="form-card-sub">Ürün ağacı tanımı, birim tüketim miktarları ve imalat fire oranları</div>
+          </div>
+        </div>
+
         <form action="/production/bom" method="POST">
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
-            <div class="form-group">
-              <label class="form-label">Üretilecek Mamul Ürün *</label>
-              <select name="finishedStockItemId" class="form-control" required>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Üretilecek Mamul Ürün *</label>
+              <select name="finishedStockItemId" class="aesthetic-input" required style="cursor: pointer;">
                 <% finishedStockItems.forEach(item => { %>
                   <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %></option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Gerekli Hammadde / Bileşen *</label>
-              <select name="componentStockItemId" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Gerekli Hammadde / Bileşen *</label>
+              <select name="componentStockItemId" class="aesthetic-input" required style="cursor: pointer;">
                 <% componentStockItems.forEach(comp => { %>
                   <option value="<%= comp.id %>"><%= comp.stockCode %> — <%= comp.name %> (Stok: <%= comp.currentStock %> <%= comp.unit %>)</option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Birim İmalat Miktarı *</label>
-              <input type="number" name="quantityRequired" value="1.0" min="0.0001" step="0.0001" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Birim İmalat Miktarı *</label>
+              <input type="number" name="quantityRequired" value="1.0" min="0.0001" step="0.0001" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Tahmini Fire / Hurda (%)</label>
-              <input type="number" name="scrapPercentage" value="2.0" min="0" step="0.5" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Tahmini Fire / Hurda (%)</label>
+              <input type="number" name="scrapPercentage" value="2.0" min="0" step="0.5" class="aesthetic-input">
             </div>
           </div>
-          <div class="form-group" style="margin-top: 12px;">
-            <label class="form-label">BOM Açıklaması / Spesifikasyon</label>
-            <input type="text" name="notes" placeholder="Örn: 2mm Paslanmaz Lazer Kesim Plaka..." class="form-control">
+          <div class="aesthetic-group" style="margin-top: 6px;">
+            <label class="aesthetic-label">BOM Açıklaması / Spesifikasyon</label>
+            <input type="text" name="notes" placeholder="Örn: 2mm Paslanmaz Lazer Kesim Plaka revizyon A..." class="aesthetic-input">
           </div>
-          <button type="submit" class="btn" style="margin-top: 16px;">📜 Reçete Bileşenini Kaydet</button>
+          <div style="margin-top: 12px;">
+            <button type="submit" class="btn-indigo-gradient">📜 Reçete Bileşenini Kaydet</button>
+          </div>
         </form>
       </div>
 
       <!-- BOM Items Table -->
+      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">📋 Tanımlı Üretim Reçeteleri ve Ürün Ağaçları</h3>
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
@@ -120,22 +220,22 @@
           </thead>
           <tbody>
             <% if (bomItems.length === 0) { %>
-              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Henüz kayıtlı üretim reçetesi bulunmamaktadır.</td></tr>
+              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Henüz kayıtlı üretim reçetesi bulunmamaktadır.</td></tr>
             <% } else { %>
               <% bomItems.forEach(b => { %>
                 <% const compPrice = b.componentItem ? parseFloat(b.componentItem.purchasePrice || 0) : 0; %>
                 <% const unitCost = (parseFloat(b.quantityRequired) * compPrice * (1 + (parseFloat(b.scrapPercentage || 0)/100))).toFixed(2); %>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= b.bomCode %></strong></td>
+                  <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; background: rgba(99,102,241,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(99,102,241,0.2);"><%= b.bomCode %></strong></td>
                   <td><strong style="color: var(--text-primary);"><%= b.finishedProduct ? b.finishedProduct.name : '—' %></strong></td>
                   <td>
-                    <strong style="color: var(--cyan);"><%= b.componentItem ? b.componentItem.name : '—' %></strong>
+                    <strong style="color: #22d3ee;"><%= b.componentItem ? b.componentItem.name : '—' %></strong>
                     <div style="font-size: 0.75rem; color: var(--text-muted);"><%= b.componentItem ? b.componentItem.stockCode : '' %></div>
                   </td>
                   <td><strong><%= b.quantityRequired %> <%= b.componentItem ? b.componentItem.unit : '' %></strong></td>
                   <td><%= compPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</td>
                   <td><%= b.scrapPercentage %>%</td>
-                  <td><strong style="color: var(--emerald);"><%= parseFloat(unitCost).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</strong></td>
+                  <td><strong style="color: #34d399; font-size: 0.95rem;"><%= parseFloat(unitCost).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</strong></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= b.notes || '—' %></td>
                 </tr>
               <% }); %>

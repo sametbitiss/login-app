@@ -6,6 +6,104 @@
   <title>Yeni İş Emri Oluştur — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+
+    .form-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .aesthetic-group { margin-bottom: 16px; }
+    .aesthetic-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .aesthetic-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      padding: 12px 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .aesthetic-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+    }
+    .aesthetic-input[readonly] {
+      background: #090d16;
+      border-color: #334155;
+      color: #818cf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      cursor: not-allowed;
+    }
+    .aesthetic-input::placeholder { color: #475569; }
+
+    .btn-indigo-gradient {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -61,79 +159,87 @@
       <div class="page-header">
         <div>
           <h1>Yeni Üretim İş Emri Aç</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Mamul veya yarı mamul imalatı için fabrikayı yetkilendirin.</p>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Mamul veya yarı mamul imalatı için fabrikayı yetkilendirin.</p>
         </div>
-        <a href="/production/orders" class="btn btn-secondary">← İş Emirleri Listesi</a>
+        <a href="/production/orders" class="btn btn-secondary" style="border-radius: 10px;">← İş Emirleri Listesi</a>
       </div>
 
-      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md);">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon">⚙️</div>
+          <div>
+            <div class="form-card-title">Üretim İş Emri Başlatma Formu</div>
+            <div class="form-card-sub">Fabrika üretim hedefi, iş istasyonu, öncelik ve planlanan imalat süreleri</div>
+          </div>
+        </div>
+
         <form action="/production/orders/add" method="POST">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="form-group">
-              <label class="form-label">İş Emri Numarası</label>
-              <input type="text" name="workOrderNo" value="<%= nextWorkOrderNo %>" class="form-control" readonly style="background: var(--bg-elevated); font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--indigo);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">İş Emri Numarası (Otomatik)</label>
+              <input type="text" name="workOrderNo" value="<%= nextWorkOrderNo %>" class="aesthetic-input" readonly>
             </div>
-            <div class="form-group">
-              <label class="form-label">Üretim Başlığı / Açıklama *</label>
-              <input type="text" name="productionTitle" placeholder="Örn: 50 Adet CNC Gövde Seri İmalatı" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Üretim Başlığı / Açıklama *</label>
+              <input type="text" name="productionTitle" placeholder="Örn: 50 Adet CNC Gövde Seri İmalatı" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Üretilecek Ürün / Mamul *</label>
-              <select name="stockItemId" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Üretilecek Ürün / Mamul *</label>
+              <select name="stockItemId" class="aesthetic-input" required style="cursor: pointer;">
                 <% stockItems.forEach(item => { %>
                   <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %> (Mevcut: <%= item.currentStock %> <%= item.unit %>)</option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Hedeflenen Üretim Miktarı *</label>
-              <input type="number" name="plannedQuantity" value="10" min="1" step="0.01" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Hedeflenen Üretim Miktarı *</label>
+              <input type="number" name="plannedQuantity" value="10" min="1" step="0.01" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Birim</label>
-              <input type="text" name="unit" value="Adet" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Birim</label>
+              <input type="text" name="unit" value="Adet" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Atanacak İş İstasyonu / İstasyon</label>
-              <select name="workCenter" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Atanacak İş İstasyonu / Tezgah Parkuru</label>
+              <select name="workCenter" class="aesthetic-input" style="cursor: pointer;">
                 <% WORK_CENTERS.forEach(wc => { %>
                   <option value="<%= wc %>"><%= wc %></option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Öncelik Seviyesi</label>
-              <select name="priority" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Öncelik Seviyesi</label>
+              <select name="priority" class="aesthetic-input" style="cursor: pointer;">
                 <option value="Normal">Normal</option>
                 <option value="High">⚡ Yüksek Öncelikli</option>
                 <option value="Urgent">🚨 Acil Üretim</option>
                 <option value="Low">Düşük Öncelikli</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Tahmini Süre (Saat)</label>
-              <input type="number" name="estimatedHours" value="12" min="0" step="0.5" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Tahmini Süre (Saat)</label>
+              <input type="number" name="estimatedHours" value="12" min="0" step="0.5" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Planlanan Başlangıç Tarihi *</label>
-              <input type="date" name="plannedStartDate" value="<%= new Date().toISOString().split('T')[0] %>" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Planlanan Başlangıç Tarihi *</label>
+              <input type="date" name="plannedStartDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Planlanan Bitiş Tarihi *</label>
-              <input type="date" name="plannedEndDate" value="<%= new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] %>" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Planlanan Bitiş Tarihi *</label>
+              <input type="date" name="plannedEndDate" value="<%= new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] %>" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Üretim Mühendisi / Sorumlu</label>
-              <input type="text" name="productionManager" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" class="form-control">
+            <div class="aesthetic-group" style="grid-column: span 2;">
+              <label class="aesthetic-label">Üretim Mühendisi / Sorumlu Personel</label>
+              <input type="text" name="productionManager" value="<%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>" class="aesthetic-input">
             </div>
           </div>
-          <div class="form-group" style="margin-top: 16px;">
-            <label class="form-label">Üretim Notları & Özel İmalat Talimatları</label>
-            <textarea name="notes" class="form-control" rows="2" placeholder="Teknik resim revizyon no, özel toleranslar..."></textarea>
+          <div class="aesthetic-group" style="margin-top: 6px;">
+            <label class="aesthetic-label">Üretim Notları & Özel İmalat Talimatları</label>
+            <textarea name="notes" class="aesthetic-input" rows="3" placeholder="Teknik resim revizyon no, toleranslar, özel kalite kontrol şartları..."></textarea>
           </div>
-          <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn">⚙️ İş Emrini Kaydet ve Başlat</button>
-            <a href="/production/orders" class="btn btn-secondary">İptal</a>
+          <div style="display: flex; gap: 14px; margin-top: 14px;">
+            <button type="submit" class="btn-indigo-gradient">⚙️ İş Emrini Kaydet ve Başlat</button>
+            <a href="/production/orders" class="btn btn-secondary" style="border-radius: 10px; padding: 12px 20px;">İptal</a>
           </div>
         </form>
       </div>

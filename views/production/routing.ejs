@@ -6,6 +6,96 @@
   <title>Rotalama ve Operasyonlar — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+
+    .form-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .aesthetic-group { margin-bottom: 16px; }
+    .aesthetic-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .aesthetic-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      padding: 12px 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .aesthetic-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+    }
+    .aesthetic-input::placeholder { color: #475569; }
+
+    .btn-indigo-gradient {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -61,57 +151,67 @@
       <div class="page-header">
         <div>
           <h1>Rotalama ve Operasyon Süreç Mühendisliği</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Ürünün imalat sürecinde geçeceği tezgah sırası, hazırlık ve birim işleme süreleri.</p>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Ürünün imalat sürecinde geçeceği tezgah sırası, hazırlık ve birim işleme süreleri.</p>
         </div>
       </div>
 
       <!-- Add Routing Form -->
-      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); margin-bottom: 24px;">
-        <h3 style="font-size: 1.1rem; color: var(--indigo); margin-bottom: 16px;">🛠️ Rotalamaya Yeni Operasyon Adımı Ekle</h3>
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon">🛠️</div>
+          <div>
+            <div class="form-card-title">Rotalamaya Yeni Operasyon Adımı Ekle</div>
+            <div class="form-card-sub">Tezgah rotası, operasyon sırası (Seq 10, Seq 20...), ayar ve işleme süreleri</div>
+          </div>
+        </div>
+
         <form action="/production/routing" method="POST">
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
-            <div class="form-group">
-              <label class="form-label">Ürün Seçin *</label>
-              <select name="stockItemId" class="form-control" required>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Ürün Seçin *</label>
+              <select name="stockItemId" class="aesthetic-input" required style="cursor: pointer;">
                 <% stockItems.forEach(item => { %>
                   <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %></option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Operasyon Sırası (Seq) *</label>
-              <input type="number" name="operationSeq" value="10" step="10" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Operasyon Sırası (Seq) *</label>
+              <input type="number" name="operationSeq" value="10" step="10" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Operasyon Adı *</label>
-              <input type="text" name="operationName" placeholder="Örn: Lazer Kesim & Çapak Alma" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Operasyon Adı *</label>
+              <input type="text" name="operationName" placeholder="Örn: Lazer Kesim & Çapak Alma" class="aesthetic-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">İş İstasyonu / Tezgah *</label>
-              <select name="workCenter" class="form-control" required>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">İş İstasyonu / Tezgah *</label>
+              <select name="workCenter" class="aesthetic-input" required style="cursor: pointer;">
                 <% WORK_CENTERS.forEach(wc => { %>
                   <option value="<%= wc %>"><%= wc %></option>
                 <% }); %>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Hazırlık Süresi (Ayar / Setup dk)</label>
-              <input type="number" name="setupTimeMinutes" value="15" min="0" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Hazırlık Süresi (Setup dk)</label>
+              <input type="number" name="setupTimeMinutes" value="15" min="0" class="aesthetic-input">
             </div>
-            <div class="form-group">
-              <label class="form-label">Birim İşleme Süresi (Run Time/unit dk)</label>
-              <input type="number" name="runTimeMinutesPerUnit" value="5" min="0.1" step="0.1" class="form-control">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Birim İşleme (Run Time dk/adet)</label>
+              <input type="number" name="runTimeMinutesPerUnit" value="5" min="0.1" step="0.1" class="aesthetic-input">
             </div>
-            <div class="form-group" style="grid-column: span 2;">
-              <label class="form-label">Operatör Talimatı / Notlar</label>
-              <input type="text" name="instructions" placeholder="0.05mm tolerans hassasiyeti..." class="form-control">
+            <div class="aesthetic-group" style="grid-column: span 2;">
+              <label class="aesthetic-label">Operatör Talimatı / Notlar</label>
+              <input type="text" name="instructions" placeholder="Örn: 0.05mm tolerans hassasiyeti, kumpas kontrolü..." class="aesthetic-input">
             </div>
           </div>
-          <button type="submit" class="btn" style="margin-top: 16px;">🛠️ Operasyon Adımını Kaydet</button>
+          <div style="margin-top: 12px;">
+            <button type="submit" class="btn-indigo-gradient">🛠️ Operasyon Adımını Kaydet</button>
+          </div>
         </form>
       </div>
 
       <!-- Routing Table -->
+      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">📋 Tanımlı İmalat Rotaları ve Operasyon Adımları</h3>
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
@@ -128,17 +228,17 @@
           </thead>
           <tbody>
             <% if (routings.length === 0) { %>
-              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Henüz kayıtlı rotalama operasyonu bulunmamaktadır.</td></tr>
+              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Henüz kayıtlı rotalama operasyonu bulunmamaktadır.</td></tr>
             <% } else { %>
               <% routings.forEach(r => { %>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= r.routingCode %></strong></td>
+                  <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; background: rgba(99,102,241,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(99,102,241,0.2);"><%= r.routingCode %></strong></td>
                   <td><strong style="color: var(--text-primary);"><%= r.stockItem ? r.stockItem.name : '—' %></strong></td>
                   <td><span class="status-pill status-active">Seq <%= r.operationSeq %></span></td>
-                  <td><strong style="color: var(--cyan);"><%= r.operationName %></strong></td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= r.workCenter %></td>
+                  <td><strong style="color: #22d3ee;"><%= r.operationName %></strong></td>
+                  <td style="font-size: 0.85rem; color: var(--text-muted);"><%= r.workCenter %></td>
                   <td><%= r.setupTimeMinutes %> dk</td>
-                  <td><strong style="color: var(--emerald);"><%= r.runTimeMinutesPerUnit %> dk / adet</strong></td>
+                  <td><strong style="color: #34d399;"><%= r.runTimeMinutesPerUnit %> dk / adet</strong></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= r.instructions || '—' %></td>
                 </tr>
               <% }); %>
