@@ -14,7 +14,9 @@
       border-radius: 16px; 
       padding: 24px; 
       box-shadow: var(--shadow-md); 
+      transition: transform 0.2s, box-shadow 0.2s;
     }
+    .card-metric:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
     .card-metric span { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 8px; letter-spacing: 0.05em; }
     .card-metric strong { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px; }
@@ -27,6 +29,120 @@
       box-shadow: var(--shadow-md); 
     }
     .chart-box h3 { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0 0 20px 0; }
+
+    /* Custom Tables Design for Sales Analytics Cards */
+    .fancy-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+    .fancy-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    .fancy-card--emerald::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+    .fancy-card--indigo::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+
+    .fancy-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .fancy-card-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .fancy-card-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .fancy-card-badge--emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .fancy-card-badge--indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+
+    .fancy-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+    .fancy-table th {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 8px 14px;
+      text-align: left;
+      border: none;
+    }
+    .fancy-table tbody tr {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .fancy-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: scale(1.01);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .fancy-table td {
+      padding: 12px 14px;
+      font-size: 0.875rem;
+      border: none;
+      vertical-align: middle;
+    }
+    .fancy-table td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+    .fancy-table td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+    .tag-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .rep-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-pill-custom {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .pill--confirmed { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .pill--invoiced { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .pill--draft { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
   </style>
 </head>
 <body class="module-body">
@@ -147,62 +263,109 @@
 
       <!-- Sales Rep Table & Top Products List -->
       <div class="grid-2">
-        <div class="chart-box">
-          <h3>👤 Satış Temsilcisi Performans Tablosu</h3>
-          <div class="table-wrapper">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Temsilci</th>
-                  <th>Sipariş Adedi</th>
-                  <th class="text-end">Toplam Ciro (TL)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (!salesRepData || salesRepData.length === 0) { %>
-                  <tr><td colspan="3" class="text-center text-muted">Veri bulunamadı.</td></tr>
-                <% } else { %>
-                  <% salesRepData.forEach(r => { %>
-                    <tr>
-                      <td><strong style="color: var(--text-primary);"><%= r.salesRep || 'Temsilci Belirtilmedi' %></strong></td>
-                      <td><span class="badge bg-secondary"><%= r.orderCount %> Sipariş</span></td>
-                      <td class="text-end font-weight-bold" style="color: var(--emerald);"><%= Number(r.totalRevenue).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</td>
-                    </tr>
-                  <% }); %>
-                <% } %>
-              </tbody>
-            </table>
+        <!-- 1. Satış Temsilcisi Performans Tablosu -->
+        <div class="fancy-card fancy-card--emerald">
+          <div class="fancy-card-header">
+            <div class="fancy-card-title">
+              <span>👤 Satış Temsilcisi Performans Tablosu</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="fancy-card-badge fancy-card-badge--emerald"><%= salesRepData ? salesRepData.length : 0 %> Temsilci</span>
+              <a href="/sales/orders" style="color: var(--emerald); font-size: 0.8rem; font-weight: 700; text-decoration: none;">Siparişler →</a>
+            </div>
           </div>
+
+          <table class="fancy-table">
+            <thead>
+              <tr>
+                <th>Temsilci</th>
+                <th>Sipariş Hacmi</th>
+                <th style="text-align: right;">Toplam Ciro (TL)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!salesRepData || salesRepData.length === 0) { %>
+                <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 2rem;">Veri bulunamadı.</td></tr>
+              <% } else { %>
+                <% salesRepData.forEach(r => { %>
+                  <% const repName = r.salesRep || 'Temsilci Belirtilmedi'; %>
+                  <% const initial = repName.charAt(0).toUpperCase(); %>
+                  <tr>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="rep-avatar"><%= initial %></div>
+                        <div style="font-weight: 700; color: var(--text-primary);"><%= repName %></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span style="background: rgba(99,102,241,0.12); color: #818cf8; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(99,102,241,0.25);">
+                        📦 <%= r.orderCount %> Sipariş
+                      </span>
+                    </td>
+                    <td style="text-align: right;">
+                      <strong style="color: #34d399; font-size: 0.95rem;">
+                        <%= Number(r.totalRevenue).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> ₺
+                      </strong>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
         </div>
 
-        <div class="chart-box">
-          <h3>📋 Son Gerçekleşen Satış İşlemleri</h3>
-          <div class="table-wrapper">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Sipariş No</th>
-                  <th>Müşteri</th>
-                  <th>Tutar</th>
-                  <th>Durum</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (!recentOrders || recentOrders.length === 0) { %>
-                  <tr><td colspan="4" class="text-center text-muted">Henüz sipariş kaydı yok.</td></tr>
-                <% } else { %>
-                  <% recentOrders.slice(0, 5).forEach(o => { %>
-                    <tr>
-                      <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.orderNo %></strong></td>
-                      <td><%= o.customerName %></td>
-                      <td class="font-weight-bold" style="color: var(--emerald);"><%= Number(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= o.currency %></td>
-                      <td><span class="badge bg-primary"><%= o.status %></span></td>
-                    </tr>
-                  <% }); %>
-                <% } %>
-              </tbody>
-            </table>
+        <!-- 2. Son Gerçekleşen Satış İşlemleri -->
+        <div class="fancy-card fancy-card--indigo">
+          <div class="fancy-card-header">
+            <div class="fancy-card-title">
+              <span>📋 Son Gerçekleşen Satış İşlemleri</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="fancy-card-badge fancy-card-badge--indigo"><%= recentOrders ? recentOrders.length : 0 %> İşlem</span>
+              <a href="/sales/orders" style="color: var(--indigo); font-size: 0.8rem; font-weight: 700; text-decoration: none;">Tümünü Gör →</a>
+            </div>
           </div>
+
+          <table class="fancy-table">
+            <thead>
+              <tr>
+                <th>Sipariş No</th>
+                <th>Müşteri Adı</th>
+                <th>Toplam Tutar</th>
+                <th style="text-align: right;">Durum</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!recentOrders || recentOrders.length === 0) { %>
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">Henüz sipariş kaydı yok.</td></tr>
+              <% } else { %>
+                <% recentOrders.slice(0, 5).forEach(o => { %>
+                  <tr>
+                    <td>
+                      <span class="tag-code"><%= o.orderNo %></span>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: var(--text-primary); font-size: 0.875rem;"><%= o.customerName %></div>
+                    </td>
+                    <td>
+                      <strong style="color: #34d399; font-size: 0.9rem;">
+                        <%= Number(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= o.currency %>
+                      </strong>
+                    </td>
+                    <td style="text-align: right;">
+                      <% if (o.status === 'Confirmed' || o.status === 'Onaylandı') { %>
+                        <span class="status-pill-custom pill--confirmed">⚡ Onaylandı</span>
+                      <% } else if (o.status === 'Invoiced' || o.status === 'Faturalandı') { %>
+                        <span class="status-pill-custom pill--invoiced">🧾 Faturalandı</span>
+                      <% } else { %>
+                        <span class="status-pill-custom pill--draft">📝 <%= o.status %></span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
         </div>
       </div>
     </main>
