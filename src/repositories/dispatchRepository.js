@@ -56,11 +56,51 @@ class DispatchRepository {
       createdBy: currentUser ? currentUser.id : null
     });
 
-    // Mark associated SaleOrder as Completed
+    // Calculate total ordered quantity vs total dispatched quantity so far
     const saleOrder = await SaleOrder.findByPk(data.saleOrderId);
     if (saleOrder) {
-      saleOrder.status = 'Completed';
-      saleOrder.fulfillmentStatus = 'Closed';
+      let totalOrderedQty = 0;
+      if (saleOrder.itemsJson) {
+        try {
+          const orderItems = JSON.parse(saleOrder.itemsJson);
+          if (Array.isArray(orderItems) && orderItems.length > 0) {
+            totalOrderedQty = orderItems.reduce((sum, it) => sum + (parseFloat(it.quantity) || 0), 0);
+          }
+        } catch (e) {}
+      }
+      if (totalOrderedQty <= 0) {
+        totalOrderedQty = parseFloat(saleOrder.quantity) || 0;
+      }
+
+      // Calculate total cumulative dispatched quantity across ALL dispatches for this order
+      const allDispatches = await SaleDispatchNote.findAll({
+        where: { saleOrderId: saleOrder.id }
+      });
+
+      let totalDispatchedQtySoFar = 0;
+      for (const d of allDispatches) {
+        if (d.itemsJson) {
+          try {
+            const dItems = JSON.parse(d.itemsJson);
+            if (Array.isArray(dItems)) {
+              dItems.forEach(it => {
+                totalDispatchedQtySoFar += parseFloat(it.dispatchQuantity || it.quantity || 0);
+              });
+            }
+          } catch (e) {}
+        } else {
+          totalDispatchedQtySoFar += parseFloat(saleOrder.quantity) || 0;
+        }
+      }
+
+      // Set status: 'Completed' if fully shipped, 'Shipped' if partially shipped
+      if (totalDispatchedQtySoFar >= totalOrderedQty) {
+        saleOrder.status = 'Completed';
+        saleOrder.fulfillmentStatus = 'Closed';
+      } else {
+        saleOrder.status = 'Shipped';
+        saleOrder.fulfillmentStatus = 'Partial';
+      }
       await saleOrder.save();
 
       // Parse items to deduct from stock
