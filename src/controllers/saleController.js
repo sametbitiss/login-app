@@ -350,12 +350,27 @@ class SaleController {
       const primaryStockItemId = safeInt(primaryItem.stockItemId);
       const customerId = safeInt(req.body.customerId);
 
+      // Ensure validUntil is never empty
+      const future = new Date();
+      future.setDate(future.getDate() + 15);
+      const defaultValidUntil = future.toISOString().split('T')[0];
+      const validUntil = (req.body.validUntil && req.body.validUntil.trim() !== '') ? req.body.validUntil.trim() : defaultValidUntil;
+
+      // Customer name fallback
+      const customerName = (req.body.customerName && req.body.customerName.trim() !== '') ? req.body.customerName.trim() : 'Genel Müşteri';
+
+      // Currency code normalization
+      let rawCurrency = req.body.currency || 'TRY';
+      let currency = 'TRY';
+      if (rawCurrency.includes('USD')) currency = 'USD';
+      else if (rawCurrency.includes('EUR')) currency = 'EUR';
+
       await quotationRepository.create({
         quotationNo: req.body.quotationNo,
         customerId: customerId,
-        customerName: req.body.customerName,
+        customerName: customerName,
         quotationDate: req.body.quotationDate || new Date().toISOString().split('T')[0],
-        validUntil: req.body.validUntil,
+        validUntil: validUntil,
         stockItemId: primaryStockItemId,
         quantity: safeFloat(primaryItem.quantity, 1),
         unitPrice: safeFloat(primaryItem.unitPrice, 0),
@@ -365,7 +380,7 @@ class SaleController {
         discountAmount: grandDiscountAmount,
         taxAmount: grandTaxAmount,
         totalAmount: grandTotalAmount,
-        currency: req.body.currency || 'TRY',
+        currency: currency,
         notes: req.body.notes || null,
         itemsJson: JSON.stringify(processedItems)
       }, req.user, req.ip);

@@ -461,6 +461,41 @@
     // Initialize first row
     addNewRow();
 
+    // Form submit validation & sync
+    const qForm = document.getElementById('quotationForm');
+    if (qForm) {
+      qForm.addEventListener('submit', function(e) {
+        recalculate();
+
+        const validUntilInput = document.getElementById('validUntil');
+        if (validUntilInput && !validUntilInput.value) {
+          const future = new Date();
+          future.setDate(future.getDate() + 15);
+          validUntilInput.value = future.toISOString().split('T')[0];
+        }
+
+        const rows = document.querySelectorAll('#itemsTbody tr');
+        let validItemsCount = 0;
+        rows.forEach(row => {
+          const sel = row.querySelector('.item-select');
+          if (sel && sel.value && sel.value !== '') {
+            validItemsCount++;
+          }
+        });
+
+        const minWarn = document.getElementById('minItemWarningAlert');
+        if (validItemsCount === 0) {
+          e.preventDefault();
+          if (minWarn) {
+            minWarn.querySelector('span').textContent = '⚠️ Lütfen teklife en az 1 ürün seçiniz.';
+            minWarn.style.display = 'flex';
+            minWarn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return false;
+        }
+      });
+    }
+
     function updateClock() {
       const now = new Date();
       const el = document.getElementById('liveTime');
