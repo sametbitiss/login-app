@@ -43,6 +43,13 @@ class DispatchRepository {
     return `IRS-2026-${num.toString().padStart(4, '0')}`;
   }
 
+  async getNextTrackingNo() {
+    const last = await SaleDispatchNote.findOne({ order: [['id', 'DESC']] });
+    if (!last) return 'LOJ-2026-0001';
+    const num = last.id + 1;
+    return `LOJ-2026-${num.toString().padStart(4, '0')}`;
+  }
+
   async create(data, currentUser = null, ipAddress = null) {
     const dispatch = await SaleDispatchNote.create({
       ...data,

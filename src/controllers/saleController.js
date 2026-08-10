@@ -854,18 +854,20 @@ class SaleController {
       order: [['createdAt', 'DESC']]
     });
     const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+    const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
 
     res.render('sales/dispatches', {
       user: req.user,
       dispatches,
       openOrders,
       nextDispatchNo,
+      nextTrackingNo,
       error: null
     });
   });
 
   addDispatch = asyncHandler(async (req, res) => {
-    const { saleOrderId, carrierCompany, vehiclePlate, driverName, trackingNo, notes, itemsJson } = req.body;
+    const { saleOrderId, carrierCompany, vehiclePlate, driverName, notes, itemsJson } = req.body;
     const order = await SaleOrder.findByPk(saleOrderId, {
       include: [{ model: StockItem, as: 'stockItem' }]
     });
@@ -878,11 +880,13 @@ class SaleController {
         order: [['createdAt', 'DESC']]
       });
       const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+      const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
       return res.render('sales/dispatches', {
         user: req.user,
         dispatches,
         openOrders,
         nextDispatchNo,
+        nextTrackingNo,
         error: '⚠️ Lütfen geçerli bir sipariş seçiniz.'
       });
     }
@@ -895,16 +899,18 @@ class SaleController {
         order: [['createdAt', 'DESC']]
       });
       const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+      const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
       return res.render('sales/dispatches', {
         user: req.user,
         dispatches,
         openOrders,
         nextDispatchNo,
+        nextTrackingNo,
         error: '⚠️ Tamamlanmış siparişler için tekrar sevk irsaliyesi oluşturulamaz.'
       });
     }
 
-    // Parse and validate itemsJson dispatch quantities against ordered quantities
+    // Parse itemsJson
     let parsedItems = [];
     if (itemsJson) {
       try {
@@ -915,7 +921,6 @@ class SaleController {
     }
 
     if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
-      // Fallback from order single item or itemsJson
       if (order.itemsJson) {
         try { parsedItems = JSON.parse(order.itemsJson); } catch (e) { parsedItems = []; }
       }
@@ -937,10 +942,33 @@ class SaleController {
       }
     }
 
-    // STRICT VALIDATION RULE: dispatchQuantity CANNOT EXCEED orderedQuantity
+    // VALIDATION RULES:
+    // 1. Each item dispatchQuantity CANNOT exceed orderedQuantity.
+    // 2. Individual items CAN be 0 (for partial dispatch), BUT total sum of dispatchQuantity CANNOT be 0.
+    let totalDispatchedQty = 0;
+
     for (const item of parsedItems) {
       const orderedQty = parseFloat(item.orderedQuantity || item.quantity) || 0;
-      const dispatchQty = parseFloat(item.dispatchQuantity) || 0;
+      const dispatchQty = parseFloat(item.dispatchQuantity);
+
+      if (isNaN(dispatchQty) || dispatchQty < 0) {
+        const dispatches = await dispatchRepository.findAll();
+        const openOrders = await SaleOrder.findAll({
+          where: { status: { [Op.ne]: 'Completed' } },
+          include: [{ model: StockItem, as: 'stockItem' }],
+          order: [['createdAt', 'DESC']]
+        });
+        const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+        const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
+        return res.render('sales/dispatches', {
+          user: req.user,
+          dispatches,
+          openOrders,
+          nextDispatchNo,
+          nextTrackingNo,
+          error: `⚠️ HATA: "${item.name || 'Ürün'}" için sevk miktarı negatif olamaz!`
+        });
+      }
 
       if (dispatchQty > orderedQty) {
         const dispatches = await dispatchRepository.findAll();
@@ -950,17 +978,42 @@ class SaleController {
           order: [['createdAt', 'DESC']]
         });
         const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+        const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
         return res.render('sales/dispatches', {
           user: req.user,
           dispatches,
           openOrders,
           nextDispatchNo,
+          nextTrackingNo,
           error: `⚠️ HATA: "${item.name || 'Ürün'}" için sevk edilecek miktar (${dispatchQty} Adet), sipariş miktarını (${orderedQty} Adet) geçemez!`
         });
       }
+
+      totalDispatchedQty += dispatchQty;
+    }
+
+    if (totalDispatchedQty <= 0) {
+      const dispatches = await dispatchRepository.findAll();
+      const openOrders = await SaleOrder.findAll({
+        where: { status: { [Op.ne]: 'Completed' } },
+        include: [{ model: StockItem, as: 'stockItem' }],
+        order: [['createdAt', 'DESC']]
+      });
+      const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+      const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
+      return res.render('sales/dispatches', {
+        user: req.user,
+        dispatches,
+        openOrders,
+        nextDispatchNo,
+        nextTrackingNo,
+        error: '⚠️ HATA: Tüm ürünlerin sevk miktarı 0 olamaz. İrsaliye kesmek için en az 1 üründen miktar girilmelidir!'
+      });
     }
 
     const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+    const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
+
     await dispatchRepository.create({
       dispatchNo: nextDispatchNo,
       saleOrderId: order.id,
@@ -970,7 +1023,7 @@ class SaleController {
       carrierCompany: carrierCompany || null,
       vehiclePlate: vehiclePlate || null,
       driverName: driverName || null,
-      trackingNo: trackingNo || null,
+      trackingNo: nextTrackingNo,
       shippingAddress: order.shippingAddress || null,
       status: 'Dispatched',
       notes: notes || null,

@@ -106,7 +106,7 @@
       <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
           <h1 style="font-weight: 900;">Sevkiyat ve Teslimat (Sevk İrsaliyesi) Planlaması</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Durumu "Tamamlandı" olmayan siparişler için ürün bazlı sevk miktarlarını belirleyip Sevk İrsaliyesi kesin.</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Durumu "Tamamlandı" olmayan siparişler için parçalı ürün bazlı sevk miktarlarını belirleyip Sevk İrsaliyesi kesin.</p>
         </div>
       </div>
 
@@ -157,12 +157,12 @@
               <input type="text" id="driverName" name="driverName" placeholder="Örn: Ahmet Yılmaz">
             </div>
             <div class="input-group">
-              <label for="trackingNo">Lojistik Takip No</label>
-              <input type="text" id="trackingNo" name="trackingNo" placeholder="Örn: LOJ-98765432">
+              <label for="trackingNo">Lojistik Takip No <small style="color: var(--text-muted);">(Otomatik)</small></label>
+              <input type="text" id="trackingNo" name="trackingNo" value="<%= nextTrackingNo %>" readonly required style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); cursor: not-allowed;">
             </div>
             <div class="input-group">
               <label for="notes">İrsaliye Notu / Açıklama</label>
-              <input type="text" id="notes" name="notes" placeholder="Örn: 2 Palet halinde teslim edilecektir.">
+              <input type="text" id="notes" name="notes" placeholder="Örn: Parçalı sevkiyat: 1. Palet teslim ediliyor.">
             </div>
           </div>
 
@@ -170,9 +170,9 @@
           <div id="dispatchItemsCard" style="display: none; margin-top: 0.5rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
               <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
-                <span>📦</span> Siparişteki Ürünler ve Sevk Miktarı Belirleme
+                <span>📦</span> Siparişteki Ürünler ve Parçalı Sevk Miktarı Belirleme
               </h4>
-              <span style="font-size: 0.75rem; color: #fb7185; font-weight: 600;">⚠️ Kural: Sevk miktarı, sipariş miktarından fazla olamaz! (Azı sevk edilebilir)</span>
+              <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 600;">💡 Tekil ürünler 0 girilebilir (sonraki sevkiyat için). Tüm ürünler 0 olamaz.</span>
             </div>
 
             <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
@@ -218,7 +218,7 @@
               <th>Lojistik / Taşıyıcı</th>
               <th>Plaka</th>
               <th>Sürücü</th>
-              <th>Takip No</th>
+              <th>Lojistik Takip No</th>
               <th>Durum</th>
               <th>İşlem</th>
             </tr>
@@ -240,7 +240,7 @@
                   <td><%= d.carrierCompany || 'Kendi Aracımız' %></td>
                   <td><span class="status-pill" style="background: rgba(255,255,255,0.08);"><%= d.vehiclePlate || '—' %></span></td>
                   <td><%= d.driverName || '—' %></td>
-                  <td><%= d.trackingNo || '—' %></td>
+                  <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= d.trackingNo || '—' %></strong></td>
                   <td>
                     <span class="status-pill status-active">● Sevk Edildi</span>
                   </td>
@@ -314,7 +314,7 @@
             </span>
           </td>
           <td style="padding: 12px 14px; text-align: center;">
-            <input type="number" step="0.01" min="0.01" max="${orderedQty}" value="${orderedQty}" class="dispatch-qty-input" oninput="validateRowQty(this, ${orderedQty})" style="width: 120px; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; text-align: center;">
+            <input type="number" step="0.01" min="0" max="${orderedQty}" value="${orderedQty}" class="dispatch-qty-input" oninput="validateRowQty(this, ${orderedQty})" style="width: 120px; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; text-align: center;">
           </td>
           <td style="padding: 12px 14px;" class="row-status-col">
             <span class="status-valid-badge" style="color: #34d399; font-weight: 600; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
@@ -331,11 +331,21 @@
     }
 
     function validateRowQty(inputEl, maxOrderedQty) {
-      const val = parseFloat(inputEl.value) || 0;
+      const val = parseFloat(inputEl.value);
       const tr = inputEl.closest('tr');
       const statusCol = tr ? tr.querySelector('.row-status-col') : null;
 
-      if (val > maxOrderedQty) {
+      if (isNaN(val) || val < 0) {
+        inputEl.style.borderColor = '#f59e0b';
+        inputEl.style.boxShadow = 'none';
+        if (statusCol) {
+          statusCol.innerHTML = `
+            <span style="color: #fbbf24; font-weight: 600; font-size: 0.8rem;">
+              ⚠️ Miktar 0 veya daha büyük olmalıdır.
+            </span>
+          `;
+        }
+      } else if (val > maxOrderedQty) {
         inputEl.style.borderColor = '#f43f5e';
         inputEl.style.boxShadow = '0 0 10px rgba(244, 63, 94, 0.4)';
         if (statusCol) {
@@ -345,13 +355,13 @@
             </span>
           `;
         }
-      } else if (val <= 0) {
+      } else if (val === 0) {
         inputEl.style.borderColor = '#f59e0b';
         inputEl.style.boxShadow = 'none';
         if (statusCol) {
           statusCol.innerHTML = `
-            <span style="color: #fbbf24; font-weight: 600; font-size: 0.8rem;">
-              ⚠️ Miktar 0'dan büyük olmalıdır.
+            <span style="color: #fbbf24; font-weight: 600; font-size: 0.8rem; background: rgba(245, 158, 11, 0.1); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">
+              ● 0 Adet (Bu sevkiyatta gönderilmeyecek)
             </span>
           `;
         }
@@ -408,7 +418,8 @@
         }
 
         const rows = document.querySelectorAll('#dispatchItemsTbody tr');
-        let hasError = false;
+        let hasExceedError = false;
+        let grandTotalDispatched = 0;
 
         rows.forEach(tr => {
           const name = tr.querySelector('.item-name').value;
@@ -417,14 +428,22 @@
           const dQty = dInput ? parseFloat(dInput.value) || 0 : 0;
 
           if (dQty > oQty) {
-            hasError = true;
+            hasExceedError = true;
             alert(`⚠️ HATA: "${name}" ürünü için girilen sevk miktarı (${dQty} Adet), sipariş miktarını (${oQty} Adet) geçemez!`);
             if (dInput) dInput.focus();
           }
+
+          grandTotalDispatched += dQty;
         });
 
-        if (hasError) {
+        if (hasExceedError) {
           e.preventDefault();
+          return false;
+        }
+
+        if (grandTotalDispatched <= 0) {
+          e.preventDefault();
+          alert('⚠️ HATA: Tüm ürünlerin sevk miktarı 0 olamaz. İrsaliye kesmek için en az 1 üründen sevk miktarı girilmelidir!');
           return false;
         }
       });
