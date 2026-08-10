@@ -247,16 +247,94 @@ class SaleController {
 
   addQuotation = asyncHandler(async (req, res) => {
     try {
-      const quantity = parseFloat(req.body.quantity) || 1;
-      const unitPrice = parseFloat(req.body.unitPrice) || 0;
-      const discountRate = parseFloat(req.body.discountRate) || 0;
-      const taxRate = parseFloat(req.body.taxRate) || 20;
+      let items = [];
+      if (req.body.itemsJson) {
+        try {
+          items = typeof req.body.itemsJson === 'string' ? JSON.parse(req.body.itemsJson) : req.body.itemsJson;
+        } catch (e) {
+          items = [];
+        }
+      }
 
-      const subtotal = quantity * unitPrice;
-      const discountAmount = subtotal * (discountRate / 100);
-      const afterDiscount = subtotal - discountAmount;
-      const taxAmount = afterDiscount * (taxRate / 100);
-      const totalAmount = afterDiscount + taxAmount;
+      // Fallback if items is empty but single item form fields exist
+      if (!Array.isArray(items) || items.length === 0) {
+        const stockItemId = parseInt(req.body.stockItemId, 10) || null;
+        const quantity = parseFloat(req.body.quantity) || 1;
+        const unitPrice = parseFloat(req.body.unitPrice) || 0;
+        const discountRate = parseFloat(req.body.discountRate) || 0;
+        const taxRate = parseFloat(req.body.taxRate) || 20;
+
+        const subtotal = quantity * unitPrice;
+        const discountAmount = subtotal * (discountRate / 100);
+        const afterDiscount = subtotal - discountAmount;
+        const taxAmount = afterDiscount * (taxRate / 100);
+        const totalAmount = afterDiscount + taxAmount;
+
+        items = [{
+          stockItemId,
+          quantity,
+          unitPrice,
+          discountRate,
+          taxRate,
+          subtotal,
+          discountAmount,
+          taxAmount,
+          totalAmount
+        }];
+      }
+
+      // Calculate grand totals across all items
+      let grandSubtotal = 0;
+      let grandDiscountAmount = 0;
+      let grandTaxAmount = 0;
+      let grandTotalAmount = 0;
+      let maxDiscountRate = 0;
+
+      const processedItems = [];
+      for (const item of items) {
+        const q = parseFloat(item.quantity) || 0;
+        const p = parseFloat(item.unitPrice) || 0;
+        const d = parseFloat(item.discountRate) || 0;
+        const t = item.taxRate !== undefined ? parseFloat(item.taxRate) : 20;
+
+        const sub = q * p;
+        const disc = sub * (d / 100);
+        const afterDisc = sub - disc;
+        const tax = afterDisc * (t / 100);
+        const tot = afterDisc + tax;
+
+        grandSubtotal += sub;
+        grandDiscountAmount += disc;
+        grandTaxAmount += tax;
+        grandTotalAmount += tot;
+        if (d > maxDiscountRate) maxDiscountRate = d;
+
+        let itemName = item.name || '';
+        let stockCode = item.stockCode || '';
+        if (item.stockItemId) {
+          const st = await StockItem.findByPk(item.stockItemId);
+          if (st) {
+            itemName = st.name;
+            stockCode = st.stockCode;
+          }
+        }
+
+        processedItems.push({
+          stockItemId: item.stockItemId ? parseInt(item.stockItemId, 10) : null,
+          stockCode,
+          name: itemName,
+          quantity: q,
+          unitPrice: p,
+          discountRate: d,
+          taxRate: t,
+          subtotal: sub,
+          discountAmount: disc,
+          taxAmount: tax,
+          totalAmount: tot
+        });
+      }
+
+      const primaryItem = processedItems[0] || {};
 
       await quotationRepository.create({
         quotationNo: req.body.quotationNo,
@@ -264,17 +342,18 @@ class SaleController {
         customerName: req.body.customerName,
         quotationDate: req.body.quotationDate || new Date().toISOString().split('T')[0],
         validUntil: req.body.validUntil,
-        stockItemId: parseInt(req.body.stockItemId, 10),
-        quantity,
-        unitPrice,
-        discountRate,
-        taxRate,
-        subtotal,
-        discountAmount,
-        taxAmount,
-        totalAmount,
+        stockItemId: primaryItem.stockItemId || null,
+        quantity: primaryItem.quantity || 1,
+        unitPrice: primaryItem.unitPrice || 0,
+        discountRate: maxDiscountRate,
+        taxRate: primaryItem.taxRate !== undefined ? primaryItem.taxRate : 20,
+        subtotal: grandSubtotal,
+        discountAmount: grandDiscountAmount,
+        taxAmount: grandTaxAmount,
+        totalAmount: grandTotalAmount,
         currency: req.body.currency || 'TRY',
-        notes: req.body.notes || null
+        notes: req.body.notes || null,
+        itemsJson: JSON.stringify(processedItems)
       }, req.user, req.ip);
 
       res.redirect('/sales/quotes');
@@ -298,9 +377,39 @@ class SaleController {
   viewQuotation = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const quote = await quotationRepository.findById(id);
+    if (!quote) {
+      return res.status(404).render('error', { user: req.user, statusCode: 404, message: 'Teklif bulunamadı.', details: [] });
+    }
+
+    let parsedItems = [];
+    if (quote.itemsJson) {
+      try {
+        parsedItems = JSON.parse(quote.itemsJson);
+      } catch (e) {
+        parsedItems = [];
+      }
+    }
+
+    if (!parsedItems || parsedItems.length === 0) {
+      parsedItems = [{
+        stockItemId: quote.stockItemId,
+        stockCode: quote.stockItem ? quote.stockItem.stockCode : '-',
+        name: quote.stockItem ? quote.stockItem.name : 'Ürün Kalemi',
+        quantity: quote.quantity,
+        unitPrice: quote.unitPrice,
+        discountRate: quote.discountRate,
+        taxRate: quote.taxRate,
+        subtotal: quote.subtotal,
+        discountAmount: quote.discountAmount,
+        taxAmount: quote.taxAmount,
+        totalAmount: quote.totalAmount
+      }];
+    }
+
     res.render('sales/quote_view', {
       user: req.user,
-      quote
+      quote,
+      items: parsedItems
     });
   });
 

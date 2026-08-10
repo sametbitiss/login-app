@@ -177,17 +177,21 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <strong style="font-size: 1rem; color: #0f172a;"><%= quote.stockItem ? quote.stockItem.name : 'Ürün' %></strong><br>
-                  <span style="color: #475569; font-weight: 600; font-size: 0.85rem;"><%= quote.stockItem ? quote.stockItem.stockCode : '' %></span>
-                </td>
-                <td><strong><%= quote.quantity %></strong> <%= quote.stockItem ? quote.stockItem.unit : 'Adet' %></td>
-                <td><strong><%= Number(quote.unitPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %></strong> <%= quote.currency %></td>
-                <td><strong style="color: #dc2626;">%<%= quote.discountRate %></strong></td>
-                <td>%<%= quote.taxRate %></td>
-                <td class="text-end" style="font-size: 1.05rem; font-weight: 800; color: #4338ca;"><%= Number(quote.subtotal - quote.discountAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></td>
-              </tr>
+              <% (items && items.length > 0 ? items : [quote]).forEach(item => { %>
+                <tr>
+                  <td>
+                    <strong style="font-size: 0.95rem; color: #0f172a;"><%= item.name || (quote.stockItem ? quote.stockItem.name : 'Ürün Kalemi') %></strong><br>
+                    <span style="color: #64748b; font-weight: 600; font-size: 0.8rem;"><%= item.stockCode || (quote.stockItem ? quote.stockItem.stockCode : '-') %></span>
+                  </td>
+                  <td><strong><%= item.quantity %></strong> Adet</td>
+                  <td><strong><%= Number(item.unitPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %></strong> <%= quote.currency %></td>
+                  <td><strong style="color: #dc2626;">%<%= item.discountRate || 0 %></strong></td>
+                  <td>%<%= item.taxRate !== undefined ? item.taxRate : quote.taxRate %></td>
+                  <td class="text-end" style="font-size: 1rem; font-weight: 800; color: #4338ca;">
+                    <%= Number(item.totalAmount || ((item.quantity * item.unitPrice) * (1 - (item.discountRate||0)/100) * (1 + (item.taxRate||20)/100))).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %>
+                  </td>
+                </tr>
+              <% }); %>
             </tbody>
           </table>
 
