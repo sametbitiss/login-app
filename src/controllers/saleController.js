@@ -350,6 +350,29 @@ class SaleController {
       const primaryStockItemId = safeInt(primaryItem.stockItemId);
       const customerId = safeInt(req.body.customerId);
 
+      // Customer score & risk validation
+      if (customerId) {
+        const cust = await customerRepository.findById(customerId);
+        if (cust) {
+          const score = cust.customerScore !== undefined ? cust.customerScore : 85;
+          const isBlocked = score < 50 || cust.riskLevel === 'High' || cust.riskLevel === 'Blocked' || cust.riskLevel === 'Critical';
+          if (isBlocked) {
+            const nextQuotationNo = await quotationRepository.getNextQuotationNo();
+            const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+            const customers = await customerRepository.findAll({ status: 'Active' });
+            const exchangeRates = await exchangeRateRepository.getLatestRates();
+            return res.render('sales/quotes_add', {
+              user: req.user,
+              nextQuotationNo,
+              stockItems,
+              customers,
+              exchangeRates,
+              error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilere yeni teklif hazırlanamaz!`
+            });
+          }
+        }
+      }
+
       // Ensure validUntil is never empty
       const future = new Date();
       future.setDate(future.getDate() + 15);
@@ -481,6 +504,21 @@ class SaleController {
         message: 'Bu teklif yönetsel onay beklemektedir veya onaylanmamıştır. Yönetsel Onaylar ekranından onay verilmeden siparişe dönüştürülemez.',
         error: { status: 403 }
       });
+    }
+
+    // Customer score & risk check on conversion
+    if (quote.customerId) {
+      const cust = await customerRepository.findById(quote.customerId);
+      if (cust) {
+        const score = cust.customerScore !== undefined ? cust.customerScore : 85;
+        const isBlocked = score < 50 || cust.riskLevel === 'High' || cust.riskLevel === 'Blocked' || cust.riskLevel === 'Critical';
+        if (isBlocked) {
+          return res.render('error', {
+            message: `⚠️ Müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilerin teklifi siparişe dönüştürülemez!`,
+            error: { status: 403 }
+          });
+        }
+      }
     }
 
     const nextOrderNo = await saleService.getNextOrderNo();

@@ -104,8 +104,13 @@
                 <label for="customerId">Cari Müşteri Seçimi</label>
                 <select id="customerId" name="customerId" onchange="fillCustomerName(this)">
                   <option value="">-- Genel / Kayıtsız Müşteri --</option>
-                  <% customers.forEach(c => { %>
-                    <option value="<%= c.id %>" data-name="<%= c.companyName %>">[<%= c.customerCode %>] <%= c.companyName %> (Risk: <%= c.riskLevel %>)</option>
+                  <% customers.forEach(c => { 
+                    const score = c.customerScore !== undefined ? c.customerScore : 85;
+                    const isBlocked = score < 50 || c.riskLevel === 'High' || c.riskLevel === 'Blocked' || c.riskLevel === 'Critical';
+                  %>
+                    <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-blocked="<%= isBlocked %>" <%= isBlocked ? 'disabled style="color:#f43f5e;"' : '' %>>
+                      [<%= c.customerCode %>] <%= c.companyName %> <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / TEKLİF ENGELLİ)` : `(Puan: ${score}/100 ⭐)` %>
+                    </option>
                   <% }); %>
                 </select>
               </div>

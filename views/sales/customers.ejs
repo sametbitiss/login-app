@@ -104,8 +104,8 @@
               <th>İletişim</th>
               <th>Vergi Daire / No</th>
               <th>Risk Limiti</th>
-              <th>Güncel Borç Bakiyesi</th>
-              <th>Risk Seviyesi</th>
+              <th>Güncel Borç</th>
+              <th>Müşteri Skor & Risk</th>
               <th>Durum</th>
               <th>İşlem</th>
             </tr>
@@ -118,7 +118,14 @@
                 </td>
               </tr>
             <% } else { %>
-              <% customers.forEach(c => { %>
+              <% customers.forEach(c => { 
+                const score = c.customerScore !== undefined ? c.customerScore : 85;
+                const isRiskBlocked = score < 50 || c.riskLevel === 'High' || c.riskLevel === 'Blocked' || c.riskLevel === 'Critical';
+                let stars = '⭐⭐⭐⭐⭐';
+                if (score < 50) stars = '⭐';
+                else if (score < 70) stars = '⭐⭐⭐';
+                else if (score < 90) stars = '⭐⭐⭐⭐';
+              %>
                 <tr>
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= c.customerCode %></strong></td>
                   <td><strong><%= c.companyName %></strong></td>
@@ -135,13 +142,18 @@
                     </strong>
                   </td>
                   <td>
-                    <% if (c.riskLevel === 'High' || c.riskLevel === 'Blocked') { %>
-                      <span class="status-pill status-rejected">● Yüksek Risk</span>
-                    <% } else if (c.riskLevel === 'Medium') { %>
-                      <span class="status-pill status-pending">● Orta Risk</span>
-                    <% } else { %>
-                      <span class="status-pill status-active">● Düşük Risk</span>
-                    <% } %>
+                    <div style="display: flex; flex-direction: column; gap: 3px;">
+                      <div style="font-weight: 700; font-size: 0.85rem; color: <%= isRiskBlocked ? '#f43f5e' : '#10b981' %>;">
+                        <%= score %> / 100 <span style="font-size: 0.75rem;"><%= stars %></span>
+                      </div>
+                      <% if (isRiskBlocked) { %>
+                        <span class="status-pill status-rejected" style="font-size: 0.7rem; font-weight: 700;">🚫 SİPARİŞ/TEKLİF KİLİTLİ</span>
+                      <% } else if (c.riskLevel === 'Medium' || score < 70) { %>
+                        <span class="status-pill status-pending" style="font-size: 0.7rem;">● Orta Risk</span>
+                      <% } else { %>
+                        <span class="status-pill status-active" style="font-size: 0.7rem;">● Güvenilir Cari</span>
+                      <% } %>
+                    </div>
                   </td>
                   <td>
                     <span class="status-pill status-approved">● <%= c.status %></span>

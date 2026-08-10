@@ -70,6 +70,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: 'Low'
     },
+    customerScore: {
+      type: DataTypes.INTEGER,
+      defaultValue: 85,
+      allowNull: false
+    },
     status: {
       type: DataTypes.STRING,
       defaultValue: 'Active'

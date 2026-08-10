@@ -102,7 +102,7 @@
               <th>Müşteri / Firma</th>
               <th>Teklif Verilen Ürünler</th>
               <th>Miktar</th>
-              <th>İskonto (%)</th>
+              <th>Toplam İskonto</th>
               <th>Genel Toplam</th>
               <th>Geçerlilik Tarihi</th>
               <th>Durum</th>
@@ -152,7 +152,9 @@
                       <% }); %>
                     </div>
                   </td>
-                  <td>%<%= q.discountRate %></td>
+                  <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fb7185; font-weight: 600;">
+                    <%= parseFloat(q.discountAmount || 0).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= q.currency %>
+                  </td>
                   <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(q.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= q.currency %></strong></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(q.validUntil).toLocaleDateString('tr-TR') %></td>
                   <td>
