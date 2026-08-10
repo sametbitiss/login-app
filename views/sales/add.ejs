@@ -6,6 +6,81 @@
   <title>Yeni Satış Siparişi Oluştur — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @keyframes fadeInTab {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .tab-pane.active {
+      animation: fadeInTab 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .step-pill {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .step-pill:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #fff;
+    }
+    .step-pill.active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.5);
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
+    }
+    .step-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      transition: all 0.3s ease;
+    }
+    .step-pill.active .step-badge {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
+    }
+    .glass-hero-card {
+      background: rgba(12, 17, 28, 0.75);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(16px);
+      padding: 1.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+    }
+  </style>
 </head>
 <body class="module-body">
 
@@ -79,12 +154,12 @@
 
     <!-- Content -->
     <main class="module-content">
-      <div class="page-header">
+      <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
-          <h1>Yeni Satış Siparişi Oluştur</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sipariş numarası otomatik atanır. Sekmeli menüyü kullanarak adımları tamamlayın.</p>
+          <h1 style="font-weight: 900; letter-spacing: -0.02em;">Yeni Satış Siparişi Oluştur</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sipariş numarası otomatik atanır. Sekmeli menüyü takip ederek adımları tamamlayın.</p>
         </div>
-        <a href="/sales/orders" class="btn btn-secondary">
+        <a href="/sales/orders" class="btn btn-secondary" style="border-radius: 12px; gap: 8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           Listeye Dön
         </a>
@@ -94,35 +169,38 @@
         <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
       <% } %>
 
-      <!-- TAB NAVIGATION MENU -->
-      <div class="form-tabs-nav" style="display: flex; gap: 10px; margin-bottom: 1.5rem; background: rgba(15, 23, 42, 0.6); padding: 8px; border-radius: 14px; border: 1px solid var(--border);">
-        <button type="button" class="tab-btn active" onclick="switchTab(1)" id="tabBtn1" style="flex: 1; padding: 13px 18px; border-radius: 10px; border: none; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">
-          <span>📋</span> 1. Cari Müşteri & Genel Bilgiler
-        </button>
-        <button type="button" class="tab-btn" onclick="switchTab(2)" id="tabBtn2" style="flex: 1; padding: 13px 18px; border-radius: 10px; border: none; background: transparent; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;">
-          <span>📦</span> 2. Ürün & Mamul Kalemleri
-        </button>
-        <button type="button" class="tab-btn" onclick="switchTab(3)" id="tabBtn3" style="flex: 1; padding: 13px 18px; border-radius: 10px; border: none; background: transparent; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;">
-          <span>🚚</span> 3. Sevkiyat, Ödeme & Notlar
-        </button>
+      <!-- STEP PROGRESS TAB NAVIGATION TIMELINE -->
+      <div style="display: flex; gap: 12px; margin-bottom: 1.75rem; flex-wrap: wrap;">
+        <div class="step-pill active" onclick="switchTab(1)" id="tabBtn1">
+          <span class="step-badge" id="badge1">1</span>
+          <span>📋 Cari Müşteri & Genel Bilgiler</span>
+        </div>
+        <div class="step-pill" onclick="switchTab(2)" id="tabBtn2">
+          <span class="step-badge" id="badge2">2</span>
+          <span>📦 Ürün & Mamul Kalemleri</span>
+        </div>
+        <div class="step-pill" onclick="switchTab(3)" id="tabBtn3">
+          <span class="step-badge" id="badge3">3</span>
+          <span>🚚 Sevkiyat, Ödeme & Notlar</span>
+        </div>
       </div>
 
-      <div class="form-panel">
+      <div class="glass-hero-card">
         <form action="/sales/orders/add" method="POST" id="orderForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
           
           <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
 
           <!-- TAB 1: Cari Müşteri & Genel Bilgiler -->
-          <div id="tabContent1" class="tab-pane" style="display: block;">
-            <div style="background: rgba(15, 23, 42, 0.4); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); backdrop-filter: blur(12px);">
-              <h3 style="font-size: 1rem; font-weight: 700; color: var(--indigo); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                Sipariş & Cari Müşteri Bilgileri
+          <div id="tabContent1" class="tab-pane active" style="display: block;">
+            <div>
+              <h3 style="font-size: 1.05rem; font-weight: 800; color: #818cf8; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                1. Sipariş & Cari Müşteri Bilgileri
               </h3>
               
               <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
                 <div class="input-group">
-                  <label for="orderNo">Sipariş No <small style="color: var(--text-muted);">(Otomatik / Değiştirilemez)</small></label>
+                  <label for="orderNo">Sipariş No <small style="color: var(--text-muted);">(Otomatik)</small></label>
                   <input type="text" id="orderNo" name="orderNo" value="<%= nextOrderNo %>" required readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); cursor: not-allowed;">
                 </div>
                 <div class="input-group">
@@ -147,7 +225,7 @@
 
               <div class="form-grid form-grid--3">
                 <div class="input-group">
-                  <label for="orderDate">Sipariş Tarihi <small style="color: var(--text-muted);">(Değiştirilemez)</small></label>
+                  <label for="orderDate">Sipariş Tarihi <small style="color: var(--text-muted);">(Bugün)</small></label>
                   <input type="date" id="orderDate" name="orderDate" value="<%= new Date().toISOString().split('T')[0] %>" required readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed;">
                 </div>
                 <div class="input-group">
@@ -166,20 +244,19 @@
               </div>
             </div>
 
-            <!-- Tab 1 Next Navigation -->
-            <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem;">
-              <button type="button" onclick="goToTab(2)" class="btn btn-primary" style="padding: 12px 24px; border-radius: 10px; font-weight: 600; gap: 8px;">
-                Ürün Kalemlerine Geç ➔
+            <!-- Tab 1 Next Action -->
+            <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+              <button type="button" onclick="goToTab(2)" class="btn btn-primary" style="padding: 12px 28px; border-radius: 12px; font-weight: 700; gap: 10px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">
+                2. Adım: Ürün Kalemlerine Geç ➔
               </button>
             </div>
           </div>
 
           <!-- TAB 2: Ürün & Mamul Kalemleri -->
           <div id="tabContent2" class="tab-pane" style="display: none;">
-            <div style="background: rgba(12, 17, 28, 0.7); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-md); margin-bottom: 1.25rem;">
-              
+            <div>
               <!-- Red Warning Alert for Min 1 Product Rule -->
-              <div id="minItemWarningAlert" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 12px 18px; border-radius: 10px; color: #f43f5e; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+              <div id="minItemWarningAlert" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 <span>⚠️ Siparişte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
               </div>
@@ -187,20 +264,20 @@
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
                 <div>
                   <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px;">
-                    <span style="background: linear-gradient(135deg, var(--indigo), #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;" id="itemCountBadge">1</span>
-                    Sipariş Edilecek Ürün Kalemleri (Mamuller)
+                    <span style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;" id="itemCountBadge">1</span>
+                    2. Sipariş Edilecek Ürün Kalemleri (Mamuller)
                   </h3>
                   <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Siparişe dahil edilecek ürünleri ekleyin, miktar ve satır bazlı iskontoları belirtin.</p>
                 </div>
 
-                <button type="button" onclick="addNewRow()" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 600; padding: 10px 18px; border-radius: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); gap: 8px; transition: all 0.25s ease;">
+                <button type="button" onclick="addNewRow()" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 600; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); gap: 8px; transition: all 0.25s ease;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   + Yeni Ürün Kalemi Ekle
                 </button>
               </div>
 
               <!-- Table Container -->
-              <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
+              <div style="overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8); margin-bottom: 1.5rem;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="itemsTable">
                   <thead>
                     <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
@@ -222,11 +299,11 @@
             </div>
 
             <!-- Live Summary Cards -->
-            <div style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: var(--radius-lg); border: 1px solid var(--glass-border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
               
               <div id="approvalWarningAlert" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px 18px; border-radius: 10px; color: #fbbf24; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <span>⚡ Bu sipariş yüksek iskonto (>%20) veya yüksek toplam tutar (>100.000 TL) içerdiği için oluşturulduğunda otomatik olarak "Onay Bekliyor" statüsüne düşecektir.</span>
+                <span>⚡ Bu sipariş yüksek iskonto (>%20) veya yüksek toplam tutar (>100.000 TL) içerdiği için otomatik olarak "Onay Bekliyor" statüsüne düşecektir.</span>
               </div>
 
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; text-align: center;">
@@ -236,7 +313,7 @@
                 </div>
                 
                 <div style="background: rgba(244, 63, 94, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(244, 63, 94, 0.15);">
-                  <span style="font-size: 0.75rem; font-weight: 600; color: #f43f5e; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam İskonto</span>
+                  <span style="font-size: 0.75rem; font-weight: 600; color: #f43f5e; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam Sipariş İskontosu</span>
                   <strong id="displayDiscount" style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0.00 ₺</strong>
                 </div>
 
@@ -253,22 +330,22 @@
             </div>
 
             <!-- Tab 2 Navigation -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
-              <button type="button" onclick="goToTab(1)" class="btn btn-secondary" style="padding: 12px 20px; border-radius: 10px;">
-                ⬅ Müşteri Bilgilerine Dön
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+              <button type="button" onclick="goToTab(1)" class="btn btn-secondary" style="padding: 12px 22px; border-radius: 12px;">
+                ⬅ 1. Müşteri Bilgilerine Dön
               </button>
-              <button type="button" onclick="goToTab(3)" class="btn btn-primary" style="padding: 12px 24px; border-radius: 10px; font-weight: 600; gap: 8px;">
-                Sevkiyat ve Ödemeye Geç ➔
+              <button type="button" onclick="goToTab(3)" class="btn btn-primary" style="padding: 12px 28px; border-radius: 12px; font-weight: 700; gap: 10px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">
+                3. Adım: Sevkiyat ve Ödemeye Geç ➔
               </button>
             </div>
           </div>
 
           <!-- TAB 3: Sevkiyat, Ödeme & Notlar -->
           <div id="tabContent3" class="tab-pane" style="display: none;">
-            <div style="background: rgba(15, 23, 42, 0.4); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 1.25rem;">
-              <h3 style="font-size: 1rem; font-weight: 700; color: var(--indigo); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                Ödeme & Sevkiyat Koşulları
+            <div>
+              <h3 style="font-size: 1.05rem; font-weight: 800; color: #818cf8; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                3. Ödeme & Sevkiyat Koşulları
               </h3>
               
               <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
@@ -316,12 +393,12 @@
             </div>
 
             <!-- Tab 3 Navigation & Final Submit Button -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
-              <button type="button" onclick="goToTab(2)" class="btn btn-secondary" style="padding: 12px 20px; border-radius: 10px;">
-                ⬅ Ürün Kalemlerine Dön
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+              <button type="button" onclick="goToTab(2)" class="btn btn-secondary" style="padding: 12px 22px; border-radius: 12px;">
+                ⬅ 2. Ürün Kalemlerine Dön
               </button>
-              <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-weight: 700; padding: 14px 32px; border-radius: 12px; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3); gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
+              <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-weight: 700; padding: 14px 36px; border-radius: 12px; box-shadow: 0 6px 25px rgba(16, 185, 129, 0.35); gap: 12px; font-size: 1rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
                 📋 Satış Siparişini Kaydet ve Oluştur
               </button>
             </div>
@@ -343,21 +420,13 @@
         const pane = document.getElementById(`tabContent${i}`);
         const btn = document.getElementById(`tabBtn${i}`);
         if (pane) pane.style.display = 'none';
-        if (btn) {
-          btn.style.background = 'transparent';
-          btn.style.color = 'var(--text-secondary)';
-          btn.style.boxShadow = 'none';
-        }
+        if (btn) btn.classList.remove('active');
       }
 
       const targetPane = document.getElementById(`tabContent${tabIndex}`);
       const targetBtn = document.getElementById(`tabBtn${tabIndex}`);
       if (targetPane) targetPane.style.display = 'block';
-      if (targetBtn) {
-        targetBtn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
-        targetBtn.style.color = '#fff';
-        targetBtn.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
-      }
+      if (targetBtn) targetBtn.classList.add('active');
     }
 
     function goToTab(tabIndex) {

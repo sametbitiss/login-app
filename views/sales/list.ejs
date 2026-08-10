@@ -235,8 +235,23 @@
                       <% }); %>
                     </div>
                   </td>
+                  <% 
+                    let totalDiscountVal = parseFloat(order.discountAmount) || 0;
+                    if (totalDiscountVal === 0 && itemsList.length > 0) {
+                      itemsList.forEach(it => {
+                        const q = parseFloat(it.quantity) || 1;
+                        const p = parseFloat(it.unitPrice) || 0;
+                        const d = parseFloat(it.discountRate) || 0;
+                        totalDiscountVal += (q * p) * (d / 100);
+                      });
+                    }
+                  %>
                   <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fb7185; font-weight: 600;">
-                    <%= parseFloat(order.discountAmount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= order.currency %>
+                    <% if (totalDiscountVal > 0) { %>
+                      - <%= totalDiscountVal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %> <%= order.currency %>
+                    <% } else { %>
+                      <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                    <% } %>
                   </td>
                   <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(order.totalAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= order.currency %></strong></td>
                   <td style="font-size: 0.8rem;">
