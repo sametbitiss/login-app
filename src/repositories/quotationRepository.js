@@ -58,7 +58,8 @@ class QuotationRepository {
     const stockItemId = safeInt(data.stockItemId);
     const discountRate = safeFloat(data.discountRate, 0);
     const totalAmount = safeFloat(data.totalAmount, 0);
-    const approvalNeeded = discountRate > 20 || totalAmount > 100000;
+    const approvalNeeded = data.approvalNeeded !== undefined ? data.approvalNeeded : (discountRate > 20 || totalAmount > 100000);
+    const status = data.status ? data.status : (approvalNeeded ? 'Pending_Approval' : 'Approved');
 
     const quotation = await SaleQuotation.create({
       ...data,
@@ -73,7 +74,7 @@ class QuotationRepository {
       quantity: safeFloat(data.quantity, 1),
       unitPrice: safeFloat(data.unitPrice, 0),
       approvalNeeded,
-      status: approvalNeeded ? 'Pending_Approval' : (data.status || 'Draft'),
+      status,
       createdBy: currentUser ? currentUser.id : null
     });
 

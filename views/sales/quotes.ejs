@@ -167,13 +167,13 @@
                     <% } else if (q.status === 'Rejected') { %>
                       <span class="status-pill status-rejected">● Reddedildi</span>
                     <% } else { %>
-                      <span class="status-pill status-pending">● <%= q.status %></span>
+                      <span class="status-pill status-approved">● Onaylandı</span>
                     <% } %>
                   </td>
                   <td>
                     <div style="display:flex; gap: 4px; align-items: center;">
                       <a href="/sales/quotes/<%= q.id %>" class="btn btn-sm btn-outline-info" style="font-size: 0.75rem;">👁️ Gör</a>
-                      <% if (q.status === 'Approved') { %>
+                      <% if (q.status === 'Approved' || q.status === 'Draft' || q.status === 'Active') { %>
                         <form action="/sales/quotes/<%= q.id %>/convert" method="POST" style="display:inline;">
                           <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.75rem;">🛍️ Dönüştür</button>
                         </form>
@@ -181,6 +181,8 @@
                         <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;" title="Yönetsel Onay Ekranından Onay Verilmelidir">
                           ⏳ Onay Bekliyor
                         </span>
+                      <% } else if (q.status === 'Converted') { %>
+                        <span style="font-size: 0.75rem; color: var(--emerald); font-weight: 600;">✓ Siparişte</span>
                       <% } %>
                     </div>
                   </td>
