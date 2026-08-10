@@ -133,9 +133,10 @@
                 <label for="status">Sipariş Durumu <span class="req-star">*</span></label>
                 <select id="status" name="status" required>
                   <option value="Pending_Approval" <%= order.status === 'Pending_Approval' ? 'selected' : '' %>>Onay Bekliyor</option>
-                  <option value="Approved" <%= order.status === 'Approved' ? 'selected' : '' %>>Onaylandı (Hazırlanıyor)</option>
-                  <option value="Completed" <%= order.status === 'Completed' ? 'selected' : '' %>>Sevk Edildi (Tamamlandı)</option>
-                  <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>İptal</option>
+                  <option value="Approved" <%= order.status === 'Approved' ? 'selected' : '' %>>Onaylandı</option>
+                  <option value="Preparing" <%= (order.status === 'Preparing' || order.status === 'Hazırlanıyor') ? 'selected' : '' %>>Hazırlanıyor</option>
+                  <option value="Shipped" <%= (order.status === 'Shipped' || order.status === 'Sevk Edildi') ? 'selected' : '' %>>Sevk Edildi</option>
+                  <option value="Completed" <%= order.status === 'Completed' ? 'selected' : '' %>>Tamamlandı</option>
                 </select>
               </div>
               <div class="input-group">

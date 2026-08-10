@@ -143,13 +143,11 @@
           </div>
           <select name="status" class="filter-select" onchange="this.form.submit()">
             <option value="">Tüm Sipariş Durumları</option>
-            <option value="Draft" <%= filterStatus === 'Draft' ? 'selected' : '' %>>Taslak</option>
             <option value="Pending_Approval" <%= filterStatus === 'Pending_Approval' ? 'selected' : '' %>>Onay Bekliyor</option>
             <option value="Approved" <%= filterStatus === 'Approved' ? 'selected' : '' %>>Onaylandı</option>
             <option value="Preparing" <%= filterStatus === 'Preparing' ? 'selected' : '' %>>Hazırlanıyor</option>
             <option value="Shipped" <%= filterStatus === 'Shipped' ? 'selected' : '' %>>Sevk Edildi</option>
             <option value="Completed" <%= filterStatus === 'Completed' ? 'selected' : '' %>>Tamamlandı</option>
-            <option value="Cancelled" <%= filterStatus === 'Cancelled' ? 'selected' : '' %>>İptal</option>
           </select>
           <select name="paymentTerm" class="filter-select" onchange="this.form.submit()">
             <option value="">Tüm Ödeme Koşulları</option>
@@ -259,20 +257,18 @@
                   </td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(order.orderDate).toLocaleDateString('tr-TR') %></td>
                   <td>
-                    <% if (order.status === 'Hazırlanıyor' || order.status === 'Preparing') { %>
+                    <% if (order.status === 'Pending_Approval') { %>
+                      <span class="status-pill status-pending">● Onay Bekliyor</span>
+                    <% } else if (order.status === 'Approved') { %>
+                      <span class="status-pill status-approved">● Onaylandı</span>
+                    <% } else if (order.status === 'Hazırlanıyor' || order.status === 'Preparing') { %>
                       <span class="status-pill status-approved" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
                         ● Hazırlanıyor
                       </span>
-                    <% } else if (order.status === 'Completed') { %>
-                      <span class="status-pill status-active">● Tamamlandı</span>
-                    <% } else if (order.status === 'Approved') { %>
-                      <span class="status-pill status-approved">● Onaylandı</span>
-                    <% } else if (order.status === 'Pending_Approval') { %>
-                      <span class="status-pill status-pending">● Onay Bekliyor</span>
                     <% } else if (order.status === 'Shipped') { %>
                       <span class="status-pill status-onleave">● Sevk Edildi</span>
-                    <% } else if (order.status === 'Cancelled') { %>
-                      <span class="status-pill status-rejected">● İptal</span>
+                    <% } else if (order.status === 'Completed') { %>
+                      <span class="status-pill status-active">● Tamamlandı</span>
                     <% } else { %>
                       <span class="status-pill status-pending">● <%= order.status %></span>
                     <% } %>

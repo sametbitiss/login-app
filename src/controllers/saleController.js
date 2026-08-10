@@ -989,7 +989,7 @@ class SaleController {
       const status = action === 'approve' ? 'Approved' : 'Rejected';
       await quotationRepository.updateStatus(id, status, managerNotes, req.user, req.ip);
     } else if (type === 'order') {
-      const status = action === 'approve' ? 'Approved' : 'Cancelled';
+      const status = action === 'approve' ? 'Approved' : 'Pending_Approval';
       await saleService.updateOrder(id, { status, managerNotes }, req.user, req.ip);
     }
 
