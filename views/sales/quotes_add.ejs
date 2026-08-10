@@ -71,12 +71,15 @@
     </header>
 
     <main class="module-content">
-      <div class="page-header">
+      <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
           <h1>Yeni Satış Teklifi Hazırla</h1>
           <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Müşteriye iletilecek teklif şartlarını, geçerlilik süresini ve özel iskonto oranını girin.</p>
         </div>
-          <% if (error) { %>
+        <a href="/sales/quotes" class="btn btn-secondary">◀ Teklif Listesine Dön</a>
+      </div>
+
+      <% if (error) { %>
         <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
       <% } %>
 
@@ -295,16 +298,7 @@
       const tbody = document.getElementById('itemsTbody');
       const rows = tbody.querySelectorAll('tr');
       if (rows.length <= 1) {
-        const firstRow = rows[0];
-        const sel = firstRow.querySelector('.item-select');
-        const qtyInput = firstRow.querySelector('.item-qty');
-        const priceInput = firstRow.querySelector('.item-price');
-        const discInput = firstRow.querySelector('.item-disc');
-        if (sel) sel.selectedIndex = 0;
-        if (qtyInput) qtyInput.value = 1;
-        if (priceInput) priceInput.value = '0.00';
-        if (discInput) discInput.value = '0.00';
-        recalculate();
+        alert('Teklifte en az 1 ürün bulunmalıdır.');
         return;
       }
       const tr = document.getElementById(`row-${rowId}`);
