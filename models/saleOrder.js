@@ -78,7 +78,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     stockItemId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
+    },
+    itemsJson: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     quantity: {
       type: DataTypes.DECIMAL(15, 4),

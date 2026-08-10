@@ -528,7 +528,7 @@ class SaleController {
       customerName: quote.customerName,
       orderDate: new Date().toISOString().split('T')[0],
       paymentTerm: 'Vadeli_30',
-      status: 'Approved',
+      status: 'Preparing',
       priority: 'Normal',
       stockItemId: quote.stockItemId,
       quantity: quote.quantity,

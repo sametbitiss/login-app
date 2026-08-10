@@ -175,9 +175,9 @@
             <tr>
               <th>Sipariş No</th>
               <th>Müşteri Unvanı</th>
-              <th>Satılan Ürün</th>
+              <th>Sipariş Edilen Ürünler</th>
               <th>Miktar</th>
-              <th>Birim Satış Fiyatı</th>
+              <th>Toplam İskonto</th>
               <th>Genel Toplam</th>
               <th>Ödeme Koşulu</th>
               <th>Tarih</th>
@@ -195,7 +195,24 @@
                 </td>
               </tr>
             <% } else { %>
-              <% orders.forEach(order => { %>
+              <% orders.forEach(order => { 
+                let itemsList = [];
+                if (order.itemsJson) {
+                  try { itemsList = JSON.parse(order.itemsJson); } catch (e) { itemsList = []; }
+                }
+                if (!Array.isArray(itemsList) || itemsList.length === 0) {
+                  itemsList = [{
+                    stockCode: order.stockItem ? order.stockItem.stockCode : '-',
+                    name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
+                    quantity: order.quantity,
+                    unitPrice: order.unitPrice,
+                    discountRate: order.discountRate,
+                    taxRate: order.taxRate,
+                    subtotal: order.subtotal,
+                    totalAmount: order.totalAmount
+                  }];
+                }
+              %>
                 <tr>
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= order.orderNo %></strong></td>
                   <td>
@@ -205,22 +222,33 @@
                     <% } %>
                   </td>
                   <td>
-                    <% if (order.stockItem) { %>
-                      <span style="font-weight: 500;"><%= order.stockItem.name %></span>
-                      <span style="font-size: 0.75rem; color: var(--text-muted); display: block;"><%= order.stockItem.stockCode %></span>
-                    <% } else { %>
-                      <span style="color: var(--text-muted);">—</span>
-                    <% } %>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                      <% itemsList.forEach(it => { %>
+                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;"><%= it.name %></div>
+                      <% }); %>
+                    </div>
                   </td>
-                  <td><strong><%= parseFloat(order.quantity).toLocaleString('tr-TR') %> <%= order.stockItem ? order.stockItem.unit : '' %></strong></td>
-                  <td><%= parseFloat(order.unitPrice).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= order.currency %></td>
-                  <td><strong style="color: var(--emerald);"><%= parseFloat(order.totalAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= order.currency %></strong></td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: var(--text-secondary);">
+                      <% itemsList.forEach(it => { %>
+                        <div><%= parseFloat(it.quantity).toLocaleString('tr-TR') %> Adet</div>
+                      <% }); %>
+                    </div>
+                  </td>
+                  <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fb7185; font-weight: 600;">
+                    <%= parseFloat(order.discountAmount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= order.currency %>
+                  </td>
+                  <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(order.totalAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= order.currency %></strong></td>
                   <td style="font-size: 0.8rem;">
                     <%= order.paymentTerm === 'Pesin' ? 'Peşin' : order.paymentTerm === 'Vadeli_30' ? '30 Gün Vadeli' : order.paymentTerm === 'Vadeli_60' ? '60 Gün Vadeli' : order.paymentTerm === 'Vadeli_90' ? '90 Gün Vadeli' : 'Kredi Kartı' %>
                   </td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(order.orderDate).toLocaleDateString('tr-TR') %></td>
                   <td>
-                    <% if (order.status === 'Completed') { %>
+                    <% if (order.status === 'Hazırlanıyor' || order.status === 'Preparing') { %>
+                      <span class="status-pill status-approved" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
+                        ● Hazırlanıyor
+                      </span>
+                    <% } else if (order.status === 'Completed') { %>
                       <span class="status-pill status-active">● Tamamlandı</span>
                     <% } else if (order.status === 'Approved') { %>
                       <span class="status-pill status-approved">● Onaylandı</span>
