@@ -27,6 +27,19 @@
       height: 3px;
       background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 50%, #10b981 100%);
     }
+    .section-divider {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 1rem 0 0.5rem 0;
+      padding-bottom: 4px;
+      border-bottom: 1px dashed rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
   </style>
 </head>
 <body class="module-body">
@@ -106,7 +119,7 @@
       <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
           <h1 style="font-weight: 900;">Sevkiyat ve Teslimat (Sevk İrsaliyesi) Planlaması</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Durumu "Tamamlandı" olmayan siparişler için parçalı ürün bazlı sevk miktarlarını belirleyip Sevk İrsaliyesi kesin.</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Resmi 8 ana standart bölümü içeren, A4 siyah-beyaz baskıya uygun Sevk İrsaliyesi oluşturma paneli.</p>
         </div>
       </div>
 
@@ -118,12 +131,14 @@
       <div class="glass-form-card">
         <h3 style="color: #ec4899; font-size: 1.1rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          🚚 Yeni Sevk İrsaliyesi Hazırla
+          🚚 Yeni Resmi Sevk İrsaliyesi Oluştur
         </h3>
         
-        <form action="/sales/dispatches/add" method="POST" id="dispatchForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <form action="/sales/dispatches/add" method="POST" id="dispatchForm" style="display: flex; flex-direction: column; gap: 1rem;">
           <input type="hidden" name="itemsJson" id="dispatchItemsJsonInput" value="[]">
 
+          <!-- 1. İRSALİYE BAŞLIK & SİPARİŞ SEÇİMİ -->
+          <div class="section-divider">📌 1. İRSALİYE VE SİPARİŞ BAŞLIK BİLGİLERİ</div>
           <div class="form-grid form-grid--3">
             <div class="input-group">
               <label for="saleOrderId">Sevkiyat Yapılacak Sipariş <span class="req-star">*</span></label>
@@ -142,6 +157,66 @@
               </select>
             </div>
             <div class="input-group">
+              <label for="dispatchType">İrsaliye Türü <span class="req-star">*</span></label>
+              <select id="dispatchType" name="dispatchType" required>
+                <option value="Satış İrsaliyesi" selected>Satış İrsaliyesi</option>
+                <option value="Transfer İrsaliyesi">Transfer İrsaliyesi</option>
+                <option value="Alış İrsaliyesi">Alış İrsaliyesi</option>
+                <option value="İade İrsaliyesi">İade İrsaliyesi</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="shipmentDate">Sevk Tarihi <span class="req-star">*</span></label>
+              <input type="date" id="shipmentDate" name="shipmentDate" value="<%= new Date().toISOString().split('T')[0] %>" required>
+            </div>
+          </div>
+
+          <!-- 2. TESLİMAT & DEPO BİLGİLERİ -->
+          <div class="section-divider">🏠 2. TESLİMAT VE DEPO BİLGİLERİ</div>
+          <div class="form-grid form-grid--3">
+            <div class="input-group">
+              <label for="exitWarehouse">Çıkış Deposu <span class="req-star">*</span></label>
+              <select id="exitWarehouse" name="exitWarehouse" required>
+                <option value="Merkez Lojistik Deposu" selected>Merkez Lojistik Deposu</option>
+                <option value="Mamul Ürün Deposu">Mamul Ürün Deposu</option>
+                <option value="Kadıköy Sevkiyat Deposu">Kadıköy Sevkiyat Deposu</option>
+                <option value="Yedek Parça Deposu">Yedek Parça Deposu</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="recipientPerson">Teslim Alan Kişi / Yetkili</label>
+              <input type="text" id="recipientPerson" name="recipientPerson" placeholder="Örn: Ahmet Yılmaz (Satın Alma Müdürü)">
+            </div>
+            <div class="input-group">
+              <label for="deliveryType">Teslim Şekli</label>
+              <select id="deliveryType" name="deliveryType">
+                <option value="Adrese Teslim / Sevkiyat" selected>Adrese Teslim / Sevkiyat</option>
+                <option value="Kargo ile Gönderim">Kargo ile Gönderim</option>
+                <option value="Ambar Teslim">Ambar Teslim</option>
+                <option value="Müşteri Depodan Teslim Alacak">Müşteri Depodan Teslim Alacak</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid form-grid--3">
+            <div class="input-group">
+              <label for="deliveryCity">Teslimat İli</label>
+              <input type="text" id="deliveryCity" name="deliveryCity" placeholder="Örn: İstanbul">
+            </div>
+            <div class="input-group">
+              <label for="deliveryDistrict">Teslimat İlçesi</label>
+              <input type="text" id="deliveryDistrict" name="deliveryDistrict" placeholder="Örn: Ümraniye">
+            </div>
+            <div class="input-group">
+              <label for="projectNo">Proje / Referans No (Varsa)</label>
+              <input type="text" id="projectNo" name="projectNo" placeholder="Örn: PRJ-2026-99">
+            </div>
+          </div>
+
+          <!-- 3. SEVKİYAT VE LOJİSTİK BİLGİLERİ -->
+          <div class="section-divider">🚛 3. SEVKİYAT VE TAŞIYICI BİLGİLERİ</div>
+          <div class="form-grid form-grid--3">
+            <div class="input-group">
               <label for="carrierCompany">Lojistik / Kargo Firması</label>
               <input type="text" id="carrierCompany" name="carrierCompany" placeholder="Örn: Horoz Lojistik / Kendi Aracımız">
             </div>
@@ -149,20 +224,20 @@
               <label for="vehiclePlate">Araç Plakası</label>
               <input type="text" id="vehiclePlate" name="vehiclePlate" placeholder="Örn: 34 ABC 789">
             </div>
-          </div>
-
-          <div class="form-grid form-grid--3">
             <div class="input-group">
               <label for="driverName">Sürücü Adı / TCKN</label>
-              <input type="text" id="driverName" name="driverName" placeholder="Örn: Ahmet Yılmaz">
+              <input type="text" id="driverName" name="driverName" placeholder="Örn: Mustafa Kılıç / 12345678901">
             </div>
+          </div>
+
+          <div class="form-grid form-grid--2">
             <div class="input-group">
               <label for="trackingNo">Lojistik Takip No <small style="color: var(--text-muted);">(Otomatik)</small></label>
               <input type="text" id="trackingNo" name="trackingNo" value="<%= nextTrackingNo %>" readonly required style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); cursor: not-allowed;">
             </div>
             <div class="input-group">
               <label for="notes">İrsaliye Notu / Açıklama</label>
-              <input type="text" id="notes" name="notes" placeholder="Örn: Parçalı sevkiyat: 1. Palet teslim ediliyor.">
+              <input type="text" id="notes" name="notes" placeholder="Örn: Parçalı sevkiyat: Kargo ile gönderildi. Eksik ürün daha sonra sevk edilecektir.">
             </div>
           </div>
 
@@ -172,7 +247,7 @@
               <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
                 <span>📦</span> Siparişteki Ürünler ve Parçalı Sevk Miktarı Belirleme
               </h4>
-              <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 600;">💡 Tekil ürünler 0 girilebilir (sonraki sevkiyat için). Tüm ürünler 0 olamaz.</span>
+              <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 600;">💡 Fiyatsız Mal Teslim Belgesi: Tekil ürünler 0 girilebilir. Tüm ürünler 0 olamaz.</span>
             </div>
 
             <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
@@ -195,7 +270,7 @@
 
           <div style="margin-top: 0.75rem;">
             <button type="submit" class="btn btn-lg" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 12px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35); gap: 10px;">
-              📜 Sevk İrsaliyesini Kes ve Stoktan Düş
+              📜 Resmi Sevk İrsaliyesini Kes ve Stoktan Düş
             </button>
           </div>
         </form>
@@ -212,13 +287,13 @@
           <thead>
             <tr>
               <th>İrsaliye No</th>
+              <th>Tür</th>
               <th>Sipariş No</th>
               <th>Müşteri / Kurum</th>
               <th>Sevk Tarihi</th>
-              <th>Lojistik / Taşıyıcı</th>
-              <th>Plaka</th>
-              <th>Sürücü</th>
-              <th>Lojistik Takip No</th>
+              <th>Çıkış Deposu</th>
+              <th>Lojistik / Plaka</th>
+              <th>Takip No</th>
               <th>Durum</th>
               <th>İşlem</th>
             </tr>
@@ -234,18 +309,18 @@
               <% dispatches.forEach(d => { %>
                 <tr>
                   <td><strong style="color: #ec4899; font-family: 'JetBrains Mono', monospace;"><%= d.dispatchNo %></strong></td>
+                  <td><span class="status-pill" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;"><%= d.dispatchType || 'Satış İrsaliyesi' %></span></td>
                   <td><span style="font-family: 'JetBrains Mono', monospace; color: #818cf8;"><%= d.saleOrder ? d.saleOrder.orderNo : '—' %></span></td>
                   <td><strong><%= d.customerName %></strong></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(d.dispatchDate).toLocaleDateString('tr-TR') %></td>
-                  <td><%= d.carrierCompany || 'Kendi Aracımız' %></td>
-                  <td><span class="status-pill" style="background: rgba(255,255,255,0.08);"><%= d.vehiclePlate || '—' %></span></td>
-                  <td><%= d.driverName || '—' %></td>
+                  <td style="font-size: 0.85rem; color: #cbd5e1;"><%= d.exitWarehouse || 'Merkez Depo' %></td>
+                  <td><%= (d.carrierCompany || 'Kendi Aracımız') + (d.vehiclePlate ? ' (' + d.vehiclePlate + ')' : '') %></td>
                   <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= d.trackingNo || '—' %></strong></td>
                   <td>
                     <span class="status-pill status-active">● Sevk Edildi</span>
                   </td>
                   <td>
-                    <a href="/sales/dispatches/<%= d.id %>" class="btn btn-sm btn-outline-info" style="font-size: 0.75rem;">📄 İrsaliye Gör</a>
+                    <a href="/sales/dispatches/<%= d.id %>" class="btn btn-sm btn-outline-info" style="font-size: 0.75rem;">📄 Resmi A4 İrsaliye Gör</a>
                   </td>
                 </tr>
               <% }); %>
@@ -273,6 +348,11 @@
       if (!order) {
         if (itemsCard) itemsCard.style.display = 'none';
         return;
+      }
+
+      // Auto-fill delivery recipient if present
+      if (order.customerName && document.getElementById('recipientPerson')) {
+        document.getElementById('recipientPerson').value = order.customerName;
       }
 
       let itemsList = [];

@@ -867,7 +867,12 @@ class SaleController {
   });
 
   addDispatch = asyncHandler(async (req, res) => {
-    const { saleOrderId, carrierCompany, vehiclePlate, driverName, notes, itemsJson } = req.body;
+    const { 
+      saleOrderId, dispatchType, shipmentDate, exitWarehouse, deliveryCity, 
+      deliveryDistrict, recipientPerson, deliveryType, projectNo, carrierCompany, 
+      vehiclePlate, driverName, notes, itemsJson 
+    } = req.body;
+    
     const order = await SaleOrder.findByPk(saleOrderId, {
       include: [{ model: StockItem, as: 'stockItem' }]
     });
@@ -1016,15 +1021,23 @@ class SaleController {
 
     await dispatchRepository.create({
       dispatchNo: nextDispatchNo,
+      dispatchType: dispatchType || 'Satış İrsaliyesi',
       saleOrderId: order.id,
       customerId: order.customerId,
       customerName: order.customerName,
       dispatchDate: new Date().toISOString().split('T')[0],
+      shipmentDate: shipmentDate || new Date().toISOString().split('T')[0],
+      exitWarehouse: exitWarehouse || 'Merkez Lojistik Deposu',
       carrierCompany: carrierCompany || null,
       vehiclePlate: vehiclePlate || null,
       driverName: driverName || null,
       trackingNo: nextTrackingNo,
       shippingAddress: order.shippingAddress || null,
+      deliveryCity: deliveryCity || null,
+      deliveryDistrict: deliveryDistrict || null,
+      recipientPerson: recipientPerson || null,
+      deliveryType: deliveryType || null,
+      projectNo: projectNo || null,
       status: 'Dispatched',
       notes: notes || null,
       itemsJson: JSON.stringify(parsedItems)

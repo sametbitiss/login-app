@@ -3,74 +3,185 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sevk İrsaliyesi Detayı (<%= dispatch ? dispatch.dispatchNo : '' %>) — Enterprise ERP</title>
+  <title>Sevk İrsaliyesi (<%= dispatch ? dispatch.dispatchNo : '' %>) — Resmi A4 Belgesi</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     @media print {
-      .module-sidebar, .module-topbar, .no-print { display: none !important; }
+      body { background: #ffffff !important; color: #000000 !important; margin: 0 !important; padding: 0 !important; }
+      .module-sidebar, .module-topbar, .module-subnav, .no-print { display: none !important; }
       .module-main { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-      .paper-invoice { border: none !important; box-shadow: none !important; background: #ffffff !important; color: #0f172a !important; }
+      .paper-a4 { border: none !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; background: #ffffff !important; color: #000000 !important; }
     }
     
-    .paper-invoice { 
+    /* Strict Black & White A4 Document Canvas */
+    .paper-a4 { 
       background: #ffffff; 
-      color: #0f172a;
-      border: 1px solid #cbd5e1; 
-      border-radius: 16px; 
-      padding: 44px; 
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); 
-      max-width: 920px; 
-      margin: 0 auto 30px auto; 
+      color: #000000;
+      border: 1px solid #000000; 
+      border-radius: 0; 
+      padding: 40px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+      width: 210mm;
+      min-height: 297mm;
+      margin: 20px auto 40px auto; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      box-sizing: border-box;
     }
-    .pi-header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: flex-start; 
-      border-bottom: 2px solid #e2e8f0; 
-      padding-bottom: 24px; 
-      margin-bottom: 30px; 
+
+    .irs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #000000;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
     }
-    .pi-brand { 
-      font-size: 1.5rem; 
-      font-weight: 900; 
-      color: #15803d; 
-      display: flex; 
-      align-items: center; 
-      gap: 12px; 
+
+    .irs-company {
+      font-size: 1.15rem;
+      font-weight: 800;
+      line-height: 1.4;
+      color: #000000;
     }
-    .pi-title { text-align: right; }
-    .pi-title h2 { font-size: 1.6rem; font-weight: 900; color: #0f172a; margin: 0; }
-    .pi-title p { color: #334155; font-size: 0.95rem; font-weight: 600; margin: 5px 0 0 0; }
-    .pi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px; }
-    .pi-box { 
-      background: #f8fafc; 
-      padding: 20px; 
-      border-radius: 12px; 
-      border: 1px solid #cbd5e1; 
+
+    .irs-title-box {
+      text-align: right;
     }
-    .pi-box h4 { 
-      font-size: 0.85rem; 
-      font-weight: 800; 
-      color: #475569; 
-      text-transform: uppercase; 
-      margin-bottom: 10px; 
-      letter-spacing: 0.05em;
+
+    .irs-title-box h2 {
+      font-size: 1.6rem;
+      font-weight: 900;
+      margin: 0;
+      color: #000000;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
-    .pi-box p { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 6px 0; }
-    .pi-box-detail { color: #334155; font-size: 0.9rem; font-weight: 500; line-height: 1.6; }
-    
-    .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-    .summary-table th { 
-      background: #e2e8f0; 
-      color: #0f172a; 
-      font-weight: 800; 
-      text-align: left; 
-      padding: 14px 16px; 
-      border-bottom: 2px solid #94a3b8; 
-      font-size: 0.9rem;
+
+    .irs-title-box p {
+      margin: 4px 0 0 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #000000;
     }
-    .summary-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; color: #0f172a; font-weight: 500; }
+
+    /* Grid Sections */
+    .irs-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .irs-section-box {
+      border: 1px solid #000000;
+      padding: 12px 16px;
+    }
+
+    .irs-section-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      color: #000000;
+    }
+
+    .irs-info-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.825rem;
+    }
+
+    .irs-info-table td {
+      padding: 3px 0;
+      vertical-align: top;
+      color: #000000;
+    }
+
+    .irs-info-table td.lbl {
+      font-weight: 700;
+      width: 38%;
+      color: #000000;
+    }
+
+    .irs-info-table td.val {
+      font-weight: 500;
+      color: #000000;
+    }
+
+    /* Items Table */
+    .irs-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 0.825rem;
+    }
+
+    .irs-items-table th {
+      background: #f1f5f9;
+      color: #000000;
+      font-weight: 800;
+      text-align: left;
+      padding: 8px 10px;
+      border: 1px solid #000000;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .irs-items-table td {
+      padding: 8px 10px;
+      border: 1px solid #000000;
+      color: #000000;
+      font-weight: 500;
+    }
+
+    .irs-notes-box {
+      border: 1px solid #000000;
+      padding: 10px 14px;
+      margin-bottom: 24px;
+      font-size: 0.825rem;
+    }
+
+    /* Signatures Section */
+    .irs-signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .irs-sig-box {
+      border: 1px solid #000000;
+      padding: 12px 8px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .irs-sig-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+    }
+
+    .irs-sig-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .irs-sig-line {
+      font-size: 0.7rem;
+      color: #333;
+      margin-top: 35px;
+    }
   </style>
 </head>
 <body class="module-body">
@@ -87,7 +198,7 @@
       <div class="mss-label">SATIŞ YÖNETİMİ</div>
       <div class="mss-sub">
         <a href="/sales/dispatches" class="mss-sub-link active">🚚 Sevkiyat & İrsaliye</a>
-        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri Listesi</a>
+        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri</a>
         <a href="/sales/quotes" class="mss-sub-link">📜 Teklif & Fiyatlandırma</a>
         <a href="/sales/invoices" class="mss-sub-link">🧾 Faturalandırma</a>
       </div>
@@ -100,103 +211,174 @@
         <a href="/sales/dispatches" class="btn btn-outline-secondary btn-sm">← İrsaliye Listesine Dön</a>
       </div>
       <div class="mt-right">
-        <button onclick="window.print()" class="btn btn-outline-primary btn-sm">🖨️ İrsaliye Yazdır / PDF</button>
+        <button onclick="window.print()" class="btn btn-primary btn-sm" style="background: #0f172a; border-color: #0f172a;">🖨️ A4 Baskı / PDF İndir</button>
       </div>
     </header>
 
     <main class="module-content">
       <% if (!dispatch) { %>
-        <div class="alert alert-danger">İrsaliye bulunamadı.</div>
-      <% } else { %>
-        <div class="paper-invoice">
-          <div class="pi-header">
-            <div class="pi-brand">
-              🚚 ENTERPRISE LOJİSTİK & SEVKİYAT
+        <div class="error">İrsaliye bulunamadı.</div>
+      <% } else { 
+        const order = dispatch.saleOrder || {};
+        const cust = dispatch.customer || {};
+        
+        let itemsList = [];
+        if (dispatch.itemsJson) {
+          try { itemsList = JSON.parse(dispatch.itemsJson); } catch (e) { itemsList = []; }
+        }
+        if (!Array.isArray(itemsList) || itemsList.length === 0) {
+          itemsList = [{
+            stockCode: order.stockItem ? order.stockItem.stockCode : '-',
+            name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
+            orderedQuantity: order.quantity || 1,
+            dispatchQuantity: order.quantity || 1
+          }];
+        }
+      %>
+        <!-- A4 BLACK & WHITE OFFICIAL SEVK İRSALİYESİ FORM -->
+        <div class="paper-a4">
+          
+          <!-- 1. İRSALİYE BAŞLIK BİLGİLERİ -->
+          <div class="irs-header">
+            <div class="irs-company">
+              ENTERPRISE SANAYİ VE TİCARET A.Ş.<br>
+              <span style="font-size: 0.8rem; font-weight: 500;">
+                Organize Sanayi Bölgesi 4. Cadde No:12/A İstanbul<br>
+                Tel: +90 (212) 555 01 00 • E-posta: lojistik@enterprise.com.tr<br>
+                Büyük Mükellefler V.D. / 3840294812
+              </span>
             </div>
-            <div class="pi-title">
-              <h2>RESMİ SEVK İRSALİYESİ</h2>
-              <p>İrsaliye No: <strong style="color: #15803d;"><%= dispatch.dispatchNo %></strong></p>
-              <p>Sevk Tarihi: <strong><%= dispatch.dispatchDate %></strong></p>
+            <div class="irs-title-box">
+              <h2>SEVK İRSALİYESİ</h2>
+              <p>İrsaliye No: <strong style="font-family: 'JetBrains Mono', monospace;"><%= dispatch.dispatchNo %></strong></p>
+              <p>İrsaliye Tarihi: <strong><%= new Date(dispatch.dispatchDate).toLocaleDateString('tr-TR') %></strong></p>
+              <p>Sevk Tarihi: <strong><%= dispatch.shipmentDate ? new Date(dispatch.shipmentDate).toLocaleDateString('tr-TR') : new Date(dispatch.dispatchDate).toLocaleDateString('tr-TR') %></strong></p>
+              <p>İrsaliye Türü: <strong><%= dispatch.dispatchType || 'Satış İrsaliyesi' %></strong></p>
             </div>
           </div>
 
-          <div class="pi-grid">
-            <div class="pi-box">
-              <h4>TESLİMAT YAPILACAK MÜŞTERİ</h4>
-              <p><%= dispatch.customerName %></p>
-              <div class="pi-box-detail">
-                Adres: <strong><%= dispatch.shippingAddress || (dispatch.customer ? dispatch.customer.address : 'Müşteri Teslimat Adresi') %></strong><br>
-                <%= dispatch.customer && dispatch.customer.phone ? 'İletişim: ' + dispatch.customer.phone : '' %>
-              </div>
+          <!-- 2. CARİ (MÜŞTERİ) & 3. TESLİMAT BİLGİLERİ -->
+          <div class="irs-grid-2">
+            <div class="irs-section-box">
+              <div class="irs-section-title">2. CARİ (MÜŞTERİ) BİLGİLERİ</div>
+              <table class="irs-info-table">
+                <tr><td class="lbl">Cari Kodu:</td><td class="val"><%= cust.customerCode || 'CAR-00' + dispatch.customerId %></td></tr>
+                <tr><td class="lbl">Cari Ünvanı:</td><td class="val"><strong><%= dispatch.customerName %></strong></td></tr>
+                <tr><td class="lbl">Vergi Dairesi:</td><td class="val"><%= cust.taxOffice || 'Marmara V.D.' %></td></tr>
+                <tr><td class="lbl">Vergi / TCKN:</td><td class="val"><%= cust.taxNo || '1234567890' %></td></tr>
+                <tr><td class="lbl">Telefon:</td><td class="val"><%= cust.phone || '-' %></td></tr>
+                <tr><td class="lbl">E-posta:</td><td class="val"><%= cust.email || '-' %></td></tr>
+              </table>
             </div>
-            <div class="pi-box">
-              <h4>LOJİSTİK & NAKLİYE BİLGİLERİ</h4>
-              <p>Taşıyıcı Firma: <strong style="color: #0f172a;"><%= dispatch.carrierCompany || 'Kendi Aracımız' %></strong></p>
-              <div class="pi-box-detail">
-                Araç Plakası: <strong style="color: #0f172a;"><%= dispatch.vehiclePlate || 'Belirtilmedi' %></strong><br>
-                Sürücü Adı: <strong style="color: #0f172a;"><%= dispatch.driverName || 'Belirtilmedi' %></strong><br>
-                Takip No: <strong style="color: #0f172a;"><%= dispatch.trackingNo || '-' %></strong>
-              </div>
+
+            <div class="irs-section-box">
+              <div class="irs-section-title">3. TESLİMAT BİLGİLERİ</div>
+              <table class="irs-info-table">
+                <tr><td class="lbl">Teslimat Adresi:</td><td class="val"><%= dispatch.shippingAddress || cust.address || 'Müşteri Teslimat Adresi' %></td></tr>
+                <tr><td class="lbl">İl / İlçe / P.K.:</td><td class="val"><%= (dispatch.deliveryDistrict || cust.city || '') + ' / ' + (dispatch.deliveryCity || cust.city || '') %></td></tr>
+                <tr><td class="lbl">Teslim Alan Kişi:</td><td class="val"><strong><%= dispatch.recipientPerson || cust.contactPerson || dispatch.customerName %></strong></td></tr>
+                <tr><td class="lbl">Teslim Şekli:</td><td class="val"><%= dispatch.deliveryType || 'Adrese Teslim / Sevkiyat' %></td></tr>
+              </table>
             </div>
           </div>
 
-          <% 
-            let itemsList = [];
-            if (dispatch.itemsJson) {
-              try { itemsList = JSON.parse(dispatch.itemsJson); } catch (e) { itemsList = []; }
-            }
-            if (!Array.isArray(itemsList) || itemsList.length === 0) {
-              itemsList = [{
-                stockCode: dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.stockCode : '-',
-                name: dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.name : 'Ürün Kalemi',
-                orderedQuantity: dispatch.saleOrder ? dispatch.saleOrder.quantity : 1,
-                dispatchQuantity: dispatch.saleOrder ? dispatch.saleOrder.quantity : 1
-              }];
-            }
-          %>
-          <table class="summary-table">
+          <!-- 4. SİPARİŞ & 6. SEVKİYAT BİLGİLERİ -->
+          <div class="irs-grid-2">
+            <div class="irs-section-box">
+              <div class="irs-section-title">4. SİPARİŞ BİLGİLERİ</div>
+              <table class="irs-info-table">
+                <tr><td class="lbl">Satış Sipariş No:</td><td class="val"><strong style="font-family: 'JetBrains Mono', monospace;"><%= order.orderNo || '-' %></strong></td></tr>
+                <tr><td class="lbl">Sipariş Tarihi:</td><td class="val"><%= order.orderDate ? new Date(order.orderDate).toLocaleDateString('tr-TR') : '-' %></td></tr>
+                <tr><td class="lbl">Proje No:</td><td class="val"><%= dispatch.projectNo || '-' %></td></tr>
+                <tr><td class="lbl">Lojistik Takip No:</td><td class="val"><strong style="font-family: 'JetBrains Mono', monospace;"><%= dispatch.trackingNo || '-' %></strong></td></tr>
+              </table>
+            </div>
+
+            <div class="irs-section-box">
+              <div class="irs-section-title">6. SEVKİYAT BİLGİLERİ</div>
+              <table class="irs-info-table">
+                <tr><td class="lbl">Çıkış Deposu:</td><td class="val"><strong><%= dispatch.exitWarehouse || 'Merkez Lojistik Deposu' %></strong></td></tr>
+                <tr><td class="lbl">Taşıyıcı Firma:</td><td class="val"><%= dispatch.carrierCompany || 'Kendi Aracımız' %></td></tr>
+                <tr><td class="lbl">Araç Plakası:</td><td class="val"><strong><%= dispatch.vehiclePlate || '—' %></strong></td></tr>
+                <tr><td class="lbl">Şoför / TCKN:</td><td class="val"><%= dispatch.driverName || '—' %></td></tr>
+                <tr><td class="lbl">Sevk Sorumlusu:</td><td class="val"><%= dispatch.creator ? (dispatch.creator.firstName ? dispatch.creator.firstName + ' ' + dispatch.creator.lastName : dispatch.creator.username) : 'Lojistik Yetkilisi' %></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- 5. ÜRÜN KALEMLERİ TABLOSU (FİYATSIZ MAL TESLİM TABLOSU) -->
+          <div style="margin-bottom: 8px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">5. ÜRÜN KALEMLERİ</div>
+          <table class="irs-items-table">
             <thead>
               <tr>
-                <th style="width: 40px; text-align: center;">#</th>
-                <th>Sevk Edilen Mal/Malzeme</th>
-                <th>Sipariş No</th>
-                <th style="text-align: center;">Sipariş Miktarı</th>
-                <th style="text-align: center;">Sevk Edilen Miktar</th>
-                <th>Birim</th>
+                <th style="width: 35px; text-align: center;">S.No</th>
+                <th style="width: 100px;">Ürün Kodu</th>
+                <th>Ürün / Malzeme Adı ve Açıklaması</th>
+                <th style="width: 80px; text-align: center;">Sipariş M.</th>
+                <th style="width: 90px; text-align: center;">Sevk Miktarı</th>
+                <th style="width: 60px; text-align: center;">Birim</th>
+                <th style="width: 90px;">Çıkış Deposu</th>
+                <th style="width: 80px;">Lot / Parti No</th>
               </tr>
             </thead>
             <tbody>
               <% itemsList.forEach((it, idx) => { %>
                 <tr>
-                  <td style="text-align: center; font-weight: 700; color: #64748b;"><%= idx + 1 %></td>
+                  <td style="text-align: center; font-weight: 700;"><%= idx + 1 %></td>
+                  <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;"><%= it.stockCode || 'STK-00' + (idx+1) %></td>
                   <td>
-                    <strong style="font-size: 1rem; color: #0f172a;"><%= it.name %></strong><br>
-                    <span style="color: #475569; font-weight: 600; font-size: 0.85rem;"><%= it.stockCode || '' %></span>
+                    <strong><%= it.name %></strong>
+                    <% if (it.description) { %>
+                      <br><small style="color: #444;"><%= it.description %></small>
+                    <% } %>
                   </td>
-                  <td><strong style="color: #15803d; font-family: 'JetBrains Mono', monospace;"><%= dispatch.saleOrder ? dispatch.saleOrder.orderNo : '-' %></strong></td>
-                  <td style="text-align: center;"><span style="color: #475569; font-weight: 600;"><%= parseFloat(it.orderedQuantity || it.quantity || 1).toLocaleString('tr-TR') %></span></td>
-                  <td style="text-align: center;"><strong style="font-size: 1.1rem; color: #15803d;"><%= parseFloat(it.dispatchQuantity || it.quantity || 1).toLocaleString('tr-TR') %></strong></td>
-                  <td>Adet</td>
+                  <td style="text-align: center;"><%= parseFloat(it.orderedQuantity || it.quantity || 1).toLocaleString('tr-TR') %></td>
+                  <td style="text-align: center; font-weight: 800;"><%= parseFloat(it.dispatchQuantity || 0).toLocaleString('tr-TR') %></td>
+                  <td style="text-align: center;">Adet</td>
+                  <td><%= dispatch.exitWarehouse || 'Merkez Depo' %></td>
+                  <td><%= it.lotNo || '—' %></td>
                 </tr>
               <% }); %>
             </tbody>
           </table>
 
-          <div style="margin-top: 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center; color: #0f172a;">
-            <div style="border-top: 2px solid #cbd5e1; padding-top: 14px;">
-              <strong style="font-size: 0.95rem; display: block; margin-bottom: 4px;">TESLİM EDEN (Depo/Lojistik Sorumlusu)</strong>
-              <span style="color: #475569; font-weight: 600;"><%= dispatch.creator ? dispatch.creator.username : 'Yetkili' %></span>
-              <br><br><small style="color: #64748b; font-weight: 600;">İmza / Kaşe</small>
+          <!-- 7. AÇIKLAMA / TESLİMAT NOTLARI -->
+          <div class="irs-notes-box">
+            <strong>7. SEVKİYAT AÇIKLAMASI & TESLİMAT NOTU:</strong><br>
+            <%= dispatch.notes || 'Malzemeler eksiksiz ve hasarsız olarak yukarıda belirtilen araca yüklenmiş ve sevk edilmiştir.' %>
+          </div>
+
+          <!-- 8. İMZALAR (DÜZENLEYEN, TESLİM EDEN, TESLİM ALAN) -->
+          <div class="irs-signatures">
+            <div class="irs-sig-box">
+              <div>
+                <div class="irs-sig-title">DÜZENLEYEN</div>
+                <div class="irs-sig-name"><%= dispatch.creator ? (dispatch.creator.firstName ? dispatch.creator.firstName + ' ' + dispatch.creator.lastName : dispatch.creator.username) : 'Sistem Yetkilisi' %></div>
+              </div>
+              <div class="irs-sig-line">İmza / Tarih</div>
             </div>
-            <div style="border-top: 2px solid #cbd5e1; padding-top: 14px;">
-              <strong style="font-size: 0.95rem; display: block; margin-bottom: 4px;">TESLİM ALAN (Müşteri/Alıcı)</strong>
-              <span style="color: #475569; font-weight: 600;"><%= dispatch.customerName %></span>
-              <br><br><small style="color: #64748b; font-weight: 600;">Teslim Alma Tarihi / İmza</small>
+
+            <div class="irs-sig-box">
+              <div>
+                <div class="irs-sig-title">TESLİM EDEN</div>
+                <div class="irs-sig-name">Depo & Lojistik Sorumlusu</div>
+              </div>
+              <div class="irs-sig-line">İmza / Kaşe</div>
+            </div>
+
+            <div class="irs-sig-box">
+              <div>
+                <div class="irs-sig-title">TESLİM ALAN</div>
+                <div class="irs-sig-name"><%= dispatch.recipientPerson || dispatch.customerName %></div>
+              </div>
+              <div class="irs-sig-line">Teslim Alma Tarihi / İmza / Kaşe</div>
             </div>
           </div>
+
         </div>
       <% } %>
     </main>
   </div>
+
 </body>
 </html>
