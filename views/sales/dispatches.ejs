@@ -8,15 +8,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     .glass-form-card {
-      background: rgba(12, 17, 28, 0.75);
+      background: rgba(12, 17, 28, 0.85);
       border-radius: 20px;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(16px);
-      padding: 1.75rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
+      padding: 2rem;
       position: relative;
       overflow: hidden;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
     .glass-form-card::before {
       content: '';
@@ -27,18 +27,108 @@
       height: 3px;
       background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 50%, #10b981 100%);
     }
-    .section-divider {
-      font-size: 0.8rem;
-      font-weight: 800;
-      color: #818cf8;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin: 1rem 0 0.5rem 0;
-      padding-bottom: 4px;
-      border-bottom: 1px dashed rgba(255,255,255,0.1);
+
+    /* Tab Timeline / Step Progress Styling */
+    .step-progress-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    .step-progress-item {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+    .step-progress-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    .step-progress-item.active {
+      background: rgba(236, 72, 153, 0.12);
+      border-color: #ec4899;
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.25);
+    }
+    .step-progress-item.completed {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    .spi-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+    .step-progress-item.active .spi-badge {
+      background: #ec4899;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+    }
+    .step-progress-item.completed .spi-badge {
+      background: #10b981;
+      color: #fff;
+    }
+    .spi-text {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .spi-text strong {
+      font-size: 0.85rem;
+      color: #fff;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .spi-text span {
+      font-size: 0.725rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .step-progress-item.active .spi-text span {
+      color: #f472b6;
+    }
+
+    .tab-content-panel {
+      display: none;
+      animation: fadeInTab 0.35s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeInTab {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 992px) {
+      .step-progress-bar {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 576px) {
+      .step-progress-bar {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -119,7 +209,7 @@
       <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
           <h1 style="font-weight: 900;">Sevkiyat ve Teslimat (Sevk İrsaliyesi) Planlaması</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Resmi 8 ana standart bölümü içeren, A4 siyah-beyaz baskıya uygun Sevk İrsaliyesi oluşturma paneli.</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Resmi 8 ana standart bölümü içeren, adımlı tab menü ile Sevk İrsaliyesi oluşturma paneli.</p>
         </div>
       </div>
 
@@ -127,151 +217,220 @@
         <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
       <% } %>
 
-      <!-- Quick Dispatch Creation Form -->
+      <!-- Quick Dispatch Creation Form in Tab Menu Wizard -->
       <div class="glass-form-card">
-        <h3 style="color: #ec4899; font-size: 1.1rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          🚚 Yeni Resmi Sevk İrsaliyesi Oluştur
+        <h3 style="color: #ec4899; font-size: 1.15rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          🚚 Yeni Resmi Sevk İrsaliyesi Hazırlama Sihirbazı
         </h3>
-        
-        <form action="/sales/dispatches/add" method="POST" id="dispatchForm" style="display: flex; flex-direction: column; gap: 1rem;">
+
+        <!-- TAB STEP TIMELINE BAR -->
+        <div class="step-progress-bar">
+          <div class="step-progress-item active" onclick="switchDispatchTab(1)" id="tab-pill-1">
+            <div class="spi-badge">1</div>
+            <div class="spi-text">
+              <strong>Sipariş & Başlık</strong>
+              <span>Sipariş Seçimi ve İrsaliye Türü</span>
+            </div>
+          </div>
+          <div class="step-progress-item" onclick="switchDispatchTab(2)" id="tab-pill-2">
+            <div class="spi-badge">2</div>
+            <div class="spi-text">
+              <strong>Ürün Kalemleri</strong>
+              <span>Parçalı Sevk Miktarları</span>
+            </div>
+          </div>
+          <div class="step-progress-item" onclick="switchDispatchTab(3)" id="tab-pill-3">
+            <div class="spi-badge">3</div>
+            <div class="spi-text">
+              <strong>Teslimat & Depo</strong>
+              <span>Çıkış Deposu, Adres & Yetkili</span>
+            </div>
+          </div>
+          <div class="step-progress-item" onclick="switchDispatchTab(4)" id="tab-pill-4">
+            <div class="spi-badge">4</div>
+            <div class="spi-text">
+              <strong>Lojistik & Notlar</strong>
+              <span>Taşıyıcı, Plaka & Açıklama</span>
+            </div>
+          </div>
+        </div>
+
+        <form action="/sales/dispatches/add" method="POST" id="dispatchForm">
           <input type="hidden" name="itemsJson" id="dispatchItemsJsonInput" value="[]">
 
-          <!-- 1. İRSALİYE BAŞLIK & SİPARİŞ SEÇİMİ -->
-          <div class="section-divider">📌 1. İRSALİYE VE SİPARİŞ BAŞLIK BİLGİLERİ</div>
-          <div class="form-grid form-grid--3">
-            <div class="input-group">
-              <label for="saleOrderId">Sevkiyat Yapılacak Sipariş <span class="req-star">*</span></label>
-              <select id="saleOrderId" name="saleOrderId" required onchange="onOrderSelect(this)">
-                <option value="" disabled selected>-- Durumu Tamamlandı Olmayan Siparişi Seçiniz --</option>
-                <% openOrders.forEach(o => { 
-                  let itemCount = 1;
-                  if (o.itemsJson) {
-                    try { const arr = JSON.parse(o.itemsJson); if (Array.isArray(arr)) itemCount = arr.length; } catch (e) {}
-                  }
-                %>
-                  <option value="<%= o.id %>">
-                    [<%= o.orderNo %>] <%= o.customerName %> — <%= Number(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= o.currency %> (<%= itemCount %> Kalem Ürün • Statü: <%= o.status === 'Pending_Approval' ? 'Onay Bekliyor' : o.status === 'Approved' ? 'Onaylandı' : o.status === 'Preparing' ? 'Hazırlanıyor' : o.status %>)
-                  </option>
-                <% }); %>
-              </select>
+          <!-- TAB CONTENT 1: SİPARİŞ & İRSALİYE BAŞLIK BİLGİLERİ -->
+          <div class="tab-content-panel active" id="dispatch-tab-1">
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: #818cf8; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <span>📌</span> 1. İrsaliye ve Sipariş Başlık Bilgileri
+            </h4>
+            <div class="form-grid form-grid--2">
+              <div class="input-group">
+                <label for="saleOrderId">Sevkiyat Yapılacak Sipariş <span class="req-star">*</span></label>
+                <select id="saleOrderId" name="saleOrderId" required onchange="onOrderSelect(this)">
+                  <option value="" disabled selected>-- Durumu Tamamlandı Olmayan Siparişi Seçiniz --</option>
+                  <% openOrders.forEach(o => { 
+                    let itemCount = 1;
+                    if (o.itemsJson) {
+                      try { const arr = JSON.parse(o.itemsJson); if (Array.isArray(arr)) itemCount = arr.length; } catch (e) {}
+                    }
+                  %>
+                    <option value="<%= o.id %>">
+                      [<%= o.orderNo %>] <%= o.customerName %> — <%= Number(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= o.currency %> (<%= itemCount %> Kalem Ürün • Statü: <%= o.status === 'Pending_Approval' ? 'Onay Bekliyor' : o.status === 'Approved' ? 'Onaylandı' : o.status === 'Preparing' ? 'Hazırlanıyor' : o.status %>)
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="dispatchType">İrsaliye Türü <span class="req-star">*</span></label>
+                <select id="dispatchType" name="dispatchType" required>
+                  <option value="Satış İrsaliyesi" selected>Satış İrsaliyesi</option>
+                  <option value="Transfer İrsaliyesi">Transfer İrsaliyesi</option>
+                  <option value="Alış İrsaliyesi">Alış İrsaliyesi</option>
+                  <option value="İade İrsaliyesi">İade İrsaliyesi</option>
+                </select>
+              </div>
             </div>
-            <div class="input-group">
-              <label for="dispatchType">İrsaliye Türü <span class="req-star">*</span></label>
-              <select id="dispatchType" name="dispatchType" required>
-                <option value="Satış İrsaliyesi" selected>Satış İrsaliyesi</option>
-                <option value="Transfer İrsaliyesi">Transfer İrsaliyesi</option>
-                <option value="Alış İrsaliyesi">Alış İrsaliyesi</option>
-                <option value="İade İrsaliyesi">İade İrsaliyesi</option>
-              </select>
-            </div>
-            <div class="input-group">
-              <label for="shipmentDate">Sevk Tarihi <span class="req-star">*</span></label>
-              <input type="date" id="shipmentDate" name="shipmentDate" value="<%= new Date().toISOString().split('T')[0] %>" required>
+
+            <div class="form-grid form-grid--2" style="margin-top: 1rem;">
+              <div class="input-group">
+                <label for="shipmentDate">Sevk Tarihi <span class="req-star">*</span></label>
+                <input type="date" id="shipmentDate" name="shipmentDate" value="<%= new Date().toISOString().split('T')[0] %>" required>
+              </div>
+              <div class="input-group">
+                <label for="projectNo">Proje / Referans No (Varsa)</label>
+                <input type="text" id="projectNo" name="projectNo" placeholder="Örn: PRJ-2026-99">
+              </div>
             </div>
           </div>
 
-          <!-- 2. TESLİMAT & DEPO BİLGİLERİ -->
-          <div class="section-divider">🏠 2. TESLİMAT VE DEPO BİLGİLERİ</div>
-          <div class="form-grid form-grid--3">
-            <div class="input-group">
-              <label for="exitWarehouse">Çıkış Deposu <span class="req-star">*</span></label>
-              <select id="exitWarehouse" name="exitWarehouse" required>
-                <option value="Merkez Lojistik Deposu" selected>Merkez Lojistik Deposu</option>
-                <option value="Mamul Ürün Deposu">Mamul Ürün Deposu</option>
-                <option value="Kadıköy Sevkiyat Deposu">Kadıköy Sevkiyat Deposu</option>
-                <option value="Yedek Parça Deposu">Yedek Parça Deposu</option>
-              </select>
+          <!-- TAB CONTENT 2: ÜRÜN KALEMLERİ VE SEVK MİKTARLARI -->
+          <div class="tab-content-panel" id="dispatch-tab-2">
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: #ec4899; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <span>📦</span> 2. Siparişteki Ürünler ve Parçalı Sevk Miktarları
+            </h4>
+
+            <div id="dispatchItemsCard" style="display: none;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <span style="font-size: 0.8rem; color: #fff; font-weight: 700;">Mal Teslim Belgesi: Siparişteki ürünlerin bu sevkiyatta gidecek miktarlarını giriniz.</span>
+                <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 600;">💡 Tekil ürünler 0 girilebilir. Tüm ürünler 0 olamaz.</span>
+              </div>
+
+              <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="dispatchItemsTable">
+                  <thead>
+                    <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
+                      <th style="padding: 12px 14px; width: 40px; text-align: center;">#</th>
+                      <th style="padding: 12px 14px; min-width: 220px;">Ürün / Mamul Kalemi</th>
+                      <th style="padding: 12px 14px; width: 140px; text-align: center;">Sipariş Miktarı</th>
+                      <th style="padding: 12px 14px; width: 180px; text-align: center;">Sevk Edilecek Miktar</th>
+                      <th style="padding: 12px 14px; min-width: 200px;">Miktar Doğrulama Durumu</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dispatchItemsTbody">
+                    <!-- Dynamic rows generated on order selection -->
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div class="input-group">
-              <label for="recipientPerson">Teslim Alan Kişi / Yetkili</label>
-              <input type="text" id="recipientPerson" name="recipientPerson" placeholder="Örn: Ahmet Yılmaz (Satın Alma Müdürü)">
-            </div>
-            <div class="input-group">
-              <label for="deliveryType">Teslim Şekli</label>
-              <select id="deliveryType" name="deliveryType">
-                <option value="Adrese Teslim / Sevkiyat" selected>Adrese Teslim / Sevkiyat</option>
-                <option value="Kargo ile Gönderim">Kargo ile Gönderim</option>
-                <option value="Ambar Teslim">Ambar Teslim</option>
-                <option value="Müşteri Depodan Teslim Alacak">Müşteri Depodan Teslim Alacak</option>
-              </select>
+
+            <div id="noOrderSelectedPrompt" style="padding: 2.5rem; text-align: center; color: var(--text-muted); background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+              ⚠️ Lütfen 1. Adımdan geçerli bir sevkiyat siparişi seçiniz.
             </div>
           </div>
 
-          <div class="form-grid form-grid--3">
-            <div class="input-group">
-              <label for="deliveryCity">Teslimat İli</label>
-              <input type="text" id="deliveryCity" name="deliveryCity" placeholder="Örn: İstanbul">
+          <!-- TAB CONTENT 3: TESLİMAT VE DEPO BİLGİLERİ -->
+          <div class="tab-content-panel" id="dispatch-tab-3">
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: #10b981; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <span>🏠</span> 3. Teslimat ve Çıkış Deposu Bilgileri
+            </h4>
+
+            <div class="form-grid form-grid--3">
+              <div class="input-group">
+                <label for="exitWarehouse">Çıkış Deposu <span class="req-star">*</span></label>
+                <select id="exitWarehouse" name="exitWarehouse" required>
+                  <option value="Merkez Lojistik Deposu" selected>Merkez Lojistik Deposu</option>
+                  <option value="Mamul Ürün Deposu">Mamul Ürün Deposu</option>
+                  <option value="Kadıköy Sevkiyat Deposu">Kadıköy Sevkiyat Deposu</option>
+                  <option value="Yedek Parça Deposu">Yedek Parça Deposu</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="recipientPerson">Teslim Alan Kişi / Yetkili</label>
+                <input type="text" id="recipientPerson" name="recipientPerson" placeholder="Örn: Ahmet Yılmaz (Satın Alma Müdürü)">
+              </div>
+              <div class="input-group">
+                <label for="deliveryType">Teslim Şekli</label>
+                <select id="deliveryType" name="deliveryType">
+                  <option value="Adrese Teslim / Sevkiyat" selected>Adrese Teslim / Sevkiyat</option>
+                  <option value="Kargo ile Gönderim">Kargo ile Gönderim</option>
+                  <option value="Ambar Teslim">Ambar Teslim</option>
+                  <option value="Müşteri Depodan Teslim Alacak">Müşteri Depodan Teslim Alacak</option>
+                </select>
+              </div>
             </div>
-            <div class="input-group">
-              <label for="deliveryDistrict">Teslimat İlçesi</label>
-              <input type="text" id="deliveryDistrict" name="deliveryDistrict" placeholder="Örn: Ümraniye">
-            </div>
-            <div class="input-group">
-              <label for="projectNo">Proje / Referans No (Varsa)</label>
-              <input type="text" id="projectNo" name="projectNo" placeholder="Örn: PRJ-2026-99">
+
+            <div class="form-grid form-grid--2" style="margin-top: 1rem;">
+              <div class="input-group">
+                <label for="deliveryCity">Teslimat İli</label>
+                <input type="text" id="deliveryCity" name="deliveryCity" placeholder="Örn: İstanbul">
+              </div>
+              <div class="input-group">
+                <label for="deliveryDistrict">Teslimat İlçesi</label>
+                <input type="text" id="deliveryDistrict" name="deliveryDistrict" placeholder="Örn: Ümraniye">
+              </div>
             </div>
           </div>
 
-          <!-- 3. SEVKİYAT VE LOJİSTİK BİLGİLERİ -->
-          <div class="section-divider">🚛 3. SEVKİYAT VE TAŞIYICI BİLGİLERİ</div>
-          <div class="form-grid form-grid--3">
-            <div class="input-group">
-              <label for="carrierCompany">Lojistik / Kargo Firması</label>
-              <input type="text" id="carrierCompany" name="carrierCompany" placeholder="Örn: Horoz Lojistik / Kendi Aracımız">
+          <!-- TAB CONTENT 4: SEVKİYAT, LOJİSTİK VE NOTLAR -->
+          <div class="tab-content-panel" id="dispatch-tab-4">
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: #f59e0b; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <span>🚛</span> 4. Sevkiyat, Taşıyıcı ve İrsaliye Notları
+            </h4>
+
+            <div class="form-grid form-grid--3">
+              <div class="input-group">
+                <label for="carrierCompany">Lojistik / Kargo Firması</label>
+                <input type="text" id="carrierCompany" name="carrierCompany" placeholder="Örn: Horoz Lojistik / Kendi Aracımız">
+              </div>
+              <div class="input-group">
+                <label for="vehiclePlate">Araç Plakası</label>
+                <input type="text" id="vehiclePlate" name="vehiclePlate" placeholder="Örn: 34 ABC 789">
+              </div>
+              <div class="input-group">
+                <label for="driverName">Sürücü Adı / TCKN</label>
+                <input type="text" id="driverName" name="driverName" placeholder="Örn: Mustafa Kılıç / 12345678901">
+              </div>
             </div>
-            <div class="input-group">
-              <label for="vehiclePlate">Araç Plakası</label>
-              <input type="text" id="vehiclePlate" name="vehiclePlate" placeholder="Örn: 34 ABC 789">
-            </div>
-            <div class="input-group">
-              <label for="driverName">Sürücü Adı / TCKN</label>
-              <input type="text" id="driverName" name="driverName" placeholder="Örn: Mustafa Kılıç / 12345678901">
+
+            <div class="form-grid form-grid--2" style="margin-top: 1rem;">
+              <div class="input-group">
+                <label for="trackingNo">Lojistik Takip No <small style="color: var(--text-muted);">(Otomatik)</small></label>
+                <input type="text" id="trackingNo" name="trackingNo" value="<%= nextTrackingNo %>" readonly required style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); cursor: not-allowed;">
+              </div>
+              <div class="input-group">
+                <label for="notes">İrsaliye Notu / Açıklama</label>
+                <input type="text" id="notes" name="notes" placeholder="Örn: Parçalı sevkiyat: Kargo ile gönderildi. Eksik ürün daha sonra sevk edilecektir.">
+              </div>
             </div>
           </div>
 
-          <div class="form-grid form-grid--2">
-            <div class="input-group">
-              <label for="trackingNo">Lojistik Takip No <small style="color: var(--text-muted);">(Otomatik)</small></label>
-              <input type="text" id="trackingNo" name="trackingNo" value="<%= nextTrackingNo %>" readonly required style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); cursor: not-allowed;">
-            </div>
-            <div class="input-group">
-              <label for="notes">İrsaliye Notu / Açıklama</label>
-              <input type="text" id="notes" name="notes" placeholder="Örn: Parçalı sevkiyat: Kargo ile gönderildi. Eksik ürün daha sonra sevk edilecektir.">
-            </div>
-          </div>
-
-          <!-- DYNAMIC DISPATCH PRODUCTS TABLE -->
-          <div id="dispatchItemsCard" style="display: none; margin-top: 0.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
-                <span>📦</span> Siparişteki Ürünler ve Parçalı Sevk Miktarı Belirleme
-              </h4>
-              <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 600;">💡 Fiyatsız Mal Teslim Belgesi: Tekil ürünler 0 girilebilir. Tüm ürünler 0 olamaz.</span>
-            </div>
-
-            <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
-              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="dispatchItemsTable">
-                <thead>
-                  <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
-                    <th style="padding: 12px 14px; width: 40px; text-align: center;">#</th>
-                    <th style="padding: 12px 14px; min-width: 220px;">Ürün / Mamul Kalemi</th>
-                    <th style="padding: 12px 14px; width: 140px; text-align: center;">Sipariş Miktarı</th>
-                    <th style="padding: 12px 14px; width: 180px; text-align: center;">Sevk Edilecek Miktar</th>
-                    <th style="padding: 12px 14px; min-width: 200px;">Miktar Doğrulama Durumu</th>
-                  </tr>
-                </thead>
-                <tbody id="dispatchItemsTbody">
-                  <!-- Dynamic rows generated on order selection -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div style="margin-top: 0.75rem;">
-            <button type="submit" class="btn btn-lg" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 12px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35); gap: 10px;">
-              📜 Resmi Sevk İrsaliyesini Kes ve Stoktan Düş
+          <!-- BOTTOM TAB NAVIGATION BAR -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);">
+            <button type="button" class="btn btn-outline-secondary" id="btnPrevStep" onclick="navigateStep(-1)" style="display: none; font-weight: 600; padding: 10px 22px; border-radius: 10px;">
+              ← Önceki Adım
             </button>
+            <div id="stepCounterBadge" style="font-size: 0.825rem; color: var(--text-muted); font-weight: 600;">
+              Adım 1 / 4
+            </div>
+            <div>
+              <button type="button" class="btn btn-primary" id="btnNextStep" onclick="navigateStep(1)" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 10px 24px; border-radius: 10px;">
+                Sonraki Adım →
+              </button>
+              <button type="submit" class="btn btn-lg" id="btnSubmitDispatch" style="display: none; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 12px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35); gap: 10px;">
+                📜 Resmi Sevk İrsaliyesini Kes ve Stoktan Düş
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -333,24 +492,87 @@
 
   <script>
     window.openOrdersCatalog = <%- JSON.stringify(openOrders || []) %>;
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    function switchDispatchTab(stepNum) {
+      if (stepNum < 1 || stepNum > totalSteps) return;
+
+      currentStep = stepNum;
+
+      // Update tab content panels
+      for (let i = 1; i <= totalSteps; i++) {
+        const panel = document.getElementById(`dispatch-tab-${i}`);
+        const pill = document.getElementById(`tab-pill-${i}`);
+        if (panel) {
+          if (i === stepNum) panel.classList.add('active');
+          else panel.classList.remove('active');
+        }
+        if (pill) {
+          if (i === stepNum) {
+            pill.classList.add('active');
+          } else {
+            pill.classList.remove('active');
+            if (i < stepNum) pill.classList.add('completed');
+          }
+        }
+      }
+
+      // Update Navigation Buttons
+      const btnPrev = document.getElementById('btnPrevStep');
+      const btnNext = document.getElementById('btnNextStep');
+      const btnSubmit = document.getElementById('btnSubmitDispatch');
+      const counterBadge = document.getElementById('stepCounterBadge');
+
+      if (btnPrev) btnPrev.style.display = currentStep > 1 ? 'inline-flex' : 'none';
+
+      if (currentStep === totalSteps) {
+        if (btnNext) btnNext.style.display = 'none';
+        if (btnSubmit) btnSubmit.style.display = 'inline-flex';
+      } else {
+        if (btnNext) btnNext.style.display = 'inline-flex';
+        if (btnSubmit) btnSubmit.style.display = 'none';
+      }
+
+      if (counterBadge) counterBadge.textContent = `Adım ${currentStep} / ${totalSteps}`;
+    }
+
+    function navigateStep(direction) {
+      if (direction === 1) {
+        // Validate Step 1 requirement before proceeding
+        if (currentStep === 1) {
+          const sel = document.getElementById('saleOrderId');
+          if (!sel || !sel.value) {
+            alert('⚠️ Lütfen önce sevkiyat yapılacak siparişi seçiniz!');
+            if (sel) sel.focus();
+            return;
+          }
+        }
+      }
+
+      switchDispatchTab(currentStep + direction);
+    }
 
     function onOrderSelect(sel) {
       const orderId = parseInt(sel.value, 10);
       const itemsCard = document.getElementById('dispatchItemsCard');
+      const noOrderPrompt = document.getElementById('noOrderSelectedPrompt');
       const tbody = document.getElementById('dispatchItemsTbody');
 
       if (!orderId || isNaN(orderId)) {
         if (itemsCard) itemsCard.style.display = 'none';
+        if (noOrderPrompt) noOrderPrompt.style.display = 'block';
         return;
       }
 
       const order = window.openOrdersCatalog.find(o => o.id === orderId);
       if (!order) {
         if (itemsCard) itemsCard.style.display = 'none';
+        if (noOrderPrompt) noOrderPrompt.style.display = 'block';
         return;
       }
 
-      // Auto-fill delivery recipient if present
+      // Auto-fill recipient person if present
       if (order.customerName && document.getElementById('recipientPerson')) {
         document.getElementById('recipientPerson').value = order.customerName;
       }
@@ -407,6 +629,7 @@
       });
 
       if (itemsCard) itemsCard.style.display = 'block';
+      if (noOrderPrompt) noOrderPrompt.style.display = 'none';
       updateDispatchItemsPayload();
     }
 
@@ -494,6 +717,7 @@
         if (!sel || !sel.value) {
           e.preventDefault();
           alert('⚠️ Lütfen sevkiyat yapılacak siparişi seçiniz.');
+          switchDispatchTab(1);
           return false;
         }
 
@@ -510,6 +734,7 @@
           if (dQty > oQty) {
             hasExceedError = true;
             alert(`⚠️ HATA: "${name}" ürünü için girilen sevk miktarı (${dQty} Adet), sipariş miktarını (${oQty} Adet) geçemez!`);
+            switchDispatchTab(2);
             if (dInput) dInput.focus();
           }
 
@@ -524,6 +749,7 @@
         if (grandTotalDispatched <= 0) {
           e.preventDefault();
           alert('⚠️ HATA: Tüm ürünlerin sevk miktarı 0 olamaz. İrsaliye kesmek için en az 1 üründen sevk miktarı girilmelidir!');
+          switchDispatchTab(2);
           return false;
         }
       });
