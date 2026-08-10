@@ -247,6 +247,17 @@ class SaleController {
 
   addQuotation = asyncHandler(async (req, res) => {
     try {
+      const safeInt = (val) => {
+        if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return null;
+        const n = parseInt(val, 10);
+        return Number.isNaN(n) ? null : n;
+      };
+      const safeFloat = (val, defaultVal = 0) => {
+        if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+        const n = parseFloat(val);
+        return Number.isNaN(n) ? defaultVal : n;
+      };
+
       let items = [];
       if (req.body.itemsJson) {
         try {
@@ -258,11 +269,11 @@ class SaleController {
 
       // Fallback if items is empty but single item form fields exist
       if (!Array.isArray(items) || items.length === 0) {
-        const stockItemId = parseInt(req.body.stockItemId, 10) || null;
-        const quantity = parseFloat(req.body.quantity) || 1;
-        const unitPrice = parseFloat(req.body.unitPrice) || 0;
-        const discountRate = parseFloat(req.body.discountRate) || 0;
-        const taxRate = parseFloat(req.body.taxRate) || 20;
+        const stockItemId = safeInt(req.body.stockItemId);
+        const quantity = safeFloat(req.body.quantity, 1);
+        const unitPrice = safeFloat(req.body.unitPrice, 0);
+        const discountRate = safeFloat(req.body.discountRate, 0);
+        const taxRate = safeFloat(req.body.taxRate, 20);
 
         const subtotal = quantity * unitPrice;
         const discountAmount = subtotal * (discountRate / 100);
@@ -292,10 +303,11 @@ class SaleController {
 
       const processedItems = [];
       for (const item of items) {
-        const q = parseFloat(item.quantity) || 0;
-        const p = parseFloat(item.unitPrice) || 0;
-        const d = parseFloat(item.discountRate) || 0;
-        const t = item.taxRate !== undefined ? parseFloat(item.taxRate) : 20;
+        const itemId = safeInt(item.stockItemId);
+        const q = safeFloat(item.quantity, 1);
+        const p = safeFloat(item.unitPrice, 0);
+        const d = safeFloat(item.discountRate, 0);
+        const t = safeFloat(item.taxRate, 20);
 
         const sub = q * p;
         const disc = sub * (d / 100);
@@ -311,8 +323,8 @@ class SaleController {
 
         let itemName = item.name || '';
         let stockCode = item.stockCode || '';
-        if (item.stockItemId) {
-          const st = await StockItem.findByPk(item.stockItemId);
+        if (itemId) {
+          const st = await StockItem.findByPk(itemId);
           if (st) {
             itemName = st.name;
             stockCode = st.stockCode;
@@ -320,7 +332,7 @@ class SaleController {
         }
 
         processedItems.push({
-          stockItemId: item.stockItemId ? parseInt(item.stockItemId, 10) : null,
+          stockItemId: itemId,
           stockCode,
           name: itemName,
           quantity: q,
@@ -335,18 +347,20 @@ class SaleController {
       }
 
       const primaryItem = processedItems[0] || {};
+      const primaryStockItemId = safeInt(primaryItem.stockItemId);
+      const customerId = safeInt(req.body.customerId);
 
       await quotationRepository.create({
         quotationNo: req.body.quotationNo,
-        customerId: req.body.customerId ? parseInt(req.body.customerId, 10) : null,
+        customerId: customerId,
         customerName: req.body.customerName,
         quotationDate: req.body.quotationDate || new Date().toISOString().split('T')[0],
         validUntil: req.body.validUntil,
-        stockItemId: primaryItem.stockItemId || null,
-        quantity: primaryItem.quantity || 1,
-        unitPrice: primaryItem.unitPrice || 0,
+        stockItemId: primaryStockItemId,
+        quantity: safeFloat(primaryItem.quantity, 1),
+        unitPrice: safeFloat(primaryItem.unitPrice, 0),
         discountRate: maxDiscountRate,
-        taxRate: primaryItem.taxRate !== undefined ? primaryItem.taxRate : 20,
+        taxRate: safeFloat(primaryItem.taxRate, 20),
         subtotal: grandSubtotal,
         discountAmount: grandDiscountAmount,
         taxAmount: grandTaxAmount,

@@ -43,13 +43,35 @@ class QuotationRepository {
   }
 
   async create(data, currentUser = null, ipAddress = null) {
-    // Check if approval needed (>20% discount or >100,000 TL total)
-    const discountRate = parseFloat(data.discountRate) || 0;
-    const totalAmount = parseFloat(data.totalAmount) || 0;
+    const safeInt = (val) => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return null;
+      const n = parseInt(val, 10);
+      return Number.isNaN(n) ? null : n;
+    };
+    const safeFloat = (val, defaultVal = 0) => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+      const n = parseFloat(val);
+      return Number.isNaN(n) ? defaultVal : n;
+    };
+
+    const customerId = safeInt(data.customerId);
+    const stockItemId = safeInt(data.stockItemId);
+    const discountRate = safeFloat(data.discountRate, 0);
+    const totalAmount = safeFloat(data.totalAmount, 0);
     const approvalNeeded = discountRate > 20 || totalAmount > 100000;
 
     const quotation = await SaleQuotation.create({
       ...data,
+      customerId,
+      stockItemId,
+      discountRate,
+      totalAmount,
+      subtotal: safeFloat(data.subtotal, 0),
+      discountAmount: safeFloat(data.discountAmount, 0),
+      taxAmount: safeFloat(data.taxAmount, 0),
+      taxRate: safeFloat(data.taxRate, 20),
+      quantity: safeFloat(data.quantity, 1),
+      unitPrice: safeFloat(data.unitPrice, 0),
       approvalNeeded,
       status: approvalNeeded ? 'Pending_Approval' : (data.status || 'Draft'),
       createdBy: currentUser ? currentUser.id : null
