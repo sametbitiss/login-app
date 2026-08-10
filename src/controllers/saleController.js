@@ -849,8 +849,9 @@ class SaleController {
   listDispatches = asyncHandler(async (req, res) => {
     const dispatches = await dispatchRepository.findAll();
     const openOrders = await SaleOrder.findAll({
-      where: { status: { [Op.in]: ['Approved', 'Preparing'] } },
-      include: [{ model: StockItem, as: 'stockItem' }]
+      where: { status: { [Op.ne]: 'Completed' } },
+      include: [{ model: StockItem, as: 'stockItem' }],
+      order: [['createdAt', 'DESC']]
     });
     const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
 
@@ -858,31 +859,123 @@ class SaleController {
       user: req.user,
       dispatches,
       openOrders,
-      nextDispatchNo
+      nextDispatchNo,
+      error: null
     });
   });
 
   addDispatch = asyncHandler(async (req, res) => {
-    const { saleOrderId, carrierCompany, vehiclePlate, driverName, trackingNo, notes } = req.body;
-    const order = await SaleOrder.findByPk(saleOrderId);
+    const { saleOrderId, carrierCompany, vehiclePlate, driverName, trackingNo, notes, itemsJson } = req.body;
+    const order = await SaleOrder.findByPk(saleOrderId, {
+      include: [{ model: StockItem, as: 'stockItem' }]
+    });
 
-    if (order) {
+    if (!order) {
+      const dispatches = await dispatchRepository.findAll();
+      const openOrders = await SaleOrder.findAll({
+        where: { status: { [Op.ne]: 'Completed' } },
+        include: [{ model: StockItem, as: 'stockItem' }],
+        order: [['createdAt', 'DESC']]
+      });
       const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
-      await dispatchRepository.create({
-        dispatchNo: nextDispatchNo,
-        saleOrderId: order.id,
-        customerId: order.customerId,
-        customerName: order.customerName,
-        dispatchDate: new Date().toISOString().split('T')[0],
-        carrierCompany: carrierCompany || null,
-        vehiclePlate: vehiclePlate || null,
-        driverName: driverName || null,
-        trackingNo: trackingNo || null,
-        shippingAddress: order.shippingAddress || null,
-        status: 'Dispatched',
-        notes: notes || null
-      }, req.user, req.ip);
+      return res.render('sales/dispatches', {
+        user: req.user,
+        dispatches,
+        openOrders,
+        nextDispatchNo,
+        error: '⚠️ Lütfen geçerli bir sipariş seçiniz.'
+      });
     }
+
+    if (order.status === 'Completed') {
+      const dispatches = await dispatchRepository.findAll();
+      const openOrders = await SaleOrder.findAll({
+        where: { status: { [Op.ne]: 'Completed' } },
+        include: [{ model: StockItem, as: 'stockItem' }],
+        order: [['createdAt', 'DESC']]
+      });
+      const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+      return res.render('sales/dispatches', {
+        user: req.user,
+        dispatches,
+        openOrders,
+        nextDispatchNo,
+        error: '⚠️ Tamamlanmış siparişler için tekrar sevk irsaliyesi oluşturulamaz.'
+      });
+    }
+
+    // Parse and validate itemsJson dispatch quantities against ordered quantities
+    let parsedItems = [];
+    if (itemsJson) {
+      try {
+        parsedItems = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
+      } catch (e) {
+        parsedItems = [];
+      }
+    }
+
+    if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+      // Fallback from order single item or itemsJson
+      if (order.itemsJson) {
+        try { parsedItems = JSON.parse(order.itemsJson); } catch (e) { parsedItems = []; }
+      }
+      if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+        parsedItems = [{
+          stockItemId: order.stockItemId,
+          stockCode: order.stockItem ? order.stockItem.stockCode : '',
+          name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
+          orderedQuantity: order.quantity,
+          dispatchQuantity: order.quantity,
+          unitPrice: order.unitPrice
+        }];
+      } else {
+        parsedItems = parsedItems.map(it => ({
+          ...it,
+          orderedQuantity: parseFloat(it.quantity) || 1,
+          dispatchQuantity: parseFloat(it.quantity) || 1
+        }));
+      }
+    }
+
+    // STRICT VALIDATION RULE: dispatchQuantity CANNOT EXCEED orderedQuantity
+    for (const item of parsedItems) {
+      const orderedQty = parseFloat(item.orderedQuantity || item.quantity) || 0;
+      const dispatchQty = parseFloat(item.dispatchQuantity) || 0;
+
+      if (dispatchQty > orderedQty) {
+        const dispatches = await dispatchRepository.findAll();
+        const openOrders = await SaleOrder.findAll({
+          where: { status: { [Op.ne]: 'Completed' } },
+          include: [{ model: StockItem, as: 'stockItem' }],
+          order: [['createdAt', 'DESC']]
+        });
+        const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+        return res.render('sales/dispatches', {
+          user: req.user,
+          dispatches,
+          openOrders,
+          nextDispatchNo,
+          error: `⚠️ HATA: "${item.name || 'Ürün'}" için sevk edilecek miktar (${dispatchQty} Adet), sipariş miktarını (${orderedQty} Adet) geçemez!`
+        });
+      }
+    }
+
+    const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
+    await dispatchRepository.create({
+      dispatchNo: nextDispatchNo,
+      saleOrderId: order.id,
+      customerId: order.customerId,
+      customerName: order.customerName,
+      dispatchDate: new Date().toISOString().split('T')[0],
+      carrierCompany: carrierCompany || null,
+      vehiclePlate: vehiclePlate || null,
+      driverName: driverName || null,
+      trackingNo: trackingNo || null,
+      shippingAddress: order.shippingAddress || null,
+      status: 'Dispatched',
+      notes: notes || null,
+      itemsJson: JSON.stringify(parsedItems)
+    }, req.user, req.ip);
 
     res.redirect('/sales/dispatches');
   });

@@ -5,10 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sevkiyat ve Teslimat (Dağıtım) Planlaması — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .glass-form-card {
+      background: rgba(12, 17, 28, 0.75);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(16px);
+      padding: 1.75rem;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .glass-form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 50%, #10b981 100%);
+    }
+  </style>
 </head>
 <body class="module-body">
 
+  <!-- Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
       <a href="/" class="msb-logo">
@@ -57,12 +80,7 @@
         <% if (user.role === 'Admin') { %>
           <a href="/admin" class="mt-link">Sistem Yönetimi</a><a href="/admin/logs" class="mt-link">📜 İşlem Logları</a>
         <% } %>
-        <a href="/stock" class="mt-link">Stok & Depo</a>
         <a href="/sales" class="mt-link active">Satış Yönetimi</a>
-        <a href="/purchase" class="mt-link">Satın Alma</a>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
-          <a href="/production" class="mt-link">Üretim Planlama</a><a href="/quality" class="mt-link">Kalite Kontrol</a>
-        <% } %>
       </div>
       <div class="mt-right">
         <span class="mt-time" id="liveTime"></span>
@@ -85,25 +103,41 @@
         <a href="/sales/price-lists" class="msn-link">💰 Özel Fiyat Listeleri</a>
       </div>
 
-      <div class="page-header">
+      <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
-          <h1>Sevkiyat ve Teslimat (Dağıtım) Planlaması</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Onaylı siparişlerin depodan araçlara yüklenerek sevk edilmesi ve Sevk İrsaliyesi kesilmesi.</p>
+          <h1 style="font-weight: 900;">Sevkiyat ve Teslimat (Sevk İrsaliyesi) Planlaması</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Durumu "Tamamlandı" olmayan siparişler için ürün bazlı sevk miktarlarını belirleyip Sevk İrsaliyesi kesin.</p>
         </div>
       </div>
 
+      <% if (error) { %>
+        <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
+      <% } %>
+
       <!-- Quick Dispatch Creation Form -->
-      <div class="form-panel" style="margin-bottom: 1.75rem;">
-        <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1rem;">🚚 Onaylı Sipariş İçin Sevk İrsaliyesi Kes</h3>
+      <div class="glass-form-card">
+        <h3 style="color: #ec4899; font-size: 1.1rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          🚚 Yeni Sevk İrsaliyesi Hazırla
+        </h3>
         
-        <form action="/sales/dispatches/add" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+        <form action="/sales/dispatches/add" method="POST" id="dispatchForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <input type="hidden" name="itemsJson" id="dispatchItemsJsonInput" value="[]">
+
           <div class="form-grid form-grid--3">
             <div class="input-group">
               <label for="saleOrderId">Sevkiyat Yapılacak Sipariş <span class="req-star">*</span></label>
-              <select id="saleOrderId" name="saleOrderId" required>
-                <option value="" disabled selected>-- Hazırlanan / Onaylı Sipariş Seçiniz --</option>
-                <% openOrders.forEach(o => { %>
-                  <option value="<%= o.id %>">[<%= o.orderNo %>] <%= o.customerName %> - <%= o.stockItem ? o.stockItem.name : '' %> (<%= o.quantity %> Adet)</option>
+              <select id="saleOrderId" name="saleOrderId" required onchange="onOrderSelect(this)">
+                <option value="" disabled selected>-- Durumu Tamamlandı Olmayan Siparişi Seçiniz --</option>
+                <% openOrders.forEach(o => { 
+                  let itemCount = 1;
+                  if (o.itemsJson) {
+                    try { const arr = JSON.parse(o.itemsJson); if (Array.isArray(arr)) itemCount = arr.length; } catch (e) {}
+                  }
+                %>
+                  <option value="<%= o.id %>">
+                    [<%= o.orderNo %>] <%= o.customerName %> — <%= Number(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= o.currency %> (<%= itemCount %> Kalem Ürün • Statü: <%= o.status === 'Pending_Approval' ? 'Onay Bekliyor' : o.status === 'Approved' ? 'Onaylandı' : o.status === 'Preparing' ? 'Hazırlanıyor' : o.status %>)
+                  </option>
                 <% }); %>
               </select>
             </div>
@@ -127,18 +161,52 @@
               <input type="text" id="trackingNo" name="trackingNo" placeholder="Örn: LOJ-98765432">
             </div>
             <div class="input-group">
-              <label for="notes">İrsaliye Notu</label>
+              <label for="notes">İrsaliye Notu / Açıklama</label>
               <input type="text" id="notes" name="notes" placeholder="Örn: 2 Palet halinde teslim edilecektir.">
             </div>
           </div>
 
-          <div>
-            <button type="submit" class="btn" style="background: var(--pink); border-color: var(--pink);">📜 Sevk İrsaliyesini Kes ve Stoktan Düş</button>
+          <!-- DYNAMIC DISPATCH PRODUCTS TABLE -->
+          <div id="dispatchItemsCard" style="display: none; margin-top: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span>📦</span> Siparişteki Ürünler ve Sevk Miktarı Belirleme
+              </h4>
+              <span style="font-size: 0.75rem; color: #fb7185; font-weight: 600;">⚠️ Kural: Sevk miktarı, sipariş miktarından fazla olamaz! (Azı sevk edilebilir)</span>
+            </div>
+
+            <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="dispatchItemsTable">
+                <thead>
+                  <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
+                    <th style="padding: 12px 14px; width: 40px; text-align: center;">#</th>
+                    <th style="padding: 12px 14px; min-width: 220px;">Ürün / Mamul Kalemi</th>
+                    <th style="padding: 12px 14px; width: 140px; text-align: center;">Sipariş Miktarı</th>
+                    <th style="padding: 12px 14px; width: 180px; text-align: center;">Sevk Edilecek Miktar</th>
+                    <th style="padding: 12px 14px; min-width: 200px;">Miktar Doğrulama Durumu</th>
+                  </tr>
+                </thead>
+                <tbody id="dispatchItemsTbody">
+                  <!-- Dynamic rows generated on order selection -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="margin-top: 0.75rem;">
+            <button type="submit" class="btn btn-lg" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 12px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35); gap: 10px;">
+              📜 Sevk İrsaliyesini Kes ve Stoktan Düş
+            </button>
           </div>
         </form>
       </div>
 
       <!-- Dispatch Notes Table -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0;">📜 Kesilmiş Sevk İrsaliyeleri Listesi</h3>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Toplam <%= dispatches.length %> İrsaliye Kaydı</span>
+      </div>
+
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
@@ -165,8 +233,8 @@
             <% } else { %>
               <% dispatches.forEach(d => { %>
                 <tr>
-                  <td><strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= d.dispatchNo %></strong></td>
-                  <td><span style="font-family: 'JetBrains Mono', monospace;"><%= d.saleOrder ? d.saleOrder.orderNo : '—' %></span></td>
+                  <td><strong style="color: #ec4899; font-family: 'JetBrains Mono', monospace;"><%= d.dispatchNo %></strong></td>
+                  <td><span style="font-family: 'JetBrains Mono', monospace; color: #818cf8;"><%= d.saleOrder ? d.saleOrder.orderNo : '—' %></span></td>
                   <td><strong><%= d.customerName %></strong></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(d.dispatchDate).toLocaleDateString('tr-TR') %></td>
                   <td><%= d.carrierCompany || 'Kendi Aracımız' %></td>
@@ -189,6 +257,179 @@
   </div>
 
   <script>
+    window.openOrdersCatalog = <%- JSON.stringify(openOrders || []) %>;
+
+    function onOrderSelect(sel) {
+      const orderId = parseInt(sel.value, 10);
+      const itemsCard = document.getElementById('dispatchItemsCard');
+      const tbody = document.getElementById('dispatchItemsTbody');
+
+      if (!orderId || isNaN(orderId)) {
+        if (itemsCard) itemsCard.style.display = 'none';
+        return;
+      }
+
+      const order = window.openOrdersCatalog.find(o => o.id === orderId);
+      if (!order) {
+        if (itemsCard) itemsCard.style.display = 'none';
+        return;
+      }
+
+      let itemsList = [];
+      if (order.itemsJson) {
+        try { itemsList = JSON.parse(order.itemsJson); } catch (e) { itemsList = []; }
+      }
+
+      if (!Array.isArray(itemsList) || itemsList.length === 0) {
+        itemsList = [{
+          stockItemId: order.stockItemId,
+          stockCode: order.stockItem ? order.stockItem.stockCode : '-',
+          name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
+          quantity: order.quantity || 1,
+          unitPrice: order.unitPrice || 0
+        }];
+      }
+
+      tbody.innerHTML = '';
+
+      itemsList.forEach((it, idx) => {
+        const orderedQty = parseFloat(it.quantity) || 1;
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--border)';
+
+        tr.innerHTML = `
+          <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
+          <td style="padding: 12px 14px;">
+            <strong style="color: #fff; font-size: 0.9rem;">${it.name}</strong>
+            ${it.stockCode ? `<div style="font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">Kod: ${it.stockCode}</div>` : ''}
+            <input type="hidden" class="item-stock-id" value="${it.stockItemId || ''}">
+            <input type="hidden" class="item-stock-code" value="${it.stockCode || ''}">
+            <input type="hidden" class="item-name" value="${it.name || ''}">
+            <input type="hidden" class="item-unit-price" value="${it.unitPrice || 0}">
+            <input type="hidden" class="item-ordered-qty" value="${orderedQty}">
+          </td>
+          <td style="padding: 12px 14px; text-align: center;">
+            <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; border: 1px solid rgba(99, 102, 241, 0.3);">
+              ${orderedQty.toLocaleString('tr-TR')} Adet
+            </span>
+          </td>
+          <td style="padding: 12px 14px; text-align: center;">
+            <input type="number" step="0.01" min="0.01" max="${orderedQty}" value="${orderedQty}" class="dispatch-qty-input" oninput="validateRowQty(this, ${orderedQty})" style="width: 120px; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; text-align: center;">
+          </td>
+          <td style="padding: 12px 14px;" class="row-status-col">
+            <span class="status-valid-badge" style="color: #34d399; font-weight: 600; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
+              ✓ Uygundur (Max: ${orderedQty} Adet)
+            </span>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      if (itemsCard) itemsCard.style.display = 'block';
+      updateDispatchItemsPayload();
+    }
+
+    function validateRowQty(inputEl, maxOrderedQty) {
+      const val = parseFloat(inputEl.value) || 0;
+      const tr = inputEl.closest('tr');
+      const statusCol = tr ? tr.querySelector('.row-status-col') : null;
+
+      if (val > maxOrderedQty) {
+        inputEl.style.borderColor = '#f43f5e';
+        inputEl.style.boxShadow = '0 0 10px rgba(244, 63, 94, 0.4)';
+        if (statusCol) {
+          statusCol.innerHTML = `
+            <span style="color: #f43f5e; font-weight: 700; font-size: 0.8rem; background: rgba(244, 63, 94, 0.1); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(244, 63, 94, 0.3);">
+              ⚠️ Miktar Aşımı! Max ${maxOrderedQty} Adet sevk edilebilir.
+            </span>
+          `;
+        }
+      } else if (val <= 0) {
+        inputEl.style.borderColor = '#f59e0b';
+        inputEl.style.boxShadow = 'none';
+        if (statusCol) {
+          statusCol.innerHTML = `
+            <span style="color: #fbbf24; font-weight: 600; font-size: 0.8rem;">
+              ⚠️ Miktar 0'dan büyük olmalıdır.
+            </span>
+          `;
+        }
+      } else {
+        inputEl.style.borderColor = 'var(--border)';
+        inputEl.style.boxShadow = 'none';
+        if (statusCol) {
+          statusCol.innerHTML = `
+            <span style="color: #34d399; font-weight: 600; font-size: 0.8rem;">
+              ✓ Uygundur (Max: ${maxOrderedQty} Adet)
+            </span>
+          `;
+        }
+      }
+
+      updateDispatchItemsPayload();
+    }
+
+    function updateDispatchItemsPayload() {
+      const rows = document.querySelectorAll('#dispatchItemsTbody tr');
+      const itemsPayload = [];
+
+      rows.forEach(tr => {
+        const sId = tr.querySelector('.item-stock-id').value;
+        const sCode = tr.querySelector('.item-stock-code').value;
+        const name = tr.querySelector('.item-name').value;
+        const uPrice = parseFloat(tr.querySelector('.item-unit-price').value) || 0;
+        const oQty = parseFloat(tr.querySelector('.item-ordered-qty').value) || 0;
+        const dInput = tr.querySelector('.dispatch-qty-input');
+        const dQty = dInput ? parseFloat(dInput.value) || 0 : 0;
+
+        itemsPayload.push({
+          stockItemId: sId,
+          stockCode: sCode,
+          name: name,
+          unitPrice: uPrice,
+          orderedQuantity: oQty,
+          dispatchQuantity: dQty
+        });
+      });
+
+      document.getElementById('dispatchItemsJsonInput').value = JSON.stringify(itemsPayload);
+    }
+
+    const dForm = document.getElementById('dispatchForm');
+    if (dForm) {
+      dForm.addEventListener('submit', function(e) {
+        updateDispatchItemsPayload();
+        const sel = document.getElementById('saleOrderId');
+        if (!sel || !sel.value) {
+          e.preventDefault();
+          alert('⚠️ Lütfen sevkiyat yapılacak siparişi seçiniz.');
+          return false;
+        }
+
+        const rows = document.querySelectorAll('#dispatchItemsTbody tr');
+        let hasError = false;
+
+        rows.forEach(tr => {
+          const name = tr.querySelector('.item-name').value;
+          const oQty = parseFloat(tr.querySelector('.item-ordered-qty').value) || 0;
+          const dInput = tr.querySelector('.dispatch-qty-input');
+          const dQty = dInput ? parseFloat(dInput.value) || 0 : 0;
+
+          if (dQty > oQty) {
+            hasError = true;
+            alert(`⚠️ HATA: "${name}" ürünü için girilen sevk miktarı (${dQty} Adet), sipariş miktarını (${oQty} Adet) geçemez!`);
+            if (dInput) dInput.focus();
+          }
+        });
+
+        if (hasError) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    }
+
     function updateClock() {
       const now = new Date();
       const el = document.getElementById('liveTime');

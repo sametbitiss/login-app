@@ -49,32 +49,56 @@ class DispatchRepository {
       createdBy: currentUser ? currentUser.id : null
     });
 
-    // Mark associated SaleOrder as Shipped/Completed
+    // Mark associated SaleOrder as Completed
     const saleOrder = await SaleOrder.findByPk(data.saleOrderId);
     if (saleOrder) {
       saleOrder.status = 'Completed';
       saleOrder.fulfillmentStatus = 'Closed';
       await saleOrder.save();
 
-      // Trigger automatic stock decrease
-      const { StockItem, StockMovement } = require('../../models');
-      const item = await StockItem.findByPk(saleOrder.stockItemId);
-      if (item) {
-        const newStock = parseFloat(item.currentStock) - parseFloat(saleOrder.quantity);
-        item.currentStock = newStock < 0 ? 0 : newStock;
-        await item.save();
+      // Parse items to deduct from stock
+      let itemsToDeduct = [];
+      if (data.itemsJson) {
+        try {
+          itemsToDeduct = typeof data.itemsJson === 'string' ? JSON.parse(data.itemsJson) : data.itemsJson;
+        } catch (e) {
+          itemsToDeduct = [];
+        }
+      }
 
-        await StockMovement.create({
-          movementNo: `SH-${Date.now().toString().slice(-6)}`,
-          stockItemId: item.id,
-          sourceWarehouseId: 1,
-          movementType: 'Outbound',
-          quantity: saleOrder.quantity,
-          unitPrice: saleOrder.unitPrice,
-          referenceNo: dispatch.dispatchNo,
-          notes: `[İrsaliyeli Sevkiyat] ${dispatch.dispatchNo} sevk irsaliyesi ile depodan çıkış yapıldı.`,
-          performedBy: currentUser ? currentUser.id : null
-        });
+      if (!Array.isArray(itemsToDeduct) || itemsToDeduct.length === 0) {
+        itemsToDeduct = [{
+          stockItemId: saleOrder.stockItemId,
+          dispatchQuantity: saleOrder.quantity,
+          unitPrice: saleOrder.unitPrice
+        }];
+      }
+
+      const { StockItem, StockMovement } = require('../../models');
+
+      for (const it of itemsToDeduct) {
+        const sId = parseInt(it.stockItemId, 10);
+        const qtyToDeduct = parseFloat(it.dispatchQuantity || it.quantity || 1);
+        if (sId && sId > 0 && qtyToDeduct > 0) {
+          const item = await StockItem.findByPk(sId);
+          if (item) {
+            const newStock = parseFloat(item.currentStock) - qtyToDeduct;
+            item.currentStock = newStock < 0 ? 0 : newStock;
+            await item.save();
+
+            await StockMovement.create({
+              movementNo: `SH-${Date.now().toString().slice(-6)}-${sId}`,
+              stockItemId: item.id,
+              sourceWarehouseId: 1,
+              movementType: 'Outbound',
+              quantity: qtyToDeduct,
+              unitPrice: it.unitPrice || item.salePrice || 0,
+              referenceNo: dispatch.dispatchNo,
+              notes: `[İrsaliyeli Sevkiyat] ${dispatch.dispatchNo} sevk irsaliyesi ile ${item.name} (${qtyToDeduct} Adet) depodan çıkış yapıldı.`,
+              performedBy: currentUser ? currentUser.id : null
+            });
+          }
+        }
       }
     }
 
@@ -84,7 +108,7 @@ class DispatchRepository {
       action: 'CREATE',
       entity: 'SaleDispatchNote',
       entityId: dispatch.id,
-      details: { dispatchNo: dispatch.dispatchNo },
+      details: { dispatchNo: dispatch.dispatchNo, saleOrderId: dispatch.saleOrderId, customerName: dispatch.customerName },
       ipAddress
     });
 

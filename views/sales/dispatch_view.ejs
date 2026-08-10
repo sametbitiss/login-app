@@ -140,25 +140,45 @@
             </div>
           </div>
 
+          <% 
+            let itemsList = [];
+            if (dispatch.itemsJson) {
+              try { itemsList = JSON.parse(dispatch.itemsJson); } catch (e) { itemsList = []; }
+            }
+            if (!Array.isArray(itemsList) || itemsList.length === 0) {
+              itemsList = [{
+                stockCode: dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.stockCode : '-',
+                name: dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.name : 'Ürün Kalemi',
+                orderedQuantity: dispatch.saleOrder ? dispatch.saleOrder.quantity : 1,
+                dispatchQuantity: dispatch.saleOrder ? dispatch.saleOrder.quantity : 1
+              }];
+            }
+          %>
           <table class="summary-table">
             <thead>
               <tr>
+                <th style="width: 40px; text-align: center;">#</th>
                 <th>Sevk Edilen Mal/Malzeme</th>
                 <th>Sipariş No</th>
-                <th>Miktar</th>
+                <th style="text-align: center;">Sipariş Miktarı</th>
+                <th style="text-align: center;">Sevk Edilen Miktar</th>
                 <th>Birim</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <strong style="font-size: 1rem; color: #0f172a;"><%= dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.name : 'Ürün' %></strong><br>
-                  <span style="color: #475569; font-weight: 600; font-size: 0.85rem;"><%= dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.stockCode : '' %></span>
-                </td>
-                <td><strong style="color: #15803d; font-family: 'JetBrains Mono', monospace;"><%= dispatch.saleOrder ? dispatch.saleOrder.orderNo : '-' %></strong></td>
-                <td><strong style="font-size: 1.15rem; color: #15803d;"><%= dispatch.saleOrder ? dispatch.saleOrder.quantity : 1 %></strong></td>
-                <td><%= dispatch.saleOrder && dispatch.saleOrder.stockItem ? dispatch.saleOrder.stockItem.unit : 'Adet' %></td>
-              </tr>
+              <% itemsList.forEach((it, idx) => { %>
+                <tr>
+                  <td style="text-align: center; font-weight: 700; color: #64748b;"><%= idx + 1 %></td>
+                  <td>
+                    <strong style="font-size: 1rem; color: #0f172a;"><%= it.name %></strong><br>
+                    <span style="color: #475569; font-weight: 600; font-size: 0.85rem;"><%= it.stockCode || '' %></span>
+                  </td>
+                  <td><strong style="color: #15803d; font-family: 'JetBrains Mono', monospace;"><%= dispatch.saleOrder ? dispatch.saleOrder.orderNo : '-' %></strong></td>
+                  <td style="text-align: center;"><span style="color: #475569; font-weight: 600;"><%= parseFloat(it.orderedQuantity || it.quantity || 1).toLocaleString('tr-TR') %></span></td>
+                  <td style="text-align: center;"><strong style="font-size: 1.1rem; color: #15803d;"><%= parseFloat(it.dispatchQuantity || it.quantity || 1).toLocaleString('tr-TR') %></strong></td>
+                  <td>Adet</td>
+                </tr>
+              <% }); %>
             </tbody>
           </table>
 
