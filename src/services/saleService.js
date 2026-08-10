@@ -20,10 +20,13 @@ class SaleService {
       throw new ValidationError('Bu sipariş numarası zaten mevcuttur.');
     }
 
-    // 2. Check stock item existence
-    const stockItem = await stockRepository.findById(data.stockItemId);
-    if (!stockItem) {
-      throw new ValidationError('Seçilen stok kartı sistemde bulunamadı.');
+    // 2. Check stock item existence if valid stockItemId is provided and not multi-item payload
+    const stockItemId = parseInt(data.stockItemId, 10);
+    if (!isNaN(stockItemId) && stockItemId > 0) {
+      const stockItem = await stockRepository.findById(stockItemId);
+      if (!stockItem && (!data.itemsJson || data.itemsJson === '[]')) {
+        throw new ValidationError('Seçilen stok kartı sistemde bulunamadı.');
+      }
     }
 
     // 3. Mathematical Calculations (Nett, İskonto, KDV, Genel Toplam)

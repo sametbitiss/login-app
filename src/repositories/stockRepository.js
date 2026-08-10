@@ -49,7 +49,9 @@ class StockRepository {
   }
 
   async findById(id) {
-    return await StockItem.findByPk(id, {
+    const validId = parseInt(id, 10);
+    if (!validId || Number.isNaN(validId) || validId <= 0) return null;
+    return await StockItem.findByPk(validId, {
       include: [{ model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }]
     });
   }

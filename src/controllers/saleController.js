@@ -122,10 +122,11 @@ class SaleController {
 
         if (disc > maxDiscountRate) maxDiscountRate = disc;
 
+        const itemId = safeInt(item.stockItemId);
         let itemName = item.name || 'Ürün Kalemi';
         let stockCode = item.stockCode || '';
-        if (item.stockItemId) {
-          const st = await StockItem.findByPk(item.stockItemId);
+        if (itemId && itemId > 0) {
+          const st = await StockItem.findByPk(itemId);
           if (st) {
             itemName = st.name;
             stockCode = st.stockCode;
@@ -133,7 +134,7 @@ class SaleController {
         }
 
         processedItems.push({
-          stockItemId: safeInt(item.stockItemId),
+          stockItemId: itemId && itemId > 0 ? itemId : null,
           stockCode,
           name: itemName,
           quantity: qty,
@@ -147,8 +148,11 @@ class SaleController {
         });
       }
 
-      const primaryItem = processedItems[0] || {};
-      const primaryStockItemId = safeInt(primaryItem.stockItemId);
+      let primaryStockItemId = safeInt(primaryItem.stockItemId);
+      if (!primaryStockItemId || primaryStockItemId <= 0) {
+        const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });
+        primaryStockItemId = defaultStock ? defaultStock.id : 1;
+      }
       const customerId = safeInt(req.body.customerId);
 
       // Customer score & risk validation
@@ -475,7 +479,11 @@ class SaleController {
       }
 
       const primaryItem = processedItems[0] || {};
-      const primaryStockItemId = safeInt(primaryItem.stockItemId);
+      let primaryStockItemId = safeInt(primaryItem.stockItemId);
+      if (!primaryStockItemId || primaryStockItemId <= 0) {
+        const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });
+        primaryStockItemId = defaultStock ? defaultStock.id : 1;
+      }
       const customerId = safeInt(req.body.customerId);
 
       // Customer score & risk validation

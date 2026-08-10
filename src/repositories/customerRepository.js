@@ -27,7 +27,9 @@ class CustomerRepository {
   }
 
   async findById(id) {
-    return await CustomerAccount.findByPk(id, {
+    const validId = parseInt(id, 10);
+    if (!validId || Number.isNaN(validId) || validId <= 0) return null;
+    return await CustomerAccount.findByPk(validId, {
       include: [
         { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
         { model: SaleOrder, as: 'orders' }

@@ -426,9 +426,10 @@
           lineTotalTd.textContent = tot.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
         }
 
-        if (stockItemId) {
+        const parsedStockId = parseInt(stockItemId, 10);
+        if (!isNaN(parsedStockId) && parsedStockId > 0) {
           itemsPayload.push({
-            stockItemId: parseInt(stockItemId, 10),
+            stockItemId: parsedStockId,
             stockCode,
             name,
             quantity: qty,

@@ -33,7 +33,9 @@ class SaleRepository {
   }
 
   async findById(id) {
-    return await SaleOrder.findByPk(id, {
+    const validId = parseInt(id, 10);
+    if (!validId || Number.isNaN(validId) || validId <= 0) return null;
+    return await SaleOrder.findByPk(validId, {
       include: [
         { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
         { model: StockItem, as: 'stockItem' }
@@ -42,12 +44,51 @@ class SaleRepository {
   }
 
   async findByOrderNo(orderNo) {
+    if (!orderNo) return null;
     return await SaleOrder.findOne({ where: { orderNo } });
   }
 
   async create(data, currentUser = null, ipAddress = null) {
+    const safeInt = (val) => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return null;
+      const n = parseInt(val, 10);
+      return Number.isNaN(n) ? null : n;
+    };
+    const safeFloat = (val, defaultVal = 0) => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+      const n = parseFloat(val);
+      return Number.isNaN(n) ? defaultVal : n;
+    };
+
+    let customerId = safeInt(data.customerId);
+    let stockItemId = safeInt(data.stockItemId);
+
+    if (!stockItemId || stockItemId <= 0) {
+      const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });
+      stockItemId = defaultStock ? defaultStock.id : 1;
+    }
+
+    const quantity = safeFloat(data.quantity, 1);
+    const unitPrice = safeFloat(data.unitPrice, 0);
+    const discountRate = safeFloat(data.discountRate, 0);
+    const taxRate = safeFloat(data.taxRate, 20);
+    const subtotal = safeFloat(data.subtotal, 0);
+    const discountAmount = safeFloat(data.discountAmount, 0);
+    const taxAmount = safeFloat(data.taxAmount, 0);
+    const totalAmount = safeFloat(data.totalAmount, 0);
+
     const order = await SaleOrder.create({
       ...data,
+      customerId,
+      stockItemId,
+      quantity,
+      unitPrice,
+      discountRate,
+      taxRate,
+      subtotal,
+      discountAmount,
+      taxAmount,
+      totalAmount,
       createdBy: currentUser ? currentUser.id : null
     });
 
