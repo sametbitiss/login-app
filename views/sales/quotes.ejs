@@ -100,8 +100,8 @@
             <tr>
               <th>Teklif No</th>
               <th>Müşteri / Firma</th>
-              <th>Teklif Verilen Ürün(ler)</th>
-              <th>Kalem / Miktar</th>
+              <th>Teklif Verilen Ürünler</th>
+              <th>Miktar</th>
               <th>İskonto (%)</th>
               <th>Genel Toplam</th>
               <th>Geçerlilik Tarihi</th>
@@ -134,30 +134,23 @@
                     totalAmount: q.totalAmount
                   }];
                 }
-
-                const namesSummary = itemsList.map(it => it.name).join(', ');
-                const tooltipText = itemsList.map((it, idx) => `${idx + 1}. ${it.name} (Miktar: ${it.quantity}, Birim Fiyat: ${parseFloat(it.unitPrice).toLocaleString('tr-TR')} ${q.currency})`).join('\n');
-                const totalQty = itemsList.reduce((acc, it) => acc + (parseFloat(it.quantity) || 0), 0);
               %>
-                <tr style="white-space: nowrap;">
+                <tr>
                   <td><strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= q.quotationNo %></strong></td>
                   <td><strong><%= q.customerName %></strong></td>
-                  <td style="max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= tooltipText %>">
-                    <% if (itemsList.length > 1) { %>
-                      <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 700; padding: 3px 7px; border-radius: 6px; font-size: 0.75rem; margin-right: 6px;">
-                        📦 <%= itemsList.length %> Kalem
-                      </span>
-                      <span style="font-weight: 600; color: var(--text-primary);"><%= namesSummary %></span>
-                    <% } else { %>
-                      <span style="font-weight: 500; color: var(--text-primary);"><%= itemsList[0].name %></span>
-                    <% } %>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                      <% itemsList.forEach(it => { %>
+                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;"><%= it.name %></div>
+                      <% }); %>
+                    </div>
                   </td>
-                  <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: var(--text-secondary);">
-                    <% if (itemsList.length > 1) { %>
-                      <%= itemsList.length %> Kalem (<%= totalQty.toLocaleString('tr-TR') %> Adet)
-                    <% } else { %>
-                      <%= parseFloat(itemsList[0].quantity).toLocaleString('tr-TR') %> Adet
-                    <% } %>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: var(--text-secondary);">
+                      <% itemsList.forEach(it => { %>
+                        <div><%= parseFloat(it.quantity).toLocaleString('tr-TR') %> Adet</div>
+                      <% }); %>
+                    </div>
                   </td>
                   <td>%<%= q.discountRate %></td>
                   <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(q.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= q.currency %></strong></td>
