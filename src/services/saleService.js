@@ -29,20 +29,60 @@ class SaleService {
       }
     }
 
-    // 3. Mathematical Calculations (Nett, İskonto, KDV, Genel Toplam)
-    const quantity = parseFloat(data.quantity) || 0;
-    const unitPrice = parseFloat(data.unitPrice) || 0;
-    const discountRate = parseFloat(data.discountRate) || 0;
-    const taxRate = parseFloat(data.taxRate) || 20;
+    // 3. Mathematical Calculations (Multi-item vs Single-item)
+    let itemsList = [];
+    if (data.itemsJson) {
+      try {
+        itemsList = typeof data.itemsJson === 'string' ? JSON.parse(data.itemsJson) : data.itemsJson;
+      } catch (e) {
+        itemsList = [];
+      }
+    }
 
-    if (quantity <= 0) throw new ValidationError('Sipariş miktarı sıfırdan büyük olmalıdır.');
-    if (unitPrice < 0) throw new ValidationError('Birim fiyat negatif olamaz.');
+    let subtotal = 0;
+    let discountAmount = 0;
+    let taxAmount = 0;
+    let totalAmount = 0;
 
-    const subtotal = quantity * unitPrice;
-    const discountAmount = subtotal * (discountRate / 100);
-    const amountAfterDiscount = subtotal - discountAmount;
-    const taxAmount = amountAfterDiscount * (taxRate / 100);
-    const totalAmount = amountAfterDiscount + taxAmount;
+    if (Array.isArray(itemsList) && itemsList.length > 0) {
+      itemsList.forEach(it => {
+        const q = parseFloat(it.quantity) || 1;
+        const p = parseFloat(it.unitPrice) || 0;
+        const d = parseFloat(it.discountRate) || 0;
+        const t = parseFloat(it.taxRate) || 20;
+
+        const lineSub = q * p;
+        const lineDisc = lineSub * (d / 100);
+        const lineAfterDisc = lineSub - lineDisc;
+        const lineTax = lineAfterDisc * (t / 100);
+        const lineTot = lineAfterDisc + lineTax;
+
+        subtotal += lineSub;
+        discountAmount += lineDisc;
+        taxAmount += lineTax;
+        totalAmount += lineTot;
+      });
+    } else {
+      const quantity = parseFloat(data.quantity) || 0;
+      const unitPrice = parseFloat(data.unitPrice) || 0;
+      const discountRate = parseFloat(data.discountRate) || 0;
+      const taxRate = parseFloat(data.taxRate) || 20;
+
+      if (quantity <= 0) throw new ValidationError('Sipariş miktarı sıfırdan büyük olmalıdır.');
+      if (unitPrice < 0) throw new ValidationError('Birim fiyat negatif olamaz.');
+
+      subtotal = quantity * unitPrice;
+      discountAmount = subtotal * (discountRate / 100);
+      const amountAfterDiscount = subtotal - discountAmount;
+      taxAmount = amountAfterDiscount * (taxRate / 100);
+      totalAmount = amountAfterDiscount + taxAmount;
+    }
+
+    // Override with pre-passed grand totals if provided
+    if (data.subtotal !== undefined && parseFloat(data.subtotal) > 0) subtotal = parseFloat(data.subtotal);
+    if (data.discountAmount !== undefined && parseFloat(data.discountAmount) >= 0) discountAmount = parseFloat(data.discountAmount);
+    if (data.taxAmount !== undefined && parseFloat(data.taxAmount) >= 0) taxAmount = parseFloat(data.taxAmount);
+    if (data.totalAmount !== undefined && parseFloat(data.totalAmount) > 0) totalAmount = parseFloat(data.totalAmount);
 
     const computedData = {
       ...data,
