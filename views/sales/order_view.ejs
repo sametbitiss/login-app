@@ -105,6 +105,36 @@
             totalAmount: order.totalAmount
           }];
         }
+
+        let calculatedSubtotal = 0;
+        let calculatedDiscount = 0;
+        let calculatedTax = 0;
+        let calculatedTotal = 0;
+
+        itemsList.forEach(it => {
+          const q = parseFloat(it.quantity) || 1;
+          const p = parseFloat(it.unitPrice) || 0;
+          const d = parseFloat(it.discountRate) || 0;
+          const t = parseFloat(it.taxRate) || 20;
+
+          const lineSub = q * p;
+          const lineDisc = lineSub * (d / 100);
+          const lineAfterDisc = lineSub - lineDisc;
+          const lineTax = lineAfterDisc * (t / 100);
+          const lineTot = lineAfterDisc + lineTax;
+
+          calculatedSubtotal += lineSub;
+          calculatedDiscount += lineDisc;
+          calculatedTax += lineTax;
+          calculatedTotal += lineTot;
+        });
+
+        if (calculatedDiscount === 0 && parseFloat(order.discountAmount || 0) > 0) {
+          calculatedDiscount = parseFloat(order.discountAmount);
+        }
+        if (calculatedTotal === 0 && parseFloat(order.totalAmount || 0) > 0) {
+          calculatedTotal = parseFloat(order.totalAmount);
+        }
       %>
         <div class="order-card">
           <div class="order-header">
@@ -152,11 +182,11 @@
             </div>
             <div class="info-tile" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
               <span style="color: #34d399;">Genel Sipariş Tutarı</span>
-              <strong style="color: #10b981; font-family: 'JetBrains Mono', monospace;"><%= Number(order.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
+              <strong style="color: #10b981; font-family: 'JetBrains Mono', monospace;"><%= calculatedTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
             </div>
             <div class="info-tile" style="background: rgba(244, 63, 94, 0.05); border-color: rgba(244, 63, 94, 0.2);">
               <span style="color: #f43f5e;">Toplam İskonto Tutarı</span>
-              <strong style="color: #fb7185; font-family: 'JetBrains Mono', monospace;">- <%= Number(order.discountAmount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
+              <strong style="color: #fb7185; font-family: 'JetBrains Mono', monospace;">- <%= calculatedDiscount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
             </div>
           </div>
 
@@ -228,22 +258,22 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; text-align: center;">
               <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
                 <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Ara Toplam (Brüt)</span>
-                <strong style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;"><%= Number(order.subtotal || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
+                <strong style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;"><%= calculatedSubtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
               </div>
               
               <div style="background: rgba(244, 63, 94, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(244, 63, 94, 0.15);">
                 <span style="font-size: 0.75rem; font-weight: 600; color: #f43f5e; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam Sipariş İskontosu</span>
-                <strong style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- <%= Number(order.discountAmount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
+                <strong style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- <%= calculatedDiscount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
               </div>
 
               <div style="background: rgba(99, 102, 241, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.15);">
                 <span style="font-size: 0.75rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam KDV Tutarı</span>
-                <strong style="font-size: 1.25rem; color: #a5b4fc; font-family: 'JetBrains Mono', monospace;">+ <%= Number(order.taxAmount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
+                <strong style="font-size: 1.25rem; color: #a5b4fc; font-family: 'JetBrains Mono', monospace;">+ <%= calculatedTax.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
               </div>
 
               <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%); padding: 16px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);">
                 <span style="font-size: 0.75rem; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">GENEL SİPARİŞ TOPLAMI</span>
-                <strong style="font-size: 1.45rem; color: #10b981; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);"><%= Number(order.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
+                <strong style="font-size: 1.45rem; color: #10b981; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);"><%= calculatedTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
               </div>
             </div>
           </div>
