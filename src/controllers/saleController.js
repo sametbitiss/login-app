@@ -148,6 +148,7 @@ class SaleController {
         });
       }
 
+      const primaryItem = processedItems[0] || {};
       let primaryStockItemId = safeInt(primaryItem.stockItemId);
       if (!primaryStockItemId || primaryStockItemId <= 0) {
         const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });

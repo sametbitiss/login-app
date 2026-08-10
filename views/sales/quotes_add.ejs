@@ -74,7 +74,7 @@
       <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
           <h1>Yeni Satış Teklifi Hazırla</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Müşteriye iletilecek teklif şartlarını, geçerlilik süresini ve özel iskonto oranını girin.</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Müşteriye iletilecek teklif şartlarını, geçerlilik süresini ve özel iskonto oranını sekmeli menüden doldurun.</p>
         </div>
         <a href="/sales/quotes" class="btn btn-secondary">◀ Teklif Listesine Dön</a>
       </div>
@@ -83,152 +83,193 @@
         <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
       <% } %>
 
+      <!-- TAB NAVIGATION MENU -->
+      <div class="form-tabs-nav" style="display: flex; gap: 10px; margin-bottom: 1.5rem; background: rgba(15, 23, 42, 0.6); padding: 8px; border-radius: 14px; border: 1px solid var(--border);">
+        <button type="button" class="tab-btn active" onclick="switchTab(1)" id="tabBtn1" style="flex: 1; padding: 13px 18px; border-radius: 10px; border: none; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">
+          <span>📜</span> 1. Teklif & Cari Müşteri Bilgileri
+        </button>
+        <button type="button" class="tab-btn" onclick="switchTab(2)" id="tabBtn2" style="flex: 1; padding: 13px 18px; border-radius: 10px; border: none; background: transparent; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;">
+          <span>📦</span> 2. Ürün & Mamul Kalemleri
+        </button>
+        <button type="button" class="tab-btn" onclick="switchTab(3)" id="tabBtn3" style="flex: 1; padding: 13px 18px; border-radius: 10px; border: none; background: transparent; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;">
+          <span>📝</span> 3. Teklif Şartları & Notlar
+        </button>
+      </div>
+
       <div class="form-panel">
-        <form action="/sales/quotes/add" method="POST" id="quotationForm" style="display: flex; flex-direction: column; gap: 1.75rem;">
+        <form action="/sales/quotes/add" method="POST" id="quotationForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
           
           <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
 
-          <!-- Header Meta Box -->
-          <div style="background: rgba(15, 23, 42, 0.4); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); backdrop-filter: blur(12px);">
-            <h3 style="font-size: 1rem; font-weight: 700; color: var(--indigo); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              Teklif & Cari Müşteri Bilgileri
-            </h3>
-            
-            <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
-              <div class="input-group">
-                <label for="quotationNo">Teklif No <span class="req-star">*</span></label>
-                <input type="text" id="quotationNo" name="quotationNo" value="<%= nextQuotationNo %>" required readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">
+          <!-- TAB 1: Teklif & Cari Müşteri Bilgileri -->
+          <div id="tabContent1" class="tab-pane" style="display: block;">
+            <div style="background: rgba(15, 23, 42, 0.4); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); backdrop-filter: blur(12px);">
+              <h3 style="font-size: 1rem; font-weight: 700; color: var(--indigo); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Teklif & Cari Müşteri Bilgileri
+              </h3>
+              
+              <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
+                <div class="input-group">
+                  <label for="quotationNo">Teklif No <span class="req-star">*</span></label>
+                  <input type="text" id="quotationNo" name="quotationNo" value="<%= nextQuotationNo %>" required readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">
+                </div>
+                <div class="input-group">
+                  <label for="customerId">Cari Müşteri Seçimi</label>
+                  <select id="customerId" name="customerId" onchange="fillCustomerName(this)">
+                    <option value="">-- Genel / Kayıtsız Müşteri --</option>
+                    <% customers.forEach(c => { 
+                      const score = c.customerScore !== undefined ? c.customerScore : 85;
+                      const isBlocked = score < 50 || c.riskLevel === 'High' || c.riskLevel === 'Blocked' || c.riskLevel === 'Critical';
+                    %>
+                      <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-blocked="<%= isBlocked %>" <%= isBlocked ? 'disabled style="color:#f43f5e;"' : '' %>>
+                        [<%= c.customerCode %>] <%= c.companyName %> <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / TEKLİF ENGELLİ)` : `(Puan: ${score}/100 ⭐)` %>
+                      </option>
+                    <% }); %>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label for="customerName">Müşteri / Kurum Unvanı <span class="req-star">*</span></label>
+                  <input type="text" id="customerName" name="customerName" required placeholder="Müşteri adını girin">
+                </div>
               </div>
-              <div class="input-group">
-                <label for="customerId">Cari Müşteri Seçimi</label>
-                <select id="customerId" name="customerId" onchange="fillCustomerName(this)">
-                  <option value="">-- Genel / Kayıtsız Müşteri --</option>
-                  <% customers.forEach(c => { 
-                    const score = c.customerScore !== undefined ? c.customerScore : 85;
-                    const isBlocked = score < 50 || c.riskLevel === 'High' || c.riskLevel === 'Blocked' || c.riskLevel === 'Critical';
-                  %>
-                    <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-blocked="<%= isBlocked %>" <%= isBlocked ? 'disabled style="color:#f43f5e;"' : '' %>>
-                      [<%= c.customerCode %>] <%= c.companyName %> <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / TEKLİF ENGELLİ)` : `(Puan: ${score}/100 ⭐)` %>
-                    </option>
-                  <% }); %>
-                </select>
-              </div>
-              <div class="input-group">
-                <label for="customerName">Müşteri / Kurum Unvanı <span class="req-star">*</span></label>
-                <input type="text" id="customerName" name="customerName" required placeholder="Müşteri adını girin">
+
+              <div class="form-grid form-grid--3">
+                <div class="input-group">
+                  <label for="quotationDate">Teklif Tarihi <small style="color: var(--text-muted);">(Değiştirilemez)</small></label>
+                  <input type="date" id="quotationDate" name="quotationDate" value="<%= new Date().toISOString().split('T')[0] %>" required readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed;">
+                </div>
+                <div class="input-group">
+                  <label for="validUntil">Geçerlilik Son Tarihi <span class="req-star">*</span></label>
+                  <input type="date" id="validUntil" name="validUntil" value="" min="<%= new Date().toISOString().split('T')[0] %>" required>
+                </div>
+                <div class="input-group">
+                  <label for="currency">Para Birimi</label>
+                  <select id="currency" name="currency" onchange="recalculate()">
+                    <option value="TRY">TRY (₺)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR (€)">EUR (€)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div class="form-grid form-grid--3">
-              <div class="input-group">
-                <label for="quotationDate">Teklif Tarihi <small style="color: var(--text-muted);">(Değiştirilemez)</small></label>
-                <input type="date" id="quotationDate" name="quotationDate" value="<%= new Date().toISOString().split('T')[0] %>" required readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed;">
-              </div>
-              <div class="input-group">
-                <label for="validUntil">Geçerlilik Son Tarihi <span class="req-star">*</span></label>
-                <input type="date" id="validUntil" name="validUntil" value="" min="<%= new Date().toISOString().split('T')[0] %>" required>
-              </div>
-              <div class="input-group">
-                <label for="currency">Para Birimi</label>
-                <select id="currency" name="currency" onchange="recalculate()">
-                  <option value="TRY">TRY (₺)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR (€)">EUR (€)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Dynamic Multi-Item Product Table Section -->
-          <div style="background: rgba(12, 17, 28, 0.7); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-md);">
-            
-            <!-- Red Warning Alert for Min 1 Product Rule -->
-            <div id="minItemWarningAlert" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 12px 18px; border-radius: 10px; color: #f43f5e; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span>⚠️ Teklifte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
-              <div>
-                <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px;">
-                  <span style="background: linear-gradient(135deg, var(--indigo), #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;" id="itemCountBadge">1</span>
-                  Teklif Edilecek Ürün Kalemleri (Mamuller)
-                </h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Müşteriye teklif verilecek tüm ürünleri ekleyin, miktar ve satır bazlı iskontoları belirtin.</p>
-              </div>
-
-              <button type="button" onclick="addNewRow()" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 600; padding: 10px 18px; border-radius: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); gap: 8px; transition: all 0.25s ease;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                + Yeni Ürün Kalemi Ekle
+            <!-- Tab 1 Next Navigation -->
+            <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem;">
+              <button type="button" onclick="goToTab(2)" class="btn btn-primary" style="padding: 12px 24px; border-radius: 10px; font-weight: 600; gap: 8px;">
+                Ürün Kalemlerine Geç ➔
               </button>
             </div>
-
-            <!-- Table Container -->
-            <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
-              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="itemsTable">
-                <thead>
-                  <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
-                    <th style="padding: 14px 16px; width: 45px; text-align: center;">#</th>
-                    <th style="padding: 14px 16px; min-width: 260px;">Ürün / Mamul Kalemi</th>
-                    <th style="padding: 14px 16px; width: 110px;">Miktar</th>
-                    <th style="padding: 14px 16px; width: 140px;">Birim Fiyat</th>
-                    <th style="padding: 14px 16px; width: 110px;">İskonto (%)</th>
-                    <th style="padding: 14px 16px; width: 100px;">KDV (%)</th>
-                    <th style="padding: 14px 16px; width: 150px; text-align: right;">Satır Toplamı</th>
-                    <th style="padding: 14px 16px; width: 60px; text-align: center;">Sil</th>
-                  </tr>
-                </thead>
-                <tbody id="itemsTbody">
-                  <!-- Dynamic rows generated by JavaScript -->
-                </tbody>
-              </table>
-            </div>
           </div>
 
-          <!-- Live Summary Card & Approval Alert -->
-          <div style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: var(--radius-lg); border: 1px solid var(--glass-border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
-            
-            <div id="approvalWarningAlert" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px 18px; border-radius: 10px; color: #fbbf24; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <span>⚡ Bu teklif yüksek iskonto (>%20) veya yüksek toplam tutar (>100.000 TL) içerdiği için yönetsel onay gerektirecektir.</span>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; text-align: center;">
-              <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Ara Toplam (Brüt)</span>
-                <strong id="displaySubtotal" style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
-              </div>
+          <!-- TAB 2: Ürün & Mamul Kalemleri -->
+          <div id="tabContent2" class="tab-pane" style="display: none;">
+            <div style="background: rgba(12, 17, 28, 0.7); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-md); margin-bottom: 1.25rem;">
               
-              <div style="background: rgba(244, 63, 94, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(244, 63, 94, 0.15);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: #f43f5e; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam İskonto</span>
-                <strong id="displayDiscount" style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0.00 ₺</strong>
+              <!-- Red Warning Alert for Min 1 Product Rule -->
+              <div id="minItemWarningAlert" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 12px 18px; border-radius: 10px; color: #f43f5e; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>⚠️ Teklifte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
               </div>
 
-              <div style="background: rgba(99, 102, 241, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.15);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam KDV Tutarı</span>
-                <strong id="displayTax" style="font-size: 1.25rem; color: #a5b4fc; font-family: 'JetBrains Mono', monospace;">+ 0.00 ₺</strong>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px;">
+                    <span style="background: linear-gradient(135deg, var(--indigo), #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;" id="itemCountBadge">1</span>
+                    Teklif Edilecek Ürün Kalemleri (Mamuller)
+                  </h3>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Müşteriye teklif verilecek tüm ürünleri ekleyin, miktar ve satır bazlı iskontoları belirtin.</p>
+                </div>
+
+                <button type="button" onclick="addNewRow()" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 600; padding: 10px 18px; border-radius: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); gap: 8px; transition: all 0.25s ease;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  + Yeni Ürün Kalemi Ekle
+                </button>
               </div>
 
-              <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%); padding: 16px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);">
-                <span style="font-size: 0.75rem; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">GENEL TEKLİF TOPLAMI</span>
-                <strong id="displayTotal" style="font-size: 1.45rem; color: #10b981; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);">0.00 ₺</strong>
+              <!-- Table Container -->
+              <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="itemsTable">
+                  <thead>
+                    <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
+                      <th style="padding: 14px 16px; width: 45px; text-align: center;">#</th>
+                      <th style="padding: 14px 16px; min-width: 260px;">Ürün / Mamul Kalemi</th>
+                      <th style="padding: 14px 16px; width: 110px;">Miktar</th>
+                      <th style="padding: 14px 16px; width: 140px;">Birim Fiyat</th>
+                      <th style="padding: 14px 16px; width: 110px;">İskonto (%)</th>
+                      <th style="padding: 14px 16px; width: 100px;">KDV (%)</th>
+                      <th style="padding: 14px 16px; width: 150px; text-align: right;">Satır Toplamı</th>
+                      <th style="padding: 14px 16px; width: 60px; text-align: center;">Sil</th>
+                    </tr>
+                  </thead>
+                  <tbody id="itemsTbody">
+                    <!-- Dynamic rows generated by JavaScript -->
+                  </tbody>
+                </table>
               </div>
+            </div>
+
+            <!-- Live Summary Card & Approval Alert -->
+            <div style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: var(--radius-lg); border: 1px solid var(--glass-border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+              
+              <div id="approvalWarningAlert" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px 18px; border-radius: 10px; color: #fbbf24; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>⚡ Bu teklif yüksek iskonto (>%20) veya yüksek toplam tutar (>100.000 TL) içerdiği için yönetsel onay gerektirecektir.</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; text-align: center;">
+                <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                  <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Ara Toplam (Brüt)</span>
+                  <strong id="displaySubtotal" style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
+                </div>
+                
+                <div style="background: rgba(244, 63, 94, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(244, 63, 94, 0.15);">
+                  <span style="font-size: 0.75rem; font-weight: 600; color: #f43f5e; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam İskonto</span>
+                  <strong id="displayDiscount" style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0.00 ₺</strong>
+                </div>
+
+                <div style="background: rgba(99, 102, 241, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.15);">
+                  <span style="font-size: 0.75rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam KDV Tutarı</span>
+                  <strong id="displayTax" style="font-size: 1.25rem; color: #a5b4fc; font-family: 'JetBrains Mono', monospace;">+ 0.00 ₺</strong>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%); padding: 16px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);">
+                  <span style="font-size: 0.75rem; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">GENEL TEKLİF TOPLAMI</span>
+                  <strong id="displayTotal" style="font-size: 1.45rem; color: #10b981; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);">0.00 ₺</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2 Navigation -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
+              <button type="button" onclick="goToTab(1)" class="btn btn-secondary" style="padding: 12px 20px; border-radius: 10px;">
+                ⬅ Teklif Bilgilerine Dön
+              </button>
+              <button type="button" onclick="goToTab(3)" class="btn btn-primary" style="padding: 12px 24px; border-radius: 10px; font-weight: 600; gap: 8px;">
+                Teklif Notlarına Geç ➔
+              </button>
             </div>
           </div>
 
-          <!-- Notes & Actions -->
-          <div class="input-group">
-            <label for="notes">Teklif Şartları / Notlar</label>
-            <textarea id="notes" name="notes" rows="3" placeholder="Örn: Fiyatlarımıza nakliye dahil değildir. Teslimat süresi sipariş onayından itibaren 7 iş günüdür. Teklif geçerlilik süresi dolduktan sonra fiyatlarımız güncellenebilir."></textarea>
-          </div>
+          <!-- TAB 3: Teklif Şartları & Notlar -->
+          <div id="tabContent3" class="tab-pane" style="display: none;">
+            <div style="background: rgba(15, 23, 42, 0.4); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 1.25rem;">
+              <div class="input-group">
+                <label for="notes">Teklif Şartları / Notlar</label>
+                <textarea id="notes" name="notes" rows="4" placeholder="Örn: Fiyatlarımıza nakliye dahil değildir. Teslimat süresi sipariş onayından itibaren 7 iş günüdür. Teklif geçerlilik süresi dolduktan sonra fiyatlarımız güncellenebilir."></textarea>
+              </div>
+            </div>
 
-          <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem;">
-            <button type="submit" class="btn btn-warning btn-lg" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; font-weight: 700; padding: 14px 28px; border-radius: 12px; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3); gap: 10px;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
-              📜 Teklifi Kaydet ve Oluştur
-            </button>
-            <a href="/sales/quotes" class="btn btn-secondary" style="padding: 14px 22px; border-radius: 12px;">İptal</a>
+            <!-- Tab 3 Navigation & Final Submit Button -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
+              <button type="button" onclick="goToTab(2)" class="btn btn-secondary" style="padding: 12px 20px; border-radius: 10px;">
+                ⬅ Ürün Kalemlerine Dön
+              </button>
+              <button type="submit" class="btn btn-warning btn-lg" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; font-weight: 700; padding: 14px 32px; border-radius: 12px; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3); gap: 10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
+                📜 Teklifi Kaydet ve Oluştur
+              </button>
+            </div>
           </div>
 
         </form>
@@ -242,12 +283,60 @@
 
     let rowCounter = 0;
 
+    function switchTab(tabIndex) {
+      for (let i = 1; i <= 3; i++) {
+        const pane = document.getElementById(`tabContent${i}`);
+        const btn = document.getElementById(`tabBtn${i}`);
+        if (pane) pane.style.display = 'none';
+        if (btn) {
+          btn.style.background = 'transparent';
+          btn.style.color = 'var(--text-secondary)';
+          btn.style.boxShadow = 'none';
+        }
+      }
+
+      const targetPane = document.getElementById(`tabContent${tabIndex}`);
+      const targetBtn = document.getElementById(`tabBtn${tabIndex}`);
+      if (targetPane) targetPane.style.display = 'block';
+      if (targetBtn) {
+        targetBtn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+        targetBtn.style.color = '#fff';
+        targetBtn.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+      }
+    }
+
+    function goToTab(tabIndex) {
+      if (tabIndex === 2) {
+        const cName = document.getElementById('customerName');
+        if (!cName || !cName.value.trim()) {
+          alert('⚠️ Lütfen devam etmeden önce Müşteri / Kurum Unvanı alanını doldurunuz.');
+          switchTab(1);
+          if (cName) cName.focus();
+          return;
+        }
+      }
+      if (tabIndex === 3) {
+        recalculate();
+        const rows = document.querySelectorAll('#itemsTbody tr');
+        let validCount = 0;
+        rows.forEach(r => {
+          const sel = r.querySelector('.item-select');
+          if (sel && sel.value && sel.value !== '') validCount++;
+        });
+        if (validCount === 0) {
+          alert('⚠️ Lütfen devam etmeden önce en az 1 adet ürün/mamul kalemi seçiniz.');
+          switchTab(2);
+          return;
+        }
+      }
+      switchTab(tabIndex);
+    }
+
     function fillCustomerName(sel) {
       const opt = sel.options[sel.selectedIndex];
       if (opt && opt.dataset.name) {
         document.getElementById('customerName').value = opt.dataset.name;
       }
-      // Re-check customer pricing across all table rows
       checkAllCustomerPrices();
     }
 
@@ -345,7 +434,6 @@
         if (priceInput) priceInput.value = parseFloat(opt.dataset.price).toFixed(2);
       }
 
-      // Check special price for customer if customer selected
       const customerId = document.getElementById('customerId').value;
       const stockItemId = sel.value;
       if (customerId && stockItemId) {
@@ -444,16 +532,13 @@
         }
       });
 
-      // Update hidden JSON input
       document.getElementById('itemsJsonInput').value = JSON.stringify(itemsPayload);
 
-      // Update summary card displays
       document.getElementById('displaySubtotal').textContent = grandSubtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
       document.getElementById('displayDiscount').textContent = '- ' + grandDiscount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
       document.getElementById('displayTax').textContent = '+ ' + grandTax.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
       document.getElementById('displayTotal').textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
 
-      // Approval Warning Trigger
       const warningAlert = document.getElementById('approvalWarningAlert');
       if (warningAlert) {
         if (maxDiscRate > 20 || grandTotal > 100000) {
@@ -464,14 +549,21 @@
       }
     }
 
-    // Initialize first row
     addNewRow();
 
-    // Form submit validation & sync
     const qForm = document.getElementById('quotationForm');
     if (qForm) {
       qForm.addEventListener('submit', function(e) {
         recalculate();
+
+        const cName = document.getElementById('customerName');
+        if (!cName || !cName.value.trim()) {
+          e.preventDefault();
+          alert('⚠️ Lütfen Müşteri / Kurum Unvanı alanını doldurunuz.');
+          switchTab(1);
+          if (cName) cName.focus();
+          return false;
+        }
 
         const validUntilInput = document.getElementById('validUntil');
         if (validUntilInput && !validUntilInput.value) {
@@ -489,14 +581,10 @@
           }
         });
 
-        const minWarn = document.getElementById('minItemWarningAlert');
         if (validItemsCount === 0) {
           e.preventDefault();
-          if (minWarn) {
-            minWarn.querySelector('span').textContent = '⚠️ Lütfen teklife en az 1 ürün seçiniz.';
-            minWarn.style.display = 'flex';
-            minWarn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
+          alert('⚠️ Lütfen teklife en az 1 adet geçerli ürün kalemi seçiniz.');
+          switchTab(2);
           return false;
         }
       });
