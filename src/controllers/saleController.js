@@ -281,16 +281,33 @@ class SaleController {
   editOrder = asyncHandler(async (req, res) => {
     const { id } = req.params;
     try {
-      const quantity = parseFloat(req.body.quantity) || 1;
-      const unitPrice = parseFloat(req.body.unitPrice) || 0;
-      const discountRate = parseFloat(req.body.discountRate) || 0;
-      const taxRate = parseFloat(req.body.taxRate) || 20;
+      const safeInt = (val) => {
+        if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return null;
+        const n = parseInt(val, 10);
+        return Number.isNaN(n) ? null : n;
+      };
+      const safeFloat = (val, defaultVal = 0) => {
+        if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+        const n = parseFloat(val);
+        return Number.isNaN(n) ? defaultVal : n;
+      };
+
+      const quantity = safeFloat(req.body.quantity, 1);
+      const unitPrice = safeFloat(req.body.unitPrice, 0);
+      const discountRate = safeFloat(req.body.discountRate, 0);
+      const taxRate = safeFloat(req.body.taxRate, 20);
 
       const subtotal = quantity * unitPrice;
       const discountAmount = subtotal * (discountRate / 100);
       const afterDiscount = subtotal - discountAmount;
       const taxAmount = afterDiscount * (taxRate / 100);
       const totalAmount = afterDiscount + taxAmount;
+
+      let stockItemId = safeInt(req.body.stockItemId);
+      if (!stockItemId || stockItemId <= 0) {
+        const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });
+        stockItemId = defaultStock ? defaultStock.id : 1;
+      }
 
       await saleService.updateOrder(id, {
         customerName: req.body.customerName ? req.body.customerName.trim() : '',
@@ -301,7 +318,7 @@ class SaleController {
         paymentTerm: req.body.paymentTerm,
         status: req.body.status,
         priority: req.body.priority,
-        stockItemId: parseInt(req.body.stockItemId, 10),
+        stockItemId,
         quantity,
         unitPrice,
         discountRate,
