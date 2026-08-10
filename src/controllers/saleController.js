@@ -50,65 +50,193 @@ class SaleController {
 
   addOrder = asyncHandler(async (req, res) => {
     try {
-      const quantity = parseFloat(req.body.quantity) || 1;
-      const unitPrice = parseFloat(req.body.unitPrice) || 0;
-      const discountRate = parseFloat(req.body.discountRate) || 0;
-      const taxRate = parseFloat(req.body.taxRate) || 20;
+      const safeInt = (val) => {
+        if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return null;
+        const n = parseInt(val, 10);
+        return Number.isNaN(n) ? null : n;
+      };
+      const safeFloat = (val, defaultVal = 0) => {
+        if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+        const n = parseFloat(val);
+        return Number.isNaN(n) ? defaultVal : n;
+      };
 
-      const subtotal = quantity * unitPrice;
-      const discountAmount = subtotal * (discountRate / 100);
-      const afterDiscount = subtotal - discountAmount;
-      const taxAmount = afterDiscount * (taxRate / 100);
-      const totalAmount = afterDiscount + taxAmount;
+      let items = [];
+      if (req.body.itemsJson) {
+        try {
+          items = typeof req.body.itemsJson === 'string' ? JSON.parse(req.body.itemsJson) : req.body.itemsJson;
+        } catch (e) {
+          items = [];
+        }
+      }
 
-      let approvalNeeded = discountRate > 20 || totalAmount > 100000;
-      let approvalReason = [];
-      if (discountRate > 20) approvalReason.push('Yüksek İskonto Oranı (>%20)');
-      if (totalAmount > 100000) approvalReason.push('Yüksek Sipariş Tutarı (>100.000 TL)');
+      if (!Array.isArray(items) || items.length === 0) {
+        const stockItemId = safeInt(req.body.stockItemId);
+        const quantity = safeFloat(req.body.quantity, 1);
+        const unitPrice = safeFloat(req.body.unitPrice, 0);
+        const discountRate = safeFloat(req.body.discountRate, 0);
+        const taxRate = safeFloat(req.body.taxRate, 20);
 
-      const customerId = req.body.customerId ? parseInt(req.body.customerId, 10) : null;
+        const subtotal = quantity * unitPrice;
+        const discountAmount = subtotal * (discountRate / 100);
+        const afterDiscount = subtotal - discountAmount;
+        const taxAmount = afterDiscount * (taxRate / 100);
+        const totalAmount = afterDiscount + taxAmount;
+
+        items = [{
+          stockItemId,
+          quantity,
+          unitPrice,
+          discountRate,
+          taxRate,
+          subtotal,
+          discountAmount,
+          taxAmount,
+          totalAmount
+        }];
+      }
+
+      let grandSubtotal = 0;
+      let grandDiscountAmount = 0;
+      let grandTaxAmount = 0;
+      let grandTotalAmount = 0;
+      let maxDiscountRate = 0;
+      const processedItems = [];
+
+      for (const item of items) {
+        const qty = safeFloat(item.quantity, 1);
+        const price = safeFloat(item.unitPrice, 0);
+        const disc = safeFloat(item.discountRate, 0);
+        const tax = safeFloat(item.taxRate, 20);
+
+        const sub = qty * price;
+        const discAmt = sub * (disc / 100);
+        const afterDisc = sub - discAmt;
+        const taxAmt = afterDisc * (tax / 100);
+        const tot = afterDisc + taxAmt;
+
+        grandSubtotal += sub;
+        grandDiscountAmount += discAmt;
+        grandTaxAmount += taxAmt;
+        grandTotalAmount += tot;
+
+        if (disc > maxDiscountRate) maxDiscountRate = disc;
+
+        let itemName = item.name || 'Ürün Kalemi';
+        let stockCode = item.stockCode || '';
+        if (item.stockItemId) {
+          const st = await StockItem.findByPk(item.stockItemId);
+          if (st) {
+            itemName = st.name;
+            stockCode = st.stockCode;
+          }
+        }
+
+        processedItems.push({
+          stockItemId: safeInt(item.stockItemId),
+          stockCode,
+          name: itemName,
+          quantity: qty,
+          unitPrice: price,
+          discountRate: disc,
+          taxRate: tax,
+          subtotal: sub,
+          discountAmount: discAmt,
+          taxAmount: taxAmt,
+          totalAmount: tot
+        });
+      }
+
+      const primaryItem = processedItems[0] || {};
+      const primaryStockItemId = safeInt(primaryItem.stockItemId);
+      const customerId = safeInt(req.body.customerId);
+
+      // Customer score & risk validation
       if (customerId) {
-        const cust = await CustomerAccount.findByPk(customerId);
+        const cust = await customerRepository.findById(customerId);
         if (cust) {
-          const newBalance = parseFloat(cust.currentBalance) + totalAmount;
-          if (newBalance > parseFloat(cust.creditLimit)) {
-            approvalNeeded = true;
-            approvalReason.push('Müşteri Risk Limit Aşımı');
+          const score = cust.customerScore !== undefined ? cust.customerScore : 85;
+          const isBlocked = score < 50 || cust.riskLevel === 'High' || cust.riskLevel === 'Blocked' || cust.riskLevel === 'Critical';
+          if (isBlocked) {
+            const nextOrderNo = await saleService.getNextOrderNo();
+            const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+            const customers = await customerRepository.findAll({ status: 'Active' });
+            const exchangeRates = await exchangeRateRepository.getLatestRates();
+            return res.render('sales/add', {
+              user: req.user,
+              nextOrderNo,
+              stockItems,
+              customers,
+              exchangeRates,
+              formData: req.body,
+              error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilere yeni sipariş oluşturulamaz!`
+            });
           }
         }
       }
 
-      const data = {
-        orderNo: req.body.orderNo ? req.body.orderNo.trim() : '',
+      const customerName = (req.body.customerName && req.body.customerName.trim() !== '') ? req.body.customerName.trim() : 'Genel Müşteri';
+      let rawCurrency = req.body.currency || 'TRY';
+      let currency = 'TRY';
+      if (rawCurrency.includes('USD')) currency = 'USD';
+      else if (rawCurrency.includes('EUR')) currency = 'EUR';
+
+      // Check item discounts (>20%) and total amount (>100k TL)
+      const highDiscountReasons = [];
+      for (const item of processedItems) {
+        if (item.discountRate > 20) {
+          const discountVal = parseFloat(item.discountRate).toLocaleString('tr-TR');
+          highDiscountReasons.push(`${item.name || 'Ürün'} (%${discountVal} iskonto)`);
+        }
+      }
+
+      let approvalNeeded = false;
+      let approvalReason = null;
+
+      if (highDiscountReasons.length > 0 && grandTotalAmount > 100000) {
+        approvalNeeded = true;
+        approvalReason = `Yüksek İskonto: ${highDiscountReasons.join(', ')} ve Yüksek Tutar (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
+      } else if (highDiscountReasons.length > 0) {
+        approvalNeeded = true;
+        approvalReason = `Yüksek Ürün İskontosu: ${highDiscountReasons.join(', ')} (Yönetsel onay sınırı: %20)`;
+      } else if (grandTotalAmount > 100000) {
+        approvalNeeded = true;
+        approvalReason = `Yüksek Sipariş Tutarı (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
+      }
+
+      const nextOrderNo = await saleService.getNextOrderNo();
+      const status = approvalNeeded ? 'Pending_Approval' : 'Preparing';
+
+      await saleService.createOrder({
+        orderNo: nextOrderNo,
         customerId,
-        customerName: req.body.customerName ? req.body.customerName.trim() : '',
-        customerTaxNo: req.body.customerTaxNo && req.body.customerTaxNo.trim() ? req.body.customerTaxNo.trim() : null,
-        customerEmail: req.body.customerEmail && req.body.customerEmail.trim() ? req.body.customerEmail.trim() : null,
-        customerPhone: req.body.customerPhone && req.body.customerPhone.trim() ? req.body.customerPhone.trim() : null,
+        customerName,
+        customerTaxNo: req.body.customerTaxNo ? req.body.customerTaxNo.trim() : null,
+        customerPhone: req.body.customerPhone ? req.body.customerPhone.trim() : null,
         orderDate: req.body.orderDate || new Date().toISOString().split('T')[0],
         deliveryDate: req.body.deliveryDate || null,
         paymentTerm: req.body.paymentTerm || 'Pesin',
-        status: approvalNeeded ? 'Pending_Approval' : 'Approved',
+        status,
         approvalNeeded,
-        approvalReason: approvalReason.join(', ') || null,
+        approvalReason,
         priority: req.body.priority || 'Normal',
-        stockItemId: parseInt(req.body.stockItemId, 10),
-        quantity,
-        unitPrice,
-        discountRate,
-        taxRate,
-        subtotal,
-        discountAmount,
-        taxAmount,
-        totalAmount,
-        currency: req.body.currency || 'TRY',
+        stockItemId: primaryStockItemId,
+        quantity: safeFloat(primaryItem.quantity, 1),
+        unitPrice: safeFloat(primaryItem.unitPrice, 0),
+        discountRate: maxDiscountRate,
+        taxRate: safeFloat(primaryItem.taxRate, 20),
+        subtotal: grandSubtotal,
+        discountAmount: grandDiscountAmount,
+        taxAmount: grandTaxAmount,
+        totalAmount: grandTotalAmount,
+        currency,
+        itemsJson: JSON.stringify(processedItems),
         shippingAddress: req.body.shippingAddress || null,
         billingAddress: req.body.billingAddress || null,
         salesRep: req.body.salesRep || (req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username),
         notes: req.body.notes || null
-      };
+      }, req.user, req.ip);
 
-      await saleService.createOrder(data, req.user, req.ip);
       res.redirect('/sales/orders');
     } catch (err) {
       const nextOrderNo = await saleService.getNextOrderNo();

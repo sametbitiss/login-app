@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sipariş Ekle — Enterprise ERP</title>
+  <title>Yeni Satış Siparişi Oluştur — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="module-body">
 
@@ -82,7 +82,7 @@
       <div class="page-header">
         <div>
           <h1>Yeni Satış Siparişi Oluştur</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Tüm sipariş matrah ve müşteri bilgilerini sekmelerden eksiksiz doldurun (* zorunludur).</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sipariş numarası otomatik atanır. Müşteri ve ürün kalemlerini doldurarak siparişi tamamlayın.</p>
         </div>
         <a href="/sales/orders" class="btn btn-secondary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -91,101 +91,54 @@
       </div>
 
       <% if (error) { %>
-        <div class="error" id="serverErrorBanner"><%= error %></div>
+        <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
       <% } %>
 
-      <!-- Dynamic Form Client-side Error Alert Banner -->
-      <div class="error" id="clientErrorBanner" style="display: none; margin-bottom: 1.25rem;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="clientErrorMessage">Kayıt Yapılamadı! Lütfen eksik olan zorunlu (*) alanları doldurunuz.</span>
-      </div>
+      <div class="form-panel">
+        <form action="/sales/orders/add" method="POST" id="orderForm" style="display: flex; flex-direction: column; gap: 1.75rem;">
+          
+          <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
 
-      <!-- Form Container with Tab Navigation -->
-      <form action="/sales/orders/add" method="POST" class="stock-form-container" id="saleAddForm" novalidate>
-
-        <!-- Tab Header Bar -->
-        <div class="form-tabs-header">
-          <button type="button" class="tab-btn active" data-tab="tab-customer" id="tab-btn-customer">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>1. Müşteri & Sipariş</span>
-            <span class="tab-badge tab-badge--req">*</span>
-          </button>
-
-          <button type="button" class="tab-btn" data-tab="tab-product" id="tab-btn-product">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-            <span>2. Ürün & Miktar</span>
-            <span class="tab-badge tab-badge--req">*</span>
-          </button>
-
-          <button type="button" class="tab-btn" data-tab="tab-finance" id="tab-btn-finance">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span>3. Ödeme & Matrah</span>
-            <span class="tab-badge tab-badge--req">*</span>
-          </button>
-
-          <button type="button" class="tab-btn" data-tab="tab-shipping" id="tab-btn-shipping">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            <span>4. Adres & Teslimat</span>
-          </button>
-
-          <button type="button" class="tab-btn" data-tab="tab-notes" id="tab-btn-notes">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span>5. Notlar & Temsilci</span>
-          </button>
-        </div>
-
-        <!-- Tab Body Panes -->
-        <div class="form-tabs-body">
-
-          <!-- Tab 1: Müşteri & Sipariş -->
-          <div class="tab-pane active" id="tab-customer">
-            <div class="tab-pane-title">👤 Müşteri & Temel Sipariş Bilgileri</div>
-            <div class="form-grid form-grid--3">
+          <!-- 1. Header Meta Box: Customer & Order Meta -->
+          <div style="background: rgba(15, 23, 42, 0.4); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); backdrop-filter: blur(12px);">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--indigo); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Sipariş & Cari Müşteri Bilgileri
+            </h3>
+            
+            <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
               <div class="input-group">
-                <label for="orderNo">Sipariş No <span class="req-star">*</span></label>
-                <input type="text" id="orderNo" name="orderNo" value="<%= formData.orderNo || nextOrderNo %>" required placeholder="SAT-2026-0001">
-                <span class="field-error-msg">Sipariş numarası zorunludur.</span>
+                <label for="orderNo">Sipariş No <small style="color: var(--text-muted);">(Otomatik / Değiştirilemez)</small></label>
+                <input type="text" id="orderNo" name="orderNo" value="<%= nextOrderNo %>" required readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); cursor: not-allowed;">
               </div>
+              <div class="input-group">
+                <label for="customerId">Cari Müşteri Seçimi</label>
+                <select id="customerId" name="customerId" onchange="fillCustomerName(this)">
+                  <option value="">-- Genel / Kayıtsız Müşteri --</option>
+                  <% customers.forEach(c => { 
+                    const score = c.customerScore !== undefined ? c.customerScore : 85;
+                    const isBlocked = score < 50 || c.riskLevel === 'High' || c.riskLevel === 'Blocked' || c.riskLevel === 'Critical';
+                  %>
+                    <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-tax="<%= c.taxNo || '' %>" data-phone="<%= c.phone || '' %>" data-blocked="<%= isBlocked %>" <%= isBlocked ? 'disabled style="color:#f43f5e;"' : '' %>>
+                      [<%= c.customerCode %>] <%= c.companyName %> <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / SİPARİŞ ENGELLİ)` : `(Puan: ${score}/100 ⭐)` %>
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="customerName">Müşteri / Kurum Unvanı <span class="req-star">*</span></label>
+                <input type="text" id="customerName" name="customerName" value="<%= formData.customerName || '' %>" required placeholder="Müşteri unvanını girin">
+              </div>
+            </div>
+
+            <div class="form-grid form-grid--3">
               <div class="input-group">
                 <label for="orderDate">Sipariş Tarihi <span class="req-star">*</span></label>
                 <input type="date" id="orderDate" name="orderDate" value="<%= formData.orderDate || new Date().toISOString().split('T')[0] %>" required>
-                <span class="field-error-msg">Sipariş tarihi zorunludur.</span>
               </div>
               <div class="input-group">
                 <label for="deliveryDate">Tahmini Teslimat Tarihi</label>
-                <input type="date" id="deliveryDate" name="deliveryDate" value="<%= formData.deliveryDate || '' %>">
-              </div>
-            </div>
-
-            <div class="form-grid form-grid--3">
-              <div class="input-group">
-                <label for="customerName">Müşteri Ticari Unvanı / Adı <span class="req-star">*</span></label>
-                <input type="text" id="customerName" name="customerName" value="<%= formData.customerName || '' %>" required placeholder="Örn: Mega İnşaat A.Ş.">
-                <span class="field-error-msg">Müşteri unvanı zorunludur.</span>
-              </div>
-              <div class="input-group">
-                <label for="customerTaxNo">Vergi / TC Kimlik No</label>
-                <input type="text" id="customerTaxNo" name="customerTaxNo" value="<%= formData.customerTaxNo || '' %>" placeholder="1234567890">
-              </div>
-              <div class="input-group">
-                <label for="customerPhone">Müşteri Telefon</label>
-                <input type="text" id="customerPhone" name="customerPhone" value="<%= formData.customerPhone || '' %>" placeholder="+90 (5xx) xxx xx xx">
-              </div>
-            </div>
-
-            <div class="form-grid form-grid--2">
-              <div class="input-group">
-                <label for="status">Sipariş Durumu <span class="req-star">*</span></label>
-                <select id="status" name="status" required>
-                  <option value="" disabled <%= !formData.status ? 'selected' : '' %>>-- Durum Seçiniz --</option>
-                  <option value="Draft" <%= formData.status === 'Draft' ? 'selected' : '' %>>Taslak</option>
-                  <option value="Pending_Approval" <%= formData.status === 'Pending_Approval' || !formData.status ? 'selected' : '' %>>Onay Bekliyor</option>
-                  <option value="Approved" <%= formData.status === 'Approved' ? 'selected' : '' %>>Onaylandı</option>
-                  <option value="Preparing" <%= formData.status === 'Preparing' ? 'selected' : '' %>>Hazırlanıyor</option>
-                  <option value="Shipped" <%= formData.status === 'Shipped' ? 'selected' : '' %>>Sevk Edildi</option>
-                  <option value="Completed" <%= formData.status === 'Completed' ? 'selected' : '' %>>Tamamlandı</option>
-                </select>
-                <span class="field-error-msg">Durum seçilmesi zorunludur.</span>
+                <input type="date" id="deliveryDate" name="deliveryDate" value="<%= formData.deliveryDate || '' %>" min="<%= new Date().toISOString().split('T')[0] %>">
               </div>
               <div class="input-group">
                 <label for="priority">Sipariş Önceliği</label>
@@ -199,161 +152,399 @@
             </div>
           </div>
 
-          <!-- Tab 2: Ürün & Miktar -->
-          <div class="tab-pane" id="tab-product">
-            <div class="tab-pane-title">📦 Stok Ürünü Seçimi & Fiyat Bilgileri</div>
-            <div class="form-grid form-grid--1">
-              <div class="input-group">
-                <label for="stockItemId">Satılan Ürün (Mamul / Ticari Mal) <span class="req-star">*</span></label>
-                <select id="stockItemId" name="stockItemId" required onchange="onStockChange(this)">
-                  <option value="" disabled <%= !formData.stockItemId ? 'selected' : '' %>>-- Satılacak Ürün Seçiniz --</option>
-                  <% stockItems.forEach(item => { %>
-                    <option value="<%= item.id %>" data-price="<%= item.salePrice %>" data-unit="<%= item.unit %>" data-currency="<%= item.currency %>" data-stock="<%= item.currentStock %>" <%= String(formData.stockItemId) === String(item.id) ? 'selected' : '' %>>
-                      [<%= item.stockCode %>] <%= item.name %> — Mevcut Stok: <%= parseFloat(item.currentStock).toLocaleString('tr-TR') %> <%= item.unit %> — Fiyat: <%= parseFloat(item.salePrice).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= item.currency %>
-                    </option>
-                  <% }); %>
-                </select>
-                <span class="field-error-msg">Stok kartı seçilmesi zorunludur.</span>
-              </div>
+          <!-- 2. Dynamic Multi-Item Product Table Section (Identical to quotes_add.ejs) -->
+          <div style="background: rgba(12, 17, 28, 0.7); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-md);">
+            
+            <!-- Red Warning Alert for Min 1 Product Rule -->
+            <div id="minItemWarningAlert" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 12px 18px; border-radius: 10px; color: #f43f5e; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>⚠️ Siparişte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
             </div>
 
-            <!-- Instant Stock Availability Alert Box -->
-            <div id="stockAvailabilityWarning" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid var(--amber); color: #f59e0b; padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-top: 0.75rem; font-size: 0.85rem; font-weight: 500;">
-              ⚠️ <strong>STOK YETERSİZ UYARISI:</strong> Girilen sipariş miktarı (<span id="warnReqQty">0</span>) depodaki mevcut stoktan (<span id="warnCurrStock">0</span>) fazladır! Sipariş "Açık Sipariş" (Open Fulfillment) olarak kaydedilecek ve üretim planlamasına sevk edilecektir.
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px;">
+                  <span style="background: linear-gradient(135deg, var(--indigo), #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;" id="itemCountBadge">1</span>
+                  Sipariş Edilecek Ürün Kalemleri (Mamuller)
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Siparişe dahil edilecek ürünleri ekleyin, miktar ve satır bazlı iskontoları belirtin.</p>
+              </div>
+
+              <button type="button" onclick="addNewRow()" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 600; padding: 10px 18px; border-radius: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); gap: 8px; transition: all 0.25s ease;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                + Yeni Ürün Kalemi Ekle
+              </button>
             </div>
 
-            <div class="form-grid form-grid--4" style="margin-top: 1rem;">
-              <div class="input-group">
-                <label for="quantity">Sipariş Miktarı <span class="req-star">*</span></label>
-                <input type="number" step="0.01" id="quantity" name="quantity" value="<%= formData.quantity || '1' %>" required placeholder="1" oninput="checkStockFulfillment()">
-                <span class="field-error-msg">Miktar sıfırdan büyük olmalıdır.</span>
-              </div>
-              <div class="input-group">
-                <label for="unitPrice">Birim Satış Fiyatı <span class="req-star">*</span></label>
-                <input type="number" step="0.01" id="unitPrice" name="unitPrice" value="<%= formData.unitPrice || '0' %>" required placeholder="0.00">
-                <span class="field-error-msg">Birim fiyat zorunludur.</span>
-              </div>
-              <div class="input-group">
-                <label for="discountRate">İskonto Oranı (%)</label>
-                <input type="number" step="0.01" id="discountRate" name="discountRate" value="<%= formData.discountRate || '0' %>" placeholder="0">
-              </div>
-              <div class="input-group">
-                <label for="taxRate">KDV Oranı (%)</label>
-                <input type="number" step="0.01" id="taxRate" name="taxRate" value="<%= formData.taxRate || '20' %>" placeholder="20">
-              </div>
+            <!-- Table Container -->
+            <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8);">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="itemsTable">
+                <thead>
+                  <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
+                    <th style="padding: 14px 16px; width: 45px; text-align: center;">#</th>
+                    <th style="padding: 14px 16px; min-width: 260px;">Ürün / Mamul Kalemi</th>
+                    <th style="padding: 14px 16px; width: 110px;">Miktar</th>
+                    <th style="padding: 14px 16px; width: 140px;">Birim Fiyat</th>
+                    <th style="padding: 14px 16px; width: 110px;">İskonto (%)</th>
+                    <th style="padding: 14px 16px; width: 100px;">KDV (%)</th>
+                    <th style="padding: 14px 16px; width: 150px; text-align: right;">Satır Toplamı</th>
+                    <th style="padding: 14px 16px; width: 60px; text-align: center;">Sil</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTbody">
+                  <!-- Dynamic rows generated by JavaScript -->
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <!-- Tab 3: Ödeme & Matrah -->
-          <div class="tab-pane" id="tab-finance">
-            <div class="tab-pane-title">💰 Ödeme Koşulları & Matrah Canlı Hesaplama</div>
-            <div class="form-grid form-grid--2">
+          <!-- 3. Financial & Shipping Terms Box -->
+          <div style="background: rgba(15, 23, 42, 0.4); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--indigo); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Ödeme & Sevkiyat Koşulları
+            </h3>
+            
+            <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
               <div class="input-group">
-                <label for="paymentTerm">Ödeme Koşulu <span class="req-star">*</span></label>
-                <select id="paymentTerm" name="paymentTerm" required>
-                  <option value="" disabled <%= !formData.paymentTerm ? 'selected' : '' %>>-- Ödeme Koşulu Seçiniz --</option>
+                <label for="paymentTerm">Ödeme Şekli / Vade</label>
+                <select id="paymentTerm" name="paymentTerm">
                   <option value="Pesin" <%= formData.paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin Ödeme</option>
-                  <option value="Vadeli_30" <%= formData.paymentTerm === 'Vadeli_30' ? 'selected' : '' %>>30 Gün Vadeli</option>
+                  <option value="Vadeli_30" <%= formData.paymentTerm === 'Vadeli_30' || !formData.paymentTerm ? 'selected' : '' %>>30 Gün Vadeli</option>
                   <option value="Vadeli_60" <%= formData.paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
                   <option value="Vadeli_90" <%= formData.paymentTerm === 'Vadeli_90' ? 'selected' : '' %>>90 Gün Vadeli</option>
                   <option value="Kredi_Karti" <%= formData.paymentTerm === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı</option>
                 </select>
-                <span class="field-error-msg">Ödeme koşulu seçilmesi zorunludur.</span>
               </div>
+
               <div class="input-group">
-                <label for="currency">Para Birimi <span class="req-star">*</span></label>
-                <select id="currency" name="currency" required>
-                  <option value="" disabled <%= !formData.currency ? 'selected' : '' %>>-- Para Birimi Seçiniz --</option>
-                  <option value="TRY" <%= formData.currency === 'TRY' ? 'selected' : '' %>>₺ TRY</option>
-                  <option value="USD" <%= formData.currency === 'USD' ? 'selected' : '' %>>$ USD</option>
-                  <option value="EUR" <%= formData.currency === 'EUR' ? 'selected' : '' %>>€ EUR</option>
+                <label for="currency">Para Birimi</label>
+                <select id="currency" name="currency" onchange="recalculate()">
+                  <option value="TRY">TRY (₺)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
                 </select>
-                <span class="field-error-msg">Para birimi seçilmesi zorunludur.</span>
+              </div>
+
+              <div class="input-group">
+                <label for="salesRep">Satış Temsilcisi</label>
+                <input type="text" id="salesRep" name="salesRep" value="<%= formData.salesRep || (user.firstName ? `${user.firstName} ${user.lastName}` : user.username) %>" placeholder="Temsilci adı">
               </div>
             </div>
 
-            <!-- Live Matrah Breakdown Box -->
-            <div style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-lg);">
-              <h4 style="color: var(--indigo); font-size: 0.95rem; margin-bottom: 12px;">📊 Otomatik Hesaplanan Sipariş Matrahı</h4>
-              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
-                <div>
-                  <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Ara Toplam (Brüt)</span>
-                  <strong id="calcSubtotal" style="font-size: 1.1rem;">0.00 ₺</strong>
-                </div>
-                <div>
-                  <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">İskonto Tutarı</span>
-                  <strong id="calcDiscount" style="font-size: 1.1rem; color: var(--rose);">0.00 ₺</strong>
-                </div>
-                <div>
-                  <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">KDV Tutarı</span>
-                  <strong id="calcTax" style="font-size: 1.1rem; color: var(--amber);">0.00 ₺</strong>
-                </div>
-                <div>
-                  <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Genel Toplam (Net)</span>
-                  <strong id="calcTotal" style="font-size: 1.2rem; color: var(--emerald);">0.00 ₺</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tab 4: Adres & Teslimat -->
-          <div class="tab-pane" id="tab-shipping">
-            <div class="tab-pane-title">🚚 Teslimat & Fatura Adres Bilgileri</div>
             <div class="form-grid form-grid--2">
               <div class="input-group">
                 <label for="shippingAddress">Teslimat Adresi</label>
-                <textarea id="shippingAddress" name="shippingAddress" rows="3" placeholder="Ürünlerin teslim edileceği tam adres..."><%= formData.shippingAddress || '' %></textarea>
+                <textarea id="shippingAddress" name="shippingAddress" rows="2" placeholder="Sevkiyat yapılacak detaylı adres..."><%= formData.shippingAddress || '' %></textarea>
               </div>
               <div class="input-group">
                 <label for="billingAddress">Fatura Adresi</label>
-                <textarea id="billingAddress" name="billingAddress" rows="3" placeholder="Resmi fatura adresi..."><%= formData.billingAddress || '' %></textarea>
+                <textarea id="billingAddress" name="billingAddress" rows="2" placeholder="Fatura kesilecek şirket adresi..."><%= formData.billingAddress || '' %></textarea>
               </div>
             </div>
           </div>
 
-          <!-- Tab 5: Notlar & Temsilci -->
-          <div class="tab-pane" id="tab-notes">
-            <div class="tab-pane-title">📝 Satış Temsilcisi & Özel Notlar</div>
-            <div class="form-grid form-grid--2">
-              <div class="input-group">
-                <label for="salesRep">Satış Temsilcisi</label>
-                <input type="text" id="salesRep" name="salesRep" value="<%= formData.salesRep || (user.firstName ? user.firstName + ' ' + user.lastName : user.username) %>" placeholder="Siparişi alan personel">
+          <!-- 4. Live Summary Card & Approval Alert -->
+          <div style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: var(--radius-lg); border: 1px solid var(--glass-border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+            
+            <div id="approvalWarningAlert" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px 18px; border-radius: 10px; color: #fbbf24; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>⚡ Bu sipariş yüksek iskonto (>%20) veya yüksek toplam tutar (>100.000 TL) içerdiği için oluşturulduğunda otomatik olarak "Onay Bekliyor" statüsüne düşecektir.</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; text-align: center;">
+              <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Ara Toplam (Brüt)</span>
+                <strong id="displaySubtotal" style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
               </div>
-              <div class="input-group">
-                <label for="notes">Sipariş Notları</label>
-                <textarea id="notes" name="notes" rows="3" placeholder="Özel teslimat talimatı, müşteri notları..."><%= formData.notes || '' %></textarea>
+              
+              <div style="background: rgba(244, 63, 94, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(244, 63, 94, 0.15);">
+                <span style="font-size: 0.75rem; font-weight: 600; color: #f43f5e; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam İskonto</span>
+                <strong id="displayDiscount" style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0.00 ₺</strong>
+              </div>
+
+              <div style="background: rgba(99, 102, 241, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.15);">
+                <span style="font-size: 0.75rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam KDV Tutarı</span>
+                <strong id="displayTax" style="font-size: 1.25rem; color: #a5b4fc; font-family: 'JetBrains Mono', monospace;">+ 0.00 ₺</strong>
+              </div>
+
+              <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%); padding: 16px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);">
+                <span style="font-size: 0.75rem; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">GENEL SİPARİŞ TOPLAMI</span>
+                <strong id="displayTotal" style="font-size: 1.45rem; color: #10b981; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);">0.00 ₺</strong>
               </div>
             </div>
           </div>
 
-        </div>
-
-        <!-- Form Actions Footer -->
-        <div class="form-tabs-footer">
-          <div class="tab-step-btns">
-            <button type="button" class="btn btn-secondary btn-sm" id="btnPrevTab" style="display: none;">
-              ← Önceki Sekme
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" id="btnNextTab">
-              Sonraki Sekme →
-            </button>
+          <!-- 5. Notes & Actions -->
+          <div class="input-group">
+            <label for="notes">Sipariş Notları / Özel Talimatlar</label>
+            <textarea id="notes" name="notes" rows="3" placeholder="Örn: Sevkiyat haftası teslimat öncesi müşteri aransın. Taşıma ücreti alıcıya aittir."><%= formData.notes || '' %></textarea>
           </div>
 
-          <div class="form-submit-btns">
-            <button type="submit" class="btn btn-lg" id="btnSubmitForm">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Satış Siparişini Kaydet
+          <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem;">
+            <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; font-weight: 700; padding: 14px 28px; border-radius: 12px; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3); gap: 10px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
+              📋 Satış Siparişini Kaydet ve Oluştur
             </button>
-            <a href="/sales/orders" class="btn btn-secondary btn-lg">İptal</a>
+            <a href="/sales/orders" class="btn btn-secondary" style="padding: 14px 22px; border-radius: 12px;">İptal</a>
           </div>
-        </div>
 
-      </form>
+        </form>
+      </div>
     </main>
   </div>
 
   <script>
-    // Live Clock
+    // Available stock items catalog passed from backend
+    window.stockCatalog = <%- JSON.stringify(stockItems || []) %>;
+
+    let rowCounter = 0;
+
+    function fillCustomerName(sel) {
+      const opt = sel.options[sel.selectedIndex];
+      if (opt && opt.dataset.name) {
+        document.getElementById('customerName').value = opt.dataset.name;
+      }
+      checkAllCustomerPrices();
+    }
+
+    function addNewRow(initialData = null) {
+      rowCounter++;
+      const tbody = document.getElementById('itemsTbody');
+      const tr = document.createElement('tr');
+      tr.id = `row-${rowCounter}`;
+      tr.style.borderBottom = '1px solid var(--border)';
+      tr.style.transition = 'background 0.2s ease';
+      tr.onmouseenter = () => tr.style.background = 'rgba(255, 255, 255, 0.02)';
+      tr.onmouseleave = () => tr.style.background = 'transparent';
+
+      let optionsHtml = `<option value="" disabled ${!initialData ? 'selected' : ''}>-- Ürün Seçiniz --</option>`;
+      window.stockCatalog.forEach(st => {
+        const isSel = initialData && initialData.stockItemId == st.id ? 'selected' : '';
+        optionsHtml += `<option value="${st.id}" data-price="${st.salePrice}" data-code="${st.stockCode}" ${isSel}>[${st.stockCode}] ${st.name} (Fiyat: ${st.salePrice} ${st.currency})</option>`;
+      });
+
+      const qty = initialData ? initialData.quantity : 1;
+      const price = initialData ? initialData.unitPrice : 0.00;
+      const disc = initialData ? initialData.discountRate : 0.00;
+      const tax = initialData ? initialData.taxRate : 20.00;
+
+      tr.innerHTML = `
+        <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">1</td>
+        <td style="padding: 12px 14px;">
+          <select class="item-select" onchange="onItemSelect(this, ${rowCounter})" style="width: 100%; background: rgba(6, 8, 15, 0.8); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 0.875rem;">
+            ${optionsHtml}
+          </select>
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.01" min="0.01" value="${qty}" class="item-qty" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.8); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 0.875rem; text-align: center;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.01" min="0" value="${price}" class="item-price" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.8); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 0.875rem; text-align: right; font-family: 'JetBrains Mono', monospace;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.1" min="0" max="100" value="${disc}" class="item-disc" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.8); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 0.875rem; text-align: center;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="1" min="0" max="100" value="${tax}" class="item-tax" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.8); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 0.875rem; text-align: center;">
+        </td>
+        <td style="padding: 12px 14px; text-align: right; font-weight: 700; color: #10b981; font-family: 'JetBrains Mono', monospace;" class="item-line-total">
+          0.00
+        </td>
+        <td style="padding: 12px 14px; text-align: center;">
+          <button type="button" onclick="removeRow(${rowCounter})" style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.25); color: #f43f5e; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;" title="Satırı Sil">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+      const minWarn = document.getElementById('minItemWarningAlert');
+      if (minWarn) minWarn.style.display = 'none';
+      updateRowIndices();
+      recalculate();
+    }
+
+    function removeRow(rowId) {
+      const tbody = document.getElementById('itemsTbody');
+      const rows = tbody.querySelectorAll('tr');
+      const minWarn = document.getElementById('minItemWarningAlert');
+      if (rows.length <= 1) {
+        if (minWarn) minWarn.style.display = 'flex';
+        return;
+      }
+      if (minWarn) minWarn.style.display = 'none';
+      const tr = document.getElementById(`row-${rowId}`);
+      if (tr) {
+        tr.remove();
+        updateRowIndices();
+        recalculate();
+      }
+    }
+
+    function updateRowIndices() {
+      const rows = document.querySelectorAll('#itemsTbody tr');
+      rows.forEach((row, idx) => {
+        const indexTd = row.querySelector('.row-index');
+        if (indexTd) indexTd.textContent = idx + 1;
+      });
+      const badge = document.getElementById('itemCountBadge');
+      if (badge) badge.textContent = rows.length;
+    }
+
+    function onItemSelect(sel, rowId) {
+      const opt = sel.options[sel.selectedIndex];
+      const row = document.getElementById(`row-${rowId}`);
+      if (!row) return;
+
+      if (opt && opt.dataset.price) {
+        const priceInput = row.querySelector('.item-price');
+        if (priceInput) priceInput.value = parseFloat(opt.dataset.price).toFixed(2);
+      }
+
+      const customerId = document.getElementById('customerId').value;
+      const stockItemId = sel.value;
+      if (customerId && stockItemId) {
+        fetch(`/sales/api/customer-price?customerId=${customerId}&stockItemId=${stockItemId}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.success && data.hasSpecialPrice) {
+              const priceInput = row.querySelector('.item-price');
+              const discInput = row.querySelector('.item-disc');
+              if (priceInput) priceInput.value = parseFloat(data.specialPrice).toFixed(2);
+              if (discInput && data.customDiscountRate > 0) discInput.value = parseFloat(data.customDiscountRate).toFixed(2);
+              recalculate();
+            }
+          }).catch(e => console.error(e));
+      }
+
+      recalculate();
+    }
+
+    function checkAllCustomerPrices() {
+      const customerId = document.getElementById('customerId').value;
+      if (!customerId) return;
+
+      const rows = document.querySelectorAll('#itemsTbody tr');
+      rows.forEach(row => {
+        const sel = row.querySelector('.item-select');
+        if (sel && sel.value) {
+          onItemSelect(sel, parseInt(row.id.replace('row-', ''), 10));
+        }
+      });
+    }
+
+    function recalculate() {
+      const rows = document.querySelectorAll('#itemsTbody tr');
+      const currency = document.getElementById('currency').value || 'TRY';
+      const symbol = currency === 'USD' ? '$' : (currency === 'EUR' ? '€' : '₺');
+
+      let grandSubtotal = 0;
+      let grandDiscount = 0;
+      let grandTax = 0;
+      let grandTotal = 0;
+      let maxDiscRate = 0;
+
+      const itemsPayload = [];
+
+      rows.forEach(row => {
+        const sel = row.querySelector('.item-select');
+        const qtyInput = row.querySelector('.item-qty');
+        const priceInput = row.querySelector('.item-price');
+        const discInput = row.querySelector('.item-disc');
+        const taxInput = row.querySelector('.item-tax');
+        const lineTotalTd = row.querySelector('.item-line-total');
+
+        const stockItemId = sel ? sel.value : '';
+        const opt = sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+        const stockCode = opt && opt.dataset.code ? opt.dataset.code : '';
+        const name = opt ? opt.text.split('] ')[1] || opt.text : '';
+
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const price = parseFloat(priceInput ? priceInput.value : 0) || 0;
+        const discRate = parseFloat(discInput ? discInput.value : 0) || 0;
+        const taxRate = parseFloat(taxInput ? taxInput.value : 0) || 0;
+
+        const sub = qty * price;
+        const discAmt = sub * (discRate / 100);
+        const afterDisc = sub - discAmt;
+        const taxAmt = afterDisc * (taxRate / 100);
+        const tot = afterDisc + taxAmt;
+
+        grandSubtotal += sub;
+        grandDiscount += discAmt;
+        grandTax += taxAmt;
+        grandTotal += tot;
+
+        if (discRate > maxDiscRate) maxDiscRate = discRate;
+
+        if (lineTotalTd) {
+          lineTotalTd.textContent = tot.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
+        }
+
+        if (stockItemId) {
+          itemsPayload.push({
+            stockItemId: parseInt(stockItemId, 10),
+            stockCode,
+            name,
+            quantity: qty,
+            unitPrice: price,
+            discountRate: discRate,
+            taxRate: taxRate,
+            subtotal: sub,
+            discountAmount: discAmt,
+            taxAmount: taxAmt,
+            totalAmount: tot
+          });
+        }
+      });
+
+      document.getElementById('itemsJsonInput').value = JSON.stringify(itemsPayload);
+
+      document.getElementById('displaySubtotal').textContent = grandSubtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
+      document.getElementById('displayDiscount').textContent = '- ' + grandDiscount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
+      document.getElementById('displayTax').textContent = '+ ' + grandTax.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
+      document.getElementById('displayTotal').textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
+
+      const warningAlert = document.getElementById('approvalWarningAlert');
+      if (warningAlert) {
+        if (maxDiscRate > 20 || grandTotal > 100000) {
+          warningAlert.style.display = 'flex';
+        } else {
+          warningAlert.style.display = 'none';
+        }
+      }
+    }
+
+    addNewRow();
+
+    const oForm = document.getElementById('orderForm');
+    if (oForm) {
+      oForm.addEventListener('submit', function(e) {
+        recalculate();
+
+        const rows = document.querySelectorAll('#itemsTbody tr');
+        let validItemsCount = 0;
+        rows.forEach(row => {
+          const sel = row.querySelector('.item-select');
+          if (sel && sel.value && sel.value !== '') {
+            validItemsCount++;
+          }
+        });
+
+        const minWarn = document.getElementById('minItemWarningAlert');
+        if (validItemsCount === 0) {
+          e.preventDefault();
+          if (minWarn) {
+            minWarn.querySelector('span').textContent = '⚠️ Lütfen siparişe en az 1 ürün seçiniz.';
+            minWarn.style.display = 'flex';
+            minWarn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return false;
+        }
+      });
+    }
+
     function updateClock() {
       const now = new Date();
       const el = document.getElementById('liveTime');
@@ -361,227 +552,6 @@
     }
     updateClock();
     setInterval(updateClock, 1000);
-
-    // Elements & State
-    const form = document.getElementById('saleAddForm');
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabPanes = document.querySelectorAll('.tab-pane');
-    const btnPrev = document.getElementById('btnPrevTab');
-    const btnNext = document.getElementById('btnNextTab');
-    const clientErrorBanner = document.getElementById('clientErrorBanner');
-    const clientErrorMessage = document.getElementById('clientErrorMessage');
-
-    let currentTabIndex = 0;
-
-    function switchTab(index) {
-      if (index < 0 || index >= tabBtns.length) return;
-      currentTabIndex = index;
-
-      tabBtns.forEach((btn, i) => {
-        btn.classList.toggle('active', i === index);
-      });
-
-      tabPanes.forEach((pane, i) => {
-        pane.classList.toggle('active', i === index);
-      });
-
-      // Update Prev/Next buttons
-      btnPrev.style.display = index === 0 ? 'none' : 'inline-flex';
-      btnNext.style.display = index === tabBtns.length - 1 ? 'none' : 'inline-flex';
-    }
-
-    tabBtns.forEach((btn, idx) => {
-      btn.addEventListener('click', () => switchTab(idx));
-    });
-
-    btnPrev.addEventListener('click', () => switchTab(currentTabIndex - 1));
-
-    // Validate a specific tab pane by index
-    function validateTab(paneIndex) {
-      const pane = tabPanes[paneIndex];
-      if (!pane) return true;
-
-      const requiredInputs = pane.querySelectorAll('[required]');
-      let isValid = true;
-
-      requiredInputs.forEach(input => {
-        const val = input.value ? input.value.trim() : '';
-        if (!val) {
-          isValid = false;
-          input.classList.add('is-invalid');
-        } else {
-          input.classList.remove('is-invalid');
-        }
-      });
-
-      return isValid;
-    }
-
-    // Update tab badges
-    function updateTabBadges() {
-      tabPanes.forEach((pane, i) => {
-        const requiredInputs = pane.querySelectorAll('[required]');
-        if (requiredInputs.length === 0) return;
-
-        let paneValid = true;
-        requiredInputs.forEach(input => {
-          if (!input.value || !input.value.trim()) paneValid = false;
-        });
-
-        const badge = tabBtns[i].querySelector('.tab-badge');
-        if (badge) {
-          if (paneValid) {
-            badge.classList.remove('tab-badge--err');
-            badge.classList.add('tab-badge--ok');
-            badge.textContent = '✓';
-          } else {
-            badge.classList.remove('tab-badge--ok');
-            badge.classList.add('tab-badge--err');
-            badge.textContent = '!';
-          }
-        }
-      });
-    }
-
-    // Input blur/change event to clear invalid styling
-    form.querySelectorAll('input, select, textarea').forEach(input => {
-      input.addEventListener('input', () => {
-        if (input.value && input.value.trim()) {
-          input.classList.remove('is-invalid');
-        }
-        updateTabBadges();
-        calcMatrah();
-      });
-      input.addEventListener('change', () => {
-        if (input.value && input.value.trim()) {
-          input.classList.remove('is-invalid');
-        }
-        updateTabBadges();
-        calcMatrah();
-      });
-    });
-
-    // Next step button validates current tab first
-    btnNext.addEventListener('click', () => {
-      const isCurrentValid = validateTab(currentTabIndex);
-      if (!isCurrentValid) {
-        clientErrorMessage.textContent = 'Lütfen bu sekmedeki zorunlu (*) alanları doldurunuz.';
-        clientErrorBanner.style.display = 'flex';
-        return;
-      }
-      clientErrorBanner.style.display = 'none';
-      switchTab(currentTabIndex + 1);
-    });
-
-    // Global Form Submission Validation across ALL tabs
-    form.addEventListener('submit', (e) => {
-      form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-      let firstInvalidPaneIndex = -1;
-      let firstInvalidInput = null;
-      let missingFieldLabels = [];
-
-      tabPanes.forEach((pane, paneIndex) => {
-        const requiredInputs = pane.querySelectorAll('[required]');
-        requiredInputs.forEach(input => {
-          const val = input.value ? input.value.trim() : '';
-          if (!val) {
-            input.classList.add('is-invalid');
-            if (firstInvalidPaneIndex === -1) {
-              firstInvalidPaneIndex = paneIndex;
-              firstInvalidInput = input;
-            }
-            const label = input.closest('.input-group') ? input.closest('.input-group').querySelector('label') : null;
-            if (label) {
-              const labelClean = label.textContent.replace('*', '').trim();
-              if (!missingFieldLabels.includes(labelClean)) {
-                missingFieldLabels.push(labelClean);
-              }
-            }
-          }
-        });
-      });
-
-      updateTabBadges();
-
-      if (firstInvalidPaneIndex !== -1) {
-        e.preventDefault(); // STOP form submission!
-        switchTab(firstInvalidPaneIndex);
-        clientErrorMessage.textContent = `Kayıt Yapılamadı! Lütfen eksik olan zorunlu (*) alanları doldurunuz: ${missingFieldLabels.join(', ')}`;
-        clientErrorBanner.style.display = 'flex';
-
-        if (firstInvalidInput) {
-          setTimeout(() => firstInvalidInput.focus(), 150);
-        }
-      } else {
-        clientErrorBanner.style.display = 'none';
-      }
-    });
-
-    // Stock Change & Instant Stock Availability Check
-    function onStockChange(select) {
-      const selectedOpt = select.options[select.selectedIndex];
-      if (selectedOpt && selectedOpt.dataset.price) {
-        unitPriceInput.value = selectedOpt.dataset.price;
-        if (selectedOpt.dataset.currency) {
-          currencySelect.value = selectedOpt.dataset.currency;
-        }
-        calcMatrah();
-        updateTabBadges();
-      }
-      checkStockFulfillment();
-    }
-
-    function checkStockFulfillment() {
-      const select = document.getElementById('stockItemId');
-      const quantityInput = document.getElementById('quantity');
-      const warnBox = document.getElementById('stockAvailabilityWarning');
-      const warnReq = document.getElementById('warnReqQty');
-      const warnCurr = document.getElementById('warnCurrStock');
-
-      if (!select || !quantityInput || !warnBox) return;
-
-      const selectedOpt = select.options[select.selectedIndex];
-      if (selectedOpt && selectedOpt.dataset.stock !== undefined) {
-        const currStock = parseFloat(selectedOpt.dataset.stock) || 0;
-        const reqQty = parseFloat(quantityInput.value) || 0;
-
-        if (reqQty > currStock) {
-          warnReq.textContent = reqQty.toLocaleString('tr-TR');
-          warnCurr.textContent = currStock.toLocaleString('tr-TR');
-          warnBox.style.display = 'block';
-        } else {
-          warnBox.style.display = 'none';
-        }
-      } else {
-        warnBox.style.display = 'none';
-      }
-    }
-
-    // Live Matrah Breakdown Calculation
-    function calcMatrah() {
-      const qty = parseFloat(document.getElementById('quantity').value) || 0;
-      const price = parseFloat(document.getElementById('unitPrice').value) || 0;
-      const disc = parseFloat(document.getElementById('discountRate').value) || 0;
-      const tax = parseFloat(document.getElementById('taxRate').value) || 20;
-      const curr = document.getElementById('currency').value || '₺';
-
-      const subtotal = qty * price;
-      const discountAmt = subtotal * (disc / 100);
-      const afterDiscount = subtotal - discountAmt;
-      const taxAmt = afterDiscount * (tax / 100);
-      const total = afterDiscount + taxAmt;
-
-      const symbol = curr === 'USD' ? '$' : curr === 'EUR' ? '€' : '₺';
-
-      document.getElementById('calcSubtotal').textContent = `${subtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${symbol}`;
-      document.getElementById('calcDiscount').textContent = `${discountAmt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${symbol}`;
-      document.getElementById('calcTax').textContent = `${taxAmt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${symbol}`;
-      document.getElementById('calcTotal').textContent = `${total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${symbol}`;
-    }
-
-    updateTabBadges();
-    calcMatrah();
   </script>
 </body>
 </html>
