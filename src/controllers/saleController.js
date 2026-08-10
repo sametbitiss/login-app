@@ -213,7 +213,7 @@ class SaleController {
         customerName,
         customerTaxNo: req.body.customerTaxNo ? req.body.customerTaxNo.trim() : null,
         customerPhone: req.body.customerPhone ? req.body.customerPhone.trim() : null,
-        orderDate: req.body.orderDate || new Date().toISOString().split('T')[0],
+        orderDate: new Date().toISOString().split('T')[0],
         deliveryDate: req.body.deliveryDate || null,
         paymentTerm: req.body.paymentTerm || 'Pesin',
         status,
