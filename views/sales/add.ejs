@@ -386,10 +386,11 @@
               <div class="input-group">
                 <label for="paymentTerm">Ödeme Vadesi / Koşulu</label>
                 <select id="paymentTerm" name="paymentTerm">
-                  <option value="Peşin">Peşin (Ön Ödeme)</option>
-                  <option value="30 Gün Vadeli" selected>30 Gün Vadeli</option>
-                  <option value="60 Gün Vadeli">60 Gün Vadeli</option>
-                  <option value="90 Gün Vadeli">90 Gün Vadeli</option>
+                  <option value="Pesin">Peşin (Ön Ödeme)</option>
+                  <option value="Vadeli_30" selected>30 Gün Vadeli</option>
+                  <option value="Vadeli_60">60 Gün Vadeli</option>
+                  <option value="Vadeli_90">90 Gün Vadeli</option>
+                  <option value="Kredi_Karti">Kredi Kartı</option>
                 </select>
               </div>
               <div class="input-group">
@@ -557,12 +558,7 @@
           <input type="number" step="0.1" min="0" max="100" value="${discount}" class="item-discount" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fb7185; padding: 8px 10px; border-radius: 8px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
         </td>
         <td style="padding: 12px 14px;">
-          <select class="item-tax" onchange="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 8px; border-radius: 8px; text-align: center;">
-            <option value="20" ${tax == 20 ? 'selected' : ''}>%20</option>
-            <option value="10" ${tax == 10 ? 'selected' : ''}>%10</option>
-            <option value="1" ${tax == 1 ? 'selected' : ''}>%1</option>
-            <option value="0" ${tax == 0 ? 'selected' : ''}>%0</option>
-          </select>
+          <input type="number" step="0.1" min="0" max="100" value="${tax}" class="item-tax" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
         </td>
         <td style="padding: 12px 14px; text-align: right;">
           <strong class="item-total" style="font-family: 'JetBrains Mono', monospace; color: #fff; font-size: 0.95rem;">0.00 ₺</strong>

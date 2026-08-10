@@ -210,7 +210,13 @@ class SaleController {
       }
 
       const nextOrderNo = await saleService.getNextOrderNo();
-      const status = approvalNeeded ? 'Pending_Approval' : 'Preparing';
+      let rawPaymentTerm = req.body.paymentTerm || 'Pesin';
+      let paymentTerm = 'Pesin';
+      if (rawPaymentTerm.includes('30') || rawPaymentTerm === 'Vadeli_30') paymentTerm = 'Vadeli_30';
+      else if (rawPaymentTerm.includes('60') || rawPaymentTerm === 'Vadeli_60') paymentTerm = 'Vadeli_60';
+      else if (rawPaymentTerm.includes('90') || rawPaymentTerm === 'Vadeli_90') paymentTerm = 'Vadeli_90';
+      else if (rawPaymentTerm.toLowerCase().includes('kredi') || rawPaymentTerm === 'Kredi_Karti') paymentTerm = 'Kredi_Karti';
+      else paymentTerm = 'Pesin';
 
       await saleService.createOrder({
         orderNo: nextOrderNo,
@@ -220,7 +226,7 @@ class SaleController {
         customerPhone: req.body.customerPhone ? req.body.customerPhone.trim() : null,
         orderDate: new Date().toISOString().split('T')[0],
         deliveryDate: req.body.deliveryDate || null,
-        paymentTerm: req.body.paymentTerm || 'Pesin',
+        paymentTerm,
         status,
         approvalNeeded,
         approvalReason,
