@@ -148,6 +148,7 @@
             <option value="Preparing" <%= filterStatus === 'Preparing' ? 'selected' : '' %>>Hazırlanıyor</option>
             <option value="Shipped" <%= filterStatus === 'Shipped' ? 'selected' : '' %>>Sevk Edildi</option>
             <option value="Completed" <%= filterStatus === 'Completed' ? 'selected' : '' %>>Tamamlandı</option>
+            <option value="Rejected" <%= filterStatus === 'Rejected' ? 'selected' : '' %>>Reddedildi</option>
           </select>
           <select name="paymentTerm" class="filter-select" onchange="this.form.submit()">
             <option value="">Tüm Ödeme Koşulları</option>
@@ -269,6 +270,10 @@
                       <span class="status-pill status-onleave">● Sevk Edildi</span>
                     <% } else if (order.status === 'Completed') { %>
                       <span class="status-pill status-active">● Tamamlandı</span>
+                    <% } else if (order.status === 'Rejected') { %>
+                      <span class="status-pill" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3);">
+                        ✕ Reddedildi
+                      </span>
                     <% } else { %>
                       <span class="status-pill status-pending">● <%= order.status %></span>
                     <% } %>

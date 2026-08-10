@@ -137,6 +137,7 @@
                   <option value="Preparing" <%= (order.status === 'Preparing' || order.status === 'Hazırlanıyor') ? 'selected' : '' %>>Hazırlanıyor</option>
                   <option value="Shipped" <%= (order.status === 'Shipped' || order.status === 'Sevk Edildi') ? 'selected' : '' %>>Sevk Edildi</option>
                   <option value="Completed" <%= order.status === 'Completed' ? 'selected' : '' %>>Tamamlandı</option>
+                  <option value="Rejected" <%= order.status === 'Rejected' ? 'selected' : '' %>>Reddedildi</option>
                 </select>
               </div>
               <div class="input-group">
