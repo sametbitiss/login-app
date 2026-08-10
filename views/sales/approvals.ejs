@@ -101,10 +101,10 @@
               <tr>
                 <th>Teklif No</th>
                 <th>Müşteri</th>
-                <th>Ürün</th>
-                <th>İskonto (%)</th>
+                <th>Teklif Edilen Ürün(ler) & İskontolar</th>
+                <th>Maks. İsk. (%)</th>
                 <th>Genel Toplam</th>
-                <th>Neden Onay Bekliyor?</th>
+                <th>Yönetsel Onay Gerekçesi (Detay)</th>
                 <th>Karar</th>
               </tr>
             </thead>
@@ -112,23 +112,55 @@
               <% if (pendingQuotes.length === 0) { %>
                 <tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Onay bekleyen satış teklifi bulunmamaktadır.</td></tr>
               <% } else { %>
-                <% pendingQuotes.forEach(q => { %>
+                <% pendingQuotes.forEach(q => { 
+                  let itemsList = [];
+                  if (q.itemsJson) {
+                    try { itemsList = JSON.parse(q.itemsJson); } catch (e) { itemsList = []; }
+                  }
+                  if (!Array.isArray(itemsList) || itemsList.length === 0) {
+                    itemsList = [{
+                      name: q.stockItem ? q.stockItem.name : 'Ürün Kalemi',
+                      discountRate: q.discountRate
+                    }];
+                  }
+                %>
                   <tr>
-                    <td><strong style="font-family: monospace; color: var(--pink);"><%= q.quotationNo %></strong></td>
+                    <td><strong style="font-family: 'JetBrains Mono', monospace; color: var(--pink);"><%= q.quotationNo %></strong></td>
                     <td><strong><%= q.customerName %></strong></td>
-                    <td><%= q.stockItem ? q.stockItem.name : '' %></td>
-                    <td><strong style="color: var(--amber);">%<%= q.discountRate %></strong></td>
-                    <td><strong><%= parseFloat(q.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= q.currency %></strong></td>
-                    <td><span class="status-pill status-pending">● Yüksek İskonto / Tutar</span></td>
+                    <td>
+                      <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <% itemsList.forEach(it => { 
+                          const isHigh = parseFloat(it.discountRate) > 20;
+                        %>
+                          <div style="font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                            <span style="font-weight: 600; color: <%= isHigh ? '#f43f5e' : 'var(--text-primary)' %>;"><%= it.name %></span>
+                            <% if (isHigh) { %>
+                              <span style="background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); font-size: 0.7rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;">
+                                %<%= parseFloat(it.discountRate).toLocaleString('tr-TR') %> İSKONTO (High)
+                              </span>
+                            <% } else if (parseFloat(it.discountRate) > 0) { %>
+                              <span style="font-size: 0.75rem; color: var(--text-muted);">(%<%= parseFloat(it.discountRate).toLocaleString('tr-TR') %>)</span>
+                            <% } %>
+                          </div>
+                        <% }); %>
+                      </div>
+                    </td>
+                    <td><strong style="color: var(--amber); font-family: 'JetBrains Mono', monospace;">%<%= q.discountRate %></strong></td>
+                    <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(q.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= q.currency %></strong></td>
+                    <td style="max-width: 280px;">
+                      <div style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; line-height: 1.45;">
+                        ⚠️ <%= q.approvalReason || 'Yüksek Ürün İskontosu (Sınır %20)' %>
+                      </div>
+                    </td>
                     <td>
                       <div style="display:flex; gap:0.5rem;">
                         <form action="/sales/approvals/quote/<%= q.id %>/action" method="POST">
                           <input type="hidden" name="action" value="approve">
-                          <button type="submit" class="btn btn-sm btn-success">✓ Onayla</button>
+                          <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.8rem;">✓ Onayla</button>
                         </form>
                         <form action="/sales/approvals/quote/<%= q.id %>/action" method="POST">
                           <input type="hidden" name="action" value="reject">
-                          <button type="submit" class="btn btn-sm btn-danger">✕ Reddet</button>
+                          <button type="submit" class="btn btn-sm btn-danger" style="font-size: 0.8rem;">✕ Reddet</button>
                         </form>
                       </div>
                     </td>

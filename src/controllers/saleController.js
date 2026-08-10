@@ -365,6 +365,29 @@ class SaleController {
       if (rawCurrency.includes('USD')) currency = 'USD';
       else if (rawCurrency.includes('EUR')) currency = 'EUR';
 
+      // Check individual item discounts (>20%) and total amount (>100k)
+      const highDiscountReasons = [];
+      for (const item of processedItems) {
+        if (item.discountRate > 20) {
+          const discountVal = parseFloat(item.discountRate).toLocaleString('tr-TR');
+          highDiscountReasons.push(`${item.name || 'Ürün'} (%${discountVal} iskonto)`);
+        }
+      }
+
+      let approvalNeeded = false;
+      let approvalReason = null;
+
+      if (highDiscountReasons.length > 0 && grandTotalAmount > 100000) {
+        approvalNeeded = true;
+        approvalReason = `Yüksek İskonto: ${highDiscountReasons.join(', ')} ve Yüksek Tutar (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
+      } else if (highDiscountReasons.length > 0) {
+        approvalNeeded = true;
+        approvalReason = `Yüksek Ürün İskontosu: ${highDiscountReasons.join(', ')} (Yönetsel onay sınırı: %20)`;
+      } else if (grandTotalAmount > 100000) {
+        approvalNeeded = true;
+        approvalReason = `Yüksek Teklif Tutarı (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
+      }
+
       await quotationRepository.create({
         quotationNo: req.body.quotationNo,
         customerId: customerId,
@@ -381,6 +404,9 @@ class SaleController {
         taxAmount: grandTaxAmount,
         totalAmount: grandTotalAmount,
         currency: currency,
+        approvalNeeded: approvalNeeded,
+        approvalReason: approvalReason,
+        status: approvalNeeded ? 'Pending_Approval' : 'Approved',
         notes: req.body.notes || null,
         itemsJson: JSON.stringify(processedItems)
       }, req.user, req.ip);
@@ -446,33 +472,42 @@ class SaleController {
     const { id } = req.params;
     const quote = await quotationRepository.findById(id);
 
-    if (quote) {
-      const nextOrderNo = await saleService.getNextOrderNo();
-      await saleService.createOrder({
-        orderNo: nextOrderNo,
-        customerId: quote.customerId,
-        customerName: quote.customerName,
-        orderDate: new Date().toISOString().split('T')[0],
-        paymentTerm: 'Vadeli_30',
-        status: 'Approved',
-        priority: 'Normal',
-        stockItemId: quote.stockItemId,
-        quantity: quote.quantity,
-        unitPrice: quote.unitPrice,
-        discountRate: quote.discountRate,
-        taxRate: quote.taxRate,
-        subtotal: quote.subtotal,
-        discountAmount: quote.discountAmount,
-        taxAmount: quote.taxAmount,
-        totalAmount: quote.totalAmount,
-        currency: quote.currency,
-        salesRep: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
-        notes: `[Teklif No: ${quote.quotationNo}] Teklif onaylanarak siparişe dönüştürüldü.`
-      }, req.user, req.ip);
-
-      await quotationRepository.updateStatus(id, 'Converted', 'Siparişe dönüştürüldü', req.user, req.ip);
+    if (!quote) {
+      return res.redirect('/sales/quotes');
     }
 
+    if (quote.status !== 'Approved') {
+      return res.render('error', {
+        message: 'Bu teklif yönetsel onay beklemektedir veya onaylanmamıştır. Yönetsel Onaylar ekranından onay verilmeden siparişe dönüştürülemez.',
+        error: { status: 403 }
+      });
+    }
+
+    const nextOrderNo = await saleService.getNextOrderNo();
+    await saleService.createOrder({
+      orderNo: nextOrderNo,
+      customerId: quote.customerId,
+      customerName: quote.customerName,
+      orderDate: new Date().toISOString().split('T')[0],
+      paymentTerm: 'Vadeli_30',
+      status: 'Approved',
+      priority: 'Normal',
+      stockItemId: quote.stockItemId,
+      quantity: quote.quantity,
+      unitPrice: quote.unitPrice,
+      discountRate: quote.discountRate,
+      taxRate: quote.taxRate,
+      subtotal: quote.subtotal,
+      discountAmount: quote.discountAmount,
+      taxAmount: quote.taxAmount,
+      totalAmount: quote.totalAmount,
+      currency: quote.currency,
+      itemsJson: quote.itemsJson,
+      salesRep: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
+      notes: `[Teklif No: ${quote.quotationNo}] Teklif onaylanarak siparişe dönüştürüldü.`
+    }, req.user, req.ip);
+
+    await quotationRepository.updateStatus(id, 'Converted', 'Siparişe dönüştürüldü', req.user, req.ip);
     res.redirect('/sales/orders');
   });
 
