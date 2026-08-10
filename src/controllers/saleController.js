@@ -209,6 +209,7 @@ class SaleController {
         approvalReason = `Yüksek Sipariş Tutarı (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
       }
 
+      const status = approvalNeeded ? 'Pending_Approval' : 'Approved';
       const nextOrderNo = await saleService.getNextOrderNo();
       let rawPaymentTerm = req.body.paymentTerm || 'Pesin';
       let paymentTerm = 'Pesin';
