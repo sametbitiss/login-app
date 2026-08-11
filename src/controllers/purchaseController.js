@@ -5,7 +5,7 @@ const supplierRepository = require('../repositories/supplierRepository');
 const rfqRepository = require('../repositories/rfqRepository');
 const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const asyncHandler = require('../utils/asyncHandler');
-const { StockItem, PurchaseOrder, Supplier } = require('../../models');
+const { StockItem, PurchaseOrder, Supplier, PurchaseRequisition } = require('../../models');
 const { Op } = require('sequelize');
 
 class PurchaseController {
