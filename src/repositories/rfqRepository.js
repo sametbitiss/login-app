@@ -22,7 +22,7 @@ class RfqRepository {
       include: [
         { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
         { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit'] },
-        { model: Supplier, as: 'supplier', attributes: ['id', 'supplierCode', 'companyName'] }
+        { model: Supplier, as: 'supplier', attributes: ['id', 'supplierCode', 'companyName', 'performanceScore', 'qualityScore', 'city'] }
       ]
     });
   }

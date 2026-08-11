@@ -275,9 +275,86 @@ class PurchaseController {
     const rfqs = await purchaseService.getAllRfqs({ search, status });
     const rfqStats = await purchaseService.getRfqStats();
 
+    // 1. Product-based grouping
+    const groupedMap = new Map();
+
+    rfqs.forEach(rfq => {
+      const itemId = rfq.stockItemId || 0;
+      const itemName = rfq.stockItem ? rfq.stockItem.name : 'Genel Malzeme / Belirtilmemiş';
+      const stockCode = rfq.stockItem ? rfq.stockItem.stockCode : 'GENEL-000';
+      const unit = rfq.stockItem ? rfq.stockItem.unit : 'Adet';
+      const category = rfq.stockItem ? rfq.stockItem.category : '—';
+
+      if (!groupedMap.has(itemId)) {
+        groupedMap.set(itemId, {
+          stockItemId: itemId,
+          itemName,
+          stockCode,
+          unit,
+          category,
+          stockItem: rfq.stockItem,
+          items: [],
+          recommendedOffer: null
+        });
+      }
+      groupedMap.get(itemId).items.push(rfq);
+    });
+
+    const groupedRfqs = Array.from(groupedMap.values());
+
+    // 2. Price/Performance Evaluation Algorithm for each Product Group
+    groupedRfqs.forEach(group => {
+      const validOffers = group.items.filter(item => item.offeredUnitPrice && parseFloat(item.offeredUnitPrice) > 0);
+
+      if (validOffers.length > 0) {
+        const prices = validOffers.map(o => parseFloat(o.offeredUnitPrice));
+        const minPrice = Math.min(...prices);
+
+        const daysList = validOffers.map(o => parseInt(o.deliveryDays, 10) || 7);
+        const minDeliveryDays = Math.min(...daysList);
+
+        validOffers.forEach(o => {
+          const unitPrice = parseFloat(o.offeredUnitPrice) || 1;
+          const priceScore = minPrice > 0 ? (minPrice / unitPrice) * 100 : 50;
+
+          const days = parseInt(o.deliveryDays, 10) || 7;
+          const deliveryScore = minDeliveryDays > 0 ? Math.min(100, Math.max(30, (minDeliveryDays / days) * 100)) : 70;
+
+          const supplierRating = o.supplier ? (parseFloat(o.supplier.performanceScore) || parseFloat(o.supplier.qualityScore) || 85) : 85;
+
+          // Payment term score bonus
+          let termBonus = 0;
+          if (o.paymentTerm === 'Vadeli_90') termBonus = 15;
+          else if (o.paymentTerm === 'Vadeli_60') termBonus = 10;
+          else if (o.paymentTerm === 'Vadeli_30') termBonus = 5;
+
+          const deliveryTermScore = Math.min(100, deliveryScore + termBonus);
+
+          // Weighted Price/Performance Score: 50% Price, 25% Delivery/Term, 25% Supplier Rating
+          const totalScore = (priceScore * 0.50) + (deliveryTermScore * 0.25) + (supplierRating * 0.25);
+          o.fpScore = Math.round(totalScore);
+
+          o.scoreBreakdown = {
+            priceScore: Math.round(priceScore),
+            deliveryScore: Math.round(deliveryScore),
+            supplierRating: Math.round(supplierRating)
+          };
+        });
+
+        // Sort offers in each group by fpScore descending
+        validOffers.sort((a, b) => b.fpScore - a.fpScore);
+
+        // Find the best / recommended offer
+        const winnerOffer = validOffers[0];
+        winnerOffer.isRecommended = true;
+        group.recommendedOffer = winnerOffer;
+      }
+    });
+
     res.render('purchase/rfq', {
       user: req.user,
       rfqs,
+      groupedRfqs,
       rfqStats,
       filterSearch: search || '',
       filterStatus: status || ''
