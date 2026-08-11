@@ -13,7 +13,8 @@ router.use(verifyToken, authorizeRoles('Admin', 'Production_Manager'));
 router.get('/', (req, res) => res.redirect('/production/analytics'));
 router.get('/analytics', productionController.showAnalytics);
 
-// 1. Work Orders Routes
+// 1. Work Orders & Requisitions Routes
+router.get('/requisitions', productionController.listRequisitions);
 router.get('/orders', productionController.listOrders);
 router.get('/orders/add', productionController.renderAddOrder);
 router.post('/orders/add', validate(validateProductionOrderCreate), productionController.addOrder);

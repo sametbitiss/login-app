@@ -105,11 +105,16 @@
                   <td><strong style="color: var(--amber);">+<%= missing > 0 ? missing : 10 %> <%= item.unit %></strong></td>
                   <td><%= item.supplier || 'Ana Tedarikçi A.Ş.' %></td>
                   <td>
+                    <% const isProductionItem = (item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul'); %>
                     <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
                       <input type="hidden" name="stockItemId" value="<%= item.id %>">
                       <input type="hidden" name="requestedQuantity" value="<%= missing > 0 ? missing : 10 %>">
                       <input type="hidden" name="urgency" value="Urgent">
-                      <button type="submit" class="btn btn-sm btn-success">📩 Otomatik Satın Alma Talebi Aç</button>
+                      <% if (isProductionItem) { %>
+                        <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">⚙️ Üretime Bildir (İş Emri Talebi Aç)</button>
+                      <% } else { %>
+                        <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">🛒 Satın Almaya Bildir (Talep Aç)</button>
+                      <% } %>
                     </form>
                   </td>
                 </tr>

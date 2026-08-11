@@ -3,13 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Üretim İş Emirleri — Enterprise ERP</title>
+  <title>Üretim Talepleri & Stok Uyarıları — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
-    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
     <div class="module-sidebar-section">
       <div class="mss-label">🏭 ÜRETİM & İMALAT YÖNETİMİ</div>
       <div class="mss-group-title">📊 DASHBOARD & PERFORMANS</div>
@@ -18,8 +23,8 @@
       </div>
       <div class="mss-group-title">⚙️ İMALAT & SİPARİŞ KONTROLÜ</div>
       <div class="mss-sub">
-        <a href="/production/requisitions" class="mss-sub-link">📩 Üretim Talepleri</a>
-        <a href="/production/orders" class="mss-sub-link active">📋 Üretim İş Emirleri</a>
+        <a href="/production/requisitions" class="mss-sub-link active">📩 Üretim Talepleri</a>
+        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
         <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
         <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
       </div>
@@ -50,8 +55,8 @@
     <main class="module-content">
       <div class="module-subnav">
         <a href="/production/analytics" class="msn-link">📊 Analitik</a>
-        <a href="/production/requisitions" class="msn-link">📩 Üretim Talepleri</a>
-        <a href="/production/orders" class="msn-link active">📋 İş Emirleri</a>
+        <a href="/production/requisitions" class="msn-link active">📩 Üretim Talepleri</a>
+        <a href="/production/orders" class="msn-link">📋 İş Emirleri</a>
         <a href="/production/orders/add" class="msn-link">➕ İş Emri Ekle</a>
         <a href="/production/mrp" class="msn-link">⚡ MRP Hesaplama</a>
         <a href="/production/bom" class="msn-link">📜 Reçeteler (BOM)</a>
@@ -62,8 +67,8 @@
 
       <div class="page-header">
         <div>
-          <h1>Üretim İş Emirleri Listesi</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Fabrika imalat emirleri, başlama/bitiş tarihleri ve durum takibi.</p>
+          <h1>📩 Üretim Talepleri Kartı (Kritik Stok & İmalat Uyarısı)</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Stok & Depo Modülünde kritik seviyenin altına inen Yarı Mamul ve Mamul ürünler için gönderilen üretim talepleri.</p>
         </div>
         <a href="/production/orders/add" class="btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -71,35 +76,80 @@
         </a>
       </div>
 
+      <div class="kpi-strip">
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--indigo">📋</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Talep / İş Emri</span><span class="kpi-chip-value"><%= stats.totalOrders %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--rose">🚨</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Kritik Stok Üretim Talepleri</span><span class="kpi-chip-value"><%= orders.filter(o => o.productionTitle && o.productionTitle.includes('Kritik Stok')).length %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--amber">⚡</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Planlanan Talepler</span><span class="kpi-chip-value"><%= stats.plannedOrders %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--emerald">⚙️</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Üretimdeki İşler</span><span class="kpi-chip-value"><%= stats.inProductionOrders %></span></div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <form method="GET" action="/production/requisitions" class="filter-form">
+          <div class="filter-input-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" name="search" placeholder="İş emri no, ürün veya başlığa göre ara..." value="<%= filterSearch %>" class="filter-input">
+          </div>
+          <select name="status" class="filter-select" onchange="this.form.submit()">
+            <option value="">Tüm Durumlar</option>
+            <option value="Planned" <%= filterStatus === 'Planned' ? 'selected' : '' %>>Planlandı</option>
+            <option value="In_Production" <%= filterStatus === 'In_Production' ? 'selected' : '' %>>Üretimde</option>
+            <option value="Completed" <%= filterStatus === 'Completed' ? 'selected' : '' %>>Tamamlandı</option>
+          </select>
+          <button type="submit" class="btn btn-sm">Filtrele</button>
+        </form>
+      </div>
+
+      <div class="results-info"><span>Toplam <strong><%= orders.length %></strong> adet üretim talebi listeleniyor</span></div>
+
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
-              <th>İş Emri No</th>
-              <th>Üretim Başlığı / Ürün</th>
+              <th>Talep / İş Emri No</th>
+              <th>Kaynak Modül / Tür</th>
+              <th>Üretim Başlığı & Ürün</th>
               <th>Planlanan Miktar</th>
-              <th>Üretilen / Fire</th>
               <th>İş İstasyonu</th>
               <th>Öncelik</th>
-              <th>Planlanan Tarih</th>
               <th>Durum</th>
+              <th>Açıklama / Uyarı Notu</th>
               <th>Aksiyon</th>
             </tr>
           </thead>
           <tbody>
             <% if (orders.length === 0) { %>
-              <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">Kayıtlı üretim iş emri bulunmamaktadır.</td></tr>
+              <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem;">Henüz üretim talebi veya kritik stok uyarısı bulunmamaktadır.</td></tr>
             <% } else { %>
               <% orders.forEach(o => { %>
-                <tr>
+                <% const isStockAlert = o.productionTitle && o.productionTitle.includes('Kritik Stok'); %>
+                <tr style="<%= isStockAlert ? 'background: rgba(99, 102, 241, 0.04);' : '' %>">
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.workOrderNo %></strong></td>
                   <td>
+                    <% if (isStockAlert) { %>
+                      <span class="status-pill status-rejected" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border-color: rgba(244, 63, 94, 0.3);">🚨 Stok Uyarısı</span>
+                    <% } else { %>
+                      <span class="status-pill status-approved">🏭 Planlama</span>
+                    <% } %>
+                  </td>
+                  <td>
                     <strong style="color: var(--text-primary);"><%= o.productionTitle %></strong>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= o.stockItem ? o.stockItem.name : '—' %></div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= o.stockItem ? o.stockItem.name + ' (' + o.stockItem.category + ')' : '—' %></div>
                   </td>
                   <td><strong><%= o.plannedQuantity %> <%= o.unit %></strong></td>
-                  <td><strong style="color: var(--emerald);"><%= o.completedQuantity %></strong> / <span style="color: var(--rose);"><%= o.scrapQuantity %></span></td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= o.workCenter %></td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= o.workCenter || 'İşleme İstasyonu' %></td>
                   <td>
                     <% if (o.priority === 'Urgent') { %>
                       <span class="status-pill status-rejected">🚨 Acil</span>
@@ -109,22 +159,20 @@
                       <span class="status-pill status-approved">Normal</span>
                     <% } %>
                   </td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= o.plannedStartDate %> → <%= o.plannedEndDate %></td>
                   <td>
                     <% if (o.status === 'Completed') { %>
                       <span class="status-pill status-active">● Tamamlandı</span>
                     <% } else if (o.status === 'In_Production') { %>
                       <span class="status-pill status-pending">● Üretimde</span>
-                    <% } else if (o.status === 'Quality_Check') { %>
-                      <span class="status-pill status-approved">● Kalite Kontrolde</span>
                     <% } else { %>
-                      <span class="status-pill status-approved">● <%= o.status %></span>
+                      <span class="status-pill status-approved">● <%= o.status === 'Planned' ? 'Planlandı / Bekliyor' : o.status %></span>
                     <% } %>
                   </td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 200px;"><%= o.notes || '—' %></td>
                   <td>
                     <form action="/production/orders/<%= o.id %>/status" method="POST" style="display: inline;">
                       <select name="status" onchange="this.form.submit()" class="filter-select" style="padding: 4px 8px; font-size: 0.8rem;">
-                        <option value="Planned" <%= o.status === 'Planned' ? 'selected' : '' %>>Planlandı</option>
+                        <option value="Planned" <%= o.status === 'Planned' ? 'selected' : '' %>>Bekliyor</option>
                         <option value="In_Production" <%= o.status === 'In_Production' ? 'selected' : '' %>>Üretime Al</option>
                         <option value="Quality_Check" <%= o.status === 'Quality_Check' ? 'selected' : '' %>>Kaliteye Gönder</option>
                         <option value="Completed" <%= o.status === 'Completed' ? 'selected' : '' %>>Tamamla (Stokla)</option>

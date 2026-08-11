@@ -35,7 +35,25 @@ class ProductionController {
     });
   });
 
-  // 1. WORK ORDERS LIST
+  // 1. REQUISITIONS & WORK ORDERS LIST
+  listRequisitions = asyncHandler(async (req, res) => {
+    const { search, status, priority } = req.query;
+    const orders = await productionRepository.findAll({ search, status, priority });
+    const stats = await productionRepository.getStats();
+
+    res.render('production/requisitions', {
+      user: req.user,
+      orders,
+      stats,
+      WORK_CENTERS,
+      ALL_ROLES,
+      activeSubTab: 'requisitions',
+      filterSearch: search || '',
+      filterStatus: status || '',
+      filterPriority: priority || ''
+    });
+  });
+
   listOrders = asyncHandler(async (req, res) => {
     const { search, status, priority, workCenter } = req.query;
     const orders = await productionRepository.findAll({ search, status, priority, workCenter });

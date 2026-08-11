@@ -334,34 +334,79 @@ class StockController {
     const lowStockItems = await stockRepository.getLowStockAlerts();
     const requisitions = await requisitionRepository.findAll({ sourceModule: 'Stock' });
 
+    let successMsg = null;
+    if (req.query.success === 'purchase') {
+      successMsg = '🛒 Satın Alma Talebi başarıyla oluşturuldu ve Satın Alma Modülüne (Talepler Kartına) iletildi.';
+    } else if (req.query.success === 'production') {
+      successMsg = '⚙️ Üretim Talebi / İş Emri başarıyla oluşturuldu ve Üretim Planlama Modülüne (Talepler Kartına) iletildi.';
+    } else if (req.query.success === 'true') {
+      successMsg = 'Talebiniz başarıyla ilgili modüle iletildi.';
+    }
+
     res.render('stock/alerts', {
       user: req.user,
       lowStockItems,
       requisitions,
       ALL_ROLES,
       activeSubTab: 'alerts',
-      successMsg: req.query.success === 'true' ? 'Satın Alma Talebi başarıyla oluşturuldu ve Satın Alma Departmanına iletildi.' : null
+      successMsg
     });
   });
 
   createStockRequisition = asyncHandler(async (req, res) => {
     const { stockItemId, requestedQuantity, urgency, notes } = req.body;
 
-    if (!stockItemId || !requestedQuantity) {
-      throw new ValidationError('Malzeme ve talep miktarı seçimi zorunludur.');
+    if (!stockItemId) {
+      throw new ValidationError('Malzeme seçimi zorunludur.');
     }
 
-    await requisitionRepository.create({
-      sourceModule: 'Stock',
-      stockItemId,
-      requestedQuantity: parseFloat(requestedQuantity) || 1,
-      urgency: urgency || 'Normal',
-      status: 'Pending',
-      requesterName: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
-      notes: notes || 'Kritik stok seviyesi altına düşüldüğü için depodan otomatik talep oluşturuldu.'
-    }, req.user, req.ip);
+    const item = await stockRepository.findById(stockItemId);
+    if (!item) {
+      throw new NotFoundError('Stok kalemi bulunamadı.');
+    }
 
-    res.redirect('/stock/alerts?success=true');
+    const missingAmount = parseFloat(item.minStock || 0) - parseFloat(item.currentStock || 0);
+    const qty = parseFloat(requestedQuantity) || (missingAmount > 0 ? missingAmount : 10);
+
+    const isProductionItem = (item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul');
+
+    if (isProductionItem) {
+      const productionRepository = require('../repositories/productionRepository');
+      const nextWorkOrderNo = await productionRepository.generateWorkOrderNo();
+
+      const today = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+
+      await productionRepository.create({
+        workOrderNo: nextWorkOrderNo,
+        productionTitle: `[Kritik Stok Uyarısı] ${item.name} Üretim Talebi`,
+        stockItemId: item.id,
+        plannedQuantity: qty,
+        unit: item.unit || 'Adet',
+        status: 'Planned',
+        priority: urgency === 'Urgent' ? 'Urgent' : 'High',
+        workCenter: item.category === 'Mamul' ? 'Montaj İstasyonu' : 'İşleme İstasyonu',
+        plannedStartDate: today.toISOString().split('T')[0],
+        plannedEndDate: nextWeek.toISOString().split('T')[0],
+        notes: notes || `Stok ve Depo modülünden kritik stok uyarısı ile otomatik üretim talebi açıldı. (Stok: ${item.currentStock}, Min: ${item.minStock})`
+      }, req.user, req.ip);
+
+      res.redirect('/stock/alerts?success=production');
+    } else {
+      await requisitionRepository.create({
+        sourceModule: 'Stock',
+        stockItemId: item.id,
+        requestedQuantity: qty,
+        unit: item.unit || 'Adet',
+        urgency: urgency || 'High',
+        status: 'Pending',
+        requesterName: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
+        notes: notes || `Stok ve Depo modülünden kritik stok uyarısı ile otomatik satın alma talebi açıldı. (Stok: ${item.currentStock}, Min: ${item.minStock})`
+      }, req.user, req.ip);
+
+      res.redirect('/stock/alerts?success=purchase');
+    }
   });
 
   // 9. INVENTORY VALUATION (FIFO / WEIGHTED AVERAGE)
