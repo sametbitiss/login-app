@@ -568,8 +568,9 @@
       const tr = document.createElement('tr');
       tr.id = `row-${rowIdCounter}`;
 
+      const stockItemsList = stockCatalog || [];
       const stockOptionsHtml = stockItemsList.map(st => `
-        <option value="${st.id}" data-code="${st.stockCode}" data-price="${st.salePrice}" data-tax="${st.taxRate}">
+        <option value="${st.id}" data-code="${st.stockCode}" data-price="${st.salePrice}" data-tax="${st.taxRate || 20}">
           [${st.stockCode}] ${st.name} (${parseFloat(st.salePrice).toLocaleString('tr-TR')} ₺)
         </option>
       `).join('');
@@ -577,7 +578,7 @@
       const qty = initialData ? initialData.quantity : 1;
       const price = initialData ? initialData.unitPrice : (stockItemsList[0] ? stockItemsList[0].salePrice : 0);
       const discount = initialData ? initialData.discountRate : 0;
-      const tax = initialData ? initialData.taxRate : (stockItemsList[0] ? stockItemsList[0].taxRate : 20);
+      const tax = initialData ? initialData.taxRate : (stockItemsList[0] ? (stockItemsList[0].taxRate || 20) : 20);
 
       tr.innerHTML = `
         <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">1</td>
