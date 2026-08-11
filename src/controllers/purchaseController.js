@@ -289,11 +289,16 @@ class PurchaseController {
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
 
     // Fetch products for which a PurchaseRequisition exists
-    const requisitions = await PurchaseRequisition.findAll({
-      where: { status: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
-      include: [{ model: StockItem, as: 'stockItem' }],
-      order: [['createdAt', 'DESC']]
-    });
+    let requisitions = [];
+    try {
+      requisitions = await PurchaseRequisition.findAll({
+        where: { status: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
+        include: [{ model: StockItem, as: 'stockItem' }],
+        order: [['createdAt', 'DESC']]
+      });
+    } catch (e) {
+      console.error('Error fetching requisitions in renderAddRfq:', e);
+    }
 
     const reqMap = new Map();
     requisitions.forEach(reqItem => {
@@ -314,7 +319,28 @@ class PurchaseController {
       }
     });
 
-    const requisitionedProducts = Array.from(reqMap.values());
+    let requisitionedProducts = Array.from(reqMap.values());
+
+    // Fallback: If no requisitions exist in DB, load active stock items so the page ALWAYS opens smoothly!
+    if (requisitionedProducts.length === 0) {
+      const allItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+      requisitionedProducts = allItems.map(item => {
+        const minStockVal = parseFloat(item.minStock) || 10;
+        return {
+          stockItemId: item.id,
+          stockCode: item.stockCode,
+          name: item.name,
+          category: item.category,
+          unit: item.unit || 'Adet',
+          minStock: minStockVal > 0 ? minStockVal : 10,
+          purchasePrice: parseFloat(item.purchasePrice) || 0,
+          requisitionNo: 'TAL-GENEL',
+          requisitionId: 0,
+          requestedQuantity: minStockVal || 10
+        };
+      });
+    }
+
     const targetReqId = req.query.requisitionId ? parseInt(req.query.requisitionId, 10) : null;
 
     res.render('purchase/rfq_add', {
