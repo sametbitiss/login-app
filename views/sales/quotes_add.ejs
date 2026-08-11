@@ -605,16 +605,16 @@
       tr.id = `row-${rowIdCounter}`;
 
       const stockItemsList = stockCatalog || [];
-      const stockOptionsHtml = stockItemsList.map(st => `
+      const stockOptionsHtml = `<option value="">-- Ürün / Stok Kalemi Seçiniz --</option>` + stockItemsList.map(st => `
         <option value="${st.id}" data-code="${st.stockCode}" data-price="${st.salePrice}" data-tax="${st.taxRate || 20}">
           [${st.stockCode}] ${st.name} (${parseFloat(st.salePrice).toLocaleString('tr-TR')} ₺)
         </option>
       `).join('');
 
       const qty = initialData ? initialData.quantity : 1;
-      const price = initialData ? initialData.unitPrice : (stockItemsList[0] ? stockItemsList[0].salePrice : 0);
+      const price = initialData ? initialData.unitPrice : 0;
       const discount = initialData ? initialData.discountRate : 0;
-      const tax = initialData ? initialData.taxRate : (stockItemsList[0] ? (stockItemsList[0].taxRate || 20) : 20);
+      const tax = initialData ? initialData.taxRate : 20;
 
       tr.innerHTML = `
         <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">1</td>
@@ -648,10 +648,16 @@
       tbody.appendChild(tr);
       updateRowIndices();
 
-      // Trigger initial stock selection logic to auto-apply special prices
       const selectEl = tr.querySelector('.item-stock-id');
-      if (selectEl) onStockSelect(selectEl, rowIdCounter);
-      else recalculate();
+      if (initialData && initialData.stockItemId) {
+        if (selectEl) {
+          selectEl.value = initialData.stockItemId;
+          onStockSelect(selectEl, rowIdCounter);
+        }
+      } else {
+        if (selectEl) selectEl.value = '';
+        recalculate();
+      }
     }
 
     function removeRow(id) {
@@ -685,39 +691,51 @@
     }
 
     function onStockSelect(selectEl, rowId) {
+      const tr = document.getElementById(`row-${rowId}`);
+      if (!tr) return;
+
+      const priceInput = tr.querySelector('.item-price');
+      const discInput = tr.querySelector('.item-discount');
+      const taxInput = tr.querySelector('.item-tax');
+
+      if (!selectEl.value) {
+        if (priceInput) priceInput.value = 0;
+        if (discInput) discInput.value = 0;
+        if (taxInput) taxInput.value = 20;
+        if (priceInput) delete priceInput.dataset.specialMax;
+        if (discInput) delete discInput.dataset.specialMin;
+        recalculate();
+        return;
+      }
+
       const option = selectEl.options[selectEl.selectedIndex];
       const defaultPrice = parseFloat(option.getAttribute('data-price')) || 0;
       const tax = option.getAttribute('data-tax');
-      const tr = document.getElementById(`row-${rowId}`);
 
-      if (tr) {
-        if (tax !== null) tr.querySelector('.item-tax').value = tax;
+      if (tax !== null && taxInput) taxInput.value = tax;
 
-        const custSelect = document.getElementById('customerId');
-        const custId = custSelect ? custSelect.value : '';
-        const stockItemId = selectEl.value;
+      const custSelect = document.getElementById('customerId');
+      const custId = custSelect ? custSelect.value : '';
+      const stockItemId = selectEl.value;
 
-        const sp = getCustomerSpecialPrice(custId, stockItemId);
-        const priceInput = tr.querySelector('.item-price');
-        const discInput = tr.querySelector('.item-discount');
+      const sp = getCustomerSpecialPrice(custId, stockItemId);
 
-        if (sp) {
-          const specPrice = parseFloat(sp.specialPrice);
-          const customDisc = parseFloat(sp.customDiscountRate);
+      if (sp) {
+        const specPrice = parseFloat(sp.specialPrice);
+        const customDisc = parseFloat(sp.customDiscountRate);
 
-          priceInput.value = specPrice;
-          discInput.value = customDisc;
-          priceInput.dataset.specialMax = specPrice;
-          discInput.dataset.specialMin = customDisc;
-        } else {
-          priceInput.value = defaultPrice;
-          discInput.value = 0;
-          delete priceInput.dataset.specialMax;
-          delete discInput.dataset.specialMin;
-        }
-
-        recalculate();
+        priceInput.value = specPrice;
+        discInput.value = customDisc;
+        priceInput.dataset.specialMax = specPrice;
+        discInput.dataset.specialMin = customDisc;
+      } else {
+        priceInput.value = defaultPrice;
+        discInput.value = 0;
+        delete priceInput.dataset.specialMax;
+        delete discInput.dataset.specialMin;
       }
+
+      recalculate();
     }
 
     let globalSpecialPriceViolation = null;
