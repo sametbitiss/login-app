@@ -334,6 +334,31 @@ class StockController {
     const lowStockItems = await stockRepository.getLowStockAlerts();
     const requisitions = await requisitionRepository.findAll({ sourceModule: 'Stock' });
 
+    const { PurchaseRequisition, ProductionOrder } = require('../../models');
+    const { Op } = require('sequelize');
+
+    // Fetch active/pending purchase requisitions
+    const pendingPurchaseReqs = await PurchaseRequisition.findAll({
+      where: {
+        status: { [Op.in]: ['Pending', 'Approved'] }
+      }
+    });
+
+    // Fetch active/pending production orders
+    const pendingProductionOrders = await ProductionOrder.findAll({
+      where: {
+        status: { [Op.in]: ['Planned', 'In_Production', 'Quality_Check'] }
+      }
+    });
+
+    const pendingPurchaseStockItemIds = new Set(pendingPurchaseReqs.map(r => parseInt(r.stockItemId, 10)));
+    const pendingProductionStockItemIds = new Set(pendingProductionOrders.map(o => parseInt(o.stockItemId, 10)));
+
+    lowStockItems.forEach(item => {
+      item.hasPendingPurchaseReq = pendingPurchaseStockItemIds.has(item.id);
+      item.hasPendingProductionOrder = pendingProductionStockItemIds.has(item.id);
+    });
+
     let successMsg = null;
     if (req.query.success === 'purchase') {
       successMsg = '🛒 Satın Alma Talebi başarıyla oluşturuldu ve Satın Alma Modülüne (Talepler Kartına) iletildi.';
@@ -389,7 +414,7 @@ class StockController {
         workCenter: item.category === 'Mamul' ? 'Montaj İstasyonu' : 'İşleme İstasyonu',
         plannedStartDate: today.toISOString().split('T')[0],
         plannedEndDate: nextWeek.toISOString().split('T')[0],
-        notes: notes || `Stok ve Depo modülünden kritik stok uyarısı ile otomatik üretim talebi açıldı. (Stok: ${item.currentStock}, Min: ${item.minStock})`
+        notes: notes || `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir! (Mevcut Stok: ${item.currentStock} ${item.unit}, Min Stok: ${item.minStock} ${item.unit}). Lütfen fabrikada bu ürünü acil üretin!`
       }, req.user, req.ip);
 
       res.redirect('/stock/alerts?success=production');
@@ -402,7 +427,7 @@ class StockController {
         urgency: urgency || 'High',
         status: 'Pending',
         requesterName: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
-        notes: notes || `Stok ve Depo modülünden kritik stok uyarısı ile otomatik satın alma talebi açıldı. (Stok: ${item.currentStock}, Min: ${item.minStock})`
+        notes: notes || `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir! (Mevcut Stok: ${item.currentStock} ${item.unit}, Min Stok: ${item.minStock} ${item.unit}). Lütfen bu ürünü tedarikçiden acil satın alın!`
       }, req.user, req.ip);
 
       res.redirect('/stock/alerts?success=purchase');

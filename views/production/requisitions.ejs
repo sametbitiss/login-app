@@ -76,6 +76,14 @@
         </a>
       </div>
 
+      <% const stockAlertsCount = orders.filter(o => o.productionTitle && o.productionTitle.includes('Kritik Stok') && o.status === 'Planned').length; %>
+      <% if (stockAlertsCount > 0) { %>
+        <div style="background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; font-weight: 600;">
+          <span>⚙️ <strong>Stok & Depo Modülünden UYARI!</strong> Depoda kritik stok seviyesine düşen <%= stockAlertsCount %> adet Yarı Mamul/Mamul için acil üretim talebi açıldı! Lütfen fabrikada bu ürünleri acil üretin.</span>
+          <span style="background: #6366f1; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;"><%= stockAlertsCount %> ACİL İMALAT TALEBİ</span>
+        </div>
+      <% } %>
+
       <div class="kpi-strip">
         <div class="kpi-chip">
           <div class="kpi-chip-icon kpi-chip--indigo">📋</div>

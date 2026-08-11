@@ -82,6 +82,14 @@
         </a>
       </div>
 
+      <% const stockAlertsCount = requisitions.filter(r => r.sourceModule === 'Stock' && r.status === 'Pending').length; %>
+      <% if (stockAlertsCount > 0) { %>
+        <div style="background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; font-weight: 600;">
+          <span>🚨 <strong>Stok & Depo Modülünden UYARI!</strong> Depoda kritik stok seviyesine düşen <%= stockAlertsCount %> malzeme için acil satın alma talebi iletildi! Lütfen bu ürünleri tedarikçilerden acil satın alın.</span>
+          <span style="background: #f43f5e; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;"><%= stockAlertsCount %> ACİL TALEP</span>
+        </div>
+      <% } %>
+
       <!-- Filters -->
       <div class="filter-bar">
         <form method="GET" action="/purchase/requisitions" class="filter-form">
@@ -115,6 +123,7 @@
               <th>Talep Edilen Malzeme</th>
               <th>Miktar</th>
               <th>Aciliyet</th>
+              <th>Açıklama / Sistem Uyarısı</th>
               <th>Talep Eden</th>
               <th>Durum</th>
               <th>Tarih</th>
@@ -124,7 +133,7 @@
           <tbody>
             <% if (requisitions.length === 0) { %>
               <tr>
-                <td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                   <div style="font-size: 2rem; margin-bottom: 8px;">📩</div>
                   Henüz satın alma talebi bulunmamaktadır.
                   <br><a href="/purchase/requisitions/add" style="color: var(--indigo); font-weight: 600;">İlk talebi oluşturun →</a>
@@ -132,11 +141,12 @@
               </tr>
             <% } else { %>
               <% requisitions.forEach(req => { %>
-                <tr>
+                <% const isStockAlert = req.sourceModule === 'Stock'; %>
+                <tr style="<%= isStockAlert ? 'background: rgba(244, 63, 94, 0.04);' : '' %>">
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= req.requisitionNo %></strong></td>
                   <td>
                     <% if (req.sourceModule === 'Stock') { %>
-                      <span class="status-pill status-approved">📦 Stok</span>
+                      <span class="status-pill status-rejected" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border-color: rgba(244, 63, 94, 0.3);">🚨 Stok Uyarısı</span>
                     <% } else if (req.sourceModule === 'Production') { %>
                       <span class="status-pill status-onleave">🏭 Üretim</span>
                     <% } else { %>
@@ -145,7 +155,7 @@
                   </td>
                   <td>
                     <strong style="color: var(--text-primary);"><%= req.stockItem ? req.stockItem.name : '—' %></strong>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.stockItem ? req.stockItem.stockCode : '' %></div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= req.stockItem ? req.stockItem.stockCode + ' (' + req.stockItem.category + ')' : '' %></div>
                   </td>
                   <td><strong><%= req.requestedQuantity %> <%= req.unit || (req.stockItem ? req.stockItem.unit : 'Adet') %></strong></td>
                   <td>
@@ -155,6 +165,13 @@
                       <span class="status-pill status-pending">⚠️ Yüksek</span>
                     <% } else { %>
                       <span class="status-pill status-approved">Normal</span>
+                    <% } %>
+                  </td>
+                  <td style="font-size: 0.8rem; max-width: 260px;">
+                    <% if (isStockAlert) { %>
+                      <div style="color: var(--rose); font-weight: 600;"><%= req.notes %></div>
+                    <% } else { %>
+                      <div style="color: var(--text-muted);"><%= req.notes || '—' %></div>
                     <% } %>
                   </td>
                   <td><%= req.requesterName || '—' %></td>
@@ -175,7 +192,7 @@
                   <td>
                     <% if (req.status === 'Pending' || req.status === 'Approved') { %>
                       <form action="/purchase/requisitions/<%= req.id %>/convert" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-sm btn-success">📦 Siparişe Dönüştür</button>
+                        <button type="submit" class="btn btn-sm btn-success">📦 Siparişe Dönüştür (Satın Al)</button>
                       </form>
                     <% } else { %>
                       <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
