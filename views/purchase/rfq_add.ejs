@@ -26,6 +26,53 @@
       height: 4px;
       background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
     }
+
+    /* Tab Menu Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 12px;
+      border-bottom: 2px solid #1e293b;
+      margin-bottom: 24px;
+      padding-bottom: 8px;
+    }
+    .tab-btn {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 12px 12px 0 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+    .tab-btn:hover {
+      color: #f8fafc;
+      background: rgba(51, 65, 85, 0.8);
+    }
+    .tab-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      border-color: #6366f1;
+      box-shadow: 0 -4px 16px rgba(99, 102, 241, 0.35);
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .section-title {
       font-size: 1.1rem;
       font-weight: 800;
@@ -83,6 +130,15 @@
       align-items: center;
       gap: 4px;
     }
+
+    .tab-footer-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #1e293b;
+    }
   </style>
 </head>
 <body class="module-body">
@@ -97,8 +153,8 @@
       </div>
       <div class="mss-group-title">📋 SATIN ALMA OPERASYONLARI</div>
       <div class="mss-sub">
-        <a href="/purchase/requisitions" class="mss-sub-link">📩 Satın Alma Talepleri</a>
-        <a href="/purchase/rfq" class="mss-sub-link active">📨 Teklif Yönetimi (RFQ)</a>
+        <a href="/purchase/requisitions" class="mss-sub-link active">📩 Satın Alma Talepleri</a>
+        <a href="/purchase/rfq" class="mss-sub-link">📨 Teklif Yönetimi (RFQ)</a>
         <a href="/purchase/orders" class="mss-sub-link">📦 Satın Alma Siparişleri</a>
         <a href="/purchase/goods-receipt" class="mss-sub-link">🚛 Mal Kabul (GRN)</a>
       </div>
@@ -122,17 +178,17 @@
     <main class="module-content">
       <div class="module-subnav">
         <a href="/purchase/analytics" class="msn-link">📊 Analitik</a><a href="/purchase/approvals" class="msn-link">⚡ Onaylar</a>
-        <a href="/purchase/requisitions" class="msn-link">📩 Talepler</a><a href="/purchase/rfq" class="msn-link active">📨 RFQ</a>
+        <a href="/purchase/requisitions" class="msn-link active">📩 Talepler</a><a href="/purchase/rfq" class="msn-link">📨 RFQ</a>
         <a href="/purchase/orders" class="msn-link">📦 Siparişler</a><a href="/purchase/goods-receipt" class="msn-link">🚛 Mal Kabul</a>
         <a href="/purchase/suppliers" class="msn-link">🏢 Tedarikçiler</a>
       </div>
 
       <div class="page-header">
         <div>
-          <h1>📨 Yeni Satın Alma Teklifi Oluştur (RFQ)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Talep oluşturulmuş ürünler için tedarikçilerden gelen teklif genel bilgilerini ve kalem detaylarını eksiksiz girin.</p>
+          <h1>📨 Satın Alma Talebine Teklif Ekle</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün için tedarikçilerden gelen teklif detaylarını sekme menüler üzerinden adım adım tanımlayın.</p>
         </div>
-        <a href="/purchase/rfq" class="btn btn-secondary">← Teklif Listesi</a>
+        <a href="/purchase/requisitions" class="btn btn-secondary">← Talepler Listesine Dön</a>
       </div>
 
       <% if (error) { %>
@@ -141,189 +197,229 @@
         </div>
       <% } %>
 
+      <!-- TAB MENU BUTTONS -->
+      <div class="tab-nav">
+        <button type="button" class="tab-btn active" onclick="switchTab('tab-general')" id="btn-tab-general">
+          <span>📝</span> 1. Teklif Genel Bilgileri
+        </button>
+        <button type="button" class="tab-btn" onclick="switchTab('tab-items')" id="btn-tab-items">
+          <span>📦</span> 2. Teklif Kalemleri (Ürünler)
+        </button>
+        <button type="button" class="tab-btn" onclick="switchTab('tab-totals')" id="btn-tab-totals">
+          <span>💰</span> 3. Toplamlar & Onay
+        </button>
+      </div>
+
       <form action="/purchase/rfq/add" method="POST" id="rfqForm">
-        <div class="glass-form-card">
-          <!-- BÖLÜM 1: GENEL BİLGİLER -->
-          <div class="section-title">
-            <span>📝</span> 1. Teklif Genel Bilgileri
-          </div>
 
-          <div class="form-grid-4">
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Teklif No (Otomatik)</label>
-              <input type="text" name="rfqNo" value="<%= nextRfqNo %>" class="aesthetic-input" readonly>
+        <!-- TAB 1: GENEL BİLGİLER -->
+        <div class="tab-pane active" id="tab-general">
+          <div class="glass-form-card">
+            <div class="section-title">
+              <span>📝</span> 1. Teklif Genel Bilgileri
             </div>
 
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Tedarikçi Firma *</label>
-              <select name="supplierId" id="supplierSelect" class="aesthetic-input" required style="cursor: pointer;">
-                <option value="">-- Tedarikçi Seçin --</option>
-                <% suppliers.forEach(sup => { %>
-                  <option value="<%= sup.id %>" data-name="<%= sup.companyName %>"><%= sup.supplierCode %> — <%= sup.companyName %></option>
-                <% }); %>
-              </select>
-              <input type="hidden" name="supplierName" id="supplierNameInput" value="">
+            <div class="form-grid-4">
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif No (Otomatik)</label>
+                <input type="text" name="rfqNo" value="<%= nextRfqNo %>" class="aesthetic-input" readonly>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Tedarikçi Firma *</label>
+                <select name="supplierId" id="supplierSelect" class="aesthetic-input" required style="cursor: pointer;">
+                  <option value="">-- Tedarikçi Seçin --</option>
+                  <% suppliers.forEach(sup => { %>
+                    <option value="<%= sup.id %>" data-name="<%= sup.companyName %>"><%= sup.supplierCode %> — <%= sup.companyName %></option>
+                  <% }); %>
+                </select>
+                <input type="hidden" name="supplierName" id="supplierNameInput" value="">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif Tarihi *</label>
+                <input type="date" name="rfqDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input" required>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Geçerlilik Tarihi</label>
+                <input type="date" name="validUntil" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Para Birimi *</label>
+                <select name="currency" id="currencySelect" class="aesthetic-input" required style="cursor: pointer;">
+                  <option value="TRY">TRY (₺)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Ödeme Koşulu *</label>
+                <select name="paymentTerm" class="aesthetic-input" required style="cursor: pointer;">
+                  <option value="Pesin">Peşin Ödeme</option>
+                  <option value="Vadeli_30" selected>30 Gün Vadeli</option>
+                  <option value="Vadeli_60">60 Gün Vadeli</option>
+                  <option value="Vadeli_90">90 Gün Vadeli</option>
+                  <option value="Kredi_Karti">Kredi Kartı</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teslimat Süresi (Gün)</label>
+                <input type="number" name="deliveryDays" value="5" min="1" class="aesthetic-input" placeholder="Örn: 5">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teslimat Yeri</label>
+                <input type="text" name="deliveryPlace" value="Merkez Depo / İstanbul" class="aesthetic-input" placeholder="Örn: Ankara Depo / Raf-02">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Nakliye Durumu</label>
+                <select name="shippingStatus" class="aesthetic-input" style="cursor: pointer;">
+                  <option value="Tedarikçi Karşılar">Tedarikçi Karşılar (Ücretsiz)</option>
+                  <option value="Alıcı Karşılar">Alıcı Karşılar (Nakliye Alıcıya Ait)</option>
+                  <option value="Dahil">Fiyata Dahil</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">KDV Durumu</label>
+                <select name="vatStatus" class="aesthetic-input" style="cursor: pointer;">
+                  <option value="Hariç" selected>Fiyatlara KDV Hariçtir</option>
+                  <option value="Dahil">Fiyatlara KDV Dahildir</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif Durumu</label>
+                <select name="status" class="aesthetic-input" style="cursor: pointer;">
+                  <option value="Received" selected>Teklif Alındı</option>
+                  <option value="Draft">Taslak</option>
+                  <option value="Sent">Gönderildi</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif Belgesi Ref / No</label>
+                <input type="text" name="documentRef" class="aesthetic-input" placeholder="Örn: PDF-TEKLIF-2026-04.pdf">
+              </div>
             </div>
 
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Teklif Tarihi *</label>
-              <input type="date" name="rfqDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input" required>
+            <div class="aesthetic-group" style="margin-top: 6px;">
+              <label class="aesthetic-label">Teklif Açıklaması / Özel Şartlar</label>
+              <input type="text" name="notes" class="aesthetic-input" placeholder="Örn: TSE sertifikalı ürün teklifidir. 30 gün geçerlidir.">
             </div>
 
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Geçerlilik Tarihi</label>
-              <input type="date" name="validUntil" class="aesthetic-input">
+            <div class="tab-footer-nav">
+              <div></div>
+              <button type="button" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 700; padding: 10px 24px; border-radius: 10px; border: none; cursor: pointer;" onclick="switchTab('tab-items')">
+                İleri: Teklif Kalemleri →
+              </button>
             </div>
-
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Para Birimi *</label>
-              <select name="currency" id="currencySelect" class="aesthetic-input" required style="cursor: pointer;">
-                <option value="TRY">TRY (₺)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-              </select>
-            </div>
-
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Ödeme Koşulu *</label>
-              <select name="paymentTerm" class="aesthetic-input" required style="cursor: pointer;">
-                <option value="Pesin">Peşin Ödeme</option>
-                <option value="Vadeli_30" selected>30 Gün Vadeli</option>
-                <option value="Vadeli_60">60 Gün Vadeli</option>
-                <option value="Vadeli_90">90 Gün Vadeli</option>
-                <option value="Kredi_Karti">Kredi Kartı</option>
-              </select>
-            </div>
-
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Teslimat Süresi (Gün)</label>
-              <input type="number" name="deliveryDays" value="5" min="1" class="aesthetic-input" placeholder="Örn: 5">
-            </div>
-
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Teslimat Yeri</label>
-              <input type="text" name="deliveryPlace" value="Merkez Depo / İstanbul" class="aesthetic-input" placeholder="Örn: Ankara Depo / Raf-02">
-            </div>
-
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Nakliye Durumu</label>
-              <select name="shippingStatus" class="aesthetic-input" style="cursor: pointer;">
-                <option value="Tedarikçi Karşılar">Tedarikçi Karşılar (Ücretsiz)</option>
-                <option value="Alıcı Karşılar">Alıcı Karşılar (Nakliye Alıcıya Ait)</option>
-                <option value="Dahil">Fiyata Dahil</option>
-              </select>
-            </div>
-
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">KDV Durumu</label>
-              <select name="vatStatus" class="aesthetic-input" style="cursor: pointer;">
-                <option value="Hariç" selected>Fiyatlara KDV Hariçtir</option>
-                <option value="Dahil">Fiyatlara KDV Dahildir</option>
-              </select>
-            </div>
-
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Teklif Durumu</label>
-              <select name="status" class="aesthetic-input" style="cursor: pointer;">
-                <option value="Received" selected>Teklif Alındı</option>
-                <option value="Draft">Taslak</option>
-                <option value="Sent">Gönderildi</option>
-              </select>
-            </div>
-
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Teklif Belgesi Ref / No</label>
-              <input type="text" name="documentRef" class="aesthetic-input" placeholder="Örn: PDF-TEKLIF-2026-04.pdf">
-            </div>
-          </div>
-
-          <div class="aesthetic-group" style="margin-top: 6px;">
-            <label class="aesthetic-label">Teklif Açıklaması / Özel Şartlar</label>
-            <input type="text" name="notes" class="aesthetic-input" placeholder="Örn: TSE sertifikalı ürün teklifidir. 30 gün geçerlidir.">
           </div>
         </div>
 
-        <!-- BÖLÜM 2: KALEMLER -->
-        <div class="glass-form-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-            <div class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
-              <span>📦</span> 2. Teklif Kalemleri (Yalnızca Talep Oluşturulmuş Ürünler)
+        <!-- TAB 2: KALEMLER -->
+        <div class="tab-pane" id="tab-items">
+          <div class="glass-form-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+              <div class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
+                <span>📦</span> 2. Teklif Kalemleri (Talep Edilen Ürünler)
+              </div>
+              <button type="button" class="btn btn-sm" id="addRowBtn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 700; border: none; padding: 8px 16px; border-radius: 8px;">
+                ➕ Kalem Ekle
+              </button>
             </div>
-            <button type="button" class="btn btn-sm" id="addRowBtn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 700; border: none; padding: 8px 16px; border-radius: 8px;">
-              ➕ Kalem Ekle
-            </button>
-          </div>
 
-          <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); color: #818cf8; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.85rem; font-weight: 500;">
-            🔒 <strong>Kural Uyarısı:</strong> Ürünler yalnızca Stok & Depo Modülünden talep oluşturulmuş ürünler arasından seçilebilir. Sipariş adedi default olarak o ürünün minimum stok seviyesi gelir ve <strong>altına inilemez</strong>!
-          </div>
+            <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); color: #818cf8; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.85rem; font-weight: 500;">
+              🔒 <strong>Kural Uyarısı:</strong> Ürünler talep oluşturulmuş ürünler arasından seçilebilir. Sipariş adedi default olarak o ürünün minimum stok seviyesi gelir ve <strong>altına inilemez</strong>!
+            </div>
 
-          <div class="table-wrapper">
-            <table class="data-table" id="itemsTable">
-              <thead>
-                <tr>
-                  <th style="width: 25%;">Ürün (Talep Oluşturulmuş) *</th>
-                  <th style="width: 12%;">Talep Ref</th>
-                  <th style="width: 12%;">Miktar *</th>
-                  <th style="width: 8%;">Birim</th>
-                  <th style="width: 11%;">Birim Fiyat *</th>
-                  <th style="width: 8%;">İskonto %</th>
-                  <th style="width: 8%;">KDV %</th>
-                  <th style="width: 12%;">Net Tutar</th>
-                  <th style="width: 4%;"></th>
-                </tr>
-              </thead>
-              <tbody id="itemsTableBody">
-                <!-- Lines injected dynamically by JavaScript -->
-              </tbody>
-            </table>
+            <div class="table-wrapper">
+              <table class="data-table" id="itemsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 25%;">Ürün (Talep Oluşturulmuş) *</th>
+                    <th style="width: 12%;">Talep Ref</th>
+                    <th style="width: 12%;">Miktar *</th>
+                    <th style="width: 8%;">Birim</th>
+                    <th style="width: 11%;">Birim Fiyat *</th>
+                    <th style="width: 8%;">İskonto %</th>
+                    <th style="width: 8%;">KDV %</th>
+                    <th style="width: 12%;">Net Tutar</th>
+                    <th style="width: 4%;"></th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                  <!-- Lines injected dynamically by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="tab-footer-nav">
+              <button type="button" class="btn btn-secondary" onclick="switchTab('tab-general')">
+                ← Geri: Genel Bilgiler
+              </button>
+              <button type="button" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 700; padding: 10px 24px; border-radius: 10px; border: none; cursor: pointer;" onclick="switchTab('tab-totals')">
+                İleri: Toplamlar & Onay →
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- BÖLÜM 3: TOPLAMLAR -->
-        <div class="glass-form-card">
-          <div class="section-title">
-            <span>💰</span> 3. Teklif Toplamları
-          </div>
-
-          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
-            <div>
-              <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">
-                Tüm tutarlar seçilen para birimi cinsinden anlık hesaplanır.<br>
-                Herhangi bir üründe miktar, ilgili ürünün minimum stok seviyesinin altına düşürülemez.
-              </p>
+        <!-- TAB 3: TOPLAMLAR -->
+        <div class="tab-pane" id="tab-totals">
+          <div class="glass-form-card">
+            <div class="section-title">
+              <span>💰</span> 3. Teklif Toplamları & Onay
             </div>
 
-            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 14px; padding: 18px;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">
-                <span>Ara Toplam:</span>
-                <strong id="displaySubtotal">0.00 TL</strong>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+              <div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                  Girilen teklif kalemleri ve genel bilgiler kontrol edildi.<br>
+                  Aynı satın alma talebi için farklı tedarikçilerden <strong>istediğiniz kadar teklif ekleyebilirsiniz</strong>.<br>
+                  Hesaplanan tutarlar seçtiğiniz para birimi cinsinden gösterilmektedir.
+                </p>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--rose); margin-bottom: 8px;">
-                <span>Toplam İskonto (-):</span>
-                <strong id="displayDiscount">0.00 TL</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--amber); margin-bottom: 12px;">
-                <span>Toplam KDV (+):</span>
-                <strong id="displayTax">0.00 TL</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 1.15rem; color: var(--emerald); font-weight: 800; border-top: 1.5px solid var(--border); padding-top: 12px;">
-                <span>Genel Toplam:</span>
-                <strong id="displayGrandTotal">0.00 TL</strong>
+
+              <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 14px; padding: 18px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">
+                  <span>Ara Toplam:</span>
+                  <strong id="displaySubtotal">0.00 TL</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--rose); margin-bottom: 8px;">
+                  <span>Toplam İskonto (-):</span>
+                  <strong id="displayDiscount">0.00 TL</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--amber); margin-bottom: 12px;">
+                  <span>Toplam KDV (+):</span>
+                  <strong id="displayTax">0.00 TL</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.15rem; color: var(--emerald); font-weight: 800; border-top: 1.5px solid var(--border); padding-top: 12px;">
+                  <span>Genel Toplam:</span>
+                  <strong id="displayGrandTotal">0.00 TL</strong>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Hidden Summary Inputs -->
-          <input type="hidden" name="subtotal" id="inputSubtotal" value="0">
-          <input type="hidden" name="totalDiscount" id="inputTotalDiscount" value="0">
-          <input type="hidden" name="totalTax" id="inputTotalTax" value="0">
-          <input type="hidden" name="offeredTotalPrice" id="inputGrandTotal" value="0">
+            <!-- Hidden Summary Inputs -->
+            <input type="hidden" name="subtotal" id="inputSubtotal" value="0">
+            <input type="hidden" name="totalDiscount" id="inputTotalDiscount" value="0">
+            <input type="hidden" name="totalTax" id="inputTotalTax" value="0">
+            <input type="hidden" name="offeredTotalPrice" id="inputGrandTotal" value="0">
 
-          <div style="margin-top: 24px; text-align: right;">
-            <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 1rem; font-weight: 800; padding: 14px 36px; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); cursor: pointer;">
-              💾 Teklifi Sisteme Kaydet
-            </button>
+            <div class="tab-footer-nav" style="margin-top: 32px;">
+              <button type="button" class="btn btn-secondary" onclick="switchTab('tab-items')">
+                ← Geri: Teklif Kalemleri
+              </button>
+              <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 1rem; font-weight: 800; padding: 14px 36px; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); cursor: pointer;">
+                💾 Teklifi Sisteme Kaydet
+              </button>
+            </div>
           </div>
         </div>
       </form>
@@ -334,6 +430,17 @@
   <script>
     const REQUISITIONED_PRODUCTS = <%- JSON.stringify(requisitionedProducts) %>;
     const TARGET_REQ_ID = <%= targetReqId ? targetReqId : 'null' %>;
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      const targetPane = document.getElementById(tabId);
+      const targetBtn = document.getElementById('btn-' + tabId);
+
+      if (targetPane) targetPane.classList.add('active');
+      if (targetBtn) targetBtn.classList.add('active');
+    }
 
     const supplierSelect = document.getElementById('supplierSelect');
     const supplierNameInput = document.getElementById('supplierNameInput');
