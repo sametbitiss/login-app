@@ -131,6 +131,10 @@ class DispatchRepository {
           if (item) {
             const newStock = parseFloat(item.currentStock) - qtyToDeduct;
             item.currentStock = newStock < 0 ? 0 : newStock;
+
+            const newReserved = parseFloat(item.reservedStock || 0) - qtyToDeduct;
+            item.reservedStock = newReserved < 0 ? 0 : newReserved;
+
             await item.save();
 
             await StockMovement.create({

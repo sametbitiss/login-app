@@ -143,7 +143,9 @@
               <th>Malzeme Adı</th>
               <th>Kategori</th>
               <th>Birim</th>
-              <th>Mevcut Stok</th>
+              <th>Fiziksel Stok</th>
+              <th>Rezerve Stok</th>
+              <th>Kullanılabilir Stok</th>
               <th>Min / Max</th>
               <th>Alış Fiyatı</th>
               <th>Satış Fiyatı</th>
@@ -154,7 +156,7 @@
           <tbody>
             <% if (stockItems.length === 0) { %>
               <tr>
-                <td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <td colspan="12" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                   <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
                   Kayıtlı stok kartı bulunmamaktadır.
                   <br><a href="/stock/items/add" style="color: var(--indigo); font-weight: 600;">Yeni stok kartı ekleyin →</a>
@@ -171,10 +173,26 @@
                   <td><span class="status-pill status-approved"><%= item.category %></span></td>
                   <td><%= item.unit %></td>
                   <td>
-                    <% if (parseFloat(item.currentStock) <= parseFloat(item.minStock || 0)) { %>
-                      <strong style="color: var(--rose);">⚠️ <%= item.currentStock %></strong>
+                    <strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;"><%= parseFloat(item.currentStock || 0).toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %></strong>
+                  </td>
+                  <td>
+                    <strong style="color: #fb7185; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;"><%= parseFloat(item.reservedStock || 0).toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %></strong>
+                  </td>
+                  <td>
+                    <% 
+                      const curr = parseFloat(item.currentStock || 0);
+                      const resv = parseFloat(item.reservedStock || 0);
+                      const avail = Math.max(0, curr - resv);
+                      const isLow = avail <= parseFloat(item.minStock || 0);
+                    %>
+                    <% if (isLow) { %>
+                      <span style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                        ⚠️ <%= avail.toLocaleString('tr-TR', {minimumFractionDigits:0, maximumFractionDigits:2}) %>
+                      </span>
                     <% } else { %>
-                      <strong><%= item.currentStock %></strong>
+                      <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                        ✓ <%= avail.toLocaleString('tr-TR', {minimumFractionDigits:0, maximumFractionDigits:2}) %>
+                      </span>
                     <% } %>
                   </td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= item.minStock || 0 %> / <%= item.maxStock || '∞' %></td>

@@ -92,6 +92,26 @@ class SaleRepository {
       createdBy: currentUser ? currentUser.id : null
     });
 
+    // Reserve Stock for Order Items
+    let itemsToReserve = [];
+    if (order.itemsJson) {
+      try { itemsToReserve = JSON.parse(order.itemsJson); } catch (e) { itemsToReserve = []; }
+    }
+    if (!Array.isArray(itemsToReserve) || itemsToReserve.length === 0) {
+      itemsToReserve = [{ stockItemId: order.stockItemId, quantity: order.quantity }];
+    }
+    for (const it of itemsToReserve) {
+      const sId = parseInt(it.stockItemId, 10);
+      const qty = parseFloat(it.quantity || 0);
+      if (sId && sId > 0 && qty > 0) {
+        const item = await StockItem.findByPk(sId);
+        if (item) {
+          item.reservedStock = parseFloat(item.reservedStock || 0) + qty;
+          await item.save();
+        }
+      }
+    }
+
     await logService.logCrud({
       userId: currentUser ? currentUser.id : null,
       username: currentUser ? currentUser.username : 'System',
@@ -111,6 +131,29 @@ class SaleRepository {
 
     const oldData = { status: order.status, totalAmount: order.totalAmount };
     await order.update(data);
+
+    // Release Reserved Stock on Cancellation or Rejection
+    if ((data.status === 'Cancelled' || data.status === 'Rejected') && oldData.status !== 'Cancelled' && oldData.status !== 'Rejected' && oldData.status !== 'Completed') {
+      let itemsToRelease = [];
+      if (order.itemsJson) {
+        try { itemsToRelease = JSON.parse(order.itemsJson); } catch (e) { itemsToRelease = []; }
+      }
+      if (!Array.isArray(itemsToRelease) || itemsToRelease.length === 0) {
+        itemsToRelease = [{ stockItemId: order.stockItemId, quantity: order.quantity }];
+      }
+      for (const it of itemsToRelease) {
+        const sId = parseInt(it.stockItemId, 10);
+        const qty = parseFloat(it.quantity || 0);
+        if (sId && sId > 0 && qty > 0) {
+          const item = await StockItem.findByPk(sId);
+          if (item) {
+            const newReserved = parseFloat(item.reservedStock || 0) - qty;
+            item.reservedStock = newReserved < 0 ? 0 : newReserved;
+            await item.save();
+          }
+        }
+      }
+    }
 
     // Automatic Stock Decrease & Movement Ledger on Completed (Dispatch) Status
     if (data.status === 'Completed' && oldData.status !== 'Completed') {
@@ -156,6 +199,29 @@ class SaleRepository {
   async delete(id, currentUser = null, ipAddress = null) {
     const order = await SaleOrder.findByPk(id);
     if (!order) return false;
+
+    // Release Reserved Stock on Delete if order was active
+    if (order.status !== 'Cancelled' && order.status !== 'Rejected' && order.status !== 'Completed') {
+      let itemsToRelease = [];
+      if (order.itemsJson) {
+        try { itemsToRelease = JSON.parse(order.itemsJson); } catch (e) { itemsToRelease = []; }
+      }
+      if (!Array.isArray(itemsToRelease) || itemsToRelease.length === 0) {
+        itemsToRelease = [{ stockItemId: order.stockItemId, quantity: order.quantity }];
+      }
+      for (const it of itemsToRelease) {
+        const sId = parseInt(it.stockItemId, 10);
+        const qty = parseFloat(it.quantity || 0);
+        if (sId && sId > 0 && qty > 0) {
+          const item = await StockItem.findByPk(sId);
+          if (item) {
+            const newReserved = parseFloat(item.reservedStock || 0) - qty;
+            item.reservedStock = newReserved < 0 ? 0 : newReserved;
+            await item.save();
+          }
+        }
+      }
+    }
 
     const deletedCode = order.orderNo;
     await order.destroy();

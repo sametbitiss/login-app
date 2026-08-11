@@ -50,6 +50,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0
     },
+    reservedStock: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: false,
+      defaultValue: 0
+    },
     minStock: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
