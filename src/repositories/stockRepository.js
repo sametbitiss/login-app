@@ -15,7 +15,7 @@ class StockRepository {
   // --- 1. STOCK ITEMS METHODS ---
   async findAll(filters = {}) {
     const where = {};
-    const validCategories = ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal', 'Hizmet', 'Diger'];
+    const validCategories = ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Ticari_Mal', 'Diger'];
     const validStatuses = ['Active', 'Passive', 'Discontinued'];
 
     if (filters.status && validStatuses.includes(filters.status)) {

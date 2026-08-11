@@ -12,7 +12,7 @@ const validateStockCreate = (req) => {
     errors.push('Stok adı en fazla 200 karakter olabilir.');
   }
 
-  const validCategories = ['Hammadde', 'Yari_Mamul', 'Mamul', 'Ticari_Mal', 'Hizmet', 'Diger'];
+  const validCategories = ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Ticari_Mal', 'Diger'];
   if (!category || category.trim().length === 0) {
     errors.push('Kategori seçilmesi zorunludur.');
   } else if (!validCategories.includes(category)) {

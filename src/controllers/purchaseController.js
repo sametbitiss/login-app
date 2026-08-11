@@ -329,7 +329,7 @@ class PurchaseController {
     } catch (err) {
       const nextRfqNo = await purchaseService.getNextRfqNo();
       const stockItems = await StockItem.findAll({
-        where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yedek_Parca', 'Ambalaj', 'Ticari_Mal'] } },
+        where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Ticari_Mal', 'Diger'] } },
         order: [['name', 'ASC']]
       });
       const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });

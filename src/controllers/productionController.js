@@ -156,7 +156,7 @@ class ProductionController {
     });
 
     const componentStockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Yedek_Parca', 'Ambalaj'] } },
+      where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Ticari_Mal', 'Diger'] } },
       order: [['name', 'ASC']]
     });
 

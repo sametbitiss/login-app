@@ -11,10 +11,7 @@ const CATEGORIES = [
   { value: 'Hammadde', label: 'Hammadde' },
   { value: 'Yari_Mamul', label: 'Yarı Mamul' },
   { value: 'Mamul', label: 'Mamul' },
-  { value: 'Yedek_Parca', label: 'Yedek Parça' },
-  { value: 'Ambalaj', label: 'Ambalaj' },
   { value: 'Ticari_Mal', label: 'Ticari Mal' },
-  { value: 'Hizmet', label: 'Hizmet' },
   { value: 'Diger', label: 'Diğer' }
 ];
 
