@@ -392,8 +392,8 @@ class StockController {
 
     const missingAmount = parseFloat(item.minStock || 0) - parseFloat(item.currentStock || 0);
     const qty = parseFloat(requestedQuantity) || (missingAmount > 0 ? missingAmount : 10);
-
-    const isProductionItem = (item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul');
+    const pMethod = item.procurementMethod || ((item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul') ? 'Üretim' : 'Satın Alma');
+    const isProductionItem = (pMethod === 'Üretim' || pMethod === 'Production');
 
     if (isProductionItem) {
       const productionRepository = require('../repositories/productionRepository');
@@ -414,23 +414,28 @@ class StockController {
         workCenter: item.category === 'Mamul' ? 'Montaj İstasyonu' : 'İşleme İstasyonu',
         plannedStartDate: today.toISOString().split('T')[0],
         plannedEndDate: nextWeek.toISOString().split('T')[0],
-        notes: notes || `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir! (Mevcut Stok: ${item.currentStock} ${item.unit}, Min Stok: ${item.minStock} ${item.unit}). Lütfen fabrikada bu ürünü acil üretin!`
+        notes: `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir (Mevcut: ${item.currentStock} ${item.unit}, Min: ${item.minStock} ${item.unit}). Tedarik Yöntemi: Üretim. Lütfen acil imalatını tamamlayın.`,
+        createdBy: req.user.id
       }, req.user, req.ip);
 
-      res.redirect('/stock/alerts?success=production');
+      return res.redirect('/stock/alerts?success=production');
     } else {
-      await requisitionRepository.create({
+      const nextReqNo = await purchaseService.getNextRequisitionNo();
+
+      await purchaseService.createRequisition({
+        requisitionNo: nextReqNo,
         sourceModule: 'Stock',
         stockItemId: item.id,
         requestedQuantity: qty,
         unit: item.unit || 'Adet',
-        urgency: urgency || 'High',
+        urgency: urgency === 'Urgent' ? 'Urgent' : 'High',
         status: 'Pending',
         requesterName: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
-        notes: notes || `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir! (Mevcut Stok: ${item.currentStock} ${item.unit}, Min Stok: ${item.minStock} ${item.unit}). Lütfen bu ürünü tedarikçiden acil satın alın!`
+        notes: `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir (Mevcut: ${item.currentStock} ${item.unit}, Min: ${item.minStock} ${item.unit}). Tedarik Yöntemi: Satın Alma. Lütfen acil tedarik edin.`,
+        createdBy: req.user.id
       }, req.user, req.ip);
 
-      res.redirect('/stock/alerts?success=purchase');
+      return res.redirect('/stock/alerts?success=purchase');
     }
   });
 

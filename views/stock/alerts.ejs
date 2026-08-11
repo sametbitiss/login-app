@@ -105,7 +105,10 @@
                   <td><strong style="color: var(--amber);">+<%= missing > 0 ? missing : 10 %> <%= item.unit %></strong></td>
                   <td><%= item.supplier || 'Ana Tedarikçi A.Ş.' %></td>
                   <td>
-                    <% const isProductionItem = (item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul'); %>
+                    <% 
+                      const pMethod = item.procurementMethod || ((item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul') ? 'Üretim' : 'Satın Alma');
+                      const isProductionItem = (pMethod === 'Üretim' || pMethod === 'Production');
+                    %>
                     <% if (isProductionItem) { %>
                       <% if (item.hasPendingProductionOrder) { %>
                         <button type="button" disabled class="btn btn-sm" style="background: var(--bg-tertiary, #334155); color: #94a3b8; border: 1px solid #475569; cursor: not-allowed; opacity: 0.8; font-weight: 700;" title="Bu ürün için Üretim Modülünde aktif talep mevcuttur. Tekrar talep oluşturulamaz.">
