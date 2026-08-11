@@ -23,6 +23,7 @@ class CustomerLedgerRepository {
 
     const entry = await CustomerLedger.create({
       ...data,
+      transactionType: data.transactionType || (debit > 0 ? 'Sale_Invoice' : 'Payment'),
       balance: newBalance,
       createdBy: currentUser ? currentUser.id : null
     });

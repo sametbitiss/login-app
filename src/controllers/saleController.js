@@ -1170,6 +1170,7 @@ class SaleController {
       await customerLedgerRepository.addEntry({
         customerId: order.customerId,
         transactionDate: invoice.invoiceDate,
+        transactionType: 'Sale_Invoice',
         documentNo: invoice.invoiceNo,
         description: `[Satış Faturası] ${invoice.invoiceNo} no'lu fatura kaydı`,
         debitAmount: invoice.totalAmount,
