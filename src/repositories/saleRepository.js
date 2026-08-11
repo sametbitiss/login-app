@@ -64,7 +64,7 @@ class SaleRepository {
     let stockItemId = safeInt(data.stockItemId);
 
     if (!stockItemId || stockItemId <= 0) {
-      const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });
+      const defaultStock = await StockItem.findOne({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
       stockItemId = defaultStock ? defaultStock.id : 1;
     }
 

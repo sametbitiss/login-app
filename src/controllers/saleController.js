@@ -153,7 +153,7 @@ class SaleController {
       const primaryItem = processedItems[0] || {};
       let primaryStockItemId = safeInt(primaryItem.stockItemId);
       if (!primaryStockItemId || primaryStockItemId <= 0) {
-        const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });
+        const defaultStock = await StockItem.findOne({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
         primaryStockItemId = defaultStock ? defaultStock.id : 1;
       }
       const customerId = safeInt(req.body.customerId);
@@ -342,7 +342,7 @@ class SaleController {
 
       let stockItemId = safeInt(req.body.stockItemId);
       if (!stockItemId || stockItemId <= 0) {
-        const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });
+        const defaultStock = await StockItem.findOne({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
         stockItemId = defaultStock ? defaultStock.id : 1;
       }
 
@@ -537,7 +537,7 @@ class SaleController {
       const primaryItem = processedItems[0] || {};
       let primaryStockItemId = safeInt(primaryItem.stockItemId);
       if (!primaryStockItemId || primaryStockItemId <= 0) {
-        const defaultStock = await StockItem.findOne({ where: { status: 'Active' } });
+        const defaultStock = await StockItem.findOne({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
         primaryStockItemId = defaultStock ? defaultStock.id : 1;
       }
       const customerId = safeInt(req.body.customerId);
@@ -785,7 +785,7 @@ class SaleController {
   listPriceLists = asyncHandler(async (req, res) => {
     const rawPriceLists = await priceListRepository.findAll();
     const customers = await customerRepository.findAll({ status: 'Active' });
-    const stockItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+    const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
 
     // Group price lists by customerId
     const groupsMap = new Map();
@@ -909,7 +909,7 @@ class SaleController {
     } catch (err) {
       const rawPriceLists = await priceListRepository.findAll();
       const customers = await customerRepository.findAll({ status: 'Active' });
-      const stockItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+      const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
 
       const groupsMap = new Map();
       rawPriceLists.forEach(item => {
