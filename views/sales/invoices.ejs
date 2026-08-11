@@ -156,14 +156,9 @@
                 </div>
 
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" onclick="openInvoiceModal(<%= o.id %>, '<%= o.orderNo %>')" class="btn btn-sm btn-outline-info" style="font-size: 0.8rem; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(129, 140, 248, 0.4); color: #818cf8; background: rgba(99, 102, 241, 0.1); cursor: pointer;">
-                    ⚙️ Parametreleri Düzenle
+                  <button type="button" onclick='openInvoiceModal(<%- JSON.stringify(o) %>)' class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; padding: 10px 22px; border-radius: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); font-size: 0.875rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                    🧾 Satış Faturası Oluştur
                   </button>
-                  <form action="/sales/invoices/create-from-order/<%= o.id %>" method="POST" style="margin: 0;">
-                    <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; padding: 9px 18px; border-radius: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); font-size: 0.825rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                      🧾 Hızlı Faturayı Kes
-                    </button>
-                  </form>
                 </div>
               </div>
             <% }); %>
@@ -238,73 +233,143 @@
     </main>
   </div>
 
-  <!-- Modal for Invoice Configuration before creation -->
-  <div id="invoiceConfigModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
-    <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px; width: 100%; max-width: 680px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); color: #fff;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">
-        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #34d399; display: flex; align-items: center; gap: 8px;">
-          <span>⚙️</span> Fatura Parametrelerini Düzenle ve Kes
-        </h3>
-        <button type="button" onclick="closeInvoiceModal()" style="background: transparent; border: none; color: #cbd5e1; font-size: 1.25rem; cursor: pointer;">✕</button>
+  <!-- STUNNING GLASSMORPHIC INVOICE CREATION & CONFIGURATION MODAL -->
+  <div id="invoiceConfigModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(6, 9, 18, 0.85); backdrop-filter: blur(16px); z-index: 9999; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;">
+    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; width: 100%; max-width: 780px; padding: 28px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); color: #fff; max-height: 90vh; overflow-y: auto;">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #34d399; display: flex; align-items: center; gap: 10px;">
+            <span>🧾</span> Resmi Satış Faturası Oluşturma Modalı
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.825rem; margin: 4px 0 0 0;">Lütfen fatura senaryosu, cari adres ve ödeme vade parametrelerini onaylayarak faturayı oluşturun.</p>
+        </div>
+        <button type="button" onclick="closeInvoiceModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+      </div>
+
+      <!-- Order Summary Card inside Modal -->
+      <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Bağlı Sipariş & Müşteri</span>
+          <div style="font-size: 1rem; font-weight: 800; color: #fff; margin-top: 2px;">
+            <span id="modalOrderNo" style="font-family: 'JetBrains Mono', monospace; color: #818cf8;">—</span> • <span id="modalCustomerName">—</span>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Fatura Tutarı</span>
+          <div id="modalTotalAmount" style="font-size: 1.25rem; font-weight: 900; color: #34d399; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">0.00 TL</div>
+        </div>
       </div>
 
       <form id="modalInvoiceForm" action="" method="POST">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-          <div class="input-group">
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Senaryosu</label>
-            <select name="invoiceScenario" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px;">
-              <option value="EARSIVFATURA" selected>e-Arşiv Fatura</option>
-              <option value="EFATURA">e-Fatura (Ticari / Temel)</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Türü</label>
-            <select name="invoiceType" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px;">
-              <option value="SATIS" selected>Satış Faturası</option>
-              <option value="IADE">İade Faturası</option>
-              <option value="ISTISNA">İstisna Faturası</option>
-              <option value="OZELMATRAH">Özel Matrah Faturası</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-          <div class="input-group">
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Ödeme Şekli & Vade Süresi</label>
-            <select name="paymentTermDays" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px;">
-              <option value="0">Peşin (Nakit / Kredi Kartı)</option>
-              <option value="15">15 Gün Vadeli</option>
-              <option value="30" selected>30 Gün Vadeli</option>
-              <option value="60">60 Gün Vadeli</option>
-              <option value="90">90 Gün Vadeli</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Döviz Kuru</label>
-            <input type="number" step="0.0001" name="exchangeRate" value="1.0000" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace;">
+        
+        <!-- SECTION 1: BELGE & SENARYO BİLGİLERİ -->
+        <div style="margin-bottom: 18px;">
+          <h4 style="font-size: 0.85rem; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <span>📄</span> 1. Fatura Belge & Senaryo Parametreleri
+          </h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Senaryosu <span style="color: #f43f5e;">*</span></label>
+              <select name="invoiceScenario" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+                <option value="EARSIVFATURA" selected>e-Arşiv Fatura (GİB Standart)</option>
+                <option value="EFATURA">e-Fatura (Ticari Senaryo)</option>
+                <option value="EFATURA_TEMEL">e-Fatura (Temel Senaryo)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Türü / Tipi <span style="color: #f43f5e;">*</span></label>
+              <select name="invoiceType" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+                <option value="SATIS" selected>Satış Faturası</option>
+                <option value="IADE">İade Faturası</option>
+                <option value="ISTISNA">İstisna Faturası (%0 KDV)</option>
+                <option value="OZELMATRAH">Özel Matrah Faturası</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-          <div class="input-group">
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Banka Adı</label>
-            <input type="text" name="bankName" value="Ziraat Bankası A.Ş. - Maslak Şubesi" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px;">
+        <!-- SECTION 2: CARİ & ADRES BİLGİLERİ -->
+        <div style="margin-bottom: 18px;">
+          <h4 style="font-size: 0.85rem; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <span>🏢</span> 2. Müşteri (Cari) & Fatura Adresi Bilgileri
+          </h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 10px;">
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Vergi Dairesi</label>
+              <input type="text" id="modalTaxOffice" name="customerTaxOffice" placeholder="Örn: Maslak V.D." style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+            </div>
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Vergi No / TCKN</label>
+              <input type="text" id="modalTaxNo" name="customerTaxNo" placeholder="Örn: 1234567890" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace;">
+            </div>
           </div>
-          <div class="input-group">
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">IBAN Numarası</label>
-            <input type="text" name="ibanNo" value="TR56 0001 0002 0003 0004 0005 06" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace;">
+
+          <div class="input-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura & Teslimat Adresi</label>
+            <input type="text" id="modalAddress" name="billingAddress" placeholder="Örn: Maslak Mah. Büyükdere Cad. No:100 Şişli / İstanbul" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Telefon</label>
+              <input type="text" id="modalPhone" name="customerPhone" placeholder="+90 212 555 0100" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+            </div>
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">E-Posta (e-Fatura Gönderim)</label>
+              <input type="email" id="modalEmail" name="customerEmail" placeholder="fatura@musteri.com" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+            </div>
           </div>
         </div>
 
-        <div class="input-group" style="margin-bottom: 18px;">
-          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Açıklaması / Notlar</label>
-          <input type="text" id="modalNotesInput" name="notes" placeholder="Örn: 30 gün vadeli teslimat faturasıdır." style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px;">
+        <!-- SECTION 3: ÖDEME & BANKA BİLGİLERİ -->
+        <div style="margin-bottom: 18px;">
+          <h4 style="font-size: 0.85rem; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <span>💳</span> 3. Ödeme Vadesi & Banka IBAN Bilgileri
+          </h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 10px;">
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Ödeme Şekli & Vade Süresi</label>
+              <select name="paymentTermDays" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px; font-weight: 600;">
+                <option value="0">Peşin (Nakit / Kredi Kartı)</option>
+                <option value="15">15 Gün Vadeli</option>
+                <option value="30" selected>30 Gün Vadeli</option>
+                <option value="60">60 Gün Vadeli</option>
+                <option value="90">90 Gün Vadeli</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Döviz Kuru</label>
+              <input type="number" step="0.0001" name="exchangeRate" value="1.0000" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Banka Adı & Şubesi</label>
+              <input type="text" name="bankName" value="Ziraat Bankası A.Ş. - Maslak Şubesi" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+            </div>
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">IBAN Numarası</label>
+              <input type="text" name="ibanNo" value="TR56 0001 0002 0003 0004 0005 06" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace;">
+            </div>
+          </div>
         </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;">
-          <button type="button" onclick="closeInvoiceModal()" class="btn btn-outline-secondary" style="padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); color: #fff; background: transparent; cursor: pointer;">İptal</button>
-          <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; padding: 10px 22px; border-radius: 8px; cursor: pointer;">
-            🧾 Faturayı Oluştur & Cari Bakiyeye İşle
+        <!-- SECTION 4: NOTLAR & AÇIKLAMA -->
+        <div class="input-group" style="margin-bottom: 22px;">
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Notu / Açıklama</label>
+          <input type="text" id="modalNotesInput" name="notes" placeholder="Örn: 30 gün vadeli teslimat faturasıdır." style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 14px; border-radius: 10px;">
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+          <button type="button" onclick="closeInvoiceModal()" class="btn btn-outline-secondary" style="padding: 10px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); color: #fff; background: transparent; cursor: pointer; font-weight: 600;">
+            İptal
+          </button>
+          <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 800; padding: 12px 28px; border-radius: 10px; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); font-size: 0.95rem; cursor: pointer;">
+            🧾 Resmi Faturayı Kes & Cari Bakiyeye İşle
           </button>
         </div>
       </form>
@@ -312,13 +377,31 @@
   </div>
 
   <script>
-    function openInvoiceModal(orderId, orderNo) {
+    function openInvoiceModal(order) {
       const modal = document.getElementById('invoiceConfigModal');
       const form = document.getElementById('modalInvoiceForm');
-      const notes = document.getElementById('modalNotesInput');
 
-      if (form) form.action = `/sales/invoices/create-from-order/${orderId}`;
-      if (notes) notes.value = `[Sipariş No: ${orderNo}] numaralı tamamlanan satış siparişi faturaya dönüştürüldü.`;
+      if (form) form.action = `/sales/invoices/create-from-order/${order.id}`;
+
+      document.getElementById('modalOrderNo').textContent = order.orderNo || '—';
+      document.getElementById('modalCustomerName').textContent = order.customerName || 'Müşteri';
+      document.getElementById('modalTotalAmount').textContent = parseFloat(order.totalAmount || 0).toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ' + (order.currency || 'TL');
+
+      if (order.customer) {
+        document.getElementById('modalTaxOffice').value = order.customer.taxOffice || 'Maslak V.D.';
+        document.getElementById('modalTaxNo').value = order.customer.taxNo || order.customerTaxNo || '';
+        document.getElementById('modalAddress').value = order.customer.address || order.billingAddress || '';
+        document.getElementById('modalPhone').value = order.customer.phone || order.customerPhone || '';
+        document.getElementById('modalEmail').value = order.customer.email || order.customerEmail || '';
+      } else {
+        document.getElementById('modalTaxOffice').value = 'Maslak V.D.';
+        document.getElementById('modalTaxNo').value = order.customerTaxNo || '';
+        document.getElementById('modalAddress').value = order.billingAddress || '';
+        document.getElementById('modalPhone').value = order.customerPhone || '';
+        document.getElementById('modalEmail').value = order.customerEmail || '';
+      }
+
+      document.getElementById('modalNotesInput').value = `[Sipariş No: ${order.orderNo}] numaralı tamamlanan satış siparişi faturaya dönüştürüldü.`;
 
       if (modal) {
         modal.style.display = 'flex';
