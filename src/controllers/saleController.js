@@ -767,48 +767,162 @@ class SaleController {
 
   // 2b. MÜŞTERİ ÖZEL FİYAT LİSTELERİ & DÖVİZ KURLARI
   listPriceLists = asyncHandler(async (req, res) => {
-    const priceLists = await priceListRepository.findAll();
+    const rawPriceLists = await priceListRepository.findAll();
     const customers = await customerRepository.findAll({ status: 'Active' });
     const stockItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
 
+    // Group price lists by customerId
+    const groupsMap = new Map();
+
+    rawPriceLists.forEach(item => {
+      const custId = item.customerId || 0;
+      if (!groupsMap.has(custId)) {
+        groupsMap.set(custId, {
+          customerId: item.customerId,
+          customerName: item.customer ? item.customer.companyName : 'Tüm Müşteriler (Genel İskonto)',
+          customerCode: item.customer ? item.customer.customerCode : 'GENEL-000',
+          customer: item.customer,
+          listName: item.listName || 'Özel Fiyat Listesi',
+          validFrom: item.validFrom,
+          validUntil: item.validUntil,
+          items: []
+        });
+      }
+      groupsMap.get(custId).items.push(item);
+    });
+
+    const groupedPriceLists = Array.from(groupsMap.values());
+
     res.render('sales/price_lists', {
       user: req.user,
-      priceLists,
+      priceLists: rawPriceLists,
+      groupedPriceLists,
       customers,
       stockItems,
-      error: null
+      error: null,
+      success: req.query.success || null
     });
   });
 
   addPriceList = asyncHandler(async (req, res) => {
     try {
-      await priceListRepository.create({
-        listName: req.body.listName || 'Özel Fiyat Tanımı',
-        customerId: req.body.customerId ? parseInt(req.body.customerId, 10) : null,
-        stockItemId: parseInt(req.body.stockItemId, 10),
-        specialPrice: parseFloat(req.body.specialPrice) || 0,
-        customDiscountRate: parseFloat(req.body.customDiscountRate) || 0,
-        currency: req.body.currency || 'TRY',
-        validFrom: req.body.validFrom || null,
-        validUntil: req.body.validUntil || null,
-        notes: req.body.notes || null,
-        status: 'Active'
-      }, req.user);
+      const listName = req.body.listName || 'Müşteri Özel Fiyat Listesi';
+      const customerId = req.body.customerId ? parseInt(req.body.customerId, 10) : null;
+      const validFrom = req.body.validFrom || null;
+      const validUntil = req.body.validUntil || null;
+      const notes = req.body.notes || null;
 
-      res.redirect('/sales/price-lists');
+      let itemsToProcess = [];
+
+      if (req.body.itemsJson) {
+        try { itemsToProcess = JSON.parse(req.body.itemsJson); } catch (e) { itemsToProcess = []; }
+      }
+
+      if (!Array.isArray(itemsToProcess) || itemsToProcess.length === 0) {
+        if (req.body.stockItemId) {
+          itemsToProcess = [{
+            stockItemId: parseInt(req.body.stockItemId, 10),
+            specialPrice: parseFloat(req.body.specialPrice) || 0,
+            customDiscountRate: parseFloat(req.body.customDiscountRate) || 0,
+            currency: req.body.currency || 'TRY'
+          }];
+        }
+      }
+
+      if (itemsToProcess.length === 0) {
+        throw new Error('Lütfen özel fiyat tanımlanacak en az 1 adet ürün ekleyiniz.');
+      }
+
+      for (const it of itemsToProcess) {
+        const stockItemId = parseInt(it.stockItemId, 10);
+        if (!stockItemId) continue;
+
+        const specPrice = parseFloat(it.specialPrice) || 0;
+        const discRate = parseFloat(it.customDiscountRate) || 0;
+        const curr = it.currency || 'TRY';
+
+        const existing = await CustomerPriceList.findOne({
+          where: {
+            customerId: customerId,
+            stockItemId: stockItemId
+          }
+        });
+
+        if (existing) {
+          await existing.update({
+            listName,
+            specialPrice: specPrice,
+            customDiscountRate: discRate,
+            currency: curr,
+            validFrom,
+            validUntil,
+            notes,
+            status: 'Active'
+          });
+        } else {
+          await priceListRepository.create({
+            listName,
+            customerId,
+            stockItemId,
+            specialPrice: specPrice,
+            customDiscountRate: discRate,
+            currency: curr,
+            validFrom,
+            validUntil,
+            notes,
+            status: 'Active'
+          }, req.user);
+        }
+      }
+
+      res.redirect('/sales/price-lists?success=' + encodeURIComponent('✅ Müşteri özel fiyat listesi başarıyla kaydedildi.'));
     } catch (err) {
-      const priceLists = await priceListRepository.findAll();
+      const rawPriceLists = await priceListRepository.findAll();
       const customers = await customerRepository.findAll({ status: 'Active' });
       const stockItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
 
+      const groupsMap = new Map();
+      rawPriceLists.forEach(item => {
+        const custId = item.customerId || 0;
+        if (!groupsMap.has(custId)) {
+          groupsMap.set(custId, {
+            customerId: item.customerId,
+            customerName: item.customer ? item.customer.companyName : 'Tüm Müşteriler (Genel İskonto)',
+            customerCode: item.customer ? item.customer.customerCode : 'GENEL-000',
+            customer: item.customer,
+            listName: item.listName || 'Özel Fiyat Listesi',
+            validFrom: item.validFrom,
+            validUntil: item.validUntil,
+            items: []
+          });
+        }
+        groupsMap.get(custId).items.push(item);
+      });
+
       res.render('sales/price_lists', {
         user: req.user,
-        priceLists,
+        priceLists: rawPriceLists,
+        groupedPriceLists: Array.from(groupsMap.values()),
         customers,
         stockItems,
-        error: err.message || 'Fiyat listesi kaydı oluşturulurken hata oluştu.'
+        error: err.message || 'Fiyat listesi kaydı oluşturulurken hata oluştu.',
+        success: null
       });
     }
+  });
+
+  deleteCustomerPriceLists = asyncHandler(async (req, res) => {
+    const { customerId } = req.params;
+    const targetCustId = customerId === '0' || customerId === 'null' ? null : parseInt(customerId, 10);
+    
+    await CustomerPriceList.destroy({ where: { customerId: targetCustId } });
+    res.redirect('/sales/price-lists?success=' + encodeURIComponent('✅ Seçilen müşteriye ait özel fiyat tanımları silindi.'));
+  });
+
+  deletePriceListItem = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    await CustomerPriceList.destroy({ where: { id: parseInt(id, 10) } });
+    res.redirect('/sales/price-lists?success=' + encodeURIComponent('✅ Özel fiyat ürünü silindi.'));
   });
 
 

@@ -33,6 +33,8 @@ router.post('/quotes/:id/convert', saleController.convertQuotationToOrder);
 // 2b. Özel Fiyat Listeleri
 router.get('/price-lists', saleController.listPriceLists);
 router.post('/price-lists/add', saleController.addPriceList);
+router.post('/price-lists/delete-customer/:customerId', saleController.deleteCustomerPriceLists);
+router.post('/price-lists/delete-item/:id', saleController.deletePriceListItem);
 
 // 3. Cari & Müşteri Kartları Routes
 router.get('/customers', saleController.listCustomers);

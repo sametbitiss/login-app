@@ -5,20 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Özel Fiyat Listeleri — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     .pl-card { 
-      background: var(--bg-surface); 
-      border: 1px solid var(--border); 
-      border-radius: 16px; 
-      padding: 28px; 
-      box-shadow: var(--shadow-md); 
+      background: rgba(15, 23, 42, 0.75); 
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08); 
+      border-radius: 20px; 
+      padding: 24px; 
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); 
       margin-bottom: 24px; 
     }
-    .pl-title { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-    .badge-special { background: var(--indigo-soft); color: var(--indigo); font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; border: 1px solid rgba(99, 102, 241, 0.2); }
-    .badge-global { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; border: 1px solid var(--border); }
-    .price-tag { font-weight: 800; color: var(--emerald); font-size: 1.05rem; font-family: 'JetBrains Mono', monospace; }
+    .pl-title { 
+      font-size: 1.15rem; 
+      font-weight: 800; 
+      color: #fff; 
+      margin: 0 0 16px 0; 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+    }
+    .badge-special { 
+      background: rgba(99, 102, 241, 0.15); 
+      color: #818cf8; 
+      font-weight: 700; 
+      padding: 4px 10px; 
+      border-radius: 8px; 
+      font-size: 0.775rem; 
+      border: 1px solid rgba(99, 102, 241, 0.3); 
+      font-family: 'JetBrains Mono', monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge-global { 
+      background: rgba(245, 158, 11, 0.15); 
+      color: #fbbf24; 
+      font-weight: 700; 
+      padding: 4px 10px; 
+      border-radius: 8px; 
+      font-size: 0.775rem; 
+      border: 1px solid rgba(245, 158, 11, 0.3); 
+    }
+    .price-tag { 
+      font-weight: 800; 
+      color: #34d399; 
+      font-size: 0.95rem; 
+      font-family: 'JetBrains Mono', monospace; 
+    }
+    .item-pill {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.775rem;
+      color: #e2e8f0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 2px;
+    }
   </style>
 </head>
 <body class="module-body">
@@ -87,7 +133,7 @@
     </header>
 
     <main class="module-content">
-      <!-- Sub-Nav Bar: Matching Sidebar Order exactly -->
+      <!-- Sub-Nav Bar -->
       <div class="module-subnav">
         <a href="/sales/analytics" class="msn-link">📊 Satış Analitiği</a>
         <a href="/sales/approvals" class="msn-link">⚡ Yönetsel Onaylar</a>
@@ -99,137 +145,435 @@
         <a href="/sales/price-lists" class="msn-link active">💰 Özel Fiyat Listeleri</a>
       </div>
 
-      <div class="page-header">
+      <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
-          <h1>Müşteriye Özel Fiyat Listeleri ve İskonto Tanımları</h1>
-          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Müşterilere özel ürün satış fiyatları, özel iskonto oranları ve geçerlilik süreleri yönetimi.</p>
+          <h1 style="font-size: 1.5rem; font-weight: 900; color: #fff; margin: 0;">Müşteriye Özel Fiyat Listeleri ve İskonto Tanımları</h1>
+          <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">Müşterilere özel ürün satış fiyatları, özel iskonto oranları ve sözleşme süreleri yönetimi.</p>
         </div>
       </div>
 
       <% if (error) { %>
-        <div class="alert alert-danger mb-4"><%= error %></div>
+        <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #f43f5e; padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; font-weight: 600; font-size: 0.9rem;">
+          ⚠️ <%= error %>
+        </div>
       <% } %>
 
-      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
-        <!-- New Price List Form -->
-        <div class="pl-card">
-          <h2 class="pl-title">➕ Yeni Özel Fiyat Tanımla</h2>
-          <form action="/sales/price-lists/add" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
-            <div class="input-group">
-              <label>Liste / Kampanya Adı</label>
-              <input type="text" name="listName" placeholder="ör. VIP Müşteri Fiyat Listesi" required>
-            </div>
+      <% if (success) { %>
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; font-weight: 600; font-size: 0.9rem;">
+          <%= success %>
+        </div>
+      <% } %>
 
-            <div class="input-group">
-              <label>Müşteri (Boş ise tüm müşteriler için geçerli)</label>
-              <select name="customerId">
-                <option value="">-- Tüm Müşteriler (Genel İskonto) --</option>
-                <% customers.forEach(c => { %>
-                  <option value="<%= c.id %>"><%= c.customerCode %> - <%= c.companyName %></option>
-                <% }); %>
-              </select>
-            </div>
+      <!-- SECTION 1: NEW MULTI-PRODUCT PRICE LIST DEFINITION CARD -->
+      <div class="pl-card" style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 1rem;">
+          <div>
+            <h2 class="pl-title" style="margin: 0;">
+              <span style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;">➕</span>
+              Yeni Müşteri Özel Fiyat Listesi Tanımla
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.825rem; margin: 4px 0 0 0;">Seçilen müşteriye tek seferde dilediğiniz kadar ürün için özel fiyat ve iskonto oranı tanımlayabilirsiniz.</p>
+          </div>
 
-            <div class="input-group">
-              <label>Stok Ürünü</label>
-              <select name="stockItemId" required>
-                <option value="">-- Ürün Seçin --</option>
-                <% stockItems.forEach(s => { %>
-                  <option value="<%= s.id %>"><%= s.stockCode %> - <%= s.name %> (Liste: <%= Number(s.salePrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL)</option>
-                <% }); %>
-              </select>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div class="input-group">
-                <label>Özel Birim Fiyat</label>
-                <input type="number" step="0.01" name="specialPrice" placeholder="0.00" required>
-              </div>
-              <div class="input-group">
-                <label>Özel İskonto (%)</label>
-                <input type="number" step="0.01" name="customDiscountRate" value="0.00">
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label>Para Birimi</label>
-              <select name="currency">
-                <option value="TRY">TRY (₺)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-              </select>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div class="input-group">
-                <label>Başlangıç Tarihi</label>
-                <input type="date" name="validFrom">
-              </div>
-              <div class="input-group">
-                <label>Bitiş Tarihi</label>
-                <input type="date" name="validUntil">
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label>Açıklama / Notlar</label>
-              <textarea name="notes" rows="2" placeholder="Sözleşme notları veya kampanya detayları..."></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">Fiyat Listesi Kaydet</button>
-          </form>
+          <button type="button" onclick="addNewRow()" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 600; padding: 9px 18px; border-radius: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+            <span>+</span> Yeni Özel Fiyatlı Ürün Ekle
+          </button>
         </div>
 
-        <!-- Price Lists Table -->
-        <div class="pl-card">
-          <h2 class="pl-title">📋 Aktif Özel Fiyat Listeleri (<%= priceLists.length %>)</h2>
-          <div class="table-wrapper">
-            <table class="table">
+        <form action="/sales/price-lists/add" method="POST" id="priceListForm">
+          <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
+
+          <!-- Header Inputs Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 1.25rem;">
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Liste / Sözleşme Adı</label>
+              <input type="text" name="listName" value="2026 Müşteri Özel Fiyat Listesi" placeholder="ör. VIP Müşteri Fiyat Listesi" required style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+            </div>
+
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Cari Müşteri Seçimi</label>
+              <select name="customerId" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px; font-weight: 600;">
+                <option value="">-- Tüm Müşteriler (Genel Fiyat Listesi) --</option>
+                <% customers.forEach(c => { %>
+                  <option value="<%= c.id %>">[<%= c.customerCode %>] <%= c.companyName %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Geçerlilik Başlangıç Tarihi</label>
+              <input type="date" name="validFrom" value="<%= new Date().toISOString().split('T')[0] %>" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+            </div>
+
+            <div class="input-group">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Geçerlilik Bitiş Tarihi</label>
+              <input type="date" name="validUntil" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+            </div>
+          </div>
+
+          <!-- Multi-Product Table -->
+          <div style="overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8); margin-bottom: 1.25rem;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="itemsTable">
               <thead>
-                <tr>
-                  <th>Liste Adı</th>
-                  <th>Müşteri</th>
-                  <th>Ürün</th>
-                  <th>Özel Fiyat</th>
-                  <th>İskonto</th>
-                  <th>Para Birimi</th>
-                  <th>Geçerlilik</th>
+                <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
+                  <th style="padding: 12px 14px; width: 40px; text-align: center;">#</th>
+                  <th style="padding: 12px 14px;">Stok / Ürün Kalemi</th>
+                  <th style="padding: 12px 14px; width: 140px; text-align: right;">Liste Satış Fiyatı</th>
+                  <th style="padding: 12px 14px; width: 150px; text-align: right;">Müşteriye Özel Fiyat</th>
+                  <th style="padding: 12px 14px; width: 130px; text-align: center;">Özel İskonto (%)</th>
+                  <th style="padding: 12px 14px; width: 110px; text-align: center;">Para Birimi</th>
+                  <th style="padding: 12px 14px; width: 50px; text-align: center;">Sil</th>
                 </tr>
               </thead>
-              <tbody>
-                <% if (priceLists.length === 0) { %>
-                  <tr>
-                    <td colspan="7" class="text-center text-muted" style="padding: 32px;">Henüz özel fiyat listesi tanımlanmamış.</td>
-                  </tr>
-                <% } else { %>
-                  <% priceLists.forEach(pl => { %>
-                    <tr>
-                      <td><strong style="color: var(--text-primary);"><%= pl.listName %></strong></td>
-                      <td>
-                        <% if (pl.customer) { %>
-                          <span class="badge-special"><%= pl.customer.companyName %></span>
-                        <% } else { %>
-                          <span class="badge-global">Tüm Müşteriler</span>
-                        <% } %>
-                      </td>
-                      <td><span style="color: var(--text-primary); font-weight: 600;"><%= pl.stockItem ? pl.stockItem.name : '-' %></span></td>
-                      <td><span class="price-tag"><%= Number(pl.specialPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %></span></td>
-                      <td><strong style="color: var(--rose);">%<%= pl.customDiscountRate %></strong></td>
-                      <td><span class="badge bg-secondary" style="font-family: 'JetBrains Mono', monospace;"><%= pl.currency %></span></td>
-                      <td>
-                        <small style="color: var(--text-secondary); font-size: 0.8rem;">
-                          <%= pl.validFrom ? pl.validFrom : 'Her zaman' %> — <%= pl.validUntil ? pl.validUntil : 'Süresiz' %>
-                        </small>
-                      </td>
-                    </tr>
-                  <% }); %>
-                <% } %>
+              <tbody id="itemsTbody">
+                <!-- Rows injected dynamically by JS -->
               </tbody>
             </table>
           </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.825rem; color: var(--text-muted);">
+              💡 <em>Not: Bir müşteri için aynı ürüne önceden tanımlanmış özel fiyat varsa otomatik güncellenir.</em>
+            </div>
+            <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 800; padding: 11px 24px; border-radius: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); font-size: 0.9rem; cursor: pointer;">
+              💾 Müşteri Özel Fiyat Listesini Kaydet
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- SECTION 2: CUSTOMER-BASED GROUPED PRICE LISTS TABLE (HER MÜŞTERİ İÇİN TEK SATIR) -->
+      <div class="pl-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 1rem;">
+          <div>
+            <h2 class="pl-title" style="margin: 0;">
+              <span>📋</span> Aktif Özel Fiyat Listeleri (Müşteri Bazında)
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.825rem; margin: 4px 0 0 0;">Aşağıda sistemde özel fiyat tanımlanmış tüm cari müşteriler tek bir satır halinde özetlenmiştir.</p>
+          </div>
+          <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;">
+            <%= groupedPriceLists.length %> Müşteride Özel Fiyat Tanımlı
+          </span>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Cari Müşteri Unvanı</th>
+                <th>Müşteri Kodu</th>
+                <th style="width: 35%;">Tanımlı Özel Fiyatlı Ürün Özeti</th>
+                <th style="text-align: center;">Toplam Ürün</th>
+                <th>Geçerlilik Tarihi</th>
+                <th>Durum</th>
+                <th style="text-align: center;">İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (groupedPriceLists.length === 0) { %>
+                <tr>
+                  <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    Henüz tanımlanmış bir özel fiyat listesi bulunmamaktadır.
+                  </td>
+                </tr>
+              <% } else { %>
+                <% groupedPriceLists.forEach(g => { %>
+                  <tr>
+                    <td>
+                      <strong style="color: #fff; font-size: 0.95rem;"><%= g.customerName %></strong>
+                      <% if (!g.customerId) { %>
+                        <span class="badge-global" style="display: inline-block; margin-left: 6px;">Genel Liste</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <span style="font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 600;"><%= g.customerCode %></span>
+                    </td>
+                    <td>
+                      <div style="display: flex; flex-wrap: wrap; gap: 4px; max-height: 70px; overflow-y: auto;">
+                        <% g.items.slice(0, 3).forEach(it => { %>
+                          <span class="item-pill">
+                            <strong style="color: #34d399;"><%= it.stockItem ? it.stockItem.stockCode : 'STK' %></strong>: 
+                            <span class="price-tag" style="font-size: 0.8rem;"><%= parseFloat(it.specialPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= it.currency %></span>
+                            <% if (parseFloat(it.customDiscountRate) > 0) { %>
+                              <small style="color: #fb7185; font-weight: 700;">(%<%= parseFloat(it.customDiscountRate) %> İsk.)</small>
+                            <% } %>
+                          </span>
+                        <% }); %>
+                        <% if (g.items.length > 3) { %>
+                          <span class="item-pill" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-weight: 700;">
+                            +<%= g.items.length - 3 %> Diğer Ürün
+                          </span>
+                        <% } %>
+                      </div>
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="badge-special">
+                        📦 <%= g.items.length %> Ürün
+                      </span>
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                      <% if (g.validFrom) { %>
+                        <%= new Date(g.validFrom).toLocaleDateString('tr-TR') %> <%= g.validUntil ? ' - ' + new Date(g.validUntil).toLocaleDateString('tr-TR') : ' (Süresiz)' %>
+                      <% } else { %>
+                        Süresiz
+                      <% } %>
+                    </td>
+                    <td>
+                      <span class="status-pill status-active">● Aktif</span>
+                    </td>
+                    <td style="text-align: center;">
+                      <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                        <button type="button" onclick='openDetailModal(<%- JSON.stringify(g) %>)' class="btn btn-sm btn-outline-info" style="font-size: 0.775rem; padding: 6px 12px; border-radius: 8px;">
+                          👁️ Detay / Düzenle
+                        </button>
+                        <form action="/sales/price-lists/delete-customer/<%= g.customerId || 0 %>" method="POST" onsubmit="return confirm('⚠️ Bu müşteriye ait TÜM özel fiyat tanımlarını silmek istediğinize emin misiniz?');" style="margin: 0;">
+                          <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.775rem; padding: 6px 10px; border-radius: 8px;">
+                            🗑️ Sil
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
         </div>
       </div>
     </main>
   </div>
+
+  <!-- GLASSMORPHIC CUSTOMER PRICE LIST DETAIL MODAL -->
+  <div id="priceListDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(6, 9, 18, 0.85); backdrop-filter: blur(16px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; width: 100%; max-width: 820px; padding: 28px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); color: #fff; max-height: 90vh; overflow-y: auto;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #34d399; display: flex; align-items: center; gap: 10px;">
+            <span>💰</span> <span id="modalCustomerTitle">Müşteri Özel Fiyat Listesi Detayı</span>
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.825rem; margin: 4px 0 0 0;">Aşağıda bu müşteriye özel tanımlanmış tüm ürün birim fiyatları ve iskonto oranları listelenmiştir.</p>
+        </div>
+        <button type="button" onclick="closeDetailModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+      </div>
+
+      <div style="overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Stok Kodu</th>
+              <th>Ürün Adı</th>
+              <th style="text-align: right;">Liste Fiyatı</th>
+              <th style="text-align: right;">Müşteriye Özel Fiyat</th>
+              <th style="text-align: center;">Özel İskonto %</th>
+              <th style="text-align: center;">Geçerlilik</th>
+              <th style="text-align: center;">İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="modalItemsTbody">
+            <!-- Modal rows injected dynamically by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button type="button" onclick="closeDetailModal()" class="btn btn-outline-secondary" style="padding: 9px 22px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); color: #fff; background: transparent; cursor: pointer; font-weight: 600;">
+          Pencereyi Kapat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Item Master Catalog JSON Data -->
+  <script id="stockCatalogData" type="application/json">
+    <%- JSON.stringify(stockItems || []) %>
+  </script>
+
+  <script>
+    const stockCatalog = JSON.parse(document.getElementById('stockCatalogData').textContent || '[]');
+    let rowIdCounter = 0;
+
+    function addNewRow(initialData = null) {
+      rowIdCounter++;
+      const tbody = document.getElementById('itemsTbody');
+      const tr = document.createElement('tr');
+      tr.id = `row-${rowIdCounter}`;
+
+      const stockOptionsHtml = stockCatalog.map(st => `
+        <option value="${st.id}" data-code="${st.stockCode}" data-price="${st.salePrice}">
+          [${st.stockCode}] ${st.name} (Liste: ${parseFloat(st.salePrice).toLocaleString('tr-TR')} ₺)
+        </option>
+      `).join('');
+
+      const defaultPrice = stockCatalog[0] ? stockCatalog[0].salePrice : 0;
+      const price = initialData ? initialData.specialPrice : defaultPrice;
+      const discount = initialData ? initialData.customDiscountRate : 0;
+      const currency = initialData ? initialData.currency : 'TRY';
+
+      tr.innerHTML = `
+        <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">1</td>
+        <td style="padding: 12px 14px;">
+          <select class="item-stock-id" onchange="onStockSelect(this, ${rowIdCounter})" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; font-weight: 600;">
+            ${stockOptionsHtml}
+          </select>
+        </td>
+        <td style="padding: 12px 14px; text-align: right;">
+          <span class="item-ref-price" style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 0.85rem;">${parseFloat(defaultPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</span>
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.01" min="0" value="${price}" class="item-special-price" oninput="updateItemsPayload()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #34d399; padding: 8px 10px; border-radius: 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.1" min="0" max="100" value="${discount}" class="item-discount" oninput="updateItemsPayload()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fb7185; padding: 8px 10px; border-radius: 8px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <select class="item-currency" onchange="updateItemsPayload()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; text-align: center;">
+            <option value="TRY" ${currency === 'TRY' ? 'selected' : ''}>TRY (₺)</option>
+            <option value="USD" ${currency === 'USD' ? 'selected' : ''}>USD ($)</option>
+            <option value="EUR" ${currency === 'EUR' ? 'selected' : ''}>EUR (€)</option>
+          </select>
+        </td>
+        <td style="padding: 12px 14px; text-align: center;">
+          <button type="button" onclick="removeRow(${rowIdCounter})" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #f43f5e; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
+            ✕
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+      updateRowIndices();
+      updateItemsPayload();
+    }
+
+    function removeRow(id) {
+      const tbody = document.getElementById('itemsTbody');
+      if (tbody.children.length <= 1) {
+        alert('⚠️ Fiyat listesinde en az 1 adet ürün bulunmalıdır.');
+        return;
+      }
+      const tr = document.getElementById(`row-${id}`);
+      if (tr) {
+        tr.remove();
+        updateRowIndices();
+        updateItemsPayload();
+      }
+    }
+
+    function updateRowIndices() {
+      const rows = document.querySelectorAll('#itemsTbody tr');
+      rows.forEach((tr, index) => {
+        const indexTd = tr.querySelector('.row-index');
+        if (indexTd) indexTd.textContent = index + 1;
+      });
+    }
+
+    function onStockSelect(selectEl, rowId) {
+      const option = selectEl.options[selectEl.selectedIndex];
+      const price = parseFloat(option.getAttribute('data-price')) || 0;
+      const tr = document.getElementById(`row-${rowId}`);
+
+      if (tr) {
+        const refEl = tr.querySelector('.item-ref-price');
+        const priceInput = tr.querySelector('.item-special-price');
+        if (refEl) refEl.textContent = price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' TL';
+        if (priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
+          priceInput.value = price;
+        }
+        updateItemsPayload();
+      }
+    }
+
+    function updateItemsPayload() {
+      const rows = document.querySelectorAll('#itemsTbody tr');
+      const itemsPayload = [];
+
+      rows.forEach(tr => {
+        const stockSelect = tr.querySelector('.item-stock-id');
+        const stockItemId = stockSelect ? stockSelect.value : '';
+        const specialPrice = parseFloat(tr.querySelector('.item-special-price').value) || 0;
+        const customDiscountRate = parseFloat(tr.querySelector('.item-discount').value) || 0;
+        const currency = tr.querySelector('.item-currency').value || 'TRY';
+
+        if (stockItemId) {
+          itemsPayload.push({
+            stockItemId,
+            specialPrice,
+            customDiscountRate,
+            currency
+          });
+        }
+      });
+
+      document.getElementById('itemsJsonInput').value = JSON.stringify(itemsPayload);
+    }
+
+    // Modal Details Logic
+    function openDetailModal(group) {
+      const modal = document.getElementById('priceListDetailModal');
+      const title = document.getElementById('modalCustomerTitle');
+      const tbody = document.getElementById('modalItemsTbody');
+
+      if (title) title.textContent = `[${group.customerCode}] ${group.customerName} — Özel Fiyat Listesi Detayı`;
+      
+      tbody.innerHTML = '';
+      group.items.forEach(it => {
+        const tr = document.createElement('tr');
+        const stockCode = it.stockItem ? it.stockItem.stockCode : '—';
+        const stockName = it.stockItem ? it.stockItem.name : 'Stok Ürünü';
+        const salePrice = it.stockItem ? parseFloat(it.stockItem.salePrice) : 0;
+        const specPrice = parseFloat(it.specialPrice);
+        const discRate = parseFloat(it.customDiscountRate);
+
+        tr.innerHTML = `
+          <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">${stockCode}</strong></td>
+          <td><strong>${stockName}</strong></td>
+          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">${salePrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</td>
+          <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34d399;">${specPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${it.currency}</td>
+          <td style="text-align: center; font-weight: 700; color: #fb7185;">%${discRate}</td>
+          <td style="text-align: center; font-size: 0.8rem; color: var(--text-muted);">${it.validFrom || 'Süresiz'}</td>
+          <td style="text-align: center;">
+            <form action="/sales/price-lists/delete-item/${it.id}" method="POST" onsubmit="return confirm('⚠️ Bu ürünü özel fiyat listesinden silmek istediğinize emin misiniz?');" style="margin:0;">
+              <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.725rem; padding: 4px 8px; border-radius: 6px;">🗑️ Sil</button>
+            </form>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById('priceListDetailModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Initialize with 1 empty row
+    addNewRow();
+
+    const form = document.getElementById('priceListForm');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        updateItemsPayload();
+        const payload = document.getElementById('itemsJsonInput').value;
+        let arr = [];
+        try { arr = JSON.parse(payload); } catch(err) { arr = []; }
+
+        if (!arr || arr.length === 0) {
+          e.preventDefault();
+          alert('⚠️ Lütfen en az 1 adet stok ürünü için özel fiyat giriniz!');
+          return false;
+        }
+      });
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
 </body>
 </html>
