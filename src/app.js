@@ -41,6 +41,11 @@ app.use(errorHandler);
 // Database Sync and Data Seeding
 sequelize.sync({ alter: true }).then(async () => {
   console.log('Database synced successfully with models.');
+  try {
+    await sequelize.query(`ALTER TABLE "StockItems" ADD COLUMN IF NOT EXISTS "procurementMethod" VARCHAR(50) DEFAULT 'Satın Alma';`);
+  } catch (e) {
+    console.log('procurementMethod alter query:', e.message);
+  }
   await seedInitialData();
 }).catch((err) => {
   console.error('Database Sync Error:', err);

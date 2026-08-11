@@ -65,6 +65,9 @@ class StockRepository {
       ...data,
       barcode: (data.barcode && data.barcode.trim()) ? data.barcode.trim() : null,
       category: data.category || 'Ticari_Mal',
+      procurementMethod: data.procurementMethod || (
+        (data.category === 'Yari_Mamul' || data.category === 'Yarı_Mamul' || data.category === 'Mamul') ? 'Üretim' : 'Satın Alma'
+      ),
       unit: data.unit || 'Adet',
       currency: data.currency || 'TRY',
       currentStock: (data.currentStock !== undefined && data.currentStock !== '' && !isNaN(parseFloat(data.currentStock))) ? parseFloat(data.currentStock) : 0,

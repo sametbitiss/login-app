@@ -308,6 +308,17 @@
               </div>
 
               <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>Tedarik Yöntemi *</span>
+                  <span style="color: #818cf8; font-size: 0.72rem;">🔄 SÜREÇ TÜRÜ</span>
+                </label>
+                <select name="procurementMethod" id="procurementMethodSelect" class="aesthetic-input" required style="cursor: pointer;">
+                  <option value="Satın Alma" <%= (formData && formData.procurementMethod === 'Satın Alma') ? 'selected' : '' %>>🛒 Satın Alma (Tedarikçiden Alınır)</option>
+                  <option value="Üretim" <%= (formData && formData.procurementMethod === 'Üretim') ? 'selected' : '' %>>⚙️ Üretim (Fabrikada İmal Edilir)</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
                 <label class="aesthetic-label">Marka / Üretici</label>
                 <input type="text" name="brand" placeholder="Örn: Erdemir / Bosch" class="aesthetic-input">
               </div>

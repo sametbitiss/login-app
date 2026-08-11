@@ -32,6 +32,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'Ticari_Mal'
     },
+    procurementMethod: {
+      type: DataTypes.ENUM('Satın Alma', 'Üretim', 'Purchase', 'Production'),
+      allowNull: false,
+      defaultValue: 'Satın Alma'
+    },
     unit: {
       type: DataTypes.ENUM('Adet', 'Kg', 'Lt', 'Mt', 'M2', 'M3', 'Paket', 'Koli', 'Ton', 'Set'),
       allowNull: false,

@@ -142,6 +142,7 @@
               <th>Stok Kodu</th>
               <th>Malzeme Adı</th>
               <th>Kategori</th>
+              <th>Tedarik Yöntemi</th>
               <th>Birim</th>
               <th>Fiziksel Stok</th>
               <th>Rezerve Stok</th>
@@ -171,6 +172,14 @@
                     <% if (item.barcode) { %><div style="font-size: 0.75rem; color: var(--text-muted);">Barkod: <%= item.barcode %></div><% } %>
                   </td>
                   <td><span class="status-pill status-approved"><%= item.category %></span></td>
+                  <td>
+                    <% const method = item.procurementMethod || ((item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul' || item.category === 'Mamul') ? 'Üretim' : 'Satın Alma'); %>
+                    <% if (method === 'Üretim') { %>
+                      <span class="status-pill status-onleave" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">⚙️ Üretim</span>
+                    <% } else { %>
+                      <span class="status-pill status-pending" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">🛒 Satın Alma</span>
+                    <% } %>
+                  </td>
                   <td><%= item.unit %></td>
                   <td>
                     <strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;"><%= parseFloat(item.currentStock || 0).toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %></strong>
