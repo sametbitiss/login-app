@@ -202,7 +202,7 @@
 
             <div class="input-group">
               <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Geçerlilik Başlangıç Tarihi</label>
-              <input type="date" name="validFrom" value="" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+              <input type="date" name="validFrom" id="validFromInput" value="" min="<%= new Date().toISOString().split('T')[0] %>" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
             </div>
 
             <div class="input-group">
@@ -592,6 +592,16 @@
     if (form) {
       form.addEventListener('submit', function(e) {
         updateItemsPayload();
+
+        const validFromInput = document.getElementById('validFromInput');
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (validFromInput && validFromInput.value && validFromInput.value < todayStr) {
+          e.preventDefault();
+          alert('⚠️ Geçerlilik başlangıç tarihi bugünden eski bir tarih olamaz!');
+          validFromInput.focus();
+          return false;
+        }
+
         const rows = document.querySelectorAll('#itemsTbody tr');
         let hasError = false;
 

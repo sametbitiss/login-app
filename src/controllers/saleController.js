@@ -812,6 +812,11 @@ class SaleController {
       const validUntil = req.body.validUntil || null;
       const notes = req.body.notes || null;
 
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (validFrom && validFrom < todayStr) {
+        throw new Error('⚠️ Geçerlilik başlangıç tarihi bugünden eski bir tarih olamaz!');
+      }
+
       let itemsToProcess = [];
 
       if (req.body.itemsJson) {
