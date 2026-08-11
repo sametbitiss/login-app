@@ -321,10 +321,11 @@
                   <thead>
                     <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
                       <th style="padding: 12px 14px; width: 40px; text-align: center;">#</th>
-                      <th style="padding: 12px 14px; min-width: 220px;">Ürün / Mamul Kalemi</th>
-                      <th style="padding: 12px 14px; width: 140px; text-align: center;">Sipariş Miktarı</th>
-                      <th style="padding: 12px 14px; width: 180px; text-align: center;">Sevk Edilecek Miktar</th>
-                      <th style="padding: 12px 14px; min-width: 200px;">Miktar Doğrulama Durumu</th>
+                      <th style="padding: 12px 14px; min-width: 200px;">Ürün / Mamul Kalemi</th>
+                      <th style="padding: 12px 14px; width: 140px; text-align: center;">Sipariş / Önceki Sevk</th>
+                      <th style="padding: 12px 14px; width: 150px; text-align: center;">Kalan Sevk Edilebilir</th>
+                      <th style="padding: 12px 14px; width: 160px; text-align: center;">Bu Sevkiyatta Gönderilecek</th>
+                      <th style="padding: 12px 14px; min-width: 180px;">Miktar Doğrulama Durumu</th>
                     </tr>
                   </thead>
                   <tbody id="dispatchItemsTbody">
@@ -596,6 +597,10 @@
 
       itemsList.forEach((it, idx) => {
         const orderedQty = parseFloat(it.quantity) || 1;
+        const stockItemIdKey = String(it.stockItemId || order.stockItemId || '');
+        const alreadyDispatched = parseFloat(order.dispatchedQtyMap ? order.dispatchedQtyMap[stockItemIdKey] : 0) || 0;
+        const remainingQty = Math.max(0, orderedQty - alreadyDispatched);
+
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid var(--border)';
 
@@ -609,18 +614,26 @@
             <input type="hidden" class="item-name" value="${it.name || ''}">
             <input type="hidden" class="item-unit-price" value="${it.unitPrice || 0}">
             <input type="hidden" class="item-ordered-qty" value="${orderedQty}">
+            <input type="hidden" class="item-already-dispatched" value="${alreadyDispatched}">
+            <input type="hidden" class="item-remaining-qty" value="${remainingQty}">
           </td>
           <td style="padding: 12px 14px; text-align: center;">
-            <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; border: 1px solid rgba(99, 102, 241, 0.3);">
-              ${orderedQty.toLocaleString('tr-TR')} Adet
+            <div style="font-size: 0.85rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;">
+              <span style="color: var(--text-secondary);">${orderedQty.toLocaleString('tr-TR')} Sipariş</span>
+              ${alreadyDispatched > 0 ? `<br><span style="color: #fb7185; font-size: 0.75rem;">(-${alreadyDispatched.toLocaleString('tr-TR')} Önceki Sevk)</span>` : ''}
+            </div>
+          </td>
+          <td style="padding: 12px 14px; text-align: center;">
+            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+              ${remainingQty.toLocaleString('tr-TR')} Adet
             </span>
           </td>
           <td style="padding: 12px 14px; text-align: center;">
-            <input type="number" step="0.01" min="0" max="${orderedQty}" value="${orderedQty}" class="dispatch-qty-input" oninput="validateRowQty(this, ${orderedQty})" style="width: 120px; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; text-align: center;">
+            <input type="number" step="0.01" min="0" max="${remainingQty}" value="${remainingQty}" class="dispatch-qty-input" oninput="validateRowQty(this, ${remainingQty})" style="width: 110px; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; text-align: center;">
           </td>
           <td style="padding: 12px 14px;" class="row-status-col">
             <span class="status-valid-badge" style="color: #34d399; font-weight: 600; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
-              ✓ Uygundur (Max: ${orderedQty} Adet)
+              ✓ Uygundur (Max: ${remainingQty} Adet)
             </span>
           </td>
         `;
@@ -633,7 +646,7 @@
       updateDispatchItemsPayload();
     }
 
-    function validateRowQty(inputEl, maxOrderedQty) {
+    function validateRowQty(inputEl, maxRemainingQty) {
       const val = parseFloat(inputEl.value);
       const tr = inputEl.closest('tr');
       const statusCol = tr ? tr.querySelector('.row-status-col') : null;
@@ -648,13 +661,13 @@
             </span>
           `;
         }
-      } else if (val > maxOrderedQty) {
+      } else if (val > maxRemainingQty) {
         inputEl.style.borderColor = '#f43f5e';
         inputEl.style.boxShadow = '0 0 10px rgba(244, 63, 94, 0.4)';
         if (statusCol) {
           statusCol.innerHTML = `
             <span style="color: #f43f5e; font-weight: 700; font-size: 0.8rem; background: rgba(244, 63, 94, 0.1); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(244, 63, 94, 0.3);">
-              ⚠️ Miktar Aşımı! Max ${maxOrderedQty} Adet sevk edilebilir.
+              ⚠️ Miktar Aşımı! Kalan max ${maxRemainingQty} Adet sevk edilebilir.
             </span>
           `;
         }
@@ -674,7 +687,7 @@
         if (statusCol) {
           statusCol.innerHTML = `
             <span style="color: #34d399; font-weight: 600; font-size: 0.8rem;">
-              ✓ Uygundur (Max: ${maxOrderedQty} Adet)
+              ✓ Uygundur (Max: ${maxRemainingQty} Adet)
             </span>
           `;
         }

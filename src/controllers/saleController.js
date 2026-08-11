@@ -852,14 +852,47 @@ class SaleController {
     }
   });
 
-  // 4. SEVKİYAT VE İRSALİYELER
-  listDispatches = asyncHandler(async (req, res) => {
-    const dispatches = await dispatchRepository.findAll();
+  async getOpenOrdersWithDispatchedMap() {
     const openOrders = await SaleOrder.findAll({
       where: { status: { [Op.ne]: 'Completed' } },
       include: [{ model: StockItem, as: 'stockItem' }],
       order: [['createdAt', 'DESC']]
     });
+
+    const openOrdersData = [];
+    for (const order of openOrders) {
+      const orderPlain = order.get({ plain: true });
+
+      const existingDispatches = await SaleDispatchNote.findAll({
+        where: { saleOrderId: order.id }
+      });
+
+      const dispatchedQtyMap = {};
+      for (const d of existingDispatches) {
+        if (d.itemsJson) {
+          try {
+            const dItems = typeof d.itemsJson === 'string' ? JSON.parse(d.itemsJson) : d.itemsJson;
+            if (Array.isArray(dItems)) {
+              dItems.forEach(it => {
+                const sId = String(it.stockItemId || order.stockItemId || '');
+                const q = parseFloat(it.dispatchQuantity || it.quantity || 0);
+                dispatchedQtyMap[sId] = (dispatchedQtyMap[sId] || 0) + q;
+              });
+            }
+          } catch (e) {}
+        }
+      }
+
+      orderPlain.dispatchedQtyMap = dispatchedQtyMap;
+      openOrdersData.push(orderPlain);
+    }
+    return openOrdersData;
+  }
+
+  // 4. SEVKİYAT VE İRSALİYELER
+  listDispatches = asyncHandler(async (req, res) => {
+    const dispatches = await dispatchRepository.findAll();
+    const openOrders = await this.getOpenOrdersWithDispatchedMap();
     const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
     const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
 
@@ -886,11 +919,7 @@ class SaleController {
 
     if (!order) {
       const dispatches = await dispatchRepository.findAll();
-      const openOrders = await SaleOrder.findAll({
-        where: { status: { [Op.ne]: 'Completed' } },
-        include: [{ model: StockItem, as: 'stockItem' }],
-        order: [['createdAt', 'DESC']]
-      });
+      const openOrders = await this.getOpenOrdersWithDispatchedMap();
       const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
       const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
       return res.render('sales/dispatches', {
@@ -905,11 +934,7 @@ class SaleController {
 
     if (order.status === 'Completed') {
       const dispatches = await dispatchRepository.findAll();
-      const openOrders = await SaleOrder.findAll({
-        where: { status: { [Op.ne]: 'Completed' } },
-        include: [{ model: StockItem, as: 'stockItem' }],
-        order: [['createdAt', 'DESC']]
-      });
+      const openOrders = await this.getOpenOrdersWithDispatchedMap();
       const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
       const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
       return res.render('sales/dispatches', {
@@ -954,22 +979,39 @@ class SaleController {
       }
     }
 
-    // VALIDATION RULES:
-    // 1. Each item dispatchQuantity CANNOT exceed orderedQuantity.
-    // 2. Individual items CAN be 0 (for partial dispatch), BUT total sum of dispatchQuantity CANNOT be 0.
+    // Compute cumulative dispatched quantities so far for each item in this order
+    const existingDispatches = await SaleDispatchNote.findAll({
+      where: { saleOrderId: order.id }
+    });
+
+    const dispatchedQtyMap = {};
+    for (const d of existingDispatches) {
+      if (d.itemsJson) {
+        try {
+          const dItems = typeof d.itemsJson === 'string' ? JSON.parse(d.itemsJson) : d.itemsJson;
+          if (Array.isArray(dItems)) {
+            dItems.forEach(it => {
+              const sId = String(it.stockItemId || order.stockItemId || '');
+              const q = parseFloat(it.dispatchQuantity || it.quantity || 0);
+              dispatchedQtyMap[sId] = (dispatchedQtyMap[sId] || 0) + q;
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
     let totalDispatchedQty = 0;
 
     for (const item of parsedItems) {
+      const sIdKey = String(item.stockItemId || order.stockItemId || '');
       const orderedQty = parseFloat(item.orderedQuantity || item.quantity) || 0;
+      const alreadyDispatched = dispatchedQtyMap[sIdKey] || 0;
+      const remainingQty = Math.max(0, orderedQty - alreadyDispatched);
       const dispatchQty = parseFloat(item.dispatchQuantity);
 
       if (isNaN(dispatchQty) || dispatchQty < 0) {
         const dispatches = await dispatchRepository.findAll();
-        const openOrders = await SaleOrder.findAll({
-          where: { status: { [Op.ne]: 'Completed' } },
-          include: [{ model: StockItem, as: 'stockItem' }],
-          order: [['createdAt', 'DESC']]
-        });
+        const openOrders = await this.getOpenOrdersWithDispatchedMap();
         const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
         const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
         return res.render('sales/dispatches', {
@@ -982,13 +1024,9 @@ class SaleController {
         });
       }
 
-      if (dispatchQty > orderedQty) {
+      if (dispatchQty > remainingQty) {
         const dispatches = await dispatchRepository.findAll();
-        const openOrders = await SaleOrder.findAll({
-          where: { status: { [Op.ne]: 'Completed' } },
-          include: [{ model: StockItem, as: 'stockItem' }],
-          order: [['createdAt', 'DESC']]
-        });
+        const openOrders = await this.getOpenOrdersWithDispatchedMap();
         const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
         const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
         return res.render('sales/dispatches', {
@@ -997,7 +1035,7 @@ class SaleController {
           openOrders,
           nextDispatchNo,
           nextTrackingNo,
-          error: `⚠️ HATA: "${item.name || 'Ürün'}" için sevk edilecek miktar (${dispatchQty} Adet), sipariş miktarını (${orderedQty} Adet) geçemez!`
+          error: `⚠️ HATA: "${item.name || 'Ürün'}" için sevk edilecek miktar (${dispatchQty} Adet), kalan sevk edilebilir miktarı (${remainingQty} Adet) geçemez!`
         });
       }
 
@@ -1006,11 +1044,7 @@ class SaleController {
 
     if (totalDispatchedQty <= 0) {
       const dispatches = await dispatchRepository.findAll();
-      const openOrders = await SaleOrder.findAll({
-        where: { status: { [Op.ne]: 'Completed' } },
-        include: [{ model: StockItem, as: 'stockItem' }],
-        order: [['createdAt', 'DESC']]
-      });
+      const openOrders = await this.getOpenOrdersWithDispatchedMap();
       const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
       const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
       return res.render('sales/dispatches', {
