@@ -837,7 +837,16 @@ class SaleController {
         const stockItemId = parseInt(it.stockItemId, 10);
         if (!stockItemId) continue;
 
+        const stockItem = await StockItem.findByPk(stockItemId);
+        if (!stockItem) continue;
+
         const specPrice = parseFloat(it.specialPrice) || 0;
+        const stdPrice = parseFloat(stockItem.salePrice) || 0;
+
+        if (specPrice > stdPrice) {
+          throw new Error(`⚠️ [${stockItem.stockCode}] ${stockItem.name} ürünü için girilen özel fiyat (${specPrice.toLocaleString('tr-TR')} TL), ürünün standart liste satış fiyatından (${stdPrice.toLocaleString('tr-TR')} TL) daha yüksek olamaz!`);
+        }
+
         const discRate = parseFloat(it.customDiscountRate) || 0;
         const curr = it.currency || 'TRY';
 

@@ -186,8 +186,8 @@
           <!-- Header Inputs Grid -->
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 1.25rem;">
             <div class="input-group">
-              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Liste / Sözleşme Adı</label>
-              <input type="text" name="listName" value="2026 Müşteri Özel Fiyat Listesi" placeholder="ör. VIP Müşteri Fiyat Listesi" required style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Liste / Sözleşme Adı <span style="color: #f43f5e;">*</span></label>
+              <input type="text" name="listName" value="" placeholder="ör. VIP Müşteri Fiyat Listesi" required style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
             </div>
 
             <div class="input-group">
@@ -202,13 +202,19 @@
 
             <div class="input-group">
               <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Geçerlilik Başlangıç Tarihi</label>
-              <input type="date" name="validFrom" value="<%= new Date().toISOString().split('T')[0] %>" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
+              <input type="date" name="validFrom" value="" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
             </div>
 
             <div class="input-group">
               <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Geçerlilik Bitiş Tarihi</label>
               <input type="date" name="validUntil" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 9px 12px; border-radius: 8px;">
             </div>
+          </div>
+
+          <!-- Price Limit Warning Alert Banner -->
+          <div id="priceLimitExceededAlert" style="display: none; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(244, 63, 94, 0.5); padding: 12px 18px; border-radius: 12px; color: #f43f5e; font-size: 0.85rem; font-weight: 700; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span id="priceLimitExceededText">⚠️ Girilen özel fiyat, ürünün piyasa liste satış fiyatından daha yüksek olamaz!</span>
           </div>
 
           <!-- Multi-Product Table -->
@@ -219,7 +225,7 @@
                   <th style="padding: 12px 14px; width: 40px; text-align: center;">#</th>
                   <th style="padding: 12px 14px;">Stok / Ürün Kalemi</th>
                   <th style="padding: 12px 14px; width: 140px; text-align: right;">Liste Satış Fiyatı</th>
-                  <th style="padding: 12px 14px; width: 150px; text-align: right;">Müşteriye Özel Fiyat</th>
+                  <th style="padding: 12px 14px; width: 160px; text-align: right;">Müşteriye Özel Fiyat</th>
                   <th style="padding: 12px 14px; width: 130px; text-align: center;">Özel İskonto (%)</th>
                   <th style="padding: 12px 14px; width: 110px; text-align: center;">Para Birimi</th>
                   <th style="padding: 12px 14px; width: 50px; text-align: center;">Sil</th>
@@ -233,7 +239,7 @@
 
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="font-size: 0.825rem; color: var(--text-muted);">
-              💡 <em>Not: Bir müşteri için aynı ürüne önceden tanımlanmış özel fiyat varsa otomatik güncellenir.</em>
+              💡 <em>Not: Bir müşteri için özel fiyat belirlenirken ürünün liste fiyatının üzerinde fiyat girilemez.</em>
             </div>
             <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 800; padding: 11px 24px; border-radius: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); font-size: 0.9rem; cursor: pointer;">
               💾 Müşteri Özel Fiyat Listesini Kaydet
@@ -399,16 +405,16 @@
       const tr = document.createElement('tr');
       tr.id = `row-${rowIdCounter}`;
 
-      const stockOptionsHtml = stockCatalog.map(st => `
+      const stockOptionsHtml = '<option value="">-- Stok / Ürün Kalemi Seçiniz --</option>' + stockCatalog.map(st => `
         <option value="${st.id}" data-code="${st.stockCode}" data-price="${st.salePrice}">
           [${st.stockCode}] ${st.name} (Liste: ${parseFloat(st.salePrice).toLocaleString('tr-TR')} ₺)
         </option>
       `).join('');
 
-      const defaultPrice = stockCatalog[0] ? stockCatalog[0].salePrice : 0;
-      const price = initialData ? initialData.specialPrice : defaultPrice;
-      const discount = initialData ? initialData.customDiscountRate : 0;
+      const price = initialData ? initialData.specialPrice : '';
+      const discount = initialData ? initialData.customDiscountRate : '0.00';
       const currency = initialData ? initialData.currency : 'TRY';
+      const refText = initialData && initialData.salePrice ? parseFloat(initialData.salePrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' TL' : '—';
 
       tr.innerHTML = `
         <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">1</td>
@@ -418,10 +424,10 @@
           </select>
         </td>
         <td style="padding: 12px 14px; text-align: right;">
-          <span class="item-ref-price" style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 0.85rem;">${parseFloat(defaultPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</span>
+          <span class="item-ref-price" style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 0.85rem;">${refText}</span>
         </td>
         <td style="padding: 12px 14px;">
-          <input type="number" step="0.01" min="0" value="${price}" class="item-special-price" oninput="updateItemsPayload()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #34d399; padding: 8px 10px; border-radius: 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800;">
+          <input type="number" step="0.01" min="0" value="${price}" placeholder="0.00" class="item-special-price" oninput="validateRowPrice(this, ${rowIdCounter})" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #34d399; padding: 8px 10px; border-radius: 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800;">
         </td>
         <td style="padding: 12px 14px;">
           <input type="number" step="0.1" min="0" max="100" value="${discount}" class="item-discount" oninput="updateItemsPayload()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fb7185; padding: 8px 10px; border-radius: 8px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
@@ -469,18 +475,49 @@
 
     function onStockSelect(selectEl, rowId) {
       const option = selectEl.options[selectEl.selectedIndex];
-      const price = parseFloat(option.getAttribute('data-price')) || 0;
+      const listPrice = parseFloat(option.getAttribute('data-price')) || 0;
       const tr = document.getElementById(`row-${rowId}`);
 
       if (tr) {
         const refEl = tr.querySelector('.item-ref-price');
         const priceInput = tr.querySelector('.item-special-price');
-        if (refEl) refEl.textContent = price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' TL';
-        if (priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
-          priceInput.value = price;
+        if (refEl) refEl.textContent = listPrice > 0 ? listPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' TL' : '—';
+        if (priceInput) {
+          priceInput.max = listPrice;
+          if (!priceInput.value || parseFloat(priceInput.value) === 0) {
+            priceInput.value = listPrice > 0 ? listPrice : '';
+          }
+          validateRowPrice(priceInput, rowId);
         }
-        updateItemsPayload();
       }
+    }
+
+    function validateRowPrice(inputEl, rowId) {
+      const tr = document.getElementById(`row-${rowId}`);
+      if (!tr) return;
+      const selectEl = tr.querySelector('.item-stock-id');
+      const option = selectEl ? selectEl.options[selectEl.selectedIndex] : null;
+      const listPrice = option ? (parseFloat(option.getAttribute('data-price')) || 0) : 0;
+      const val = parseFloat(inputEl.value) || 0;
+
+      const alertEl = document.getElementById('priceLimitExceededAlert');
+      const alertText = document.getElementById('priceLimitExceededText');
+
+      if (listPrice > 0 && val > listPrice) {
+        inputEl.style.borderColor = '#f43f5e';
+        inputEl.style.color = '#f43f5e';
+        if (alertEl && alertText) {
+          const stockCode = option ? option.getAttribute('data-code') : '';
+          alertText.textContent = `⚠️ [${stockCode}] ürünü için girilen özel fiyat (${val.toLocaleString('tr-TR', {minimumFractionDigits:2})} TL), ürünün standart liste satış fiyatından (${listPrice.toLocaleString('tr-TR', {minimumFractionDigits:2})} TL) daha yüksek olamaz!`;
+          alertEl.style.display = 'flex';
+        }
+      } else {
+        inputEl.style.borderColor = 'var(--border)';
+        inputEl.style.color = '#34d399';
+        if (alertEl) alertEl.style.display = 'none';
+      }
+
+      updateItemsPayload();
     }
 
     function updateItemsPayload() {
@@ -555,6 +592,29 @@
     if (form) {
       form.addEventListener('submit', function(e) {
         updateItemsPayload();
+        const rows = document.querySelectorAll('#itemsTbody tr');
+        let hasError = false;
+
+        rows.forEach(tr => {
+          const stockSelect = tr.querySelector('.item-stock-id');
+          const option = stockSelect ? stockSelect.options[stockSelect.selectedIndex] : null;
+          const listPrice = option ? (parseFloat(option.getAttribute('data-price')) || 0) : 0;
+          const specPrice = parseFloat(tr.querySelector('.item-special-price').value) || 0;
+
+          if (!stockSelect.value) {
+            hasError = true;
+            alert('⚠️ Lütfen tüm eklenen satırlar için ürün seçimi yapınız!');
+          } else if (listPrice > 0 && specPrice > listPrice) {
+            hasError = true;
+            alert(`⚠️ Girilen özel fiyat (${specPrice} TL), ürünün standart liste satış fiyatından (${listPrice} TL) daha yüksek olamaz!`);
+          }
+        });
+
+        if (hasError) {
+          e.preventDefault();
+          return false;
+        }
+
         const payload = document.getElementById('itemsJsonInput').value;
         let arr = [];
         try { arr = JSON.parse(payload); } catch(err) { arr = []; }
