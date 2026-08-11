@@ -177,6 +177,27 @@ class SaleController {
               error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilere yeni sipariş oluşturulamaz!`
             });
           }
+
+          // Credit limit risk validation (creditLimit - currentBalance)
+          const creditLimit = parseFloat(cust.creditLimit) || 0;
+          const currentBalance = parseFloat(cust.currentBalance) || 0;
+          const availableCredit = creditLimit - currentBalance;
+
+          if (creditLimit > 0 && grandTotalAmount > availableCredit) {
+            const nextOrderNo = await saleService.getNextOrderNo();
+            const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+            const customers = await customerRepository.findAll({ status: 'Active' });
+            const exchangeRates = await exchangeRateRepository.getLatestRates();
+            return res.render('sales/add', {
+              user: req.user,
+              nextOrderNo,
+              stockItems,
+              customers,
+              exchangeRates,
+              formData: req.body,
+              error: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL), sipariş tutarından (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL) azdır. Risk limiti aşılacağı için bu sipariş oluşturulamaz! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL, Borç Bakiyesi: ${currentBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL)`
+            });
+          }
         }
       }
 
@@ -528,7 +549,29 @@ class SaleController {
               stockItems,
               customers,
               exchangeRates,
+              formData: req.body,
               error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilere yeni teklif hazırlanamaz!`
+            });
+          }
+
+          // Credit limit risk validation (creditLimit - currentBalance)
+          const creditLimit = parseFloat(cust.creditLimit) || 0;
+          const currentBalance = parseFloat(cust.currentBalance) || 0;
+          const availableCredit = creditLimit - currentBalance;
+
+          if (creditLimit > 0 && grandTotalAmount > availableCredit) {
+            const nextQuotationNo = await quotationRepository.getNextQuotationNo();
+            const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+            const customers = await customerRepository.findAll({ status: 'Active' });
+            const exchangeRates = await exchangeRateRepository.getLatestRates();
+            return res.render('sales/quotes_add', {
+              user: req.user,
+              nextQuotationNo,
+              stockItems,
+              customers,
+              exchangeRates,
+              formData: req.body,
+              error: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL), teklif tutarından (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL) azdır. Risk limiti aşılacağı için bu teklif oluşturulamaz! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL, Borç Bakiyesi: ${currentBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL)`
             });
           }
         }
@@ -676,6 +719,18 @@ class SaleController {
         if (isBlocked) {
           return res.render('error', {
             message: `⚠️ Müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilerin teklifi siparişe dönüştürülemez!`,
+            error: { status: 403 }
+          });
+        }
+
+        const creditLimit = parseFloat(cust.creditLimit) || 0;
+        const currentBalance = parseFloat(cust.currentBalance) || 0;
+        const availableCredit = creditLimit - currentBalance;
+        const quoteTotal = parseFloat(quote.totalAmount) || 0;
+
+        if (creditLimit > 0 && quoteTotal > availableCredit) {
+          return res.render('error', {
+            message: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL), siparişe dönüştürülmek istenen teklif tutarından (${quoteTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL) azdır. Risk limiti aşılacağı için bu teklif siparişe dönüştürülemez! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL, Güncel Borç: ${currentBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL)`,
             error: { status: 403 }
           });
         }

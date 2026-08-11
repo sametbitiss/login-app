@@ -259,12 +259,23 @@
                   <% customers.forEach(c => { 
                     const score = c.customerScore !== undefined ? c.customerScore : 85;
                     const isBlocked = score < 50 || c.riskLevel === 'High' || c.riskLevel === 'Blocked' || c.riskLevel === 'Critical';
+                    const cLimit = parseFloat(c.creditLimit) || 100000;
+                    const cBal = parseFloat(c.currentBalance) || 0;
                   %>
-                    <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-taxno="<%= c.taxNo || '' %>" data-email="<%= c.email || '' %>" data-phone="<%= c.phone || '' %>" data-address="<%= c.address || '' %>" data-blocked="<%= isBlocked %>" <%= isBlocked ? 'disabled style="color:#f43f5e;"' : '' %>>
-                      [<%= c.customerCode %>] <%= c.companyName %> <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / SİPARİŞ ENGELLİ)` : `(Puan: ${score}/100 ⭐)` %>
+                    <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-taxno="<%= c.taxNo || '' %>" data-email="<%= c.email || '' %>" data-phone="<%= c.phone || '' %>" data-address="<%= c.address || '' %>" data-creditlimit="<%= cLimit %>" data-currentbalance="<%= cBal %>" data-blocked="<%= isBlocked %>" <%= isBlocked ? 'disabled style="color:#f43f5e;"' : '' %>>
+                      [<%= c.customerCode %>] <%= c.companyName %> <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / SİPARİŞ ENGELLİ)` : `(Puan: ${score}/100 ⭐ - Risk Limiti: ${cLimit.toLocaleString('tr-TR')} TL)` %>
                     </option>
                   <% }); %>
                 </select>
+
+                <!-- Dynamic Customer Risk Card -->
+                <div id="customerRiskCard" style="display: none; margin-top: 10px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; font-size: 0.8rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div><span style="color: var(--text-muted);">Toplam Risk Limiti:</span> <strong id="cardCreditLimit" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+                    <div><span style="color: var(--text-muted);">Güncel Borç:</span> <strong id="cardCurrentBalance" style="color: #fbbf24; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+                    <div><span style="color: var(--text-muted);">Kullanılabilir Limit:</span> <strong id="cardAvailableCredit" style="color: #34d399; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+                  </div>
+                </div>
               </div>
               <div class="input-group">
                 <label for="customerName">Müşteri / Kurum Unvanı <span class="req-star">*</span></label>
@@ -298,6 +309,12 @@
             <div id="minItemWarningAlert" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <span>⚠️ Siparişte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
+            </div>
+
+            <!-- Risk Limit Exceeded Alert Banner -->
+            <div id="riskLimitExceededAlert" style="display: none; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(244, 63, 94, 0.5); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 700; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span id="riskLimitExceededText">⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti sipariş tutarından azdır. Sipariş oluşturulamaz.</span>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
@@ -505,11 +522,16 @@
         alert('⛔ DİKKAT: Seçilen cari müşterinin risk seviyesi yüksek veya puanı kritik olduğu için yeni sipariş oluşturulamaz!');
         selectEl.value = '';
         document.getElementById('customerName').value = '';
+        document.getElementById('customerRiskCard').style.display = 'none';
+        selectedCustomerCreditLimit = 0;
+        selectedCustomerCurrentBalance = 0;
         return;
       }
 
       const name = selectedOption.getAttribute('data-name');
       const address = selectedOption.getAttribute('data-address');
+      const cLimit = parseFloat(selectedOption.getAttribute('data-creditlimit')) || 0;
+      const cBalance = parseFloat(selectedOption.getAttribute('data-currentbalance')) || 0;
 
       if (name) document.getElementById('customerName').value = name;
       if (address) {
@@ -518,6 +540,24 @@
         if (shipAdd) shipAdd.value = address;
         if (billAdd) billAdd.value = address;
       }
+
+      const riskCard = document.getElementById('customerRiskCard');
+      if (selectEl.value && cLimit > 0) {
+        selectedCustomerCreditLimit = cLimit;
+        selectedCustomerCurrentBalance = cBalance;
+        const availableCredit = cLimit - cBalance;
+
+        document.getElementById('cardCreditLimit').textContent = cLimit.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+        document.getElementById('cardCurrentBalance').textContent = cBalance.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+        document.getElementById('cardAvailableCredit').textContent = availableCredit.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+        if (riskCard) riskCard.style.display = 'block';
+      } else {
+        selectedCustomerCreditLimit = 0;
+        selectedCustomerCurrentBalance = 0;
+        if (riskCard) riskCard.style.display = 'none';
+      }
+
+      recalculate();
     }
 
     // Multi-Item Row Logic
@@ -528,24 +568,23 @@
       const tbody = document.getElementById('itemsTbody');
       const tr = document.createElement('tr');
       tr.id = `row-${rowIdCounter}`;
-      tr.style.borderBottom = '1px solid var(--border)';
 
-      let stockOptions = '<option value="">-- Stok / Mamul Kalemi Seçin --</option>';
-      stockCatalog.forEach(s => {
-        const isSelected = initialData && initialData.stockItemId == s.id ? 'selected' : '';
-        stockOptions += `<option value="${s.id}" data-price="${s.salePrice}" data-tax="${s.taxRate || 20}" data-code="${s.stockCode}" ${isSelected}>[${s.stockCode}] ${s.name} (${Number(s.salePrice).toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺)</option>`;
-      });
+      const stockOptionsHtml = stockItemsList.map(st => `
+        <option value="${st.id}" data-code="${st.stockCode}" data-price="${st.salePrice}" data-tax="${st.taxRate}">
+          [${st.stockCode}] ${st.name} (${parseFloat(st.salePrice).toLocaleString('tr-TR')} ₺)
+        </option>
+      `).join('');
 
       const qty = initialData ? initialData.quantity : 1;
-      const price = initialData ? initialData.unitPrice : 0;
+      const price = initialData ? initialData.unitPrice : (stockItemsList[0] ? stockItemsList[0].salePrice : 0);
       const discount = initialData ? initialData.discountRate : 0;
-      const tax = initialData ? (initialData.taxRate || 20) : 20;
+      const tax = initialData ? initialData.taxRate : (stockItemsList[0] ? stockItemsList[0].taxRate : 20);
 
       tr.innerHTML = `
-        <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">${tbody.children.length + 1}</td>
+        <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">1</td>
         <td style="padding: 12px 14px;">
-          <select class="item-stock-id" onchange="onStockSelect(this, ${rowIdCounter})" required style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px;">
-            ${stockOptions}
+          <select class="item-stock-id" onchange="onStockSelect(this, ${rowIdCounter})" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; font-weight: 600;">
+            ${stockOptionsHtml}
           </select>
         </td>
         <td style="padding: 12px 14px;">
@@ -564,7 +603,7 @@
           <strong class="item-total" style="font-family: 'JetBrains Mono', monospace; color: #fff; font-size: 0.95rem;">0.00 ₺</strong>
         </td>
         <td style="padding: 12px 14px; text-align: center;">
-          <button type="button" onclick="removeRow(${rowIdCounter})" class="btn-delete-row" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #f43f5e; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+          <button type="button" onclick="removeRow(${rowIdCounter})" class="btn-delete-row" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #f43f5e; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
             ✕
           </button>
         </td>
@@ -682,15 +721,27 @@
       document.getElementById('displayTax').textContent = grandTax.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
       document.getElementById('displayGrandTotal').textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
 
-      // Approval Warning Alert (>20% discount rate or >20% overall discount)
+      // Approval Warning Alert (>20% discount rate)
       const approvalAlert = document.getElementById('approvalWarningAlert');
       if (approvalAlert) {
-        const overallDiscountRate = grandSubtotal > 0 ? (grandDiscount / grandSubtotal) * 100 : 0;
-        if (maxDiscountRate > 20 || overallDiscountRate > 20) {
+        if (maxDiscountRate > 20) {
           approvalAlert.style.display = 'flex';
         } else {
           approvalAlert.style.display = 'none';
         }
+      }
+
+      // Risk Limit Validation Alert
+      const riskAlert = document.getElementById('riskLimitExceededAlert');
+      const availableCredit = selectedCustomerCreditLimit - selectedCustomerCurrentBalance;
+      if (selectedCustomerCreditLimit > 0 && grandTotal > availableCredit) {
+        if (riskAlert) {
+          const warnText = document.getElementById('riskLimitExceededText');
+          if (warnText) warnText.textContent = `⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits:2})} TL), toplam sipariş tutarından (${grandTotal.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${symbol}) azdır. Risk limiti aşılacağı için sipariş oluşturulamaz.`;
+          riskAlert.style.display = 'flex';
+        }
+      } else {
+        if (riskAlert) riskAlert.style.display = 'none';
       }
     }
 
@@ -709,6 +760,14 @@
           e.preventDefault();
           alert('⚠️ Lütfen siparişe en az 1 adet geçerli stok kalemi ekleyiniz!');
           switchOrderTab(2);
+          return false;
+        }
+
+        const grandTotal = parseFloat(document.getElementById('displayGrandTotal').textContent.replace(/[^0-9,-]+/g,"").replace(',', '.')) || 0;
+        const availableCredit = selectedCustomerCreditLimit - selectedCustomerCurrentBalance;
+        if (selectedCustomerCreditLimit > 0 && grandTotal > availableCredit) {
+          e.preventDefault();
+          alert(`⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits:2})} TL), sipariş tutarından azdır. Sipariş oluşturulamaz!`);
           return false;
         }
       });
