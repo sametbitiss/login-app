@@ -73,13 +73,9 @@
 
       <div class="page-header">
         <div>
-          <h1>Satın Alma Talepleri</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Departmanlardan gelen malzeme/hizmet taleplerini yönetin ve onaylayın.</p>
+          <h1>📩 Satın Alma Talepleri Kartı (Kritik Stok Uyarısı)</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Stok & Depo Modülünde kritik seviyenin altına inen Hammadde ve Ticari Mal ürünleri için gönderilen talepler.</p>
         </div>
-        <a href="/purchase/requisitions/add" class="btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Yeni Talep Oluştur
-        </a>
       </div>
 
       <% const stockAlertsCount = requisitions.filter(r => r.sourceModule === 'Stock' && r.status === 'Pending').length; %>
@@ -89,6 +85,25 @@
           <span style="background: #f43f5e; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;"><%= stockAlertsCount %> ACİL TALEP</span>
         </div>
       <% } %>
+
+      <div class="kpi-strip">
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--indigo">📩</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Satın Alma Talebi</span><span class="kpi-chip-value"><%= requisitions.length %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--rose">🚨</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Kritik Stok Talepleri</span><span class="kpi-chip-value"><%= requisitions.filter(r => r.sourceModule === 'Stock').length %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--amber">⚡</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Bekleyen Talepler</span><span class="kpi-chip-value"><%= requisitions.filter(r => r.status === 'Pending').length %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--emerald">📦</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Siparişe Dönüştürülen</span><span class="kpi-chip-value"><%= requisitions.filter(r => r.status === 'Ordered').length %></span></div>
+        </div>
+      </div>
 
       <!-- Filters -->
       <div class="filter-bar">
@@ -136,7 +151,6 @@
                 <td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                   <div style="font-size: 2rem; margin-bottom: 8px;">📩</div>
                   Henüz satın alma talebi bulunmamaktadır.
-                  <br><a href="/purchase/requisitions/add" style="color: var(--indigo); font-weight: 600;">İlk talebi oluşturun →</a>
                 </td>
               </tr>
             <% } else { %>
