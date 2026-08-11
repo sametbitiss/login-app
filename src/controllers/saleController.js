@@ -36,7 +36,7 @@ class SaleController {
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
     const exchangeRates = await exchangeRateRepository.getLatestRates();
-    const priceLists = await priceListRepository.findAll();
+    const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
 
     res.render('sales/add', {
       user: req.user,
@@ -62,8 +62,6 @@ class SaleController {
         const n = parseFloat(val);
         return Number.isNaN(n) ? defaultVal : n;
       };
-
-      const customerId = safeInt(req.body.customerId);
 
       let items = [];
       if (req.body.itemsJson) {
@@ -112,35 +110,6 @@ class SaleController {
         const price = safeFloat(item.unitPrice, 0);
         const disc = safeFloat(item.discountRate, 0);
         const tax = safeFloat(item.taxRate, 20);
-
-        const itemId = safeInt(item.stockItemId);
-        let itemName = item.name || 'Ürün Kalemi';
-        let stockCode = item.stockCode || '';
-        if (itemId && itemId > 0) {
-          const st = await StockItem.findByPk(itemId);
-          if (st) {
-            itemName = st.name;
-            stockCode = st.stockCode;
-          }
-        }
-
-        // Special Price List validation (Fiyat arttırılamaz, İskonto düşürülemez)
-        if (customerId && itemId && itemId > 0) {
-          const priceList = await CustomerPriceList.findOne({
-            where: { customerId: customerId, stockItemId: itemId, status: 'Active' }
-          });
-          if (priceList) {
-            const specPrice = parseFloat(priceList.specialPrice);
-            const customDisc = parseFloat(priceList.customDiscountRate);
-
-            if (price > specPrice) {
-              throw new Error(`⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış birim fiyat (${specPrice.toLocaleString('tr-TR')} TL) daha yüksek bir tutara arttırılamaz! (Girilen: ${price.toLocaleString('tr-TR')} TL)`);
-            }
-            if (disc < customDisc) {
-              throw new Error(`⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış iskonto oranı (%${customDisc}) daha düşük bir orana düşürülemez! (Girilen: %${disc})`);
-            }
-          }
-        }
 
         const sub = qty * price;
         const discAmt = sub * (disc / 100);
@@ -200,12 +169,14 @@ class SaleController {
             const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
+            const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
             return res.render('sales/add', {
               user: req.user,
               nextOrderNo,
               stockItems,
               customers,
               exchangeRates,
+              priceLists,
               formData: req.body,
               error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilere yeni sipariş oluşturulamaz!`
             });
@@ -221,14 +192,16 @@ class SaleController {
             const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
+            const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
             return res.render('sales/add', {
               user: req.user,
               nextOrderNo,
               stockItems,
               customers,
               exchangeRates,
+              priceLists,
               formData: req.body,
-              error: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL), sipariş tutarından (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL) azdır. Risk limiti aşılacağı için bu sipariş oluşturulamaz! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL, Borç Bakiyesi: ${currentBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL)`
+              error: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL), sipariş tutarından (${grandTotalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL) azdır. Risk limiti aşılacağı için bu sipariş oluşturulamaz! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL, Borç Bakiyesi: ${currentBalance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL)`
             });
           }
         }
@@ -254,13 +227,13 @@ class SaleController {
 
       if (highDiscountReasons.length > 0 && grandTotalAmount > 100000) {
         approvalNeeded = true;
-        approvalReason = `Yüksek İskonto: ${highDiscountReasons.join(', ')} ve Yüksek Tutar (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
+        approvalReason = `Yüksek İskonto: ${highDiscountReasons.join(', ')} ve Yüksek Tutar (${grandTotalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currency} > 100.000 TL)`;
       } else if (highDiscountReasons.length > 0) {
         approvalNeeded = true;
         approvalReason = `Yüksek Ürün İskontosu: ${highDiscountReasons.join(', ')} (Yönetsel onay sınırı: %20)`;
       } else if (grandTotalAmount > 100000) {
         approvalNeeded = true;
-        approvalReason = `Yüksek Sipariş Tutarı (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
+        approvalReason = `Yüksek Sipariş Tutarı (${grandTotalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currency} > 100.000 TL)`;
       }
 
       const status = approvalNeeded ? 'Pending_Approval' : 'Approved';
@@ -311,6 +284,7 @@ class SaleController {
       });
       const customers = await customerRepository.findAll({ status: 'Active' });
       const exchangeRates = await exchangeRateRepository.getLatestRates();
+      const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
 
       res.render('sales/add', {
         user: req.user,
@@ -319,6 +293,7 @@ class SaleController {
         stockItems,
         customers,
         exchangeRates,
+        priceLists,
         formData: req.body
       });
     }
@@ -445,7 +420,7 @@ class SaleController {
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
     const exchangeRates = await exchangeRateRepository.getLatestRates();
-    const priceLists = await priceListRepository.findAll();
+    const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
 
     res.render('sales/quotes_add', {
       user: req.user,
@@ -470,8 +445,6 @@ class SaleController {
         const n = parseFloat(val);
         return Number.isNaN(n) ? defaultVal : n;
       };
-
-      const customerId = safeInt(req.body.customerId);
 
       let items = [];
       if (req.body.itemsJson) {
@@ -523,34 +496,6 @@ class SaleController {
         const p = safeFloat(item.unitPrice, 0);
         const d = safeFloat(item.discountRate, 0);
         const t = safeFloat(item.taxRate, 20);
-
-        let itemName = item.name || 'Ürün Kalemi';
-        let stockCode = item.stockCode || '';
-        if (itemId && itemId > 0) {
-          const st = await StockItem.findByPk(itemId);
-          if (st) {
-            itemName = st.name;
-            stockCode = st.stockCode;
-          }
-        }
-
-        // Special Price List validation (Fiyat arttırılamaz, İskonto düşürülemez)
-        if (customerId && itemId && itemId > 0) {
-          const priceList = await CustomerPriceList.findOne({
-            where: { customerId: customerId, stockItemId: itemId, status: 'Active' }
-          });
-          if (priceList) {
-            const specPrice = parseFloat(priceList.specialPrice);
-            const customDisc = parseFloat(priceList.customDiscountRate);
-
-            if (p > specPrice) {
-              throw new Error(`⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış birim fiyat (${specPrice.toLocaleString('tr-TR')} TL) daha yüksek bir tutara arttırılamaz! (Girilen: ${p.toLocaleString('tr-TR')} TL)`);
-            }
-            if (d < customDisc) {
-              throw new Error(`⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış iskonto oranı (%${customDisc}) daha düşük bir orana düşürülemez! (Girilen: %${d})`);
-            }
-          }
-        }
 
         const sub = q * p;
         const disc = sub * (d / 100);
@@ -608,12 +553,14 @@ class SaleController {
             const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
+            const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
             return res.render('sales/quotes_add', {
               user: req.user,
               nextQuotationNo,
               stockItems,
               customers,
               exchangeRates,
+              priceLists,
               formData: req.body,
               error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilere yeni teklif hazırlanamaz!`
             });
@@ -629,14 +576,16 @@ class SaleController {
             const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
+            const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
             return res.render('sales/quotes_add', {
               user: req.user,
               nextQuotationNo,
               stockItems,
               customers,
               exchangeRates,
+              priceLists,
               formData: req.body,
-              error: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL), teklif tutarından (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL) azdır. Risk limiti aşılacağı için bu teklif oluşturulamaz! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL, Borç Bakiyesi: ${currentBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL)`
+              error: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL), teklif tutarından (${grandTotalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL) azdır. Risk limiti aşılacağı için bu teklif oluşturulamaz! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL, Borç Bakiyesi: ${currentBalance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL)`
             });
           }
         }
@@ -671,13 +620,13 @@ class SaleController {
 
       if (highDiscountReasons.length > 0 && grandTotalAmount > 100000) {
         approvalNeeded = true;
-        approvalReason = `Yüksek İskonto: ${highDiscountReasons.join(', ')} ve Yüksek Tutar (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
+        approvalReason = `Yüksek İskonto: ${highDiscountReasons.join(', ')} ve Yüksek Tutar (${grandTotalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currency} > 100.000 TL)`;
       } else if (highDiscountReasons.length > 0) {
         approvalNeeded = true;
         approvalReason = `Yüksek Ürün İskontosu: ${highDiscountReasons.join(', ')} (Yönetsel onay sınırı: %20)`;
       } else if (grandTotalAmount > 100000) {
         approvalNeeded = true;
-        approvalReason = `Yüksek Teklif Tutarı (${grandTotalAmount.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${currency} > 100.000 TL)`;
+        approvalReason = `Yüksek Teklif Tutarı (${grandTotalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currency} > 100.000 TL)`;
       }
 
       await quotationRepository.create({
@@ -709,6 +658,7 @@ class SaleController {
       const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
       const customers = await customerRepository.findAll({ status: 'Active' });
       const exchangeRates = await exchangeRateRepository.getLatestRates();
+      const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
 
       res.render('sales/quotes_add', {
         user: req.user,
@@ -716,6 +666,7 @@ class SaleController {
         stockItems,
         customers,
         exchangeRates,
+        priceLists,
         error: err.message || 'Teklif oluşturulurken hata oluştu.'
       });
     }
@@ -795,7 +746,7 @@ class SaleController {
 
         if (creditLimit > 0 && quoteTotal > availableCredit) {
           return res.render('error', {
-            message: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL), siparişe dönüştürülmek istenen teklif tutarından (${quoteTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL) azdır. Risk limiti aşılacağı için bu teklif siparişe dönüştürülemez! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL, Güncel Borç: ${currentBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL)`,
+            message: `⚠️ Risk Limiti Aşımı! Müşterinin kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL), siparişe dönüştürülmek istenen teklif tutarından (${quoteTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL) azdır. Risk limiti aşılacağı için bu teklif siparişe dönüştürülemez! (Toplam Limit: ${creditLimit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL, Güncel Borç: ${currentBalance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL)`,
             error: { status: 403 }
           });
         }
@@ -993,7 +944,7 @@ class SaleController {
   deleteCustomerPriceLists = asyncHandler(async (req, res) => {
     const { customerId } = req.params;
     const targetCustId = customerId === '0' || customerId === 'null' ? null : parseInt(customerId, 10);
-    
+
     await CustomerPriceList.destroy({ where: { customerId: targetCustId } });
     res.redirect('/sales/price-lists?success=' + encodeURIComponent('✅ Seçilen müşteriye ait özel fiyat tanımları silindi.'));
   });
@@ -1127,7 +1078,7 @@ class SaleController {
                 dispatchedQtyMap[sId] = (dispatchedQtyMap[sId] || 0) + q;
               });
             }
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -1155,12 +1106,12 @@ class SaleController {
   });
 
   addDispatch = asyncHandler(async (req, res) => {
-    const { 
-      saleOrderId, dispatchType, shipmentDate, exitWarehouse, deliveryCity, 
-      deliveryDistrict, recipientPerson, deliveryType, projectNo, carrierCompany, 
-      vehiclePlate, driverName, notes, itemsJson 
+    const {
+      saleOrderId, dispatchType, shipmentDate, exitWarehouse, deliveryCity,
+      deliveryDistrict, recipientPerson, deliveryType, projectNo, carrierCompany,
+      vehiclePlate, driverName, notes, itemsJson
     } = req.body;
-    
+
     const order = await SaleOrder.findByPk(saleOrderId, {
       include: [{ model: StockItem, as: 'stockItem' }]
     });
@@ -1244,7 +1195,7 @@ class SaleController {
               dispatchedQtyMap[sId] = (dispatchedQtyMap[sId] || 0) + q;
             });
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }
 
@@ -1401,17 +1352,17 @@ class SaleController {
     const dispatchNote = await SaleDispatchNote.findOne({ where: { saleOrderId: order.id } });
 
     const nextInvoiceNo = await invoiceRepository.getNextInvoiceNo();
-    
+
     // Read from body if form/modal was submitted, else set rich defaults
     const invoiceScenario = req.body.invoiceScenario || 'EARSIVFATURA';
     const invoiceType = req.body.invoiceType || 'SATIS';
     const paymentType = req.body.paymentType || order.paymentTerm || 'Vadeli';
     const paymentTermDays = parseInt(req.body.paymentTermDays, 10) || 30;
-    
+
     const invoiceDate = req.body.invoiceDate || new Date().toISOString().split('T')[0];
     const now = new Date();
     const invoiceTime = req.body.invoiceTime || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-    
+
     const dueDateObj = new Date(invoiceDate);
     dueDateObj.setDate(dueDateObj.getDate() + paymentTermDays);
     const dueDate = req.body.dueDate || dueDateObj.toISOString().split('T')[0];

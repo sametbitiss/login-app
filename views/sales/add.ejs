@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yeni Satış Siparişi Oluştur — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <style>
     .glass-form-card {
       background: rgba(12, 17, 28, 0.85);
@@ -18,6 +21,7 @@
       overflow: hidden;
       margin-bottom: 2.5rem;
     }
+
     .glass-form-card::before {
       content: '';
       position: absolute;
@@ -35,6 +39,7 @@
       gap: 12px;
       margin-bottom: 2rem;
     }
+
     .step-progress-item {
       display: flex;
       align-items: center;
@@ -47,20 +52,24 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       user-select: none;
     }
+
     .step-progress-item:hover {
       background: rgba(255, 255, 255, 0.06);
       border-color: rgba(255, 255, 255, 0.15);
       transform: translateY(-2px);
     }
+
     .step-progress-item.active {
       background: rgba(99, 102, 241, 0.12);
       border-color: #6366f1;
       box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
     }
+
     .step-progress-item.completed {
       background: rgba(16, 185, 129, 0.08);
       border-color: rgba(16, 185, 129, 0.4);
     }
+
     .spi-badge {
       width: 32px;
       height: 32px;
@@ -75,20 +84,24 @@
       flex-shrink: 0;
       transition: all 0.3s ease;
     }
+
     .step-progress-item.active .spi-badge {
       background: #6366f1;
       color: #fff;
       box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
     }
+
     .step-progress-item.completed .spi-badge {
       background: #10b981;
       color: #fff;
     }
+
     .spi-text {
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
+
     .spi-text strong {
       font-size: 0.85rem;
       color: #fff;
@@ -96,6 +109,7 @@
       text-overflow: ellipsis;
       overflow: hidden;
     }
+
     .spi-text span {
       font-size: 0.725rem;
       color: var(--text-muted);
@@ -103,6 +117,7 @@
       text-overflow: ellipsis;
       overflow: hidden;
     }
+
     .step-progress-item.active .spi-text span {
       color: #818cf8;
     }
@@ -111,13 +126,21 @@
       display: none;
       animation: fadeInTab 0.35s ease-in-out;
     }
+
     .tab-content-panel.active {
       display: block;
     }
 
     @keyframes fadeInTab {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @media (max-width: 768px) {
@@ -127,13 +150,23 @@
     }
   </style>
 </head>
+
 <body class="module-body">
 
   <!-- Module Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
       <a href="/" class="msb-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="url(#bGrad)" />
+          <path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" />
+          <defs>
+            <linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0%" stop-color="#6366f1" />
+              <stop offset="100%" stop-color="#8b5cf6" />
+            </linearGradient>
+          </defs>
+        </svg>
         <span>Enterprise ERP</span>
       </a>
     </div>
@@ -164,10 +197,16 @@
     </div>
 
     <div class="module-sidebar-user">
-      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-avatar">
+        <%= user.username.charAt(0).toUpperCase() %>
+      </div>
       <div class="msu-meta">
-        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
-        <span><%= user.role %></span>
+        <strong>
+          <%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>
+        </strong>
+        <span>
+          <%= user.role %>
+        </span>
       </div>
     </div>
   </aside>
@@ -177,15 +216,20 @@
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
-        <% if (user.role === 'Admin') { %>
+        <% if (user.role==='Admin' ) { %>
           <a href="/admin" class="mt-link">Sistem Yönetimi</a><a href="/admin/logs" class="mt-link">📜 İşlem Logları</a>
-        <% } %>
-        <a href="/sales" class="mt-link active">Satış Yönetimi</a>
+          <% } %>
+            <a href="/sales" class="mt-link active">Satış Yönetimi</a>
       </div>
       <div class="mt-right">
         <span class="mt-time" id="liveTime"></span>
         <a href="/logout" class="mt-logout" title="Çıkış">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
         </a>
       </div>
     </header>
@@ -194,264 +238,351 @@
       <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
           <h1 style="font-weight: 900; letter-spacing: -0.02em;">Yeni Satış Siparişi Oluştur</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sipariş numarası otomatik atanır. Sekmeli menüyü takip ederek siparişi oluşturun.</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sipariş numarası otomatik atanır.
+            Sekmeli menüyü takip ederek siparişi oluşturun.</p>
         </div>
         <a href="/sales/orders" class="btn btn-secondary" style="border-radius: 12px; gap: 8px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
           Listeye Dön
         </a>
       </div>
 
       <% if (error) { %>
-        <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
-      <% } %>
-
-      <!-- GLASSFORM CARD WIZARD -->
-      <div class="glass-form-card">
-        <h3 style="color: #6366f1; font-size: 1.15rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          📋 Satış Siparişi Oluşturma Sihirbazı
-        </h3>
-
-        <!-- STEP PROGRESS TIMELINE BAR -->
-        <div class="step-progress-bar">
-          <div class="step-progress-item active" onclick="switchOrderTab(1)" id="tab-pill-1">
-            <div class="spi-badge">1</div>
-            <div class="spi-text">
-              <strong>Cari & Genel</strong>
-              <span>Sipariş No & Müşteri Seçimi</span>
-            </div>
-          </div>
-          <div class="step-progress-item" onclick="switchOrderTab(2)" id="tab-pill-2">
-            <div class="spi-badge">2</div>
-            <div class="spi-text">
-              <strong>Ürün Kalemleri</strong>
-              <span>Ürün Ekleme & İskonto</span>
-            </div>
-          </div>
-          <div class="step-progress-item" onclick="switchOrderTab(3)" id="tab-pill-3">
-            <div class="spi-badge">3</div>
-            <div class="spi-text">
-              <strong>Sevkiyat & Ödeme</strong>
-              <span>Teslimat, Ödeme & Notlar</span>
-            </div>
-          </div>
+        <div class="error" style="margin-bottom: 1.5rem;">
+          <%= error %>
         </div>
+        <% } %>
 
-        <form action="/sales/orders/add" method="POST" id="orderForm">
-          <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
+          <!-- GLASSFORM CARD WIZARD -->
+          <div class="glass-form-card">
+            <h3
+              style="color: #6366f1; font-size: 1.15rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              📋 Satış Siparişi Oluşturma Sihirbazı
+            </h3>
 
-          <!-- TAB CONTENT 1: CARİ MÜŞTERİ VE GENEL BİLGİLER -->
-          <div class="tab-content-panel active" id="order-tab-1">
-            <h4 style="font-size: 0.95rem; font-weight: 800; color: #818cf8; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-              <span>📋</span> 1. Sipariş ve Cari Müşteri Bilgileri
-            </h4>
-
-            <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
-              <div class="input-group">
-                <label for="orderNo">Satış Sipariş No <small style="color: var(--text-muted);">(Otomatik)</small></label>
-                <input type="text" id="orderNo" name="orderNo" value="<%= nextOrderNo %>" readonly required style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); cursor: not-allowed;">
+            <!-- STEP PROGRESS TIMELINE BAR -->
+            <div class="step-progress-bar">
+              <div class="step-progress-item active" onclick="switchOrderTab(1)" id="tab-pill-1">
+                <div class="spi-badge">1</div>
+                <div class="spi-text">
+                  <strong>Cari & Genel</strong>
+                  <span>Sipariş No & Müşteri Seçimi</span>
+                </div>
               </div>
-              <div class="input-group">
-                <label for="customerId">Cari Müşteri Seçimi</label>
-                <select id="customerId" name="customerId" onchange="fillCustomerDetails(this)">
-                  <option value="">-- Genel / Kayıtsız Müşteri --</option>
-                  <% customers.forEach(c => { 
-                    const score = c.customerScore !== undefined ? c.customerScore : 85;
-                    const isBlocked = score < 50 || c.riskLevel === 'High' || c.riskLevel === 'Blocked' || c.riskLevel === 'Critical';
-                    const cLimit = parseFloat(c.creditLimit) || 100000;
-                    const cBal = parseFloat(c.currentBalance) || 0;
-                  %>
-                    <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-taxno="<%= c.taxNo || '' %>" data-email="<%= c.email || '' %>" data-phone="<%= c.phone || '' %>" data-address="<%= c.address || '' %>" data-creditlimit="<%= cLimit %>" data-currentbalance="<%= cBal %>" data-blocked="<%= isBlocked %>" <%= isBlocked ? 'disabled style="color:#f43f5e;"' : '' %>>
-                      [<%= c.customerCode %>] <%= c.companyName %> <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / SİPARİŞ ENGELLİ)` : `(Puan: ${score}/100 ⭐ - Risk Limiti: ${cLimit.toLocaleString('tr-TR')} TL)` %>
-                    </option>
-                  <% }); %>
-                </select>
+              <div class="step-progress-item" onclick="switchOrderTab(2)" id="tab-pill-2">
+                <div class="spi-badge">2</div>
+                <div class="spi-text">
+                  <strong>Ürün Kalemleri</strong>
+                  <span>Ürün Ekleme & İskonto</span>
+                </div>
+              </div>
+              <div class="step-progress-item" onclick="switchOrderTab(3)" id="tab-pill-3">
+                <div class="spi-badge">3</div>
+                <div class="spi-text">
+                  <strong>Sevkiyat & Ödeme</strong>
+                  <span>Teslimat, Ödeme & Notlar</span>
+                </div>
+              </div>
+            </div>
 
-                <!-- Dynamic Customer Risk Card -->
-                <div id="customerRiskCard" style="display: none; margin-top: 10px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; font-size: 0.8rem;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div><span style="color: var(--text-muted);">Toplam Risk Limiti:</span> <strong id="cardCreditLimit" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
-                    <div><span style="color: var(--text-muted);">Güncel Borç:</span> <strong id="cardCurrentBalance" style="color: #fbbf24; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
-                    <div><span style="color: var(--text-muted);">Kullanılabilir Limit:</span> <strong id="cardAvailableCredit" style="color: #34d399; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+            <form action="/sales/orders/add" method="POST" id="orderForm">
+              <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
+
+              <!-- TAB CONTENT 1: CARİ MÜŞTERİ VE GENEL BİLGİLER -->
+              <div class="tab-content-panel active" id="order-tab-1">
+                <h4
+                  style="font-size: 0.95rem; font-weight: 800; color: #818cf8; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                  <span>📋</span> 1. Sipariş ve Cari Müşteri Bilgileri
+                </h4>
+
+                <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
+                  <div class="input-group">
+                    <label for="orderNo">Satış Sipariş No <small
+                        style="color: var(--text-muted);">(Otomatik)</small></label>
+                    <input type="text" id="orderNo" name="orderNo" value="<%= nextOrderNo %>" readonly required
+                      style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); cursor: not-allowed;">
+                  </div>
+                  <div class="input-group">
+                    <label for="customerId">Cari Müşteri Seçimi</label>
+                    <select id="customerId" name="customerId" onchange="fillCustomerDetails(this)">
+                      <option value="">-- Genel / Kayıtsız Müşteri --</option>
+                      <% customers.forEach(c=> {
+                        const score = c.customerScore !== undefined ? c.customerScore : 85;
+                        const isBlocked = score < 50 || c.riskLevel==='High' || c.riskLevel==='Blocked' ||
+                          c.riskLevel==='Critical' ; const cLimit=parseFloat(c.creditLimit) || 100000; const
+                          cBal=parseFloat(c.currentBalance) || 0; %>
+                          <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-taxno="<%= c.taxNo || '' %>"
+                            data-email="<%= c.email || '' %>" data-phone="<%= c.phone || '' %>"
+                            data-address="<%= c.address || '' %>" data-creditlimit="<%= cLimit %>"
+                            data-currentbalance="<%= cBal %>" data-blocked="<%= isBlocked %>" <%=isBlocked
+                            ? 'disabled style="color:#f43f5e;"' : '' %>>
+                            [<%= c.customerCode %>] <%= c.companyName %>
+                                <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / SİPARİŞ ENGELLİ)` : `(Puan:
+                                  ${score}/100 ⭐ - Risk Limiti: ${cLimit.toLocaleString('tr-TR')} TL)` %>
+                          </option>
+                          <% }); %>
+                    </select>
+
+                    <!-- Dynamic Customer Risk Card -->
+                    <div id="customerRiskCard"
+                      style="display: none; margin-top: 10px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; font-size: 0.8rem;">
+                      <div
+                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div><span style="color: var(--text-muted);">Toplam Risk Limiti:</span> <strong
+                            id="cardCreditLimit" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00
+                            TL</strong></div>
+                        <div><span style="color: var(--text-muted);">Güncel Borç:</span> <strong id="cardCurrentBalance"
+                            style="color: #fbbf24; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+                        <div><span style="color: var(--text-muted);">Kullanılabilir Limit:</span> <strong
+                            id="cardAvailableCredit"
+                            style="color: #34d399; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="input-group">
+                    <label for="customerName">Müşteri / Kurum Unvanı <span class="req-star">*</span></label>
+                    <input type="text" id="customerName" name="customerName" required placeholder="Müşteri adını girin">
+                  </div>
+                </div>
+
+                <div class="form-grid form-grid--3">
+                  <div class="input-group">
+                    <label for="orderDate">Sipariş Tarihi <small
+                        style="color: var(--text-muted);">(Bugün)</small></label>
+                    <input type="date" id="orderDate" name="orderDate"
+                      value="<%= new Date().toISOString().split('T')[0] %>" required readonly
+                      style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed;">
+                  </div>
+                  <div class="input-group">
+                    <label for="deliveryDate">Tahmini Teslimat Tarihi</label>
+                    <input type="date" id="deliveryDate" name="deliveryDate"
+                      min="<%= new Date().toISOString().split('T')[0] %>">
+                  </div>
+                  <div class="input-group">
+                    <label for="currency">Para Birimi</label>
+                    <select id="currency" name="currency" onchange="recalculate()">
+                      <option value="TRY">TRY (₺)</option>
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR (€)">EUR (€)</option>
+                    </select>
                   </div>
                 </div>
               </div>
-              <div class="input-group">
-                <label for="customerName">Müşteri / Kurum Unvanı <span class="req-star">*</span></label>
-                <input type="text" id="customerName" name="customerName" required placeholder="Müşteri adını girin">
-              </div>
-            </div>
 
-            <div class="form-grid form-grid--3">
-              <div class="input-group">
-                <label for="orderDate">Sipariş Tarihi <small style="color: var(--text-muted);">(Bugün)</small></label>
-                <input type="date" id="orderDate" name="orderDate" value="<%= new Date().toISOString().split('T')[0] %>" required readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed;">
-              </div>
-              <div class="input-group">
-                <label for="deliveryDate">Tahmini Teslimat Tarihi</label>
-                <input type="date" id="deliveryDate" name="deliveryDate" min="<%= new Date().toISOString().split('T')[0] %>">
-              </div>
-              <div class="input-group">
-                <label for="currency">Para Birimi</label>
-                <select id="currency" name="currency" onchange="recalculate()">
-                  <option value="TRY">TRY (₺)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR (€)">EUR (€)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB CONTENT 2: ÜRÜN KALEMLERİ VE İSKONTO -->
-          <div class="tab-content-panel" id="order-tab-2">
-            <!-- Warning Alert for Min 1 Product Rule -->
-            <div id="minItemWarningAlert" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span>⚠️ Siparişte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
-            </div>
-
-            <!-- Risk Limit Exceeded Alert Banner -->
-            <div id="riskLimitExceededAlert" style="display: none; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(244, 63, 94, 0.5); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 700; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <span id="riskLimitExceededText">⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti sipariş tutarından azdır. Sipariş oluşturulamaz.</span>
-            </div>
-
-            <!-- Special Price Violation Alert Banner -->
-            <div id="specialPriceViolationAlert" style="display: none; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(244, 63, 94, 0.5); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 700; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <span id="specialPriceViolationText">⚠️ Müşteriye özel tanımlanmış birim fiyat arttırılamaz, özel iskonto oranı da düşürülemez!</span>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
-              <div>
-                <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin: 0;">
-                  <span style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;" id="itemCountBadge">1</span>
-                  2. Sipariş Ürün Kalemleri (Teklif ile Birebir Aynı Mantık)
-                </h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Siparişe verilecek ürünleri ekleyin, miktar ve iskontoları girin (İskonto %20'den fazla ise sipariş yönetsel onaya düşer).</p>
-              </div>
-
-              <button type="button" onclick="addNewRow()" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 600; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); gap: 8px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                + Yeni Ürün Kalemi Ekle
-              </button>
-            </div>
-
-            <!-- Table Container -->
-            <div style="overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8); margin-bottom: 1.5rem;">
-              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="itemsTable">
-                <thead>
-                  <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
-                    <th style="padding: 14px 16px; width: 45px; text-align: center;">#</th>
-                    <th style="padding: 14px 16px; min-width: 260px;">Ürün / Mamul Kalemi</th>
-                    <th style="padding: 14px 16px; width: 110px;">Miktar</th>
-                    <th style="padding: 14px 16px; width: 140px;">Birim Fiyat</th>
-                    <th style="padding: 14px 16px; width: 110px;">İskonto (%)</th>
-                    <th style="padding: 14px 16px; width: 100px;">KDV (%)</th>
-                    <th style="padding: 14px 16px; width: 150px; text-align: right;">Satır Toplamı</th>
-                    <th style="padding: 14px 16px; width: 60px; text-align: center;">Sil</th>
-                  </tr>
-                </thead>
-                <tbody id="itemsTbody">
-                  <!-- Dynamic rows generated by JavaScript -->
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Live Summary Card & Approval Alert -->
-            <div style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
-              
-              <div id="approvalWarningAlert" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px 18px; border-radius: 10px; color: #fbbf24; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <span>⚡ Bu sipariş yüksek iskonto (>%20) içerdiği için oluşturulduğunda "Onay Bekliyor" statüsünde başlayacak ve yönetsel onaya düşecektir.</span>
-              </div>
-
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; text-align: center;">
-                <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
-                  <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Ara Toplam (Brüt)</span>
-                  <strong id="displaySubtotal" style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
+              <!-- TAB CONTENT 2: ÜRÜN KALEMLERİ VE İSKONTO -->
+              <div class="tab-content-panel" id="order-tab-2">
+                <!-- Warning Alert for Min 1 Product Rule -->
+                <div id="minItemWarningAlert"
+                  style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <span>⚠️ Siparişte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
-                  <span style="font-size: 0.75rem; font-weight: 600; color: #fb7185; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam İskonto</span>
-                  <strong id="displayDiscount" style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0.00 ₺</strong>
+
+                <!-- Risk Limit Exceeded Alert Banner -->
+                <div id="riskLimitExceededAlert"
+                  style="display: none; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(244, 63, 94, 0.5); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 700; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path
+                      d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  <span id="riskLimitExceededText">⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti
+                    sipariş tutarından azdır. Sipariş oluşturulamaz.</span>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
-                  <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Hesaplanan KDV</span>
-                  <strong id="displayTax" style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
+
+                <div
+                  style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
+                  <div>
+                    <h3
+                      style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin: 0;">
+                      <span
+                        style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;"
+                        id="itemCountBadge">1</span>
+                      2. Sipariş Ürün Kalemleri (Teklif ile Birebir Aynı Mantık)
+                    </h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Siparişe verilecek ürünleri
+                      ekleyin, miktar ve iskontoları girin (İskonto %20'den fazla ise sipariş yönetsel onaya düşer).</p>
+                  </div>
+
+                  <button type="button" onclick="addNewRow()" class="btn btn-sm"
+                    style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 600; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                      stroke-linecap="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    + Yeni Ürün Kalemi Ekle
+                  </button>
                 </div>
-                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); padding: 16px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3);">
-                  <span style="font-size: 0.75rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">GENEL TOPLAM</span>
-                  <strong id="displayGrandTotal" style="font-size: 1.35rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
+
+                <!-- Table Container -->
+                <div
+                  style="overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8); margin-bottom: 1.5rem;">
+                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;"
+                    id="itemsTable">
+                    <thead>
+                      <tr
+                        style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
+                        <th style="padding: 14px 16px; width: 45px; text-align: center;">#</th>
+                        <th style="padding: 14px 16px; min-width: 260px;">Ürün / Mamul Kalemi</th>
+                        <th style="padding: 14px 16px; width: 110px;">Miktar</th>
+                        <th style="padding: 14px 16px; width: 140px;">Birim Fiyat</th>
+                        <th style="padding: 14px 16px; width: 110px;">İskonto (%)</th>
+                        <th style="padding: 14px 16px; width: 100px;">KDV (%)</th>
+                        <th style="padding: 14px 16px; width: 150px; text-align: right;">Satır Toplamı</th>
+                        <th style="padding: 14px 16px; width: 60px; text-align: center;">Sil</th>
+                      </tr>
+                    </thead>
+                    <tbody id="itemsTbody">
+                      <!-- Dynamic rows generated by JavaScript -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Live Summary Card & Approval Alert -->
+                <div
+                  style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+
+                  <div id="approvalWarningAlert"
+                    style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px 18px; border-radius: 10px; color: #fbbf24; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5">
+                      <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    <span>⚡ Bu sipariş yüksek iskonto (>%20) içerdiği için oluşturulduğunda "Onay Bekliyor" statüsünde
+                      başlayacak ve yönetsel onaya düşecektir.</span>
+                  </div>
+
+                  <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; text-align: center;">
+                    <div
+                      style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                      <span
+                        style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Ara
+                        Toplam (Brüt)</span>
+                      <strong id="displaySubtotal"
+                        style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00
+                        ₺</strong>
+                    </div>
+                    <div
+                      style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                      <span
+                        style="font-size: 0.75rem; font-weight: 600; color: #fb7185; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam
+                        İskonto</span>
+                      <strong id="displayDiscount"
+                        style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0.00
+                        ₺</strong>
+                    </div>
+                    <div
+                      style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                      <span
+                        style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Hesaplanan
+                        KDV</span>
+                      <strong id="displayTax"
+                        style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00
+                        ₺</strong>
+                    </div>
+                    <div
+                      style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); padding: 16px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                      <span
+                        style="font-size: 0.75rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">GENEL
+                        TOPLAM</span>
+                      <strong id="displayGrandTotal"
+                        style="font-size: 1.35rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00
+                        ₺</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              <!-- TAB CONTENT 3: SEVKİYAT VE ÖDEME BİLGİLERİ -->
+              <div class="tab-content-panel" id="order-tab-3">
+                <h4
+                  style="font-size: 0.95rem; font-weight: 800; color: #10b981; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                  <span>🚚</span> 3. Sevkiyat Adresi, Ödeme Koşulu ve Notlar
+                </h4>
+
+                <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
+                  <div class="input-group">
+                    <label for="shippingAddress">Sevkiyat Teslimat Adresi</label>
+                    <textarea id="shippingAddress" name="shippingAddress" rows="3"
+                      placeholder="Ürünlerin teslim edileceği depo veya fabrika adresi..."></textarea>
+                  </div>
+                  <div class="input-group">
+                    <label for="billingAddress">Fatura Adresi</label>
+                    <textarea id="billingAddress" name="billingAddress" rows="3"
+                      placeholder="Müşteri fatura adresi..."></textarea>
+                  </div>
+                </div>
+
+                <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
+                  <div class="input-group">
+                    <label for="paymentTerm">Ödeme Vadesi / Koşulu</label>
+                    <select id="paymentTerm" name="paymentTerm">
+                      <option value="Pesin">Peşin (Ön Ödeme)</option>
+                      <option value="Vadeli_30" selected>30 Gün Vadeli</option>
+                      <option value="Vadeli_60">60 Gün Vadeli</option>
+                      <option value="Vadeli_90">90 Gün Vadeli</option>
+                      <option value="Kredi_Karti">Kredi Kartı</option>
+                    </select>
+                  </div>
+                  <div class="input-group">
+                    <label for="priority">Sipariş Öncelik Seviyesi</label>
+                    <select id="priority" name="priority">
+                      <option value="Normal" selected>Normal</option>
+                      <option value="Acil">⚡ Acil (Yüksek Öncelikli)</option>
+                      <option value="Kritik">🔥 Kritik / Özel Üretim</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label for="notes">Sipariş Notları & Özel Üretim Notları</label>
+                  <textarea id="notes" name="notes" rows="3"
+                    placeholder="Sipariş ile ilgili depo veya sevkiyat birimine iletilmesini istediğiniz özel talimatlar..."></textarea>
+                </div>
+              </div>
+
+              <!-- BOTTOM TAB NAVIGATION BAR -->
+              <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);">
+                <button type="button" class="btn btn-outline-secondary" id="btnPrevStep" onclick="navigateOrderStep(-1)"
+                  style="display: none; font-weight: 600; padding: 10px 22px; border-radius: 10px;">
+                  ← Önceki Adım
+                </button>
+                <div id="stepCounterBadge" style="font-size: 0.825rem; color: var(--text-muted); font-weight: 600;">
+                  Adım 1 / 3
+                </div>
+                <div>
+                  <button type="button" class="btn btn-primary" id="btnNextStep" onclick="navigateOrderStep(1)"
+                    style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 10px 24px; border-radius: 10px;">
+                    Sonraki Adım →
+                  </button>
+                  <button type="submit" class="btn btn-lg" id="btnSubmitOrder"
+                    style="display: none; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 700; padding: 12px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35); gap: 10px;">
+                    📋 Satış Siparişini Kaydet ve Sistemde Başlat
+                  </button>
+                </div>
+              </div>
+
+            </form>
           </div>
-
-          <!-- TAB CONTENT 3: SEVKİYAT VE ÖDEME BİLGİLERİ -->
-          <div class="tab-content-panel" id="order-tab-3">
-            <h4 style="font-size: 0.95rem; font-weight: 800; color: #10b981; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-              <span>🚚</span> 3. Sevkiyat Adresi, Ödeme Koşulu ve Notlar
-            </h4>
-
-            <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
-              <div class="input-group">
-                <label for="shippingAddress">Sevkiyat Teslimat Adresi</label>
-                <textarea id="shippingAddress" name="shippingAddress" rows="3" placeholder="Ürünlerin teslim edileceği depo veya fabrika adresi..."></textarea>
-              </div>
-              <div class="input-group">
-                <label for="billingAddress">Fatura Adresi</label>
-                <textarea id="billingAddress" name="billingAddress" rows="3" placeholder="Müşteri fatura adresi..."></textarea>
-              </div>
-            </div>
-
-            <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
-              <div class="input-group">
-                <label for="paymentTerm">Ödeme Vadesi / Koşulu</label>
-                <select id="paymentTerm" name="paymentTerm">
-                  <option value="Pesin">Peşin (Ön Ödeme)</option>
-                  <option value="Vadeli_30" selected>30 Gün Vadeli</option>
-                  <option value="Vadeli_60">60 Gün Vadeli</option>
-                  <option value="Vadeli_90">90 Gün Vadeli</option>
-                  <option value="Kredi_Karti">Kredi Kartı</option>
-                </select>
-              </div>
-              <div class="input-group">
-                <label for="priority">Sipariş Öncelik Seviyesi</label>
-                <select id="priority" name="priority">
-                  <option value="Normal" selected>Normal</option>
-                  <option value="Acil">⚡ Acil (Yüksek Öncelikli)</option>
-                  <option value="Kritik">🔥 Kritik / Özel Üretim</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="notes">Sipariş Notları & Özel Üretim Notları</label>
-              <textarea id="notes" name="notes" rows="3" placeholder="Sipariş ile ilgili depo veya sevkiyat birimine iletilmesini istediğiniz özel talimatlar..."></textarea>
-            </div>
-          </div>
-
-          <!-- BOTTOM TAB NAVIGATION BAR -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);">
-            <button type="button" class="btn btn-outline-secondary" id="btnPrevStep" onclick="navigateOrderStep(-1)" style="display: none; font-weight: 600; padding: 10px 22px; border-radius: 10px;">
-              ← Önceki Adım
-            </button>
-            <div id="stepCounterBadge" style="font-size: 0.825rem; color: var(--text-muted); font-weight: 600;">
-              Adım 1 / 3
-            </div>
-            <div>
-              <button type="button" class="btn btn-primary" id="btnNextStep" onclick="navigateOrderStep(1)" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 10px 24px; border-radius: 10px;">
-                Sonraki Adım →
-              </button>
-              <button type="submit" class="btn btn-lg" id="btnSubmitOrder" style="display: none; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 700; padding: 12px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35); gap: 10px;">
-                📋 Satış Siparişini Kaydet ve Sistemde Başlat
-              </button>
-            </div>
-          </div>
-
-        </form>
-      </div>
     </main>
   </div>
 
@@ -573,9 +704,9 @@
         selectedCustomerCurrentBalance = cBalance;
         const availableCredit = cLimit - cBalance;
 
-        document.getElementById('cardCreditLimit').textContent = cLimit.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
-        document.getElementById('cardCurrentBalance').textContent = cBalance.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
-        document.getElementById('cardAvailableCredit').textContent = availableCredit.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+        document.getElementById('cardCreditLimit').textContent = cLimit.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL';
+        document.getElementById('cardCurrentBalance').textContent = cBalance.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL';
+        document.getElementById('cardAvailableCredit').textContent = availableCredit.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL';
         if (riskCard) riskCard.style.display = 'block';
       } else {
         selectedCustomerCreditLimit = 0;
@@ -583,7 +714,7 @@
         if (riskCard) riskCard.style.display = 'none';
       }
 
-      // Re-trigger special price evaluation for all existing rows
+      // Re-trigger special price evaluation for all existing rows that have a selected product
       const rows = document.querySelectorAll('#itemsTbody tr');
       rows.forEach(tr => {
         const stockSelect = tr.querySelector('.item-stock-id');
@@ -779,7 +910,7 @@
         if (maxPrice !== null && !isNaN(maxPrice) && price > maxPrice) {
           priceInput.style.borderColor = '#f43f5e';
           priceInput.style.color = '#f43f5e';
-          globalSpecialPriceViolation = `⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış birim fiyat (${maxPrice.toLocaleString('tr-TR', {minimumFractionDigits:2})} TL) daha yüksek bir tutara arttırılamaz!`;
+          globalSpecialPriceViolation = `⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış birim fiyat (${maxPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL) daha yüksek bir tutara arttırılamaz!`;
         } else if (priceInput) {
           priceInput.style.borderColor = 'var(--border)';
           priceInput.style.color = '#fff';
@@ -858,7 +989,7 @@
       if (selectedCustomerCreditLimit > 0 && grandTotal > availableCredit) {
         if (riskAlert) {
           const warnText = document.getElementById('riskLimitExceededText');
-          if (warnText) warnText.textContent = `⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits:2})} TL), toplam sipariş tutarından (${grandTotal.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${symbol}) azdır. Risk limiti aşılacağı için sipariş oluşturulamaz.`;
+          if (warnText) warnText.textContent = `⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL), toplam sipariş tutarından (${grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${symbol}) azdır. Risk limiti aşılacağı için sipariş oluşturulamaz.`;
           riskAlert.style.display = 'flex';
         }
       } else {
@@ -871,7 +1002,7 @@
 
     const form = document.getElementById('orderForm');
     if (form) {
-      form.addEventListener('submit', function(e) {
+      form.addEventListener('submit', function (e) {
         recalculate();
         if (globalSpecialPriceViolation) {
           e.preventDefault();
@@ -881,7 +1012,7 @@
 
         const payload = document.getElementById('itemsJsonInput').value;
         let arr = [];
-        try { arr = JSON.parse(payload); } catch(err) { arr = []; }
+        try { arr = JSON.parse(payload); } catch (err) { arr = []; }
 
         if (!arr || arr.length === 0) {
           e.preventDefault();
@@ -890,11 +1021,11 @@
           return false;
         }
 
-        const grandTotal = parseFloat(document.getElementById('displayGrandTotal').textContent.replace(/[^0-9,-]+/g,"").replace(',', '.')) || 0;
+        const grandTotal = parseFloat(document.getElementById('displayGrandTotal').textContent.replace(/[^0-9,-]+/g, "").replace(',', '.')) || 0;
         const availableCredit = selectedCustomerCreditLimit - selectedCustomerCurrentBalance;
         if (selectedCustomerCreditLimit > 0 && grandTotal > availableCredit) {
           e.preventDefault();
-          alert(`⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', {minimumFractionDigits:2})} TL), sipariş tutarından azdır. Sipariş oluşturulamaz!`);
+          alert(`⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL), sipariş tutarından azdır. Sipariş oluşturulamaz!`);
           return false;
         }
       });
@@ -909,4 +1040,5 @@
     setInterval(updateClock, 1000);
   </script>
 </body>
+
 </html>
