@@ -36,6 +36,7 @@ class SaleController {
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
     const exchangeRates = await exchangeRateRepository.getLatestRates();
+    const priceLists = await priceListRepository.findAll();
 
     res.render('sales/add', {
       user: req.user,
@@ -44,6 +45,7 @@ class SaleController {
       stockItems,
       customers,
       exchangeRates,
+      priceLists,
       formData: {}
     });
   });
@@ -60,6 +62,8 @@ class SaleController {
         const n = parseFloat(val);
         return Number.isNaN(n) ? defaultVal : n;
       };
+
+      const customerId = safeInt(req.body.customerId);
 
       let items = [];
       if (req.body.itemsJson) {
@@ -108,6 +112,35 @@ class SaleController {
         const price = safeFloat(item.unitPrice, 0);
         const disc = safeFloat(item.discountRate, 0);
         const tax = safeFloat(item.taxRate, 20);
+
+        const itemId = safeInt(item.stockItemId);
+        let itemName = item.name || 'Ürün Kalemi';
+        let stockCode = item.stockCode || '';
+        if (itemId && itemId > 0) {
+          const st = await StockItem.findByPk(itemId);
+          if (st) {
+            itemName = st.name;
+            stockCode = st.stockCode;
+          }
+        }
+
+        // Special Price List validation (Fiyat arttırılamaz, İskonto düşürülemez)
+        if (customerId && itemId && itemId > 0) {
+          const priceList = await CustomerPriceList.findOne({
+            where: { customerId: customerId, stockItemId: itemId, status: 'Active' }
+          });
+          if (priceList) {
+            const specPrice = parseFloat(priceList.specialPrice);
+            const customDisc = parseFloat(priceList.customDiscountRate);
+
+            if (price > specPrice) {
+              throw new Error(`⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış birim fiyat (${specPrice.toLocaleString('tr-TR')} TL) daha yüksek bir tutara arttırılamaz! (Girilen: ${price.toLocaleString('tr-TR')} TL)`);
+            }
+            if (disc < customDisc) {
+              throw new Error(`⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış iskonto oranı (%${customDisc}) daha düşük bir orana düşürülemez! (Girilen: %${disc})`);
+            }
+          }
+        }
 
         const sub = qty * price;
         const discAmt = sub * (disc / 100);
@@ -412,6 +445,7 @@ class SaleController {
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
     const exchangeRates = await exchangeRateRepository.getLatestRates();
+    const priceLists = await priceListRepository.findAll();
 
     res.render('sales/quotes_add', {
       user: req.user,
@@ -419,6 +453,7 @@ class SaleController {
       stockItems,
       customers,
       exchangeRates,
+      priceLists,
       error: null
     });
   });
@@ -435,6 +470,8 @@ class SaleController {
         const n = parseFloat(val);
         return Number.isNaN(n) ? defaultVal : n;
       };
+
+      const customerId = safeInt(req.body.customerId);
 
       let items = [];
       if (req.body.itemsJson) {
@@ -486,6 +523,34 @@ class SaleController {
         const p = safeFloat(item.unitPrice, 0);
         const d = safeFloat(item.discountRate, 0);
         const t = safeFloat(item.taxRate, 20);
+
+        let itemName = item.name || 'Ürün Kalemi';
+        let stockCode = item.stockCode || '';
+        if (itemId && itemId > 0) {
+          const st = await StockItem.findByPk(itemId);
+          if (st) {
+            itemName = st.name;
+            stockCode = st.stockCode;
+          }
+        }
+
+        // Special Price List validation (Fiyat arttırılamaz, İskonto düşürülemez)
+        if (customerId && itemId && itemId > 0) {
+          const priceList = await CustomerPriceList.findOne({
+            where: { customerId: customerId, stockItemId: itemId, status: 'Active' }
+          });
+          if (priceList) {
+            const specPrice = parseFloat(priceList.specialPrice);
+            const customDisc = parseFloat(priceList.customDiscountRate);
+
+            if (p > specPrice) {
+              throw new Error(`⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış birim fiyat (${specPrice.toLocaleString('tr-TR')} TL) daha yüksek bir tutara arttırılamaz! (Girilen: ${p.toLocaleString('tr-TR')} TL)`);
+            }
+            if (d < customDisc) {
+              throw new Error(`⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış iskonto oranı (%${customDisc}) daha düşük bir orana düşürülemez! (Girilen: %${d})`);
+            }
+          }
+        }
 
         const sub = q * p;
         const disc = sub * (d / 100);

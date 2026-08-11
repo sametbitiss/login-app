@@ -317,6 +317,12 @@
               <span id="riskLimitExceededText">⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti sipariş tutarından azdır. Sipariş oluşturulamaz.</span>
             </div>
 
+            <!-- Special Price Violation Alert Banner -->
+            <div id="specialPriceViolationAlert" style="display: none; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(244, 63, 94, 0.5); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 700; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span id="specialPriceViolationText">⚠️ Müşteriye özel tanımlanmış birim fiyat arttırılamaz, özel iskonto oranı da düşürülemez!</span>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
               <div>
                 <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin: 0;">
@@ -453,6 +459,10 @@
   <script id="stockCatalogData" type="application/json">
     <%- JSON.stringify(stockItems || []) %>
   </script>
+  <!-- Customer Price Lists Master JSON Data -->
+  <script id="priceListsData" type="application/json">
+    <%- JSON.stringify(priceLists || []) %>
+  </script>
 
   <script>
     const stockCatalog = JSON.parse(document.getElementById('stockCatalogData').textContent || '[]');
@@ -514,6 +524,22 @@
       switchOrderTab(currentStep + direction);
     }
 
+    const priceListsCatalog = JSON.parse(document.getElementById('priceListsData').textContent || '[]');
+
+    function getCustomerSpecialPrice(customerId, stockItemId) {
+      if (!stockItemId) return null;
+      const cId = parseInt(customerId, 10);
+      const sId = parseInt(stockItemId, 10);
+
+      if (cId) {
+        const match = priceListsCatalog.find(p => p.customerId === cId && p.stockItemId === sId && p.status === 'Active');
+        if (match) return match;
+      }
+
+      const globalMatch = priceListsCatalog.find(p => (!p.customerId || p.customerId === 0) && p.stockItemId === sId && p.status === 'Active');
+      return globalMatch || null;
+    }
+
     function fillCustomerDetails(selectEl) {
       const selectedOption = selectEl.options[selectEl.selectedIndex];
       const isBlocked = selectedOption.getAttribute('data-blocked') === 'true';
@@ -556,6 +582,16 @@
         selectedCustomerCurrentBalance = 0;
         if (riskCard) riskCard.style.display = 'none';
       }
+
+      // Re-trigger special price evaluation for all existing rows
+      const rows = document.querySelectorAll('#itemsTbody tr');
+      rows.forEach(tr => {
+        const stockSelect = tr.querySelector('.item-stock-id');
+        if (stockSelect && stockSelect.value) {
+          const rowId = tr.id.replace('row-', '');
+          onStockSelect(stockSelect, rowId);
+        }
+      });
 
       recalculate();
     }
@@ -612,7 +648,10 @@
 
       tbody.appendChild(tr);
       updateRowIndices();
-      recalculate();
+
+      const selectEl = tr.querySelector('.item-stock-id');
+      if (selectEl) onStockSelect(selectEl, rowIdCounter);
+      else recalculate();
     }
 
     function removeRow(id) {
@@ -647,16 +686,41 @@
 
     function onStockSelect(selectEl, rowId) {
       const option = selectEl.options[selectEl.selectedIndex];
-      const price = option.getAttribute('data-price');
+      const defaultPrice = parseFloat(option.getAttribute('data-price')) || 0;
       const tax = option.getAttribute('data-tax');
       const tr = document.getElementById(`row-${rowId}`);
 
       if (tr) {
-        if (price !== null) tr.querySelector('.item-price').value = price;
         if (tax !== null) tr.querySelector('.item-tax').value = tax;
+
+        const custSelect = document.getElementById('customerId');
+        const custId = custSelect ? custSelect.value : '';
+        const stockItemId = selectEl.value;
+
+        const sp = getCustomerSpecialPrice(custId, stockItemId);
+        const priceInput = tr.querySelector('.item-price');
+        const discInput = tr.querySelector('.item-discount');
+
+        if (sp) {
+          const specPrice = parseFloat(sp.specialPrice);
+          const customDisc = parseFloat(sp.customDiscountRate);
+
+          priceInput.value = specPrice;
+          discInput.value = customDisc;
+          priceInput.dataset.specialMax = specPrice;
+          discInput.dataset.specialMin = customDisc;
+        } else {
+          priceInput.value = defaultPrice;
+          discInput.value = 0;
+          delete priceInput.dataset.specialMax;
+          delete discInput.dataset.specialMin;
+        }
+
         recalculate();
       }
     }
+
+    let globalSpecialPriceViolation = null;
 
     function recalculate() {
       const rows = document.querySelectorAll('#itemsTbody tr');
@@ -672,6 +736,7 @@
 
       let maxDiscountRate = 0;
       const itemsPayload = [];
+      globalSpecialPriceViolation = null;
 
       rows.forEach(tr => {
         const stockSelect = tr.querySelector('.item-stock-id');
@@ -681,9 +746,36 @@
         const name = selectedOpt ? selectedOpt.text.split('] ')[1]?.split(' (')[0] || '' : '';
 
         const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
-        const price = parseFloat(tr.querySelector('.item-price').value) || 0;
-        const discountRate = parseFloat(tr.querySelector('.item-discount').value) || 0;
+        const priceInput = tr.querySelector('.item-price');
+        const discInput = tr.querySelector('.item-discount');
+
+        const price = parseFloat(priceInput.value) || 0;
+        const discountRate = parseFloat(discInput.value) || 0;
         const taxRate = parseFloat(tr.querySelector('.item-tax').value) || 0;
+
+        // Mutation check: Fiyat arttırılamaz, İskonto düşürülemez
+        const maxPrice = priceInput && priceInput.dataset.specialMax !== undefined ? parseFloat(priceInput.dataset.specialMax) : null;
+        const minDisc = discInput && discInput.dataset.specialMin !== undefined ? parseFloat(discInput.dataset.specialMin) : null;
+
+        if (maxPrice !== null && !isNaN(maxPrice) && price > maxPrice) {
+          priceInput.style.borderColor = '#f43f5e';
+          priceInput.style.color = '#f43f5e';
+          globalSpecialPriceViolation = `⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış birim fiyat (${maxPrice.toLocaleString('tr-TR', {minimumFractionDigits:2})} TL) daha yüksek bir tutara arttırılamaz!`;
+        } else if (priceInput) {
+          priceInput.style.borderColor = 'var(--border)';
+          priceInput.style.color = '#fff';
+        }
+
+        if (minDisc !== null && !isNaN(minDisc) && discountRate < minDisc) {
+          discInput.style.borderColor = '#f43f5e';
+          discInput.style.color = '#f43f5e';
+          if (!globalSpecialPriceViolation) {
+            globalSpecialPriceViolation = `⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış iskonto oranı (%${minDisc}) daha düşük bir orana düşürülemez!`;
+          }
+        } else if (discInput) {
+          discInput.style.borderColor = 'var(--border)';
+          discInput.style.color = '#fb7185';
+        }
 
         if (discountRate > maxDiscountRate) maxDiscountRate = discountRate;
 
@@ -722,6 +814,15 @@
       document.getElementById('displayTax').textContent = grandTax.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
       document.getElementById('displayGrandTotal').textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
 
+      const spAlert = document.getElementById('specialPriceViolationAlert');
+      const spText = document.getElementById('specialPriceViolationText');
+      if (globalSpecialPriceViolation) {
+        if (spText) spText.textContent = globalSpecialPriceViolation;
+        if (spAlert) spAlert.style.display = 'flex';
+      } else {
+        if (spAlert) spAlert.style.display = 'none';
+      }
+
       // Approval Warning Alert (>20% discount rate)
       const approvalAlert = document.getElementById('approvalWarningAlert');
       if (approvalAlert) {
@@ -753,6 +854,12 @@
     if (form) {
       form.addEventListener('submit', function(e) {
         recalculate();
+        if (globalSpecialPriceViolation) {
+          e.preventDefault();
+          alert(globalSpecialPriceViolation);
+          return false;
+        }
+
         const payload = document.getElementById('itemsJsonInput').value;
         let arr = [];
         try { arr = JSON.parse(payload); } catch(err) { arr = []; }
