@@ -33,7 +33,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    customerTaxNo: {
+    customerTaxOffice: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    billingAddress: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    shippingAddress: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    customerPhone: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    customerEmail: {
       type: DataTypes.STRING,
       allowNull: true
     },
@@ -41,9 +57,41 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
+    invoiceTime: {
+      type: DataTypes.STRING,
+      defaultValue: '10:30:00'
+    },
     dueDate: {
       type: DataTypes.DATEONLY,
       allowNull: false
+    },
+    invoiceType: {
+      type: DataTypes.STRING,
+      defaultValue: 'SATIS'
+    },
+    invoiceScenario: {
+      type: DataTypes.STRING,
+      defaultValue: 'EARSIVFATURA'
+    },
+    ettnNo: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    orderNo: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    orderDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    dispatchNo: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    dispatchDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
     },
     subtotal: {
       type: DataTypes.DECIMAL(12, 2),
@@ -65,6 +113,26 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: 'TRY'
     },
+    exchangeRate: {
+      type: DataTypes.DECIMAL(10, 4),
+      defaultValue: 1.0000
+    },
+    paymentType: {
+      type: DataTypes.STRING,
+      defaultValue: 'Vadeli'
+    },
+    paymentTermDays: {
+      type: DataTypes.INTEGER,
+      defaultValue: 30
+    },
+    bankName: {
+      type: DataTypes.STRING,
+      defaultValue: 'Ziraat Bankası A.Ş. - Maslak Şubesi'
+    },
+    ibanNo: {
+      type: DataTypes.STRING,
+      defaultValue: 'TR56 0001 0002 0003 0004 0005 06'
+    },
     paymentStatus: {
       type: DataTypes.STRING,
       defaultValue: 'Unpaid'
@@ -72,6 +140,10 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type: DataTypes.STRING,
       defaultValue: 'Issued'
+    },
+    itemsJson: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     notes: {
       type: DataTypes.TEXT,

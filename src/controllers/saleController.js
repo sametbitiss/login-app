@@ -1128,7 +1128,12 @@ class SaleController {
 
   createInvoiceFromOrder = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const order = await SaleOrder.findByPk(id);
+    const order = await SaleOrder.findByPk(id, {
+      include: [
+        { model: StockItem, as: 'stockItem' },
+        { model: CustomerAccount, as: 'customer' }
+      ]
+    });
 
     if (!order) {
       return res.redirect('/sales/invoices?error=' + encodeURIComponent('⚠️ Sipariş kaydı bulunamadı.'));
@@ -1144,26 +1149,83 @@ class SaleController {
       return res.redirect('/sales/invoices?error=' + encodeURIComponent(`⚠️ Bu sipariş (${order.orderNo}) için daha önce ${existingInvoice.invoiceNo} numaralı satış faturası kesilmiştir! Tekrar fatura oluşturulamaz.`));
     }
 
+    // Find dispatch note if available
+    const dispatchNote = await SaleDispatchNote.findOne({ where: { saleOrderId: order.id } });
+
     const nextInvoiceNo = await invoiceRepository.getNextInvoiceNo();
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 30);
+    
+    // Read from body if form/modal was submitted, else set rich defaults
+    const invoiceScenario = req.body.invoiceScenario || 'EARSIVFATURA';
+    const invoiceType = req.body.invoiceType || 'SATIS';
+    const paymentType = req.body.paymentType || order.paymentTerm || 'Vadeli';
+    const paymentTermDays = parseInt(req.body.paymentTermDays, 10) || 30;
+    
+    const invoiceDate = req.body.invoiceDate || new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const invoiceTime = req.body.invoiceTime || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    
+    const dueDateObj = new Date(invoiceDate);
+    dueDateObj.setDate(dueDateObj.getDate() + paymentTermDays);
+    const dueDate = req.body.dueDate || dueDateObj.toISOString().split('T')[0];
+
+    const bankName = req.body.bankName || 'Ziraat Bankası A.Ş. - Maslak Ticari Şubesi';
+    const ibanNo = req.body.ibanNo || 'TR56 0001 0002 0003 0004 0005 06';
+    const ettnNo = req.body.ettnNo || require('crypto').randomUUID();
+
+    // Prepare itemsJson if not present on order
+    let itemsJsonStr = order.itemsJson;
+    if (!itemsJsonStr) {
+      itemsJsonStr = JSON.stringify([{
+        stockItemId: order.stockItemId,
+        stockCode: order.stockItem ? order.stockItem.stockCode : 'STK-001',
+        name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
+        quantity: parseFloat(order.quantity) || 1,
+        unit: order.stockItem ? order.stockItem.unit : 'Adet',
+        unitPrice: parseFloat(order.unitPrice) || 0,
+        discountRate: parseFloat(order.discountRate) || 0,
+        discountAmount: parseFloat(order.discountAmount) || 0,
+        taxRate: parseFloat(order.taxRate) || 20,
+        taxAmount: parseFloat(order.taxAmount) || 0,
+        totalAmount: parseFloat(order.totalAmount) || 0
+      }]);
+    }
 
     const invoice = await invoiceRepository.create({
       invoiceNo: nextInvoiceNo,
       saleOrderId: order.id,
+      dispatchNoteId: dispatchNote ? dispatchNote.id : null,
       customerId: order.customerId,
       customerName: order.customerName,
-      customerTaxNo: order.customerTaxNo,
-      invoiceDate: new Date().toISOString().split('T')[0],
-      dueDate: dueDate.toISOString().split('T')[0],
+      customerTaxNo: order.customerTaxNo || (order.customer ? order.customer.taxNo : '1234567890'),
+      customerTaxOffice: order.customer ? order.customer.taxOffice : 'Maslak V.D.',
+      billingAddress: order.billingAddress || (order.customer ? order.customer.address : 'Maslak Mah. Büyükdere Cad. No:100 Şişli / İstanbul'),
+      shippingAddress: order.shippingAddress || (order.customer ? order.customer.address : 'Maslak Mah. Büyükdere Cad. No:100 Şişli / İstanbul'),
+      customerPhone: order.customerPhone || (order.customer ? order.customer.phone : '+90 212 555 0100'),
+      customerEmail: order.customerEmail || (order.customer ? order.customer.email : 'bilgi@musteri.com'),
+      invoiceDate: invoiceDate,
+      invoiceTime: invoiceTime,
+      dueDate: dueDate,
+      invoiceType: invoiceType,
+      invoiceScenario: invoiceScenario,
+      ettnNo: ettnNo,
+      orderNo: order.orderNo,
+      orderDate: order.orderDate,
+      dispatchNo: dispatchNote ? dispatchNote.dispatchNo : null,
+      dispatchDate: dispatchNote ? dispatchNote.dispatchDate : null,
       subtotal: order.subtotal,
       discountAmount: order.discountAmount,
       taxAmount: order.taxAmount,
       totalAmount: order.totalAmount,
-      currency: order.currency,
+      currency: order.currency || 'TRY',
+      exchangeRate: parseFloat(req.body.exchangeRate) || 1.0000,
+      paymentType: paymentType,
+      paymentTermDays: paymentTermDays,
+      bankName: bankName,
+      ibanNo: ibanNo,
       paymentStatus: 'Unpaid',
       status: 'Issued',
-      notes: `[Sipariş No: ${order.orderNo}] numaralı tamamlanan satış siparişi faturaya dönüştürüldü.`
+      itemsJson: itemsJsonStr,
+      notes: req.body.notes || `[Sipariş No: ${order.orderNo}] numaralı tamamlanan satış siparişi faturaya dönüştürüldü.`
     }, req.user, req.ip);
 
     if (order.customerId) {
