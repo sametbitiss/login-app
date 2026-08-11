@@ -6,73 +6,6 @@
   <title>Teklif Yönetimi (RFQ) — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    .product-group-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      margin-bottom: 28px;
-      overflow: hidden;
-      box-shadow: var(--shadow-md);
-    }
-    .product-group-header {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
-      padding: 18px 24px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .product-info-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .product-icon {
-      width: 42px;
-      height: 42px;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      color: #818cf8;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.3rem;
-    }
-    .winner-badge-header {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.2) 100%);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: #34d399;
-      padding: 8px 16px;
-      border-radius: 30px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
-    }
-    .recommendation-row {
-      background: rgba(16, 185, 129, 0.05) !important;
-      border-left: 4px solid #10b981 !important;
-    }
-    .fp-score-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-weight: 800;
-      font-size: 0.85rem;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .score-high { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
-    .score-mid { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
-    .score-low { background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); }
-  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -118,8 +51,8 @@
 
       <div class="page-header">
         <div>
-          <h1>Teklif Yönetimi & Fiyat/Performans Analiz Paneli (RFQ)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Gelen tedarikçi tekliflerini ürün bazlı karşılaştırın; sistemin önerdiği en uygun teklifi tek tıkla onaylayın.</p>
+          <h1>Satın Alma Teklif Listesi (RFQ)</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Tedarikçilerden gelen tüm teklif kayıtlarının listesi.</p>
         </div>
         <a href="/purchase/rfq/add" class="btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -129,22 +62,23 @@
 
       <!-- KPI Strip -->
       <div class="kpi-strip">
-        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--indigo">📦</div><div class="kpi-chip-data"><span class="kpi-chip-label">Gruplanan Ürün Sayısı</span><span class="kpi-chip-value"><%= groupedRfqs.length %> Ürün</span></div></div>
-        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--amber">📨</div><div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Gelen Teklif</span><span class="kpi-chip-value"><%= rfqStats.totalRfqs %> Teklif</span></div></div>
-        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--emerald">🏆</div><div class="kpi-chip-data"><span class="kpi-chip-label">Değerlendirilen Gruplar</span><span class="kpi-chip-value"><%= groupedRfqs.filter(g => g.recommendedOffer).length %> Grubun En İyisi Belirlendi</span></div></div>
+        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--indigo">📨</div><div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Teklif Kaydı</span><span class="kpi-chip-value"><%= rfqs.length %> Teklif</span></div></div>
+        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--amber">⏳</div><div class="kpi-chip-data"><span class="kpi-chip-label">Teklif Alınan</span><span class="kpi-chip-value"><%= rfqs.filter(r => r.status === 'Received').length %></span></div></div>
+        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--emerald">✅</div><div class="kpi-chip-data"><span class="kpi-chip-label">Kabul Edilen</span><span class="kpi-chip-value"><%= rfqs.filter(r => r.status === 'Accepted').length %></span></div></div>
       </div>
 
+      <!-- Filter Bar -->
       <div class="filter-bar">
         <form method="GET" action="/purchase/rfq" class="filter-form">
           <div class="filter-input-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" name="search" placeholder="RFQ no, malzeme adı veya tedarikçiye göre ara..." value="<%= filterSearch %>" class="filter-input">
+            <input type="text" name="search" placeholder="Teklif no veya tedarikçi adına göre ara..." value="<%= filterSearch %>" class="filter-input">
           </div>
           <select name="status" class="filter-select" onchange="this.form.submit()">
             <option value="">Tüm Durumlar</option>
+            <option value="Received" <%= filterStatus === 'Received' ? 'selected' : '' %>>Teklif Alındı</option>
             <option value="Draft" <%= filterStatus === 'Draft' ? 'selected' : '' %>>Taslak</option>
             <option value="Sent" <%= filterStatus === 'Sent' ? 'selected' : '' %>>Gönderildi</option>
-            <option value="Received" <%= filterStatus === 'Received' ? 'selected' : '' %>>Teklif Alındı</option>
             <option value="Accepted" <%= filterStatus === 'Accepted' ? 'selected' : '' %>>Kabul Edildi</option>
             <option value="Rejected" <%= filterStatus === 'Rejected' ? 'selected' : '' %>>Reddedildi</option>
           </select>
@@ -152,130 +86,102 @@
         </form>
       </div>
 
-      <% if (groupedRfqs.length === 0) { %>
-        <div class="table-wrapper" style="text-align: center; padding: 4rem; color: var(--text-muted);">
-          <div style="font-size: 2.5rem; margin-bottom: 12px;">📨</div>
-          Kayıtlı tedarikçi teklifi bulunmamaktadır.
-          <br><a href="/purchase/rfq/add" style="color: var(--indigo); font-weight: 600; margin-top: 8px; display: inline-block;">Yeni teklif kaydı oluşturun →</a>
-        </div>
-      <% } else { %>
-        <% groupedRfqs.forEach(group => { %>
-          <div class="product-group-card">
-            <!-- Group Header -->
-            <div class="product-group-header">
-              <div class="product-info-title">
-                <div class="product-icon">📦</div>
-                <div>
-                  <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0;">
-                    <%= group.itemName %>
-                  </h3>
-                  <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-                    Stok Kodu: <strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= group.stockCode %></strong>
-                    • Birim: <strong><%= group.unit %></strong> • Kategori: <span class="status-pill status-approved"><%= group.category %></span>
-                    • Toplam <strong><%= group.items.length %></strong> Tedarikçi Teklifi Alındı
-                  </div>
-                </div>
-              </div>
+      <div class="results-info"><span>Toplam <strong><%= rfqs.length %></strong> teklif kaydı listeleniyor</span></div>
 
-              <% if (group.recommendedOffer) { %>
-                <div class="winner-badge-header">
-                  <span>🏆 <strong>SİSTEM ÖNERİSİ (EN UYGUN F/P TEKLİFİ):</strong></span>
-                  <span style="color: #fff; background: #10b981; padding: 2px 8px; border-radius: 12px; font-family: 'JetBrains Mono', monospace;"><%= group.recommendedOffer.supplierName %> (%<%= group.recommendedOffer.fpScore %> F/P Skoru — Birim: <%= parseFloat(group.recommendedOffer.offeredUnitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= group.recommendedOffer.currency %>)</span>
-                </div>
-              <% } %>
-            </div>
-
-            <!-- Group Offers Table -->
-            <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Tedarikçi Firması</th>
-                    <th>Teklif No</th>
-                    <th>Talep Miktarı</th>
-                    <th>Birim Fiyat</th>
-                    <th>Toplam Teklif Tutarı</th>
-                    <th>Teslim Süresi & Vade</th>
-                    <th>F/P Analiz Skoru</th>
-                    <th>Durum</th>
-                    <th>Aksiyon</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% group.items.forEach(rfq => { %>
-                    <% const isWinner = rfq.isRecommended; %>
-                    <tr class="<%= isWinner ? 'recommendation-row' : '' %>">
-                      <td>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                          <strong style="color: var(--text-primary); font-size: 0.95rem;"><%= rfq.supplierName %></strong>
-                          <% if (isWinner) { %>
-                            <span style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 20px;">🏆 EN UYGUN</span>
-                          <% } %>
-                        </div>
-                        <% if (rfq.supplier) { %>
-                          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
-                            Kod: <%= rfq.supplier.supplierCode %> • Puan: <strong style="color: var(--emerald);"><%= rfq.supplier.performanceScore || rfq.supplier.qualityScore || 85 %>/100 ⭐</strong>
-                          </div>
-                        <% } %>
-                      </td>
-                      <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"><%= rfq.rfqNo %></strong></td>
-                      <td><strong><%= parseFloat(rfq.requestedQuantity).toLocaleString('tr-TR') %> <%= group.unit %></strong></td>
-                      <td>
-                        <strong style="font-size: 0.95rem; font-family: 'JetBrains Mono', monospace;">
-                          <%= rfq.offeredUnitPrice ? parseFloat(rfq.offeredUnitPrice).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ' + rfq.currency : '—' %>
-                        </strong>
-                      </td>
-                      <td>
-                        <strong style="color: var(--emerald); font-size: 1rem; font-family: 'JetBrains Mono', monospace;">
-                          <%= rfq.offeredTotalPrice ? parseFloat(rfq.offeredTotalPrice).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ' + rfq.currency : '—' %>
-                        </strong>
-                      </td>
-                      <td style="font-size: 0.825rem;">
-                        <div>⏱️ <strong><%= rfq.deliveryDays ? rfq.deliveryDays + ' Gün' : 'Hemen Teslim' %></strong></div>
-                        <div style="color: var(--text-muted); font-size: 0.75rem;"><%= rfq.paymentTerm || 'Peşin Ödeme' %></div>
-                      </td>
-                      <td>
-                        <% const score = rfq.fpScore || 75; %>
-                        <% const scoreClass = score >= 85 ? 'score-high' : (score >= 70 ? 'score-mid' : 'score-low'); %>
-                        <div class="fp-score-badge <%= scoreClass %>" title="Fiyat (%50) + Teslimat/Vade (%25) + Tedarikçi Kalite Puanı (%25)">
-                          ⭐ %<%= score %> F/P Skoru
-                        </div>
-                      </td>
-                      <td>
-                        <% if (rfq.status === 'Accepted') { %>
-                          <span class="status-pill status-active">✅ Kabul Edildi</span>
-                        <% } else if (rfq.status === 'Rejected') { %>
-                          <span class="status-pill status-rejected">❌ Reddedildi</span>
-                        <% } else if (rfq.status === 'Received') { %>
-                          <span class="status-pill status-approved">📩 Teklif Alındı</span>
-                        <% } else if (rfq.status === 'Sent') { %>
-                          <span class="status-pill status-pending">📤 Gönderildi</span>
-                        <% } else { %>
-                          <span class="status-pill status-pending">● <%= rfq.status %></span>
-                        <% } %>
-                      </td>
-                      <td style="white-space: nowrap;">
-                        <% if (rfq.status === 'Received' || rfq.status === 'Sent') { %>
-                          <form action="/purchase/rfq/<%= rfq.id %>/accept" method="POST" style="display: inline;">
-                            <button type="submit" class="btn btn-sm" style="<%= isWinner ? 'background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 800; box-shadow: 0 4px 12px rgba(16,185,129,0.3);' : 'background: var(--emerald); color: #fff;' %>">
-                              <%= isWinner ? '🏆 Bu Teklifi Onayla & Siparişe Dönüştür' : '✅ Kabul Et' %>
-                            </button>
-                          </form>
-                          <form action="/purchase/rfq/<%= rfq.id %>/reject" method="POST" style="display: inline; margin-left: 4px;">
-                            <button type="submit" class="btn btn-sm" style="background: var(--rose);">❌ Red</button>
-                          </form>
-                        <% } else { %>
-                          <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
-                        <% } %>
-                      </td>
-                    </tr>
-                  <% }); %>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        <% }); %>
-      <% } %>
+      <!-- Flat Table View -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Teklif No</th>
+              <th>Tedarikçi</th>
+              <th>Teklif Tarihi</th>
+              <th>Kalemler / Ürün Özeti</th>
+              <th>Genel Toplam</th>
+              <th>Ödeme & Teslimat</th>
+              <th>KDV & Nakliye</th>
+              <th>Durum</th>
+              <th>Aksiyon</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (rfqs.length === 0) { %>
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 4rem; color: var(--text-muted);">
+                  <div style="font-size: 2.5rem; margin-bottom: 8px;">📨</div>
+                  Henüz verilmiş veya kaydedilmiş teklif bulunmamaktadır.<br>
+                  <a href="/purchase/rfq/add" style="color: var(--indigo); font-weight: 600; margin-top: 8px; display: inline-block;">Yeni teklif kaydı oluşturun →</a>
+                </td>
+              </tr>
+            <% } else { %>
+              <% rfqs.forEach(rfq => { %>
+                <tr>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"><%= rfq.rfqNo %></strong></td>
+                  <td>
+                    <strong style="color: var(--text-primary); font-size: 0.925rem;"><%= rfq.supplierName %></strong>
+                    <% if (rfq.supplier) { %><div style="font-size: 0.75rem; color: var(--text-muted);"><%= rfq.supplier.supplierCode %></div><% } %>
+                  </td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);">
+                    <%= rfq.rfqDate ? new Date(rfq.rfqDate).toLocaleDateString('tr-TR') : new Date(rfq.createdAt).toLocaleDateString('tr-TR') %>
+                    <% if (rfq.validUntil) { %><div style="font-size: 0.725rem; color: var(--amber);">Geçerlilik: <%= new Date(rfq.validUntil).toLocaleDateString('tr-TR') %></div><% } %>
+                  </td>
+                  <td>
+                    <% if (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData.length > 0) { %>
+                      <strong style="color: var(--text-primary); font-size: 0.85rem;"><%= rfq.itemsData.length %> Kalem Ürün</strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 220px;">
+                        <%= rfq.itemsData.map(i => i.productName || i.stockCode).join(', ') %>
+                      </div>
+                    <% } else if (rfq.stockItem) { %>
+                      <strong style="color: var(--text-primary); font-size: 0.85rem;"><%= rfq.stockItem.name %></strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);"><%= rfq.requestedQuantity %> <%= rfq.stockItem.unit %></div>
+                    <% } else { %>
+                      <span style="color: var(--text-muted);">—</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <strong style="color: var(--emerald); font-size: 1rem; font-family: 'JetBrains Mono', monospace;">
+                      <%= parseFloat(rfq.offeredTotalPrice || rfq.subtotal || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= rfq.currency || 'TRY' %>
+                    </strong>
+                  </td>
+                  <td style="font-size: 0.825rem;">
+                    <div>⏱️ <strong><%= rfq.deliveryDays ? rfq.deliveryDays + ' Gün' : 'Hemen Teslim' %></strong></div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;"><%= rfq.paymentTerm || 'Peşin Ödeme' %></div>
+                  </td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);">
+                    <div>KDV: <%= rfq.vatStatus || 'Hariç' %></div>
+                    <div style="font-size: 0.725rem;"><%= rfq.shippingStatus || 'Fiyata Dahil' %></div>
+                  </td>
+                  <td>
+                    <% if (rfq.status === 'Accepted') { %>
+                      <span class="status-pill status-active">✅ Kabul Edildi</span>
+                    <% } else if (rfq.status === 'Rejected') { %>
+                      <span class="status-pill status-rejected">❌ Reddedildi</span>
+                    <% } else if (rfq.status === 'Received') { %>
+                      <span class="status-pill status-approved">📩 Teklif Alındı</span>
+                    <% } else if (rfq.status === 'Sent') { %>
+                      <span class="status-pill status-pending">📤 Gönderildi</span>
+                    <% } else { %>
+                      <span class="status-pill status-pending">● <%= rfq.status %></span>
+                    <% } %>
+                  </td>
+                  <td style="white-space: nowrap;">
+                    <% if (rfq.status === 'Received' || rfq.status === 'Sent' || rfq.status === 'Draft') { %>
+                      <form action="/purchase/rfq/<%= rfq.id %>/accept" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-success">✅ Kabul</button>
+                      </form>
+                      <form action="/purchase/rfq/<%= rfq.id %>/reject" method="POST" style="display: inline; margin-left: 4px;">
+                        <button type="submit" class="btn btn-sm" style="background: var(--rose);">❌ Red</button>
+                      </form>
+                    <% } else { %>
+                      <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
     </main>
   </div>
 

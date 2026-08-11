@@ -205,9 +205,9 @@
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(req.createdAt).toLocaleDateString('tr-TR') %></td>
                   <td>
                     <% if (req.status === 'Pending' || req.status === 'Approved') { %>
-                      <form action="/purchase/requisitions/<%= req.id %>/convert" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-sm btn-success">📦 Siparişe Dönüştür (Satın Al)</button>
-                      </form>
+                      <a href="/purchase/rfq/add?requisitionId=<%= req.id %>" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 700; border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                        📨 Teklif Ekle
+                      </a>
                     <% } else { %>
                       <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
                     <% } %>

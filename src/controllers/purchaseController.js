@@ -275,86 +275,9 @@ class PurchaseController {
     const rfqs = await purchaseService.getAllRfqs({ search, status });
     const rfqStats = await purchaseService.getRfqStats();
 
-    // 1. Product-based grouping
-    const groupedMap = new Map();
-
-    rfqs.forEach(rfq => {
-      const itemId = rfq.stockItemId || 0;
-      const itemName = rfq.stockItem ? rfq.stockItem.name : 'Genel Malzeme / Belirtilmemiş';
-      const stockCode = rfq.stockItem ? rfq.stockItem.stockCode : 'GENEL-000';
-      const unit = rfq.stockItem ? rfq.stockItem.unit : 'Adet';
-      const category = rfq.stockItem ? rfq.stockItem.category : '—';
-
-      if (!groupedMap.has(itemId)) {
-        groupedMap.set(itemId, {
-          stockItemId: itemId,
-          itemName,
-          stockCode,
-          unit,
-          category,
-          stockItem: rfq.stockItem,
-          items: [],
-          recommendedOffer: null
-        });
-      }
-      groupedMap.get(itemId).items.push(rfq);
-    });
-
-    const groupedRfqs = Array.from(groupedMap.values());
-
-    // 2. Price/Performance Evaluation Algorithm for each Product Group
-    groupedRfqs.forEach(group => {
-      const validOffers = group.items.filter(item => item.offeredUnitPrice && parseFloat(item.offeredUnitPrice) > 0);
-
-      if (validOffers.length > 0) {
-        const prices = validOffers.map(o => parseFloat(o.offeredUnitPrice));
-        const minPrice = Math.min(...prices);
-
-        const daysList = validOffers.map(o => parseInt(o.deliveryDays, 10) || 7);
-        const minDeliveryDays = Math.min(...daysList);
-
-        validOffers.forEach(o => {
-          const unitPrice = parseFloat(o.offeredUnitPrice) || 1;
-          const priceScore = minPrice > 0 ? (minPrice / unitPrice) * 100 : 50;
-
-          const days = parseInt(o.deliveryDays, 10) || 7;
-          const deliveryScore = minDeliveryDays > 0 ? Math.min(100, Math.max(30, (minDeliveryDays / days) * 100)) : 70;
-
-          const supplierRating = o.supplier ? (parseFloat(o.supplier.performanceScore) || parseFloat(o.supplier.qualityScore) || 85) : 85;
-
-          // Payment term score bonus
-          let termBonus = 0;
-          if (o.paymentTerm === 'Vadeli_90') termBonus = 15;
-          else if (o.paymentTerm === 'Vadeli_60') termBonus = 10;
-          else if (o.paymentTerm === 'Vadeli_30') termBonus = 5;
-
-          const deliveryTermScore = Math.min(100, deliveryScore + termBonus);
-
-          // Weighted Price/Performance Score: 50% Price, 25% Delivery/Term, 25% Supplier Rating
-          const totalScore = (priceScore * 0.50) + (deliveryTermScore * 0.25) + (supplierRating * 0.25);
-          o.fpScore = Math.round(totalScore);
-
-          o.scoreBreakdown = {
-            priceScore: Math.round(priceScore),
-            deliveryScore: Math.round(deliveryScore),
-            supplierRating: Math.round(supplierRating)
-          };
-        });
-
-        // Sort offers in each group by fpScore descending
-        validOffers.sort((a, b) => b.fpScore - a.fpScore);
-
-        // Find the best / recommended offer
-        const winnerOffer = validOffers[0];
-        winnerOffer.isRecommended = true;
-        group.recommendedOffer = winnerOffer;
-      }
-    });
-
     res.render('purchase/rfq', {
       user: req.user,
       rfqs,
-      groupedRfqs,
       rfqStats,
       filterSearch: search || '',
       filterStatus: status || ''
@@ -363,40 +286,145 @@ class PurchaseController {
 
   renderAddRfq = asyncHandler(async (req, res) => {
     const nextRfqNo = await purchaseService.getNextRfqNo();
-    const stockItems = await StockItem.findAll({
-      where: { status: 'Active' },
-      order: [['name', 'ASC']]
-    });
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
+
+    // Fetch products for which a PurchaseRequisition exists
+    const requisitions = await PurchaseRequisition.findAll({
+      where: { status: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
+      include: [{ model: StockItem, as: 'stockItem' }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const reqMap = new Map();
+    requisitions.forEach(reqItem => {
+      if (reqItem.stockItem && !reqMap.has(reqItem.stockItem.id)) {
+        const minStockVal = parseFloat(reqItem.stockItem.minStock) || 10;
+        reqMap.set(reqItem.stockItem.id, {
+          stockItemId: reqItem.stockItem.id,
+          stockCode: reqItem.stockItem.stockCode,
+          name: reqItem.stockItem.name,
+          category: reqItem.stockItem.category,
+          unit: reqItem.stockItem.unit || 'Adet',
+          minStock: minStockVal > 0 ? minStockVal : 10,
+          purchasePrice: parseFloat(reqItem.stockItem.purchasePrice) || 0,
+          requisitionNo: reqItem.requisitionNo,
+          requisitionId: reqItem.id,
+          requestedQuantity: parseFloat(reqItem.requestedQuantity) || minStockVal || 10
+        });
+      }
+    });
+
+    const requisitionedProducts = Array.from(reqMap.values());
+    const targetReqId = req.query.requisitionId ? parseInt(req.query.requisitionId, 10) : null;
 
     res.render('purchase/rfq_add', {
       user: req.user,
       error: null,
       nextRfqNo,
-      stockItems,
       suppliers,
+      requisitionedProducts,
+      targetReqId,
       formData: {}
     });
   });
 
   addRfq = asyncHandler(async (req, res) => {
     try {
-      const quantity = parseFloat(req.body.requestedQuantity) || 1;
-      const unitPrice = parseFloat(req.body.offeredUnitPrice) || 0;
+      const supplierId = req.body.supplierId ? parseInt(req.body.supplierId, 10) : null;
+      let supplierName = req.body.supplierName ? req.body.supplierName.trim() : '';
+
+      if (supplierId) {
+        const supObj = await Supplier.findByPk(supplierId);
+        if (supObj) supplierName = supObj.companyName;
+      }
+
+      // Parse line items
+      let itemsData = [];
+      if (Array.isArray(req.body.itemStockItemId)) {
+        for (let i = 0; i < req.body.itemStockItemId.length; i++) {
+          const sId = parseInt(req.body.itemStockItemId[i], 10);
+          if (!sId) continue;
+          const qty = parseFloat(req.body.itemQuantity[i]) || 1;
+          const price = parseFloat(req.body.itemUnitPrice[i]) || 0;
+          const disc = parseFloat(req.body.itemDiscountRate[i]) || 0;
+          const vat = parseFloat(req.body.itemVatRate[i]) || 20;
+
+          const rawTotal = qty * price;
+          const discAmt = rawTotal * (disc / 100);
+          const taxAmt = (rawTotal - discAmt) * (vat / 100);
+          const net = rawTotal - discAmt + taxAmt;
+
+          itemsData.push({
+            stockItemId: sId,
+            stockCode: req.body.itemStockCode[i] || '',
+            productName: req.body.itemProductName[i] || '',
+            requisitionNo: req.body.itemRequisitionNo[i] || '',
+            quantity: qty,
+            unit: req.body.itemUnit[i] || 'Adet',
+            unitPrice: price,
+            discountRate: disc,
+            vatRate: vat,
+            netAmount: net,
+            notes: req.body.itemNotes ? (req.body.itemNotes[i] || '') : ''
+          });
+        }
+      } else if (req.body.itemStockItemId) {
+        const sId = parseInt(req.body.itemStockItemId, 10);
+        if (sId) {
+          const qty = parseFloat(req.body.itemQuantity) || 1;
+          const price = parseFloat(req.body.itemUnitPrice) || 0;
+          const disc = parseFloat(req.body.itemDiscountRate) || 0;
+          const vat = parseFloat(req.body.itemVatRate) || 20;
+
+          const rawTotal = qty * price;
+          const discAmt = rawTotal * (disc / 100);
+          const taxAmt = (rawTotal - discAmt) * (vat / 100);
+          const net = rawTotal - discAmt + taxAmt;
+
+          itemsData.push({
+            stockItemId: sId,
+            stockCode: req.body.itemStockCode || '',
+            productName: req.body.itemProductName || '',
+            requisitionNo: req.body.itemRequisitionNo || '',
+            quantity: qty,
+            unit: req.body.itemUnit || 'Adet',
+            unitPrice: price,
+            discountRate: disc,
+            vatRate: vat,
+            netAmount: net,
+            notes: req.body.itemNotes || ''
+          });
+        }
+      }
+
+      const subtotal = parseFloat(req.body.subtotal) || 0;
+      const totalDiscount = parseFloat(req.body.totalDiscount) || 0;
+      const totalTax = parseFloat(req.body.totalTax) || 0;
+      const offeredTotalPrice = parseFloat(req.body.offeredTotalPrice) || (subtotal - totalDiscount + totalTax);
+
+      const firstItem = itemsData[0] || {};
 
       await purchaseService.createRfq({
         rfqNo: req.body.rfqNo,
-        supplierId: req.body.supplierId ? parseInt(req.body.supplierId, 10) : null,
-        supplierName: req.body.supplierName ? req.body.supplierName.trim() : '',
-        stockItemId: parseInt(req.body.stockItemId, 10),
-        requestedQuantity: quantity,
-        offeredUnitPrice: unitPrice,
-        offeredTotalPrice: quantity * unitPrice,
+        supplierId,
+        supplierName,
+        stockItemId: firstItem.stockItemId || 1,
+        requestedQuantity: firstItem.quantity || 1,
+        offeredUnitPrice: firstItem.unitPrice || 0,
+        offeredTotalPrice,
+        subtotal,
+        totalDiscount,
+        totalTax,
+        itemsData,
         currency: req.body.currency || 'TRY',
+        paymentTerm: req.body.paymentTerm || 'Pesin',
         deliveryDays: req.body.deliveryDays ? parseInt(req.body.deliveryDays, 10) : null,
-        paymentTerm: req.body.paymentTerm || null,
+        deliveryPlace: req.body.deliveryPlace || null,
+        shippingStatus: req.body.shippingStatus || null,
+        vatStatus: req.body.vatStatus || null,
+        documentRef: req.body.documentRef || null,
         validUntil: req.body.validUntil || null,
-        qualityNote: req.body.qualityNote || null,
+        rfqDate: req.body.rfqDate || new Date().toISOString().split('T')[0],
         status: req.body.status || 'Received',
         requestedBy: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
         notes: req.body.notes || null
@@ -404,19 +432,40 @@ class PurchaseController {
 
       res.redirect('/purchase/rfq');
     } catch (err) {
+      console.error('addRfq Error:', err);
       const nextRfqNo = await purchaseService.getNextRfqNo();
-      const stockItems = await StockItem.findAll({
-        where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Ticari_Mal', 'Diger'] } },
-        order: [['name', 'ASC']]
-      });
       const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
+      const requisitions = await PurchaseRequisition.findAll({
+        where: { status: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
+        include: [{ model: StockItem, as: 'stockItem' }]
+      });
+
+      const reqMap = new Map();
+      requisitions.forEach(reqItem => {
+        if (reqItem.stockItem && !reqMap.has(reqItem.stockItem.id)) {
+          const minStockVal = parseFloat(reqItem.stockItem.minStock) || 10;
+          reqMap.set(reqItem.stockItem.id, {
+            stockItemId: reqItem.stockItem.id,
+            stockCode: reqItem.stockItem.stockCode,
+            name: reqItem.stockItem.name,
+            category: reqItem.stockItem.category,
+            unit: reqItem.stockItem.unit || 'Adet',
+            minStock: minStockVal > 0 ? minStockVal : 10,
+            purchasePrice: parseFloat(reqItem.stockItem.purchasePrice) || 0,
+            requisitionNo: reqItem.requisitionNo,
+            requisitionId: reqItem.id,
+            requestedQuantity: parseFloat(reqItem.requestedQuantity) || minStockVal || 10
+          });
+        }
+      });
 
       res.render('purchase/rfq_add', {
         user: req.user,
         error: err.message || 'Teklif kaydedilirken hata oluştu.',
         nextRfqNo,
-        stockItems,
         suppliers,
+        requisitionedProducts: Array.from(reqMap.values()),
+        targetReqId: null,
         formData: req.body
       });
     }

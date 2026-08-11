@@ -43,8 +43,17 @@ sequelize.sync({ alter: true }).then(async () => {
   console.log('Database synced successfully with models.');
   try {
     await sequelize.query(`ALTER TABLE "StockItems" ADD COLUMN IF NOT EXISTS "procurementMethod" VARCHAR(50) DEFAULT 'Satın Alma';`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "rfqDate" DATE;`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "deliveryPlace" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "shippingStatus" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "vatStatus" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "documentRef" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "subtotal" NUMERIC(15,4) DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "totalDiscount" NUMERIC(15,4) DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "totalTax" NUMERIC(15,4) DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "itemsData" JSONB;`);
   } catch (e) {
-    console.log('procurementMethod alter query:', e.message);
+    console.log('procurementMethod / PurchaseRfqs alter query:', e.message);
   }
   await seedInitialData();
 }).catch((err) => {

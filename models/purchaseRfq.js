@@ -76,6 +76,45 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    rfqDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    deliveryPlace: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    shippingStatus: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    vatStatus: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    documentRef: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    subtotal: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    totalDiscount: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    totalTax: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    itemsData: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
     requestedBy: {
       type: DataTypes.STRING,
       allowNull: true
