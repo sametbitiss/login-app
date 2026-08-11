@@ -92,24 +92,73 @@
         </div>
       </div>
 
+      <!-- Flash Alert Messages -->
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); color: #f43f5e; padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;">
+          <span>⚠️</span> <%= error %>
+        </div>
+      <% } %>
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399; padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;">
+          <span>✅</span> <%= success %>
+        </div>
+      <% } %>
+
       <!-- Quick Invoice Generation Panel -->
-      <div class="form-panel" style="margin-bottom: 1.75rem;">
-        <h3 style="color: var(--emerald); font-size: 1.05rem; margin-bottom: 1rem;">🧾 Tamamlanan Siparişlerden Tek Tıkla Satış Faturası Kes</h3>
+      <div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 1rem;">
+          <div>
+            <h3 style="color: #34d399; font-size: 1.1rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span>🧾</span> Tamamlanan Siparişlerden Tek Tıkla Satış Faturası Kes
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.825rem; margin: 4px 0 0 0;">
+              Aşağıda tüm ürün teslimatları gerçekleşmiş ve henüz faturası kesilmemiş siparişler listelenir. Her sipariş için yalnızca 1 adet satış faturası kesilebilir.
+            </p>
+          </div>
+          <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;">
+            <%= completedOrders.length %> Sipariş Faturaya Hazır
+          </span>
+        </div>
         
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
           <% if (completedOrders.length === 0) { %>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Faturaya dönüştürülmeyi bekleyen tamamlanmış sipariş bulunmamaktadır.</p>
+            <div style="padding: 2.25rem; text-align: center; color: var(--text-muted); background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+              <span style="font-size: 1.8rem; display: block; margin-bottom: 8px;">✓</span>
+              <strong style="color: #34d399; font-size: 0.95rem;">Faturaya dönüştürülmeyi bekleyen tamamlanmış sipariş bulunmamaktadır.</strong>
+              <p style="font-size: 0.825rem; color: var(--text-muted); margin-top: 4px;">Tamamlanan tüm satış siparişlerinin faturaları başarıyla kesilmiştir.</p>
+            </div>
           <% } else { %>
             <% completedOrders.forEach(o => { %>
-              <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 1rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                <div>
-                  <strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.orderNo %></strong>
-                  <span style="margin-left: 12px; font-weight: 600;"><%= o.customerName %></span>
-                  <span style="margin-left: 12px; color: var(--text-muted); font-size: 0.85rem;"><%= o.stockItem ? o.stockItem.name : '' %> (<%= o.quantity %> Adet)</span>
-                  <strong style="margin-left: 12px; color: var(--emerald);"><%= parseFloat(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= o.currency %></strong>
+              <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1.15rem 1.35rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; transition: all 0.2s ease;">
+                <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;">
+                  <div>
+                    <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 1rem;"><%= o.orderNo %></strong>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Tarih: <%= new Date(o.orderDate).toLocaleDateString('tr-TR') %></div>
+                  </div>
+
+                  <div style="height: 32px; width: 1px; background: rgba(255,255,255,0.1);"></div>
+
+                  <div>
+                    <strong style="color: #fff; font-size: 0.95rem; display: block;"><%= o.customerName %></strong>
+                    <span style="color: var(--text-muted); font-size: 0.825rem;">
+                      <%= o.stockItem ? o.stockItem.name : 'Çoklu Ürün Kalemi' %> (<%= o.quantity %> Adet)
+                    </span>
+                  </div>
+
+                  <div style="height: 32px; width: 1px; background: rgba(255,255,255,0.1);"></div>
+
+                  <div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Fatura Tutarı</span>
+                    <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;">
+                      <%= parseFloat(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= o.currency || 'TL' %>
+                    </strong>
+                  </div>
                 </div>
-                <form action="/sales/invoices/create-from-order/<%= o.id %>" method="POST">
-                  <button type="submit" class="btn btn-sm btn-success">🧾 Faturayı Kes & Cari Bakiyeye İşle</button>
+
+                <form action="/sales/invoices/create-from-order/<%= o.id %>" method="POST" style="margin: 0;">
+                  <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                    🧾 Tek Tıkla Faturayı Kes & Cari Bakiyeye İşle
+                  </button>
                 </form>
               </div>
             <% }); %>
@@ -118,37 +167,50 @@
       </div>
 
       <!-- Invoices List Table -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0;">🧾 Resmi Satış Faturaları Listesi</h3>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Toplam <%= invoices.length %> Fatura Kaydı</span>
+      </div>
+
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
               <th>Fatura No</th>
+              <th>Bağlı Sipariş No</th>
               <th>Müşteri Unvanı</th>
-              <th>Vergi No</th>
+              <th>Vergi Dairesi / No</th>
               <th>Fatura Tarihi</th>
               <th>Son Vade Tarihi</th>
               <th>Genel Toplam</th>
               <th>Ödeme Durumu</th>
               <th>Fatura Durumu</th>
-              <th>Baskı / Detay</th>
+              <th>İşlem</th>
             </tr>
           </thead>
           <tbody>
             <% if (invoices.length === 0) { %>
               <tr>
-                <td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                   Henüz kesilmiş satış faturası bulunmamaktadır.
                 </td>
               </tr>
             <% } else { %>
               <% invoices.forEach(inv => { %>
                 <tr>
-                  <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= inv.invoiceNo %></strong></td>
+                  <td><strong style="color: #34d399; font-family: 'JetBrains Mono', monospace;"><%= inv.invoiceNo %></strong></td>
+                  <td>
+                    <% if (inv.saleOrder) { %>
+                      <span style="font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 600;"><%= inv.saleOrder.orderNo %></span>
+                    <% } else { %>
+                      <span style="color: var(--text-muted);">—</span>
+                    <% } %>
+                  </td>
                   <td><strong><%= inv.customerName %></strong></td>
-                  <td style="font-size: 0.8rem;"><%= inv.customerTaxNo || '—' %></td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= inv.customerTaxNo || '—' %></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(inv.invoiceDate).toLocaleDateString('tr-TR') %></td>
-                  <td style="font-size: 0.8rem; color: var(--amber);"><%= new Date(inv.dueDate).toLocaleDateString('tr-TR') %></td>
-                  <td><strong style="color: var(--emerald);"><%= parseFloat(inv.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= inv.currency %></strong></td>
+                  <td style="font-size: 0.8rem; color: #fbbf24; font-weight: 600;"><%= new Date(inv.dueDate).toLocaleDateString('tr-TR') %></td>
+                  <td><strong style="color: #34d399; font-family: 'JetBrains Mono', monospace;"><%= parseFloat(inv.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= inv.currency || 'TL' %></strong></td>
                   <td>
                     <% if (inv.paymentStatus === 'Paid') { %>
                       <span class="status-pill status-active">● Ödendi</span>
@@ -157,10 +219,10 @@
                     <% } %>
                   </td>
                   <td>
-                    <span class="status-pill status-approved">● <%= inv.status %></span>
+                    <span class="status-pill status-approved">● <%= inv.status === 'Issued' ? 'Kesildi' : inv.status %></span>
                   </td>
                   <td>
-                    <a href="/sales/invoices/<%= inv.id %>" class="btn btn-sm btn-secondary" target="_blank">🖨️ Yazdır / Gör</a>
+                    <a href="/sales/invoices/<%= inv.id %>" class="btn btn-sm btn-outline-info" style="font-size: 0.75rem;">📄 Resmi A4 Fatura Gör</a>
                   </td>
                 </tr>
               <% }); %>

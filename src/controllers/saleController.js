@@ -1099,15 +1099,30 @@ class SaleController {
   // 5. FATURALANDIRMA
   listInvoices = asyncHandler(async (req, res) => {
     const invoices = await invoiceRepository.findAll();
+
+    // Find all saleOrderIds that already have an invoice
+    const existingInvoices = await SaleInvoice.findAll({
+      attributes: ['saleOrderId'],
+      where: { saleOrderId: { [Op.ne]: null } }
+    });
+    const invoicedOrderIds = existingInvoices.map(inv => inv.saleOrderId).filter(id => !!id);
+
+    // Only load Completed orders that DO NOT have an invoice yet
     const completedOrders = await SaleOrder.findAll({
-      where: { status: 'Completed' },
-      include: [{ model: StockItem, as: 'stockItem' }]
+      where: {
+        status: 'Completed',
+        id: { [Op.notIn]: invoicedOrderIds.length > 0 ? invoicedOrderIds : [0] }
+      },
+      include: [{ model: StockItem, as: 'stockItem' }],
+      order: [['createdAt', 'DESC']]
     });
 
     res.render('sales/invoices', {
       user: req.user,
       invoices,
-      completedOrders
+      completedOrders,
+      error: req.query.error || null,
+      success: req.query.success || null
     });
   });
 
@@ -1115,43 +1130,55 @@ class SaleController {
     const { id } = req.params;
     const order = await SaleOrder.findByPk(id);
 
-    if (order) {
-      const nextInvoiceNo = await invoiceRepository.getNextInvoiceNo();
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 30);
-
-      const invoice = await invoiceRepository.create({
-        invoiceNo: nextInvoiceNo,
-        saleOrderId: order.id,
-        customerId: order.customerId,
-        customerName: order.customerName,
-        customerTaxNo: order.customerTaxNo,
-        invoiceDate: new Date().toISOString().split('T')[0],
-        dueDate: dueDate.toISOString().split('T')[0],
-        subtotal: order.subtotal,
-        discountAmount: order.discountAmount,
-        taxAmount: order.taxAmount,
-        totalAmount: order.totalAmount,
-        currency: order.currency,
-        paymentStatus: 'Unpaid',
-        status: 'Issued',
-        notes: `[Sipariş No: ${order.orderNo}] numaralı satış siparişi faturaya dönüştürüldü.`
-      }, req.user, req.ip);
-
-      if (order.customerId) {
-        await customerLedgerRepository.addEntry({
-          customerId: order.customerId,
-          transactionDate: invoice.invoiceDate,
-          documentNo: invoice.invoiceNo,
-          description: `[Satış Faturası] ${invoice.invoiceNo} no'lu fatura kaydı`,
-          debitAmount: invoice.totalAmount,
-          creditAmount: 0,
-          currency: invoice.currency
-        }, req.user);
-      }
+    if (!order) {
+      return res.redirect('/sales/invoices?error=' + encodeURIComponent('⚠️ Sipariş kaydı bulunamadı.'));
     }
 
-    res.redirect('/sales/invoices');
+    if (order.status !== 'Completed') {
+      return res.redirect('/sales/invoices?error=' + encodeURIComponent('⚠️ Yalnızca teslimatı tamamlanmış (Tamamlandı durumundaki) siparişler için satış faturası kesilebilir.'));
+    }
+
+    // Double-check if an invoice already exists for this order
+    const existingInvoice = await SaleInvoice.findOne({ where: { saleOrderId: order.id } });
+    if (existingInvoice) {
+      return res.redirect('/sales/invoices?error=' + encodeURIComponent(`⚠️ Bu sipariş (${order.orderNo}) için daha önce ${existingInvoice.invoiceNo} numaralı satış faturası kesilmiştir! Tekrar fatura oluşturulamaz.`));
+    }
+
+    const nextInvoiceNo = await invoiceRepository.getNextInvoiceNo();
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+
+    const invoice = await invoiceRepository.create({
+      invoiceNo: nextInvoiceNo,
+      saleOrderId: order.id,
+      customerId: order.customerId,
+      customerName: order.customerName,
+      customerTaxNo: order.customerTaxNo,
+      invoiceDate: new Date().toISOString().split('T')[0],
+      dueDate: dueDate.toISOString().split('T')[0],
+      subtotal: order.subtotal,
+      discountAmount: order.discountAmount,
+      taxAmount: order.taxAmount,
+      totalAmount: order.totalAmount,
+      currency: order.currency,
+      paymentStatus: 'Unpaid',
+      status: 'Issued',
+      notes: `[Sipariş No: ${order.orderNo}] numaralı tamamlanan satış siparişi faturaya dönüştürüldü.`
+    }, req.user, req.ip);
+
+    if (order.customerId) {
+      await customerLedgerRepository.addEntry({
+        customerId: order.customerId,
+        transactionDate: invoice.invoiceDate,
+        documentNo: invoice.invoiceNo,
+        description: `[Satış Faturası] ${invoice.invoiceNo} no'lu fatura kaydı`,
+        debitAmount: invoice.totalAmount,
+        creditAmount: 0,
+        currency: invoice.currency
+      }, req.user);
+    }
+
+    res.redirect('/sales/invoices?success=' + encodeURIComponent(`✅ ${invoice.invoiceNo} numaralı satış faturası başarıyla oluşturuldu ve cari borç bakiyesine işlendi.`));
   });
 
   viewInvoice = asyncHandler(async (req, res) => {
