@@ -275,9 +275,108 @@ class PurchaseController {
     const rfqs = await purchaseService.getAllRfqs({ search, status });
     const rfqStats = await purchaseService.getRfqStats();
 
+    // Group RFQs by product (stockItemId)
+    const groupedMap = new Map();
+
+    rfqs.forEach(rfq => {
+      let productsInRfq = [];
+
+      if (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData.length > 0) {
+        rfq.itemsData.forEach(item => {
+          if (item.stockItemId) {
+            productsInRfq.push({
+              stockItemId: parseInt(item.stockItemId, 10),
+              stockCode: item.stockCode || 'STK-000',
+              itemName: item.productName || 'Belirtilmemiş Ürün',
+              unit: item.unit || 'Adet',
+              unitPrice: parseFloat(item.unitPrice) || 0,
+              quantity: parseFloat(item.quantity) || 1
+            });
+          }
+        });
+      }
+
+      // If no itemsData array, fallback to primary stockItem association
+      if (productsInRfq.length === 0 && rfq.stockItemId) {
+        productsInRfq.push({
+          stockItemId: parseInt(rfq.stockItemId, 10),
+          stockCode: rfq.stockItem ? rfq.stockItem.stockCode : 'GENEL-000',
+          itemName: rfq.stockItem ? rfq.stockItem.name : 'Genel Malzeme',
+          unit: rfq.stockItem ? rfq.stockItem.unit : 'Adet',
+          unitPrice: parseFloat(rfq.offeredUnitPrice) || 0,
+          quantity: parseFloat(rfq.requestedQuantity) || 1
+        });
+      }
+
+      // Add RFQ to each product group map
+      productsInRfq.forEach(prod => {
+        const key = prod.stockItemId;
+        if (!groupedMap.has(key)) {
+          groupedMap.set(key, {
+            stockItemId: key,
+            stockCode: prod.stockCode,
+            itemName: prod.itemName,
+            unit: prod.unit,
+            items: [],
+            recommendedOffer: null
+          });
+        }
+
+        const group = groupedMap.get(key);
+        if (!group.items.some(i => i.id === rfq.id)) {
+          const offerCopy = {
+            ...(rfq.toJSON ? rfq.toJSON() : rfq),
+            itemUnitPrice: prod.unitPrice,
+            itemQuantity: prod.quantity
+          };
+          group.items.push(offerCopy);
+        }
+      });
+    });
+
+    const groupedRfqs = Array.from(groupedMap.values());
+
+    // Price / Performance algorithm for each product group
+    groupedRfqs.forEach(group => {
+      const validOffers = group.items.filter(o => o.itemUnitPrice && parseFloat(o.itemUnitPrice) > 0);
+
+      if (validOffers.length > 0) {
+        const prices = validOffers.map(o => parseFloat(o.itemUnitPrice));
+        const minPrice = Math.min(...prices);
+
+        const daysList = validOffers.map(o => parseInt(o.deliveryDays, 10) || 7);
+        const minDeliveryDays = Math.min(...daysList);
+
+        validOffers.forEach(o => {
+          const unitPrice = parseFloat(o.itemUnitPrice) || 1;
+          const priceScore = minPrice > 0 ? (minPrice / unitPrice) * 100 : 50;
+
+          const days = parseInt(o.deliveryDays, 10) || 7;
+          const deliveryScore = minDeliveryDays > 0 ? Math.min(100, Math.max(30, (minDeliveryDays / days) * 100)) : 70;
+
+          const supplierRating = o.supplier ? (parseFloat(o.supplier.performanceScore) || parseFloat(o.supplier.qualityScore) || 85) : 85;
+
+          let termBonus = 0;
+          if (o.paymentTerm === 'Vadeli_90') termBonus = 15;
+          else if (o.paymentTerm === 'Vadeli_60') termBonus = 10;
+          else if (o.paymentTerm === 'Vadeli_30') termBonus = 5;
+
+          const deliveryTermScore = Math.min(100, deliveryScore + termBonus);
+          const totalScore = (priceScore * 0.50) + (deliveryTermScore * 0.25) + (supplierRating * 0.25);
+          o.fpScore = Math.round(totalScore);
+        });
+
+        validOffers.sort((a, b) => b.fpScore - a.fpScore);
+        const winner = validOffers[0];
+        if (winner) winner.isRecommended = true;
+        group.recommendedOffer = winner;
+      }
+    });
+
     res.render('purchase/rfq', {
       user: req.user,
       rfqs,
+      groupedRfqs,
       rfqStats,
       filterSearch: search || '',
       filterStatus: status || ''
