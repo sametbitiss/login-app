@@ -42,13 +42,56 @@ class PurchaseController {
     });
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
 
+    let formData = {};
+    if (req.query.rfqId) {
+      const rfq = await rfqRepository.findById(req.query.rfqId);
+      if (rfq) {
+        // Automatically accept the RFQ when converting to Order
+        try {
+          await purchaseService.acceptRfq(rfq.id, req.user, req.ip);
+        } catch (e) {
+          console.error('acceptRfq in renderAddOrder error:', e);
+        }
+
+        const firstItem = (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData[0]) ? rfq.itemsData[0] : null;
+
+        const expectedDate = new Date();
+        if (rfq.deliveryDays) {
+          expectedDate.setDate(expectedDate.getDate() + parseInt(rfq.deliveryDays, 10));
+        } else {
+          expectedDate.setDate(expectedDate.getDate() + 7);
+        }
+
+        let supplierTaxNo = '';
+        let supplierContactPerson = '';
+        if (rfq.supplier) {
+          supplierTaxNo = rfq.supplier.taxNo || '';
+          supplierContactPerson = rfq.supplier.contactPerson || '';
+        }
+
+        formData = {
+          supplierId: rfq.supplierId,
+          supplierName: rfq.supplierName,
+          supplierTaxNo,
+          supplierContactPerson,
+          stockItemId: firstItem ? firstItem.stockItemId : rfq.stockItemId,
+          quantity: firstItem ? firstItem.quantity : rfq.requestedQuantity,
+          unitPrice: firstItem ? firstItem.unitPrice : rfq.offeredUnitPrice,
+          paymentTerm: rfq.paymentTerm || 'Pesin',
+          currency: rfq.currency || 'TRY',
+          expectedDeliveryDate: expectedDate.toISOString().split('T')[0],
+          notes: `[Sözleşmeli Teklif No: ${rfq.rfqNo}] ${rfq.notes || ''}`
+        };
+      }
+    }
+
     res.render('purchase/add', {
       user: req.user,
       error: null,
       nextOrderNo,
       stockItems,
       suppliers,
-      formData: {}
+      formData
     });
   });
 

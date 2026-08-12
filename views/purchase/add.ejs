@@ -193,70 +193,75 @@
                 <option value="">— Tedarikçi Kartı Seçin —</option>
                 <% if (suppliers && suppliers.length > 0) { %>
                   <% suppliers.forEach(sup => { %>
-                    <option value="<%= sup.id %>" data-name="<%= sup.companyName %>" data-tax="<%= sup.taxNo || '' %>" data-contact="<%= sup.contactPerson || '' %>" data-email="<%= sup.email || '' %>" data-phone="<%= sup.phone || '' %>">
+                    <option value="<%= sup.id %>" data-name="<%= sup.companyName %>" data-tax="<%= sup.taxNo || '' %>" data-contact="<%= sup.contactPerson || '' %>" data-email="<%= sup.email || '' %>" data-phone="<%= sup.phone || '' %>" <%= (formData && formData.supplierId == sup.id) ? 'selected' : '' %>>
                       <%= sup.supplierCode %> — <%= sup.companyName %>
                     </option>
                   <% }); %>
                 <% } %>
               </select>
-              <input type="hidden" name="supplierName" id="supplierNameInput">
+              <input type="hidden" name="supplierName" id="supplierNameInput" value="<%= formData && formData.supplierName ? formData.supplierName : '' %>">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Tedarikçi Vergi No</label>
-              <input type="text" name="supplierTaxNo" id="supplierTaxNoInput" class="aesthetic-input">
+              <input type="text" name="supplierTaxNo" id="supplierTaxNoInput" class="aesthetic-input" value="<%= formData && formData.supplierTaxNo ? formData.supplierTaxNo : '' %>">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Tedarikçi İletişim Kişisi</label>
-              <input type="text" name="supplierContactPerson" id="supplierContactInput" class="aesthetic-input">
+              <input type="text" name="supplierContactPerson" id="supplierContactInput" class="aesthetic-input" value="<%= formData && formData.supplierContactPerson ? formData.supplierContactPerson : '' %>">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Satın Alınacak Malzeme / Stok Kartı *</label>
               <select name="stockItemId" class="aesthetic-input" id="stockSelect" onchange="onStockChange(this)" required style="cursor: pointer;">
                 <option value="">— Stok Kartı Seçin —</option>
                 <% stockItems.forEach(item => { %>
-                  <option value="<%= item.id %>" data-price="<%= item.purchasePrice || 0 %>" data-unit="<%= item.unit %>"><%= item.stockCode %> — <%= item.name %> (<%= item.category %>)</option>
+                  <option value="<%= item.id %>" data-price="<%= item.purchasePrice || 0 %>" data-unit="<%= item.unit %>" <%= (formData && formData.stockItemId == item.id) ? 'selected' : '' %>><%= item.stockCode %> — <%= item.name %> (<%= item.category %>)</option>
                 <% }); %>
               </select>
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Miktar *</label>
-              <input type="number" name="quantity" id="quantityInput" value="100" min="1" step="0.01" class="aesthetic-input" required oninput="calcTotals()">
+              <input type="number" name="quantity" id="quantityInput" value="<%= (formData && formData.quantity) ? formData.quantity : '100' %>" min="1" step="0.01" class="aesthetic-input" required oninput="calcTotals()">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Birim Alış Fiyatı (TL) *</label>
-              <input type="number" name="unitPrice" id="unitPriceInput" value="0.00" min="0" step="0.01" class="aesthetic-input" required oninput="calcTotals()">
+              <input type="number" name="unitPrice" id="unitPriceInput" value="<%= (formData && formData.unitPrice) ? formData.unitPrice : '0.00' %>" min="0" step="0.01" class="aesthetic-input" required oninput="calcTotals()">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">İskonto Oranı (%)</label>
-              <input type="number" name="discountRate" id="discountRateInput" value="0" min="0" max="100" step="0.1" class="aesthetic-input" oninput="calcTotals()">
+              <input type="number" name="discountRate" id="discountRateInput" value="<%= (formData && formData.discountRate) ? formData.discountRate : '0' %>" min="0" max="100" step="0.1" class="aesthetic-input" oninput="calcTotals()">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">KDV Oranı (%)</label>
               <select name="taxRate" id="taxRateSelect" class="aesthetic-input" onchange="calcTotals()" style="cursor: pointer;">
-                <option value="20">KDV %20</option>
-                <option value="10">KDV %10</option>
-                <option value="1">KDV %1</option>
-                <option value="0">KDV %0 (Muaf)</option>
+                <option value="20" <%= (formData && formData.taxRate == 20) ? 'selected' : '' %>>KDV %20</option>
+                <option value="10" <%= (formData && formData.taxRate == 10) ? 'selected' : '' %>>KDV %10</option>
+                <option value="1" <%= (formData && formData.taxRate == 1) ? 'selected' : '' %>>KDV %1</option>
+                <option value="0" <%= (formData && formData.taxRate == 0) ? 'selected' : '' %>>KDV %0 (Muaf)</option>
               </select>
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Ödeme Vadesi / Koşulu</label>
               <select name="paymentTerm" class="aesthetic-input" style="cursor: pointer;">
-                <option value="Vadeli_30">30 Gün Vadeli</option>
-                <option value="Vadeli_60">60 Gün Vadeli</option>
-                <option value="Vadeli_90">90 Gün Vadeli</option>
-                <option value="Pesin">Peşin Ödeme</option>
-                <option value="Kredi_Karti">Kredi Kartı</option>
+                <option value="Vadeli_30" <%= (formData && formData.paymentTerm === 'Vadeli_30') ? 'selected' : '' %>>30 Gün Vadeli</option>
+                <option value="Vadeli_60" <%= (formData && formData.paymentTerm === 'Vadeli_60') ? 'selected' : '' %>>60 Gün Vadeli</option>
+                <option value="Vadeli_90" <%= (formData && formData.paymentTerm === 'Vadeli_90') ? 'selected' : '' %>>90 Gün Vadeli</option>
+                <option value="Pesin" <%= (formData && formData.paymentTerm === 'Pesin') ? 'selected' : '' %>>Peşin Ödeme</option>
+                <option value="Kredi_Karti" <%= (formData && formData.paymentTerm === 'Kredi_Karti') ? 'selected' : '' %>>Kredi Kartı</option>
               </select>
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Sipariş Tarihi</label>
-              <input type="date" name="orderDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input">
+              <input type="date" name="orderDate" value="<%= (formData && formData.orderDate) ? formData.orderDate : new Date().toISOString().split('T')[0] %>" class="aesthetic-input">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Beklenen Teslimat Tarihi</label>
-              <input type="date" name="expectedDeliveryDate" class="aesthetic-input">
+              <input type="date" name="expectedDeliveryDate" value="<%= (formData && formData.expectedDeliveryDate) ? formData.expectedDeliveryDate : '' %>" class="aesthetic-input">
             </div>
+          </div>
+
+          <div class="aesthetic-group" style="margin-top: 14px;">
+            <label class="aesthetic-label">Sipariş Notu / Açıklama</label>
+            <input type="text" name="notes" class="aesthetic-input" value="<%= (formData && formData.notes) ? formData.notes : '' %>" placeholder="Örn: 2026-TEKLIF-01 onaylı siparişidir.">
           </div>
 
           <!-- Total summary preview -->

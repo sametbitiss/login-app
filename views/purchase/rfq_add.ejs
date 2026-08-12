@@ -504,7 +504,9 @@
           <input type="text" name="itemNetAmount" id="itemNetAmount-${rowCount}" class="aesthetic-input item-net" readonly style="font-weight: 800; color: var(--emerald); font-family: 'JetBrains Mono', monospace;">
         </td>
         <td style="text-align: center;">
-          <button type="button" onclick="removeRow(${rowCount})" style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-weight: 800;">✕</button>
+          ${rowCount === 1 
+            ? `<span title="Ana talep ürünü tekliften çıkarılamaz" style="color: #64748b; font-size: 1.1rem; cursor: not-allowed;" aria-label="Kilitli">🔒</span>` 
+            : `<button type="button" onclick="removeRow(${rowCount})" style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-weight: 800;">✕</button>`}
         </td>
       `;
 

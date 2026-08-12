@@ -333,14 +333,9 @@
                         </span>
 
                         <% if (item.status === 'Received' || item.status === 'Sent' || item.status === 'Draft') { %>
-                          <div style="display: flex; gap: 4px;">
-                            <form action="/purchase/rfq/<%= item.id %>/accept" method="POST" style="display: inline;">
-                              <button type="submit" class="btn btn-sm btn-success" style="padding: 4px 10px; font-size: 0.75rem;">✅ Kabul</button>
-                            </form>
-                            <form action="/purchase/rfq/<%= item.id %>/reject" method="POST" style="display: inline;">
-                              <button type="submit" class="btn btn-sm" style="background: var(--rose); padding: 4px 10px; font-size: 0.75rem;">❌ Red</button>
-                            </form>
-                          </div>
+                          <a href="/purchase/orders/add?rfqId=<%= item.id %>" class="btn btn-sm btn-success" style="padding: 6px 14px; font-weight: 700; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                            ✅ Kabul Et & Sipariş Oluştur
+                          </a>
                         <% } %>
                       </div>
                     </div>
@@ -430,12 +425,9 @@
                     </td>
                     <td style="white-space: nowrap;">
                       <% if (rfq.status === 'Received' || rfq.status === 'Sent' || rfq.status === 'Draft') { %>
-                        <form action="/purchase/rfq/<%= rfq.id %>/accept" method="POST" style="display: inline;">
-                          <button type="submit" class="btn btn-sm btn-success">✅ Kabul</button>
-                        </form>
-                        <form action="/purchase/rfq/<%= rfq.id %>/reject" method="POST" style="display: inline; margin-left: 4px;">
-                          <button type="submit" class="btn btn-sm" style="background: var(--rose);">❌ Red</button>
-                        </form>
+                        <a href="/purchase/orders/add?rfqId=<%= rfq.id %>" class="btn btn-sm btn-success" style="padding: 6px 14px; font-weight: 700; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                          ✅ Kabul Et & Sipariş Oluştur
+                        </a>
                       <% } else { %>
                         <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
                       <% } %>
