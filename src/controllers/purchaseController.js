@@ -328,8 +328,21 @@ class PurchaseController {
     rfqs.forEach(rfq => {
       let productsInRfq = [];
 
-      if (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData.length > 0) {
-        rfq.itemsData.forEach(item => {
+      let itemsDataArr = [];
+      if (rfq.itemsData) {
+        if (Array.isArray(rfq.itemsData)) {
+          itemsDataArr = rfq.itemsData;
+        } else if (typeof rfq.itemsData === 'string') {
+          try {
+            itemsDataArr = JSON.parse(rfq.itemsData);
+          } catch (e) {
+            console.error('Error parsing rfq.itemsData JSON:', e);
+          }
+        }
+      }
+
+      if (itemsDataArr && itemsDataArr.length > 0) {
+        itemsDataArr.forEach(item => {
           if (item.stockItemId) {
             productsInRfq.push({
               stockItemId: parseInt(item.stockItemId, 10),
@@ -379,6 +392,7 @@ class PurchaseController {
         if (!group.items.some(i => i.id === rfq.id)) {
           const offerCopy = {
             ...(rfq.toJSON ? rfq.toJSON() : rfq),
+            itemsData: itemsDataArr,
             itemUnitPrice: prod.unitPrice,
             itemQuantity: prod.quantity,
             itemDiscountRate: prod.discountRate,
@@ -527,76 +541,66 @@ class PurchaseController {
         if (supObj) supplierName = supObj.companyName;
       }
 
-      // Parse line items
+      // Parse line items robustly whether array or single value
       let itemsData = [];
-      if (Array.isArray(req.body.itemStockItemId)) {
-        for (let i = 0; i < req.body.itemStockItemId.length; i++) {
-          const sId = parseInt(req.body.itemStockItemId[i], 10);
-          if (!sId) continue;
-          const qty = parseFloat(req.body.itemQuantity[i]) || 1;
-          const price = parseFloat(req.body.itemUnitPrice[i]) || 0;
-          const disc = parseFloat(req.body.itemDiscountRate[i]) || 0;
-          const vat = parseFloat(req.body.itemVatRate[i]) || 20;
+      const stockItemIds = Array.isArray(req.body.itemStockItemId) ? req.body.itemStockItemId : (req.body.itemStockItemId ? [req.body.itemStockItemId] : []);
+      const stockCodes = Array.isArray(req.body.itemStockCode) ? req.body.itemStockCode : [req.body.itemStockCode];
+      const productNames = Array.isArray(req.body.itemProductName) ? req.body.itemProductName : [req.body.itemProductName];
+      const requisitionNos = Array.isArray(req.body.itemRequisitionNo) ? req.body.itemRequisitionNo : [req.body.itemRequisitionNo];
+      const quantities = Array.isArray(req.body.itemQuantity) ? req.body.itemQuantity : [req.body.itemQuantity];
+      const units = Array.isArray(req.body.itemUnit) ? req.body.itemUnit : [req.body.itemUnit];
+      const unitPrices = Array.isArray(req.body.itemUnitPrice) ? req.body.itemUnitPrice : [req.body.itemUnitPrice];
+      const discountRates = Array.isArray(req.body.itemDiscountRate) ? req.body.itemDiscountRate : [req.body.itemDiscountRate];
+      const vatRates = Array.isArray(req.body.itemVatRate) ? req.body.itemVatRate : [req.body.itemVatRate];
+      const netAmounts = Array.isArray(req.body.itemNetAmount) ? req.body.itemNetAmount : [req.body.itemNetAmount];
 
-          const rawTotal = qty * price;
-          const discAmt = rawTotal * (disc / 100);
-          const taxAmt = (rawTotal - discAmt) * (vat / 100);
-          const net = rawTotal - discAmt + taxAmt;
+      let calcSubtotal = 0;
+      let calcTotalDiscount = 0;
+      let calcTotalTax = 0;
 
-          itemsData.push({
-            stockItemId: sId,
-            stockCode: req.body.itemStockCode[i] || '',
-            productName: req.body.itemProductName[i] || '',
-            requisitionNo: req.body.itemRequisitionNo[i] || '',
-            quantity: qty,
-            unit: req.body.itemUnit[i] || 'Adet',
-            unitPrice: price,
-            discountRate: disc,
-            vatRate: vat,
-            netAmount: net,
-            notes: req.body.itemNotes ? (req.body.itemNotes[i] || '') : ''
-          });
-        }
-      } else if (req.body.itemStockItemId) {
-        const sId = parseInt(req.body.itemStockItemId, 10);
-        if (sId) {
-          const qty = parseFloat(req.body.itemQuantity) || 1;
-          const price = parseFloat(req.body.itemUnitPrice) || 0;
-          const disc = parseFloat(req.body.itemDiscountRate) || 0;
-          const vat = parseFloat(req.body.itemVatRate) || 20;
+      for (let i = 0; i < stockItemIds.length; i++) {
+        const sId = parseInt(stockItemIds[i], 10);
+        if (!sId) continue;
+        const qty = parseFloat(quantities[i]) || 1;
+        const price = parseFloat(unitPrices[i]) || 0;
+        const disc = parseFloat(discountRates[i]) || 0;
+        const vat = parseFloat(vatRates[i]) || 20;
 
-          const rawTotal = qty * price;
-          const discAmt = rawTotal * (disc / 100);
-          const taxAmt = (rawTotal - discAmt) * (vat / 100);
-          const net = rawTotal - discAmt + taxAmt;
+        const rawTotal = qty * price;
+        const discAmt = rawTotal * (disc / 100);
+        const taxAmt = (rawTotal - discAmt) * (vat / 100);
+        const net = netAmounts[i] ? parseFloat(netAmounts[i]) : (rawTotal - discAmt + taxAmt);
 
-          itemsData.push({
-            stockItemId: sId,
-            stockCode: req.body.itemStockCode || '',
-            productName: req.body.itemProductName || '',
-            requisitionNo: req.body.itemRequisitionNo || '',
-            quantity: qty,
-            unit: req.body.itemUnit || 'Adet',
-            unitPrice: price,
-            discountRate: disc,
-            vatRate: vat,
-            netAmount: net,
-            notes: req.body.itemNotes || ''
-          });
-        }
+        calcSubtotal += rawTotal;
+        calcTotalDiscount += discAmt;
+        calcTotalTax += taxAmt;
+
+        itemsData.push({
+          stockItemId: sId,
+          stockCode: stockCodes[i] || '',
+          productName: productNames[i] || '',
+          requisitionNo: requisitionNos[i] || '',
+          quantity: qty,
+          unit: units[i] || 'Adet',
+          unitPrice: price,
+          discountRate: disc,
+          vatRate: vat,
+          netAmount: net
+        });
       }
 
-      const subtotal = parseFloat(req.body.subtotal) || 0;
-      const totalDiscount = parseFloat(req.body.totalDiscount) || 0;
-      const totalTax = parseFloat(req.body.totalTax) || 0;
-      const offeredTotalPrice = parseFloat(req.body.offeredTotalPrice) || (subtotal - totalDiscount + totalTax);
+      const subtotal = req.body.subtotal ? parseFloat(req.body.subtotal) : calcSubtotal;
+      const totalDiscount = req.body.totalDiscount ? parseFloat(req.body.totalDiscount) : calcTotalDiscount;
+      const totalTax = req.body.totalTax ? parseFloat(req.body.totalTax) : calcTotalTax;
+      const offeredTotalPrice = req.body.offeredTotalPrice ? parseFloat(req.body.offeredTotalPrice) : (subtotal - totalDiscount + totalTax);
 
       const firstItem = itemsData[0] || {};
+      const nextNo = req.body.rfqNo ? req.body.rfqNo.trim() : await purchaseService.getNextRfqNo();
 
       await purchaseService.createRfq({
-        rfqNo: req.body.rfqNo,
+        rfqNo: nextNo,
         supplierId,
-        supplierName,
+        supplierName: supplierName || 'Genel Tedarikçi A.Ş.',
         stockItemId: firstItem.stockItemId || 1,
         requestedQuantity: firstItem.quantity || 1,
         offeredUnitPrice: firstItem.unitPrice || 0,
