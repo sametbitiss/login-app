@@ -182,6 +182,7 @@
         </div>
 
         <form action="/purchase/orders/add" method="POST">
+          <input type="hidden" name="rfqId" value="<%= formData && formData.rfqId ? formData.rfqId : '' %>">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
             <div class="aesthetic-group">
               <label class="aesthetic-label">Sipariş No (Otomatik)</label>

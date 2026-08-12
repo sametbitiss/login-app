@@ -46,13 +46,6 @@ class PurchaseController {
     if (req.query.rfqId) {
       const rfq = await rfqRepository.findById(req.query.rfqId);
       if (rfq) {
-        // Automatically accept the RFQ when converting to Order
-        try {
-          await purchaseService.acceptRfq(rfq.id, req.user, req.ip);
-        } catch (e) {
-          console.error('acceptRfq in renderAddOrder error:', e);
-        }
-
         const firstItem = (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData[0]) ? rfq.itemsData[0] : null;
 
         const expectedDate = new Date();
@@ -70,6 +63,7 @@ class PurchaseController {
         }
 
         formData = {
+          rfqId: rfq.id,
           supplierId: rfq.supplierId,
           supplierName: rfq.supplierName,
           supplierTaxNo,
@@ -122,6 +116,16 @@ class PurchaseController {
       };
 
       await purchaseService.createOrder(data, req.user, req.ip);
+
+      // Now update RFQ status to Accepted ONLY AFTER order is created
+      if (req.body.rfqId) {
+        try {
+          await purchaseService.acceptRfq(parseInt(req.body.rfqId, 10), req.user, req.ip);
+        } catch (e) {
+          console.error('acceptRfq in addOrder error:', e);
+        }
+      }
+
       res.redirect('/purchase/orders');
     } catch (err) {
       const nextOrderNo = await purchaseService.getNextOrderNo();
