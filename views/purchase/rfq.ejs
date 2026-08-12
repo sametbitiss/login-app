@@ -42,24 +42,167 @@
     .view-pane.active { display: block; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    .product-group-card {
+    /* Product Cards Box Grid Layout */
+    .product-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 24px;
+      margin-bottom: 2.5rem;
+    }
+    .product-box-card {
       background: rgba(15, 23, 42, 0.95);
       border-radius: 18px;
       border: 1px solid var(--border);
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+      padding: 1.35rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       position: relative;
       overflow: hidden;
     }
-    .product-group-card::before {
+    .product-box-card::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(180deg, #6366f1, #10b981);
+      right: 0;
+      height: 3.5px;
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+    }
+    .product-box-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+    .pbc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 10px;
+    }
+    .pbc-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pbc-icon { font-size: 1.4rem; }
+    .pbc-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #f8fafc;
+      margin: 0;
+    }
+    .pbc-code {
+      font-size: 0.75rem;
+      color: #818cf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+    .pbc-count-badge {
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .pbc-winner-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(5, 150, 105, 0.25));
+      border: 1.5px solid #10b981;
+      border-radius: 12px;
+      padding: 10px 14px;
+    }
+    .pbc-winner-tag {
+      font-size: 0.7rem;
+      color: #34d399;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .pbc-winner-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      font-size: 0.9rem;
+      color: #ffffff;
+    }
+    .pbc-winner-price {
+      color: #34d399;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+    }
+    .pbc-winner-score {
+      font-size: 0.72rem;
+      color: #a7f3d0;
+      margin-top: 2px;
+    }
+    .pbc-offers-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pbc-offer-item {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      transition: all 0.2s ease;
+    }
+    .pbc-offer-item.is-winner {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    .pbc-oi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .pbc-oi-supplier {
+      font-size: 0.88rem;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pbc-winner-pill {
+      background: #10b981;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .pbc-oi-price {
+      color: #34d399;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+    .pbc-oi-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    }
+    .pbc-oi-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pbc-status-pill {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
     }
   </style>
 </head>
@@ -108,13 +251,13 @@
       <div class="page-header">
         <div>
           <h1>Satın Alma Teklif Yönetimi (RFQ)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Talep edilen ürünlere göre gruplandırılmış tedarikçi teklifleri ve Fiyat/Performans değerlendirmeleri.</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün kutucukları üzerinden teklifler ve Fiyat/Performans değerlendirmeleri.</p>
         </div>
       </div>
 
       <!-- KPI Strip -->
       <div class="kpi-strip">
-        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--indigo">📦</div><div class="kpi-chip-data"><span class="kpi-chip-label">Talep Ürün Grubu</span><span class="kpi-chip-value"><%= groupedRfqs.length %> Ürün</span></div></div>
+        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--indigo">📦</div><div class="kpi-chip-data"><span class="kpi-chip-label">Ürün Kart Kutucuğu</span><span class="kpi-chip-value"><%= groupedRfqs.length %> Ürün</span></div></div>
         <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--amber">📨</div><div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Gelen Teklif</span><span class="kpi-chip-value"><%= rfqs.length %> Teklif</span></div></div>
         <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--emerald">⭐</div><div class="kpi-chip-data"><span class="kpi-chip-label">Önerilen En Uygun</span><span class="kpi-chip-value"><%= groupedRfqs.filter(g => g.recommendedOffer).length %> Teklif</span></div></div>
       </div>
@@ -122,120 +265,90 @@
       <!-- View Tabs -->
       <div class="view-tab-nav">
         <button type="button" class="view-tab-btn active" onclick="switchViewTab('grouped-view')" id="btn-grouped-view">
-          📦 Ürün Bazlı Gruplandırılmış Teklifler (<%= groupedRfqs.length %> Ürün)
+          📦 Ürün Kart Kutucukları (<%= groupedRfqs.length %> Ürün)
         </button>
         <button type="button" class="view-tab-btn" onclick="switchViewTab('flat-view')" id="btn-flat-view">
           📋 Tüm Teklifler (Düz Liste - <%= rfqs.length %> Teklif)
         </button>
       </div>
 
-      <!-- VIEW 1: PRODUCT BASED GROUPED VIEW -->
+      <!-- VIEW 1: PRODUCT CARDS BOX GRID VIEW -->
       <div class="view-pane active" id="grouped-view">
         <% if (groupedRfqs.length === 0) { %>
           <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 16px; text-align: center; padding: 4rem; color: var(--text-muted);">
             <div style="font-size: 2.5rem; margin-bottom: 12px;">📦</div>
-            Henüz verilmiş veya kaydedilmiş ürün teklifi bulunmamaktadır.<br>
+            Henüz verilmiş veya kaydedilmiş ürün teklif kutucuğu bulunmamaktadır.<br>
             <a href="/purchase/requisitions" style="color: var(--indigo); font-weight: 700; margin-top: 10px; display: inline-block;">Satın Alma Talepleri Ekranına Git →</a>
           </div>
         <% } else { %>
-          <% groupedRfqs.forEach(group => { %>
-            <div class="product-group-card">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
-                <div>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.3rem;">📦</span>
-                    <h2 style="font-size: 1.15rem; font-weight: 800; color: #f8fafc; margin: 0;"><%= group.itemName %></h2>
-                    <span style="background: rgba(99,102,241,0.2); color: #818cf8; border: 1px solid rgba(99,102,241,0.4); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; padding: 3px 8px; border-radius: 6px; font-weight: 700;"><%= group.stockCode %></span>
+          <div class="product-cards-grid">
+            <% groupedRfqs.forEach(group => { %>
+              <div class="product-box-card">
+                <div class="pbc-header">
+                  <div class="pbc-title-wrap">
+                    <span class="pbc-icon">📦</span>
+                    <div>
+                      <h3 class="pbc-title"><%= group.itemName %></h3>
+                      <span class="pbc-code"><%= group.stockCode %> • <%= group.unit %></span>
+                    </div>
                   </div>
-                  <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px;">
-                    Bu talep ürünü için sistemde kaydedilmiş <strong><%= group.items.length %> adet</strong> tedarikçi teklifi bulunmaktadır.
-                  </div>
+                  <span class="pbc-count-badge"><%= group.items.length %> Teklif</span>
                 </div>
 
                 <% if (group.recommendedOffer) { %>
-                  <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.3)); border: 1.5px solid #10b981; border-radius: 12px; padding: 10px 18px; text-align: right;">
-                    <div style="font-size: 0.72rem; color: #34d399; font-weight: 900; letter-spacing: 0.5px;">⭐ EN UYGUN ÖNERİLEN TEKLİF</div>
-                    <div style="font-size: 0.95rem; font-weight: 800; color: #ffffff; margin-top: 2px;">
-                      <%= group.recommendedOffer.supplierName %> — <span style="color: #34d399;"><%= parseFloat(group.recommendedOffer.itemUnitPrice || group.recommendedOffer.offeredUnitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= group.recommendedOffer.currency || 'TRY' %></span> / <%= group.unit %>
+                  <div class="pbc-winner-banner">
+                    <div class="pbc-winner-tag">⭐ EN UYGUN ÖNERİLEN TEKLİF</div>
+                    <div class="pbc-winner-details">
+                      <strong><%= group.recommendedOffer.supplierName %></strong>
+                      <span class="pbc-winner-price">
+                        <%= parseFloat(group.recommendedOffer.itemUnitPrice || group.recommendedOffer.offeredUnitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= group.recommendedOffer.currency || 'TRY' %>
+                      </span>
                     </div>
+                    <% if (group.recommendedOffer.fpScore) { %>
+                      <div class="pbc-winner-score">F/P Skoru: %<%= group.recommendedOffer.fpScore %></div>
+                    <% } %>
                   </div>
                 <% } %>
-              </div>
 
-              <!-- Table of proposals for this product -->
-              <div class="table-wrapper">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Tedarikçi</th>
-                      <th>Teklif No</th>
-                      <th>Birim Fiyat</th>
-                      <th>Miktar</th>
-                      <th>Toplam Tutar</th>
-                      <th>Teslimat & Ödeme</th>
-                      <th>F/P Skoru</th>
-                      <th>Durum</th>
-                      <th>Aksiyon</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% group.items.forEach(item => { %>
-                      <tr style="<%= item.isRecommended ? 'background: rgba(16, 185, 129, 0.08); border-left: 3.5px solid #10b981;' : '' %>">
-                        <td>
-                          <strong style="color: var(--text-primary); font-size: 0.9rem;"><%= item.supplierName %></strong>
-                          <% if (item.isRecommended) { %><span style="background: #10b981; color: #fff; font-weight: 800; font-size: 0.68rem; margin-left: 6px; padding: 2px 6px; border-radius: 4px;">⭐ ÖNERİLEN</span><% } %>
-                        </td>
-                        <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;"><%= item.rfqNo %></strong></td>
-                        <td>
-                          <strong style="color: var(--emerald); font-size: 0.95rem; font-family: 'JetBrains Mono', monospace;">
-                            <%= parseFloat(item.itemUnitPrice || item.offeredUnitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= item.currency || 'TRY' %>
-                          </strong>
-                        </td>
-                        <td style="font-size: 0.85rem;"><%= item.itemQuantity || item.requestedQuantity || 1 %> <%= group.unit %></td>
-                        <td style="font-size: 0.9rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-primary);">
-                          <%= parseFloat(item.offeredTotalPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= item.currency || 'TRY' %>
-                        </td>
-                        <td style="font-size: 0.8rem;">
-                          <div>⏱️ <strong><%= item.deliveryDays ? item.deliveryDays + ' Gün' : 'Hemen' %></strong></div>
-                          <div style="color: var(--text-muted); font-size: 0.72rem;"><%= item.paymentTerm || 'Peşin' %></div>
-                        </td>
-                        <td>
-                          <% if (item.fpScore) { %>
-                            <div style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-weight: 800; font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; display: inline-block;">
-                              🎯 %<%= item.fpScore %>
-                            </div>
-                          <% } else { %>
-                            <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
-                          <% } %>
-                        </td>
-                        <td>
-                          <% if (item.status === 'Accepted') { %>
-                            <span class="status-pill status-active">✅ Kabul Edildi</span>
-                          <% } else if (item.status === 'Rejected') { %>
-                            <span class="status-pill status-rejected">❌ Reddedildi</span>
-                          <% } else { %>
-                            <span class="status-pill status-approved">📩 Teklif Alındı</span>
-                          <% } %>
-                        </td>
-                        <td>
-                          <% if (item.status === 'Received' || item.status === 'Sent' || item.status === 'Draft') { %>
+                <div class="pbc-offers-list">
+                  <% group.items.forEach(item => { %>
+                    <div class="pbc-offer-item <%= item.isRecommended ? 'is-winner' : '' %>">
+                      <div class="pbc-oi-top">
+                        <div class="pbc-oi-supplier">
+                          <strong><%= item.supplierName %></strong>
+                          <% if (item.isRecommended) { %><span class="pbc-winner-pill">⭐ Önerilen</span><% } %>
+                        </div>
+                        <div class="pbc-oi-price">
+                          <%= parseFloat(item.itemUnitPrice || item.offeredUnitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= item.currency || 'TRY' %>
+                        </div>
+                      </div>
+                      <div class="pbc-oi-meta">
+                        <span>Miktar: <strong><%= item.itemQuantity || item.requestedQuantity || 1 %> <%= group.unit %></strong></span>
+                        <span>Teslimat: <strong><%= item.deliveryDays ? item.deliveryDays + ' Gün' : 'Hemen' %></strong></span>
+                        <span>Vade: <strong><%= item.paymentTerm || 'Peşin' %></strong></span>
+                      </div>
+                      <div class="pbc-oi-actions">
+                        <span class="pbc-status-pill <%= item.status === 'Accepted' ? 'status-active' : (item.status === 'Rejected' ? 'status-rejected' : 'status-approved') %>">
+                          <%= item.status === 'Accepted' ? '✅ Kabul Edildi' : (item.status === 'Rejected' ? '❌ Reddedildi' : '📩 Teklif Alındı') %>
+                        </span>
+
+                        <% if (item.status === 'Received' || item.status === 'Sent' || item.status === 'Draft') { %>
+                          <div style="display: flex; gap: 4px;">
                             <form action="/purchase/rfq/<%= item.id %>/accept" method="POST" style="display: inline;">
-                              <button type="submit" class="btn btn-sm btn-success">✅ Kabul</button>
+                              <button type="submit" class="btn btn-sm btn-success" style="padding: 4px 10px; font-size: 0.75rem;">✅ Kabul</button>
                             </form>
-                            <form action="/purchase/rfq/<%= item.id %>/reject" method="POST" style="display: inline; margin-left: 4px;">
-                              <button type="submit" class="btn btn-sm" style="background: var(--rose);">❌ Red</button>
+                            <form action="/purchase/rfq/<%= item.id %>/reject" method="POST" style="display: inline;">
+                              <button type="submit" class="btn btn-sm" style="background: var(--rose); padding: 4px 10px; font-size: 0.75rem;">❌ Red</button>
                             </form>
-                          <% } else { %>
-                            <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
-                          <% } %>
-                        </td>
-                      </tr>
-                    <% }); %>
-                  </tbody>
-                </table>
+                          </div>
+                        <% } %>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
               </div>
-            </div>
-          <% }); %>
+            <% }); %>
+          </div>
         <% } %>
       </div>
 
