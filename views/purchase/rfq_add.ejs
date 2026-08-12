@@ -6,98 +6,249 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Talebe Teklif Ekle — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .tab-nav {
-      display: flex;
-      gap: 12px;
+    /* World-Class Design System Extensions */
+    .rfq-add-hero {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 22px 28px;
       margin-bottom: 24px;
-      border-bottom: 1.5px solid var(--border);
-      padding-bottom: 8px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .rfq-add-hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #d946ef 75%, #10b981 100%);
+    }
+    .rfq-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: #818cf8;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .rfq-hero-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #f8fafc;
+      margin: 0;
+      letter-spacing: -0.4px;
+    }
+    .rfq-hero-desc {
+      color: #94a3b8;
+      font-size: 0.88rem;
+      margin-top: 4px;
     }
 
+    /* World-Class Glass Pill Tab Nav */
+    .tab-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      padding: 6px;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
     .tab-btn {
-      background: rgba(30, 41, 59, 0.5);
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-      font-size: 0.95rem;
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.9rem;
       font-weight: 700;
-      padding: 12px 24px;
+      padding: 12px 20px;
       border-radius: 12px;
       cursor: pointer;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 10px;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     .tab-btn:hover {
-      color: var(--text-primary);
-      background: rgba(51, 65, 85, 0.7);
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.06);
     }
-
     .tab-btn.active {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
       color: #ffffff;
-      border-color: #6366f1;
-      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+      font-weight: 800;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+      transform: translateY(-1px);
     }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; animation: tabFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    @keyframes tabFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    .tab-pane {
-      display: none;
-    }
-
-    .tab-pane.active {
-      display: block;
-      animation: fadeIn 0.25s ease;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(4px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
+    /* Ultra Glass Form Cards */
     .glass-form-card {
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.88) 100%);
+      backdrop-filter: blur(20px);
+      border-radius: 22px;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      padding: 2.25rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
       margin-bottom: 2rem;
+      position: relative;
+    }
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #f8fafc;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+    .section-title-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
     }
 
+    /* Input & Select Styling - High-End Elegance */
     .form-grid-4 {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-      margin-bottom: 18px;
+      gap: 20px;
+      margin-bottom: 20px;
     }
-
-    @media (max-width: 1024px) {
-      .form-grid-4 {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    @media (max-width: 1100px) {
+      .form-grid-4 { grid-template-columns: repeat(2, 1fr); }
     }
-
-    .section-title {
-      font-size: 1.1rem;
+    .aesthetic-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 4px;
+    }
+    .aesthetic-label {
+      font-size: 0.72rem;
       font-weight: 800;
-      color: #f8fafc;
-      margin-bottom: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 8px;
+      gap: 4px;
+    }
+    .aesthetic-input {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-weight: 600;
+      width: 100%;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      outline: none;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+      font-family: inherit;
+    }
+    .aesthetic-input:focus {
+      border-color: #818cf8;
+      background: rgba(30, 41, 59, 0.9);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      transform: translateY(-1px);
+    }
+    select.aesthetic-input {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23818cf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 42px;
+    }
+
+    /* Premium Data Table */
+    .table-wrapper {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .data-table th {
+      background: rgba(30, 41, 59, 0.8);
+      color: #94a3b8;
+      font-weight: 800;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+    }
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Totals Summary Panel */
+    .summary-card-panel {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.95) 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.92rem;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+    .summary-row.total-row {
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: #34d399;
+      border-top: 1.5px solid rgba(255, 255, 255, 0.12);
+      padding-top: 14px;
+      margin-top: 14px;
+      margin-bottom: 0;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .tab-footer-nav {
@@ -105,32 +256,28 @@
       justify-content: space-between;
       align-items: center;
       margin-top: 24px;
-      padding-top: 16px;
+      padding-top: 18px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
-
     .min-stock-warning {
       font-size: 0.72rem;
-      color: var(--amber);
-      font-weight: 600;
-      margin-top: 2px;
+      color: #fbbf24;
+      font-weight: 700;
+      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      padding: 2px 8px;
+      border-radius: 6px;
     }
   </style>
 </head>
 
 <body class="module-body">
   <aside class="module-sidebar">
-    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32"
-          fill="none">
-          <rect width="32" height="32" rx="8" fill="url(#bGrad)" />
-          <path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" />
-          <defs>
-            <linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="100%" stop-color="#8b5cf6" />
-            </linearGradient>
-          </defs>
-        </svg><span>Enterprise ERP</span></a></div>
+    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
     <div class="module-sidebar-section">
       <div class="mss-label">🛒 SATIN ALMA YÖNETİMİ</div>
       <div class="mss-group-title">📊 DASHBOARD & ONAY</div>
@@ -149,14 +296,8 @@
       <div class="mss-sub"><a href="/purchase/suppliers" class="mss-sub-link">🏢 Tedarikçi Kartları</a></div>
     </div>
     <div class="module-sidebar-user">
-      <div class="msu-avatar">
-        <%= user.username.charAt(0).toUpperCase() %>
-      </div>
-      <div class="msu-meta"><strong>
-          <%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %>
-        </strong><span>
-          <%= user.role %>
-        </span></div>
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div>
     </div>
   </aside>
 
@@ -164,302 +305,264 @@
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
-        <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a>
-          <% } %>
-            <a href="/stock" class="mt-link">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a
-              href="/purchase" class="mt-link active">Satın Alma</a>
-            <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production"
-                class="mt-link">Üretim Planlama</a>
-              <% } %>
-                <% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager'
-                  || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %><a href="/quality"
-                    class="mt-link">Kalite Kontrol</a>
-                  <% } %>
+        <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link active">Satın Alma</a>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %>
+        <% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %><a href="/quality" class="mt-link">Kalite Kontrol</a><% } %>
       </div>
-      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout"
-          title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg></a></div>
+      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
     </header>
 
     <main class="module-content">
       <div class="module-subnav">
-        <a href="/purchase/analytics" class="msn-link">📊 Analitik</a><a href="/purchase/approvals" class="msn-link">⚡
-          Onaylar</a>
-        <a href="/purchase/requisitions" class="msn-link active">📩 Talepler</a><a href="/purchase/rfq"
-          class="msn-link">📨 RFQ</a>
-        <a href="/purchase/orders" class="msn-link">📦 Siparişler</a><a href="/purchase/goods-receipt"
-          class="msn-link">🚛 Mal Kabul</a>
+        <a href="/purchase/analytics" class="msn-link">📊 Analitik</a><a href="/purchase/approvals" class="msn-link">⚡ Onaylar</a>
+        <a href="/purchase/requisitions" class="msn-link active">📩 Talepler</a><a href="/purchase/rfq" class="msn-link">📨 RFQ</a>
+        <a href="/purchase/orders" class="msn-link">📦 Siparişler</a><a href="/purchase/goods-receipt" class="msn-link">🚛 Mal Kabul</a>
         <a href="/purchase/suppliers" class="msn-link">🏢 Tedarikçiler</a>
       </div>
 
-      <div class="page-header">
+      <!-- Hero Header -->
+      <div class="rfq-add-hero">
         <div>
-          <h1>📨 Satın Alma Talebine Teklif Ekle</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün için
-            tedarikçilerden gelen teklif detaylarını sekme menüler üzerinden adım adım tanımlayın.</p>
+          <div class="rfq-hero-badge">✨ SATIN ALMA RFQ SİSTEMİ</div>
+          <h1 class="rfq-hero-title">Talebe Tedarikçi Teklifi Ekle</h1>
+          <p class="rfq-hero-desc">Tedarikçi teklif detaylarını sekmeler üzerinden tanımlayın, F/P skoruna göre değerlendirin.</p>
         </div>
-        <a href="/purchase/requisitions" class="btn btn-secondary">← Talepler Listesine Dön</a>
+        <a href="/purchase/requisitions" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;">← Talepler Listesine Dön</a>
       </div>
 
       <% if (error) { %>
-        <div
-          style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
-          <span>⚠️</span>
-          <%= error %>
+        <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1.5px solid rgba(244,63,94,0.3); padding: 16px 22px; border-radius: 16px; margin-bottom: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(244,63,94,0.2);">
+          <span style="font-size: 1.2rem;">⚠️</span> <%= error %>
         </div>
-        <% } %>
+      <% } %>
 
-          <!-- TAB MENU BUTTONS -->
-          <div class="tab-nav">
-            <button type="button" class="tab-btn active" onclick="switchTab('tab-general')" id="btn-tab-general">
-              <span>📝</span> 1. Teklif Genel Bilgileri
-            </button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-items')" id="btn-tab-items">
-              <span>📦</span> 2. Teklif Kalemleri (Ürünler)
-            </button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-totals')" id="btn-tab-totals">
-              <span>💰</span> 3. Toplamlar & Onay
-            </button>
+      <!-- TAB MENU BUTTONS -->
+      <div class="tab-nav">
+        <button type="button" class="tab-btn active" onclick="switchTab('tab-general')" id="btn-tab-general">
+          <span>📝</span> 1. Teklif Genel Bilgileri
+        </button>
+        <button type="button" class="tab-btn" onclick="switchTab('tab-items')" id="btn-tab-items">
+          <span>📦</span> 2. Teklif Kalemleri (Ürünler)
+        </button>
+        <button type="button" class="tab-btn" onclick="switchTab('tab-totals')" id="btn-tab-totals">
+          <span>💰</span> 3. Toplamlar & Onay
+        </button>
+      </div>
+
+      <form action="/purchase/rfq/add" method="POST" id="rfqForm" novalidate>
+
+        <!-- TAB 1: GENEL BİLGİLER -->
+        <div class="tab-pane active" id="tab-general">
+          <div class="glass-form-card">
+            <div class="section-title">
+              <span class="section-title-icon">📝</span> 1. Teklif Genel Bilgileri
+            </div>
+
+            <div class="form-grid-4">
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif No (Otomatik)</label>
+                <input type="text" name="rfqNo" value="<%= nextRfqNo %>" class="aesthetic-input" readonly style="font-family: 'JetBrains Mono', monospace; color: #818cf8;">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Tedarikçi Firma *</label>
+                <select name="supplierId" id="supplierSelect" class="aesthetic-input">
+                  <option value="">-- Tedarikçi Seçin --</option>
+                  <% suppliers.forEach(sup => { %>
+                    <option value="<%= sup.id %>" data-name="<%= sup.companyName %>"><%= sup.supplierCode %> — <%= sup.companyName %></option>
+                  <% }); %>
+                </select>
+                <input type="hidden" name="supplierName" id="supplierNameInput" value="">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif Tarihi *</label>
+                <input type="date" name="rfqDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Geçerlilik Tarihi</label>
+                <input type="date" name="validUntil" class="aesthetic-input">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Para Birimi *</label>
+                <select name="currency" id="currencySelect" class="aesthetic-input">
+                  <option value="TRY">TRY (₺)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Ödeme Koşulu *</label>
+                <select name="paymentTerm" class="aesthetic-input">
+                  <option value="Pesin">Peşin Ödeme</option>
+                  <option value="Vadeli_30" selected>30 Gün Vadeli</option>
+                  <option value="Vadeli_60">60 Gün Vadeli</option>
+                  <option value="Vadeli_90">90 Gün Vadeli</option>
+                  <option value="Kredi_Karti">Kredi Kartı</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teslimat Süresi (Gün)</label>
+                <input type="number" name="deliveryDays" value="5" min="1" class="aesthetic-input" placeholder="Örn: 5">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teslimat Yeri</label>
+                <input type="text" name="deliveryPlace" value="Merkez Depo / İstanbul" class="aesthetic-input" placeholder="Örn: Ankara Depo / Raf-02">
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Nakliye Durumu</label>
+                <select name="shippingStatus" class="aesthetic-input">
+                  <option value="Tedarikçi Karşılar">Tedarikçi Karşılar (Ücretsiz)</option>
+                  <option value="Alıcı Karşılar">Alıcı Karşılar (Nakliye Alıcıya Ait)</option>
+                  <option value="Dahil">Fiyata Dahil</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">KDV Durumu</label>
+                <select name="vatStatus" class="aesthetic-input">
+                  <option value="Hariç" selected>Fiyatlara KDV Hariçtir</option>
+                  <option value="Dahil">Fiyatlara KDV Dahildir</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif Durumu</label>
+                <select name="status" class="aesthetic-input">
+                  <option value="Received" selected>Teklif Alındı</option>
+                  <option value="Draft">Taslak</option>
+                  <option value="Sent">Gönderildi</option>
+                </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif Belgesi Ref / No</label>
+                <input type="text" name="documentRef" class="aesthetic-input" placeholder="Örn: PDF-TEKLIF-2026-04.pdf">
+              </div>
+            </div>
+
+            <div class="aesthetic-group" style="margin-top: 6px;">
+              <label class="aesthetic-label">Teklif Açıklaması / Özel Şartlar</label>
+              <input type="text" name="notes" class="aesthetic-input" placeholder="Örn: TSE sertifikalı ürün teklifidir. 30 gün geçerlidir.">
+            </div>
+
+            <div class="tab-footer-nav">
+              <div></div>
+              <button type="button" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; padding: 12px 28px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);" onclick="switchTab('tab-items')">
+                İleri: Teklif Kalemleri →
+              </button>
+            </div>
           </div>
+        </div>
 
-          <form action="/purchase/rfq/add" method="POST" id="rfqForm" novalidate>
+        <!-- TAB 2: KALEMLER -->
+        <div class="tab-pane" id="tab-items">
+          <div class="glass-form-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px;">
+              <div class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
+                <span class="section-title-icon">📦</span> 2. Teklif Kalemleri (Talep Edilen Ürünler)
+              </div>
+              <button type="button" class="btn btn-sm" id="addRowBtn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; border: none; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4); cursor: pointer;">
+                ➕ Kalem Ekle
+              </button>
+            </div>
 
-            <!-- TAB 1: GENEL BİLGİLER -->
-            <div class="tab-pane active" id="tab-general">
-              <div class="glass-form-card">
-                <div class="section-title">
-                  <span>📝</span> 1. Teklif Genel Bilgileri
+            <div style="background: rgba(99, 102, 241, 0.08); border: 1.5px solid rgba(99, 102, 241, 0.25); color: #818cf8; padding: 14px 18px; border-radius: 14px; margin-bottom: 22px; font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.1rem;">🔒</span> <span><strong>Kural Uyarısı:</strong> Ürünler talep oluşturulmuş ürünler arasından seçilebilir. Sipariş adedi default olarak o ürünün minimum stok seviyesi gelir ve <strong>altına inilemez</strong>!</span>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="data-table" id="itemsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 25%;">Ürün (Talep Oluşturulmuş) *</th>
+                    <th style="width: 12%;">Talep Ref</th>
+                    <th style="width: 12%;">Miktar *</th>
+                    <th style="width: 8%;">Birim</th>
+                    <th style="width: 11%;">Birim Fiyat *</th>
+                    <th style="width: 8%;">İskonto %</th>
+                    <th style="width: 8%;">KDV %</th>
+                    <th style="width: 12%;">Net Tutar</th>
+                    <th style="width: 4%;"></th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                  <!-- Lines injected dynamically by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="tab-footer-nav">
+              <button type="button" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;" onclick="switchTab('tab-general')">
+                ← Geri: Genel Bilgiler
+              </button>
+              <button type="button" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; padding: 12px 28px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);" onclick="switchTab('tab-totals')">
+                İleri: Toplamlar & Onay →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: TOPLAMLAR -->
+        <div class="tab-pane" id="tab-totals">
+          <div class="glass-form-card">
+            <div class="section-title">
+              <span class="section-title-icon">💰</span> 3. Teklif Toplamları & Onay
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 26px; align-items: start;">
+              <div>
+                <p style="color: #94a3b8; font-size: 0.92rem; line-height: 1.7; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px;">
+                  Girilen teklif kalemleri ve genel bilgiler kontrol edildi.<br>
+                  Aynı satın alma talebi için farklı tedarikçilerden <strong>istediğiniz kadar teklif ekleyebilirsiniz</strong>.<br>
+                  Hesaplanan tutarlar seçtiğiniz para birimi cinsinden gösterilmektedir.
+                </p>
+              </div>
+
+              <div class="summary-card-panel">
+                <div class="summary-row">
+                  <span>Ara Toplam:</span>
+                  <strong id="displaySubtotal" style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: #f8fafc;">0.00 TL</strong>
                 </div>
-
-                <div class="form-grid-4">
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Teklif No (Otomatik)</label>
-                    <input type="text" name="rfqNo" value="<%= nextRfqNo %>" class="aesthetic-input" readonly>
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Tedarikçi Firma *</label>
-                    <select name="supplierId" id="supplierSelect" class="aesthetic-input" style="cursor: pointer;">
-                      <option value="">-- Tedarikçi Seçin --</option>
-                      <% suppliers.forEach(sup=> { %>
-                        <option value="<%= sup.id %>" data-name="<%= sup.companyName %>">
-                          <%= sup.supplierCode %> — <%= sup.companyName %>
-                        </option>
-                        <% }); %>
-                    </select>
-                    <input type="hidden" name="supplierName" id="supplierNameInput" value="">
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Teklif Tarihi *</label>
-                    <input type="date" name="rfqDate" value="<%= new Date().toISOString().split('T')[0] %>"
-                      class="aesthetic-input">
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Geçerlilik Tarihi</label>
-                    <input type="date" name="validUntil" class="aesthetic-input">
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Para Birimi *</label>
-                    <select name="currency" id="currencySelect" class="aesthetic-input" style="cursor: pointer;">
-                      <option value="TRY">TRY (₺)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                    </select>
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Ödeme Koşulu *</label>
-                    <select name="paymentTerm" class="aesthetic-input" style="cursor: pointer;">
-                      <option value="Pesin">Peşin Ödeme</option>
-                      <option value="Vadeli_30" selected>30 Gün Vadeli</option>
-                      <option value="Vadeli_60">60 Gün Vadeli</option>
-                      <option value="Vadeli_90">90 Gün Vadeli</option>
-                      <option value="Kredi_Karti">Kredi Kartı</option>
-                    </select>
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Teslimat Süresi (Gün)</label>
-                    <input type="number" name="deliveryDays" value="5" min="1" class="aesthetic-input"
-                      placeholder="Örn: 5">
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Teslimat Yeri</label>
-                    <input type="text" name="deliveryPlace" value="Merkez Depo / İstanbul" class="aesthetic-input"
-                      placeholder="Örn: Ankara Depo / Raf-02">
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Nakliye Durumu</label>
-                    <select name="shippingStatus" class="aesthetic-input" style="cursor: pointer;">
-                      <option value="Tedarikçi Karşılar">Tedarikçi Karşılar (Ücretsiz)</option>
-                      <option value="Alıcı Karşılar">Alıcı Karşılar (Nakliye Alıcıya Ait)</option>
-                      <option value="Dahil">Fiyata Dahil</option>
-                    </select>
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">KDV Durumu</label>
-                    <select name="vatStatus" class="aesthetic-input" style="cursor: pointer;">
-                      <option value="Hariç" selected>Fiyatlara KDV Hariçtir</option>
-                      <option value="Dahil">Fiyatlara KDV Dahildir</option>
-                    </select>
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Teklif Durumu</label>
-                    <select name="status" class="aesthetic-input" style="cursor: pointer;">
-                      <option value="Received" selected>Teklif Alındı</option>
-                      <option value="Draft">Taslak</option>
-                      <option value="Sent">Gönderildi</option>
-                    </select>
-                  </div>
-
-                  <div class="aesthetic-group">
-                    <label class="aesthetic-label">Teklif Belgesi Ref / No</label>
-                    <input type="text" name="documentRef" class="aesthetic-input" placeholder="Örn: PDF-TEKLIF-2026-04.pdf">
-                  </div>
+                <div class="summary-row">
+                  <span>Toplam İskonto (-):</span>
+                  <strong id="displayDiscount" style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: #fb7185;">0.00 TL</strong>
                 </div>
-
-                <div class="aesthetic-group" style="margin-top: 6px;">
-                  <label class="aesthetic-label">Teklif Açıklaması / Özel Şartlar</label>
-                  <input type="text" name="notes" class="aesthetic-input"
-                    placeholder="Örn: TSE sertifikalı ürün teklifidir. 30 gün geçerlidir.">
+                <div class="summary-row">
+                  <span>Toplam KDV (+):</span>
+                  <strong id="displayTax" style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: #fbbf24;">0.00 TL</strong>
                 </div>
-
-                <div class="tab-footer-nav">
-                  <div></div>
-                  <button type="button" class="btn"
-                    style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 700; padding: 10px 24px; border-radius: 10px; border: none; cursor: pointer;"
-                    onclick="switchTab('tab-items')">
-                    İleri: Teklif Kalemleri →
-                  </button>
+                <div class="summary-row total-row">
+                  <span>Genel Toplam:</span>
+                  <strong id="displayGrandTotal">0.00 TL</strong>
                 </div>
               </div>
             </div>
 
-            <!-- TAB 2: KALEMLER -->
-            <div class="tab-pane" id="tab-items">
-              <div class="glass-form-card">
-                <div
-                  style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                  <div class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
-                    <span>📦</span> 2. Teklif Kalemleri (Talep Edilen Ürünler)
-                  </div>
-                  <button type="button" class="btn btn-sm" id="addRowBtn"
-                    style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 700; border: none; padding: 8px 16px; border-radius: 8px;">
-                    ➕ Kalem Ekle
-                  </button>
-                </div>
+            <!-- Hidden Summary Inputs -->
+            <input type="hidden" name="subtotal" id="inputSubtotal" value="0">
+            <input type="hidden" name="totalDiscount" id="inputTotalDiscount" value="0">
+            <input type="hidden" name="totalTax" id="inputTotalTax" value="0">
+            <input type="hidden" name="offeredTotalPrice" id="inputGrandTotal" value="0">
 
-                <div
-                  style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); color: #818cf8; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.85rem; font-weight: 500;">
-                  🔒 <strong>Kural Uyarısı:</strong> Ürünler talep oluşturulmuş ürünler arasından seçilebilir. Sipariş adedi
-                  default olarak o ürünün minimum stok seviyesi gelir ve <strong>altına inilemez</strong>!
-                </div>
-
-                <div class="table-wrapper">
-                  <table class="data-table" id="itemsTable">
-                    <thead>
-                      <tr>
-                        <th style="width: 25%;">Ürün (Talep Oluşturulmuş) *</th>
-                        <th style="width: 12%;">Talep Ref</th>
-                        <th style="width: 12%;">Miktar *</th>
-                        <th style="width: 8%;">Birim</th>
-                        <th style="width: 11%;">Birim Fiyat *</th>
-                        <th style="width: 8%;">İskonto %</th>
-                        <th style="width: 8%;">KDV %</th>
-                        <th style="width: 12%;">Net Tutar</th>
-                        <th style="width: 4%;"></th>
-                      </tr>
-                    </thead>
-                    <tbody id="itemsTableBody">
-                      <!-- Lines injected dynamically by JavaScript -->
-                    </tbody>
-                  </table>
-                </div>
-
-                <div class="tab-footer-nav">
-                  <button type="button" class="btn btn-secondary" onclick="switchTab('tab-general')">
-                    ← Geri: Genel Bilgiler
-                  </button>
-                  <button type="button" class="btn"
-                    style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 700; padding: 10px 24px; border-radius: 10px; border: none; cursor: pointer;"
-                    onclick="switchTab('tab-totals')">
-                    İleri: Toplamlar & Onay →
-                  </button>
-                </div>
-              </div>
+            <div class="tab-footer-nav" style="margin-top: 32px;">
+              <button type="button" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;" onclick="switchTab('tab-items')">
+                ← Geri: Teklif Kalemleri
+              </button>
+              <button type="submit" id="submitBtn" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 1.05rem; font-weight: 800; padding: 16px 42px; border-radius: 14px; border: none; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45); cursor: pointer; transition: all 0.25s ease;">
+                💾 Teklifi Sisteme Kaydet
+              </button>
             </div>
-
-            <!-- TAB 3: TOPLAMLAR -->
-            <div class="tab-pane" id="tab-totals">
-              <div class="glass-form-card">
-                <div class="section-title">
-                  <span>💰</span> 3. Teklif Toplamları & Onay
-                </div>
-
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
-                  <div>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
-                      Girilen teklif kalemleri ve genel bilgiler kontrol edildi.<br>
-                      Aynı satın alma talebi için farklı tedarikçilerden <strong>istediğiniz kadar teklif
-                        ekleyebilirsiniz</strong>.<br>
-                      Hesaplanan tutarlar seçtiğiniz para birimi cinsinden gösterilmektedir.
-                    </p>
-                  </div>
-
-                  <div
-                    style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 14px; padding: 18px;">
-                    <div
-                      style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">
-                      <span>Ara Toplam:</span>
-                      <strong id="displaySubtotal">0.00 TL</strong>
-                    </div>
-                    <div
-                      style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--rose); margin-bottom: 8px;">
-                      <span>Toplam İskonto (-):</span>
-                      <strong id="displayDiscount">0.00 TL</strong>
-                    </div>
-                    <div
-                      style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--amber); margin-bottom: 12px;">
-                      <span>Toplam KDV (+):</span>
-                      <strong id="displayTax">0.00 TL</strong>
-                    </div>
-                    <div
-                      style="display: flex; justify-content: space-between; font-size: 1.15rem; color: var(--emerald); font-weight: 800; border-top: 1.5px solid var(--border); padding-top: 12px;">
-                      <span>Genel Toplam:</span>
-                      <strong id="displayGrandTotal">0.00 TL</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Hidden Summary Inputs -->
-                <input type="hidden" name="subtotal" id="inputSubtotal" value="0">
-                <input type="hidden" name="totalDiscount" id="inputTotalDiscount" value="0">
-                <input type="hidden" name="totalTax" id="inputTotalTax" value="0">
-                <input type="hidden" name="offeredTotalPrice" id="inputGrandTotal" value="0">
-
-                <div class="tab-footer-nav" style="margin-top: 32px;">
-                  <button type="button" class="btn btn-secondary" onclick="switchTab('tab-items')">
-                    ← Geri: Teklif Kalemleri
-                  </button>
-                  <button type="submit" id="submitBtn" class="btn"
-                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 1rem; font-weight: 800; padding: 14px 36px; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); cursor: pointer;">
-                    💾 Teklifi Sisteme Kaydet
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
+          </div>
+        </div>
+      </form>
     </main>
   </div>
 
@@ -514,20 +617,20 @@
           <input type="hidden" name="itemProductName" id="itemProductName-${rowCount}" value="">
         </td>
         <td>
-          <input type="text" name="itemRequisitionNo" id="itemRequisitionNo-${rowCount}" class="aesthetic-input" readonly style="font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;">
+          <input type="text" name="itemRequisitionNo" id="itemRequisitionNo-${rowCount}" class="aesthetic-input" readonly style="font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #818cf8;">
         </td>
         <td>
-          <input type="number" name="itemQuantity" id="itemQuantity-${rowCount}" class="aesthetic-input item-qty" oninput="validateMinStock(this, ${rowCount})" onchange="validateMinStock(this, ${rowCount})" step="0.01" style="font-weight: 800; color: var(--emerald);">
+          <input type="number" name="itemQuantity" id="itemQuantity-${rowCount}" class="aesthetic-input item-qty" oninput="validateMinStock(this, ${rowCount})" onchange="validateMinStock(this, ${rowCount})" step="0.01" style="font-weight: 800; color: #34d399; font-family: 'JetBrains Mono', monospace;">
           <div class="min-stock-warning" id="minWarn-${rowCount}">🔒 Min: <span id="minVal-${rowCount}">0</span></div>
         </td>
         <td>
-          <input type="text" name="itemUnit" id="itemUnit-${rowCount}" class="aesthetic-input" readonly style="font-size: 0.8rem;">
+          <input type="text" name="itemUnit" id="itemUnit-${rowCount}" class="aesthetic-input" readonly style="font-size: 0.8rem; text-align: center;">
         </td>
         <td>
-          <input type="number" name="itemUnitPrice" id="itemUnitPrice-${rowCount}" class="aesthetic-input item-price" oninput="calculateTotals()" step="0.01" value="0.00">
+          <input type="number" name="itemUnitPrice" id="itemUnitPrice-${rowCount}" class="aesthetic-input item-price" oninput="calculateTotals()" step="0.01" value="0.00" style="font-family: 'JetBrains Mono', monospace;">
         </td>
         <td>
-          <input type="number" name="itemDiscountRate" id="itemDiscountRate-${rowCount}" class="aesthetic-input item-disc" oninput="calculateTotals()" min="0" max="100" step="0.01" value="0">
+          <input type="number" name="itemDiscountRate" id="itemDiscountRate-${rowCount}" class="aesthetic-input item-disc" oninput="calculateTotals()" min="0" max="100" step="0.01" value="0" style="font-family: 'JetBrains Mono', monospace; color: #fb7185;">
         </td>
         <td>
           <select name="itemVatRate" id="itemVatRate-${rowCount}" class="aesthetic-input item-vat" onchange="calculateTotals()">
@@ -538,12 +641,12 @@
           </select>
         </td>
         <td>
-          <input type="text" name="itemNetAmount" id="itemNetAmount-${rowCount}" class="aesthetic-input item-net" readonly style="font-weight: 800; color: var(--emerald); font-family: 'JetBrains Mono', monospace;">
+          <input type="text" name="itemNetAmount" id="itemNetAmount-${rowCount}" class="aesthetic-input item-net" readonly style="font-weight: 800; color: #34d399; font-family: 'JetBrains Mono', monospace;">
         </td>
         <td style="text-align: center;">
           ${rowCount === 1
           ? `<span title="Ana talep ürünü tekliften çıkarılamaz" style="color: #64748b; font-size: 1.1rem; cursor: not-allowed;" aria-label="Kilitli">🔒</span>`
-          : `<button type="button" onclick="removeRow(${rowCount})" style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-weight: 800;">✕</button>`}
+          : `<button type="button" onclick="removeRow(${rowCount})" style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 800; transition: all 0.2s ease;">✕</button>`}
         </td>
       `;
 
