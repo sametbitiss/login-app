@@ -337,7 +337,10 @@ class PurchaseController {
               itemName: item.productName || 'Belirtilmemiş Ürün',
               unit: item.unit || 'Adet',
               unitPrice: parseFloat(item.unitPrice) || 0,
-              quantity: parseFloat(item.quantity) || 1
+              quantity: parseFloat(item.quantity) || 1,
+              discountRate: parseFloat(item.discountRate) || 0,
+              vatRate: parseFloat(item.vatRate) || 20,
+              netAmount: parseFloat(item.netAmount) || 0
             });
           }
         });
@@ -351,11 +354,14 @@ class PurchaseController {
           itemName: rfq.stockItem ? rfq.stockItem.name : 'Genel Malzeme',
           unit: rfq.stockItem ? rfq.stockItem.unit : 'Adet',
           unitPrice: parseFloat(rfq.offeredUnitPrice) || 0,
-          quantity: parseFloat(rfq.requestedQuantity) || 1
+          quantity: parseFloat(rfq.requestedQuantity) || 1,
+          discountRate: 0,
+          vatRate: 20,
+          netAmount: parseFloat(rfq.offeredTotalPrice) || 0
         });
       }
 
-      // Add RFQ to each product group map
+      // Add RFQ to EACH product group map present in this proposal
       productsInRfq.forEach(prod => {
         const key = prod.stockItemId;
         if (!groupedMap.has(key)) {
@@ -374,7 +380,10 @@ class PurchaseController {
           const offerCopy = {
             ...(rfq.toJSON ? rfq.toJSON() : rfq),
             itemUnitPrice: prod.unitPrice,
-            itemQuantity: prod.quantity
+            itemQuantity: prod.quantity,
+            itemDiscountRate: prod.discountRate,
+            itemVatRate: prod.vatRate,
+            itemNetAmount: prod.netAmount
           };
           group.items.push(offerCopy);
         }
@@ -413,11 +422,19 @@ class PurchaseController {
           o.fpScore = Math.round(totalScore);
         });
 
-        validOffers.sort((a, b) => b.fpScore - a.fpScore);
-        const winner = validOffers[0];
+        // Find the winner (highest fpScore)
+        const sortedByScore = [...validOffers].sort((a, b) => b.fpScore - a.fpScore);
+        const winner = sortedByScore[0];
         if (winner) winner.isRecommended = true;
         group.recommendedOffer = winner;
       }
+
+      // Sort proposals inside the group chronologically (Oldest first, latest added at the VERY BOTTOM!)
+      group.items.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.rfqDate || 0).getTime();
+        const timeB = new Date(b.createdAt || b.rfqDate || 0).getTime();
+        return timeA - timeB;
+      });
     });
 
     res.render('purchase/rfq', {

@@ -42,13 +42,19 @@
     .view-pane.active { display: block; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Product Cards Box Grid Layout */
+    /* Product Cards Box Grid Layout - EXPLICITLY 2 ACROSS (İkişerli) */
     .product-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 24px;
       margin-bottom: 2.5rem;
     }
+    @media (max-width: 1100px) {
+      .product-cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .product-box-card {
       background: rgba(15, 23, 42, 0.95);
       border-radius: 18px;
@@ -144,13 +150,13 @@
     .pbc-offers-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 14px;
     }
     .pbc-offer-item {
       background: rgba(30, 41, 59, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 12px;
+      border-radius: 14px;
+      padding: 14px;
       transition: all 0.2s ease;
     }
     .pbc-offer-item.is-winner {
@@ -161,10 +167,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .pbc-oi-supplier {
-      font-size: 0.88rem;
+      font-size: 0.92rem;
       color: #f8fafc;
       display: flex;
       align-items: center;
@@ -182,27 +188,55 @@
       color: #34d399;
       font-weight: 800;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
     .pbc-oi-meta {
       display: flex;
+      flex-wrap: wrap;
       gap: 12px;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: #94a3b8;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 8px;
     }
     .pbc-oi-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
     .pbc-status-pill {
       font-size: 0.75rem;
       font-weight: 600;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 6px;
+    }
+
+    /* Detailed Line Items Table Inside Offer Card */
+    .line-items-mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+    .line-items-mini-table th {
+      background: rgba(15, 23, 42, 0.7);
+      color: #94a3b8;
+      font-weight: 700;
+      padding: 6px 8px;
+      text-align: left;
+      font-size: 0.72rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .line-items-mini-table td {
+      padding: 6px 8px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
     }
   </style>
 </head>
@@ -251,7 +285,7 @@
       <div class="page-header">
         <div>
           <h1>Satın Alma Teklif Yönetimi (RFQ)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün kutucukları üzerinden teklifler ve Fiyat/Performans değerlendirmeleri.</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün kutucukları üzerinden teklif kalemleri, teslimat süreleri ve F/P değerlendirmeleri.</p>
         </div>
       </div>
 
@@ -265,14 +299,14 @@
       <!-- View Tabs -->
       <div class="view-tab-nav">
         <button type="button" class="view-tab-btn active" onclick="switchViewTab('grouped-view')" id="btn-grouped-view">
-          📦 Ürün Kart Kutucukları (<%= groupedRfqs.length %> Ürün)
+          📦 Ürün Kart Kutucukları (İkişerli Sıralı — <%= groupedRfqs.length %> Ürün)
         </button>
         <button type="button" class="view-tab-btn" onclick="switchViewTab('flat-view')" id="btn-flat-view">
           📋 Tüm Teklifler (Düz Liste - <%= rfqs.length %> Teklif)
         </button>
       </div>
 
-      <!-- VIEW 1: PRODUCT CARDS BOX GRID VIEW -->
+      <!-- VIEW 1: PRODUCT CARDS BOX GRID VIEW (2-ACROSS İKİŞERLİ GRID) -->
       <div class="view-pane active" id="grouped-view">
         <% if (groupedRfqs.length === 0) { %>
           <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 16px; text-align: center; padding: 4rem; color: var(--text-muted);">
@@ -305,11 +339,12 @@
                       </span>
                     </div>
                     <% if (group.recommendedOffer.fpScore) { %>
-                      <div class="pbc-winner-score">F/P Skoru: %<%= group.recommendedOffer.fpScore %></div>
+                      <div class="pbc-winner-score">F/P Skoru: %<%= group.recommendedOffer.fpScore %> • ⏱️ <%= group.recommendedOffer.deliveryDays ? group.recommendedOffer.deliveryDays + ' Gün İçi Teslimat' : 'Hemen' %></div>
                     <% } %>
                   </div>
                 <% } %>
 
+                <!-- Offers Chronologically Ordered Inside Group (Newest at the bottom!) -->
                 <div class="pbc-offers-list">
                   <% group.items.forEach(item => { %>
                     <div class="pbc-offer-item <%= item.isRecommended ? 'is-winner' : '' %>">
@@ -318,23 +353,58 @@
                           <strong><%= item.supplierName %></strong>
                           <% if (item.isRecommended) { %><span class="pbc-winner-pill">⭐ Önerilen</span><% } %>
                         </div>
-                        <div class="pbc-oi-price">
-                          <%= parseFloat(item.itemUnitPrice || item.offeredUnitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= item.currency || 'TRY' %>
+                        <div style="text-align: right;">
+                          <div style="font-size: 0.72rem; color: #94a3b8;">Teklif No: <strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= item.rfqNo %></strong></div>
+                          <div class="pbc-oi-price">
+                            <%= parseFloat(item.offeredTotalPrice || item.subtotal || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= item.currency || 'TRY' %>
+                          </div>
                         </div>
                       </div>
+
+                      <!-- Detailed Item Lines Table Inside Offer -->
+                      <% if (item.itemsData && Array.isArray(item.itemsData) && item.itemsData.length > 0) { %>
+                        <table class="line-items-mini-table">
+                          <thead>
+                            <tr>
+                              <th>Ürün Kalemi</th>
+                              <th>Miktar</th>
+                              <th>Birim Fiyat</th>
+                              <th>İskonto</th>
+                              <th>KDV</th>
+                              <th style="text-align: right;">Net Tutar</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <% item.itemsData.forEach(line => { %>
+                              <tr>
+                                <td style="font-weight: 600; color: #f8fafc;"><%= line.productName || line.stockCode %></td>
+                                <td><%= line.quantity %> <%= line.unit || 'Adet' %></td>
+                                <td style="font-family: 'JetBrains Mono', monospace;"><%= parseFloat(line.unitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL</td>
+                                <td style="color: var(--rose);"><%= line.discountRate ? '%' + line.discountRate : '—' %></td>
+                                <td><%= line.vatRate ? '%' + line.vatRate : '%20' %></td>
+                                <td style="text-align: right; font-weight: 700; color: #34d399; font-family: 'JetBrains Mono', monospace;">
+                                  <%= parseFloat(line.netAmount || (line.quantity * line.unitPrice) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> TL
+                                </td>
+                              </tr>
+                            <% }); %>
+                          </tbody>
+                        </table>
+                      <% } %>
+
                       <div class="pbc-oi-meta">
-                        <span>Miktar: <strong><%= item.itemQuantity || item.requestedQuantity || 1 %> <%= group.unit %></strong></span>
-                        <span>Teslimat: <strong><%= item.deliveryDays ? item.deliveryDays + ' Gün' : 'Hemen' %></strong></span>
-                        <span>Vade: <strong><%= item.paymentTerm || 'Peşin' %></strong></span>
+                        <span>⏱️ Teslimat Süresi: <strong style="color: #f8fafc;"><%= item.deliveryDays ? item.deliveryDays + ' Gün İçi Teslimat' : 'Hemen Teslim' %></strong></span>
+                        <span>💳 Vade: <strong style="color: #f8fafc;"><%= item.paymentTerm || 'Peşin' %></strong></span>
+                        <span>🎯 F/P Skoru: <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= item.fpScore ? '%' + item.fpScore : '—' %></strong></span>
                       </div>
+
                       <div class="pbc-oi-actions">
                         <span class="pbc-status-pill <%= item.status === 'Accepted' ? 'status-active' : (item.status === 'Rejected' ? 'status-rejected' : 'status-approved') %>">
-                          <%= item.status === 'Accepted' ? '✅ Kabul Edildi' : (item.status === 'Rejected' ? '❌ Reddedildi' : '📩 Teklif Alındı') %>
+                          <%= item.status === 'Accepted' ? '✅ Siparişe Dönüştürüldü' : '📩 Teklif Alındı' %>
                         </span>
 
-                        <% if (item.status === 'Received' || item.status === 'Sent' || item.status === 'Draft') { %>
+                        <% if (item.status !== 'Accepted') { %>
                           <a href="/purchase/orders/add?rfqId=<%= item.id %>" class="btn btn-sm btn-success" style="padding: 6px 14px; font-weight: 700; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                            ✅ Kabul Et & Sipariş Oluştur
+                            📦 Sipariş Oluştur →
                           </a>
                         <% } %>
                       </div>
@@ -412,7 +482,7 @@
                     </td>
                     <td>
                       <% if (rfq.status === 'Accepted') { %>
-                        <span class="status-pill status-active">✅ Kabul Edildi</span>
+                        <span class="status-pill status-active">✅ Siparişe Dönüştürüldü</span>
                       <% } else if (rfq.status === 'Rejected') { %>
                         <span class="status-pill status-rejected">❌ Reddedildi</span>
                       <% } else if (rfq.status === 'Received') { %>
@@ -424,9 +494,9 @@
                       <% } %>
                     </td>
                     <td style="white-space: nowrap;">
-                      <% if (rfq.status === 'Received' || rfq.status === 'Sent' || rfq.status === 'Draft') { %>
+                      <% if (rfq.status !== 'Accepted') { %>
                         <a href="/purchase/orders/add?rfqId=<%= rfq.id %>" class="btn btn-sm btn-success" style="padding: 6px 14px; font-weight: 700; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                          ✅ Kabul Et & Sipariş Oluştur
+                          📦 Sipariş Oluştur →
                         </a>
                       <% } else { %>
                         <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
