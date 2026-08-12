@@ -3,116 +3,160 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yeni Satın Alma Siparişi — Enterprise ERP</title>
+  <title>Teklif Onayı → Satın Alma Siparişi Oluştur — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     .form-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: var(--shadow-md);
-      margin-bottom: 28px;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.92) 100%);
+      backdrop-filter: blur(20px);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      padding: 2rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      margin-bottom: 2rem;
       position: relative;
       overflow: hidden;
     }
     .form-card::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      background: linear-gradient(90deg, #10b981 0%, #059669 50%, #6366f1 100%);
     }
-
     .form-card-header {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       margin-bottom: 22px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .form-card-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      background: rgba(99, 102, 241, 0.15);
-      color: #818cf8;
-      border: 1px solid rgba(99, 102, 241, 0.3);
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .form-card-title { font-size: 1.15rem; font-weight: 800; color: #f8fafc; }
+    .form-card-sub { font-size: 0.82rem; color: #94a3b8; margin-top: 2px; }
+
+    .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 22px; }
+    @media (max-width: 1100px) { .info-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .info-item {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .info-label {
+      font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #64748b; margin-bottom: 6px;
+    }
+    .info-value {
+      font-size: 0.95rem; font-weight: 700; color: #f8fafc;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .info-value.indigo { color: #818cf8; }
+    .info-value.emerald { color: #34d399; }
+
+    .section-header {
+      font-size: 1rem; font-weight: 800; color: #f8fafc;
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .section-icon {
+      width: 32px; height: 32px; border-radius: 10px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1rem;
     }
 
-    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
-    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    /* Items Table */
+    .items-table-wrapper {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .items-table {
+      width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    }
+    .items-table th {
+      background: rgba(30, 41, 59, 0.8);
+      color: #64748b; font-weight: 800; font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.7px;
+      padding: 14px 16px; text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .items-table td {
+      padding: 14px 16px; color: #cbd5e1; font-weight: 500;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .items-table tr:last-child td { border-bottom: none; }
+    .items-table .mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+    .items-table .emerald { color: #34d399; }
+    .items-table .rose { color: #fb7185; }
+    .items-table .amber { color: #fbbf24; }
+
+    /* Summary */
+    .summary-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px;
+    }
+    .summary-chip {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px; text-align: center;
+    }
+    .summary-chip-label {
+      font-size: 0.7rem; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      display: block; margin-bottom: 6px;
+    }
+    .summary-chip-value {
+      font-size: 1.2rem; font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .summary-chip.total {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.2) 100%);
+      border-color: rgba(16, 185, 129, 0.35);
+    }
 
     .aesthetic-group { margin-bottom: 16px; }
     .aesthetic-label {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #94a3b8;
-      margin-bottom: 6px;
-      display: block;
+      font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 8px; display: block;
     }
     .aesthetic-input {
-      width: 100%;
-      background: #0f172a;
-      border: 1.5px solid #1e293b;
-      color: #f8fafc;
-      font-size: 0.9rem;
-      font-family: 'Inter', sans-serif;
-      padding: 12px 14px;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-      box-sizing: border-box;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px; padding: 12px 16px;
+      color: #f8fafc; font-size: 0.9rem; font-weight: 600;
+      width: 100%; transition: all 0.25s ease; outline: none;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+      font-family: inherit; box-sizing: border-box;
     }
     .aesthetic-input:focus {
-      outline: none;
-      border-color: #6366f1;
-      background: #090e1a;
-      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+      border-color: #818cf8;
+      background: rgba(30, 41, 59, 0.9);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22);
     }
     .aesthetic-input[readonly] {
-      background: #090d16;
-      border-color: #334155;
-      color: #818cf8;
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      cursor: not-allowed;
+      background: rgba(15, 23, 42, 0.5);
+      border-color: rgba(255, 255, 255, 0.06);
+      color: #94a3b8; cursor: not-allowed;
     }
-    .aesthetic-input::placeholder { color: #475569; }
-
-    .btn-indigo-gradient {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 0.95rem;
-      padding: 12px 28px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
-
-    .total-preview-card {
-      background: #0b1329;
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      padding: 20px 24px;
-      border-radius: 14px;
-      margin-top: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    select.aesthetic-input {
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23818cf8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 42px;
     }
   </style>
 </head>
@@ -145,7 +189,8 @@
         <a href="/" class="mt-link">Ana Sayfa</a>
         <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
         <a href="/stock" class="mt-link">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link active">Satın Alma</a>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %><% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %><a href="/quality" class="mt-link">Kalite Kontrol</a><% } %>
+        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %>
+        <% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %><a href="/quality" class="mt-link">Kalite Kontrol</a><% } %>
       </div>
       <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
     </header>
@@ -160,163 +205,208 @@
 
       <div class="page-header">
         <div>
-          <h1>Yeni Satın Alma Siparişi Oluştur</h1>
-          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Seçilen tedarikçiye verilmek üzere resmi satın alma siparişi hazırlayın.</p>
+          <h1>✅ Teklif Onayı → Satın Alma Siparişi Oluştur</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Kabul ettiğiniz teklifin detayları aşağıda listelenmiştir. Sipariş oluştur butonuna basarak resmi PO oluşturabilirsiniz.</p>
         </div>
-        <a href="/purchase/orders" class="btn btn-secondary" style="border-radius: 10px;">← Sipariş Listesine Dön</a>
+        <a href="/purchase/rfq" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;">← RFQ Teklif Listesine Dön</a>
       </div>
 
       <% if (error) { %>
-        <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+        <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1.5px solid rgba(244,63,94,0.3); padding: 16px 22px; border-radius: 16px; margin-bottom: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px;">
           <span>⚠️</span> <%= error %>
         </div>
       <% } %>
 
-      <div class="form-card">
-        <div class="form-card-header">
-          <div class="form-card-icon">📦</div>
-          <div>
-            <div class="form-card-title">Resmi Satın Alma Sipariş Formu (PO)</div>
-            <div class="form-card-sub">Tedarikçi bilgileri, sipariş kalemleri, iskonto, KDV ve ödeme vadesi hesaplamaları</div>
+      <form action="/purchase/orders/add" method="POST" id="orderForm">
+        <input type="hidden" name="rfqId" value="<%= formData.rfqId %>">
+        <input type="hidden" name="supplierName" value="<%= formData.supplierName %>">
+        <input type="hidden" name="supplierId" value="<%= formData.supplierId %>">
+        <input type="hidden" name="stockItemId" value="<%= formData.stockItemId %>">
+
+        <!-- SECTION 1: Teklif & Tedarikçi Bilgileri (Readonly) -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon">📋</div>
+            <div>
+              <div class="form-card-title">Onaylanan Teklif & Tedarikçi Bilgileri</div>
+              <div class="form-card-sub">Bu bilgiler kabul edilen tekliften otomatik olarak gelmiştir ve değiştirilemez.</div>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Teklif No</div>
+              <div class="info-value indigo"><%= formData.rfqNo %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Tedarikçi Firma</div>
+              <div class="info-value"><%= formData.supplierName %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Vergi No</div>
+              <div class="info-value"><%= formData.supplierTaxNo || '—' %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">İletişim Kişisi</div>
+              <div class="info-value"><%= formData.supplierContactPerson || '—' %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Para Birimi</div>
+              <div class="info-value indigo"><%= formData.currency %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Ödeme Vadesi</div>
+              <div class="info-value"><%= formData.paymentTerm %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Teslimat Süresi</div>
+              <div class="info-value emerald"><%= formData.deliveryDays %> Gün</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">KDV Durumu</div>
+              <div class="info-value"><%= formData.vatStatus %></div>
+            </div>
           </div>
         </div>
 
-        <form action="/purchase/orders/add" method="POST">
-          <input type="hidden" name="rfqId" value="<%= formData && formData.rfqId ? formData.rfqId : '' %>">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <!-- SECTION 2: Ürün Kalemleri Tablosu (Readonly) -->
+        <div class="form-card">
+          <div class="section-header">
+            <span class="section-icon" style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4);">📦</span>
+            Sipariş Ürün Kalemleri (Tekliften Gelen — Değiştirilemez)
+          </div>
+
+          <% if (rfqItems && rfqItems.length > 0) { %>
+            <div class="items-table-wrapper">
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px; text-align: center;">#</th>
+                    <th>Ürün / Malzeme Kalemi</th>
+                    <th style="width: 100px;">Miktar</th>
+                    <th style="width: 100px;">Birim</th>
+                    <th style="width: 120px;">Birim Fiyat</th>
+                    <th style="width: 90px;">İskonto (%)</th>
+                    <th style="width: 90px;">KDV (%)</th>
+                    <th style="width: 140px; text-align: right;">Net Tutar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% rfqItems.forEach((item, idx) => {
+                    const qty = parseFloat(item.quantity) || 1;
+                    const price = parseFloat(item.unitPrice) || 0;
+                    const disc = parseFloat(item.discountRate) || 0;
+                    const vat = parseFloat(item.vatRate) || 20;
+                    const net = parseFloat(item.netAmount) || (qty * price * (1 - disc/100) * (1 + vat/100));
+                    const curr = formData.currency === 'USD' ? '$' : (formData.currency === 'EUR' ? '€' : '₺');
+                  %>
+                    <tr>
+                      <td style="text-align: center; color: #64748b; font-weight: 800;"><%= idx + 1 %></td>
+                      <td>
+                        <strong style="color: #f8fafc;"><%= item.productName || '—' %></strong>
+                        <div style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono', monospace;"><%= item.stockCode || '' %></div>
+                      </td>
+                      <td class="mono"><%= qty %></td>
+                      <td><%= item.unit || 'Adet' %></td>
+                      <td class="mono emerald"><%= price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></td>
+                      <td class="mono rose"><%= disc > 0 ? '%' + disc.toFixed(1) : '—' %></td>
+                      <td class="mono amber">%<%= vat %></td>
+                      <td class="mono emerald" style="text-align: right; font-size: 0.95rem;"><%= net.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 20px; text-align: center; color: #64748b;">
+              Teklifte ürün kalemi bulunamadı.
+            </div>
+          <% } %>
+
+          <!-- Toplam Özet -->
+          <%
+            const curr = formData.currency === 'USD' ? '$' : (formData.currency === 'EUR' ? '€' : '₺');
+            const sub = parseFloat(formData.subtotal) || 0;
+            const disc = parseFloat(formData.totalDiscount) || 0;
+            const tax = parseFloat(formData.totalTax) || 0;
+            const total = parseFloat(formData.offeredTotalPrice) || (sub - disc + tax);
+          %>
+          <div class="summary-grid">
+            <div class="summary-chip">
+              <span class="summary-chip-label">Ara Toplam</span>
+              <span class="summary-chip-value" style="color: #f8fafc;"><%= sub.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+            </div>
+            <div class="summary-chip">
+              <span class="summary-chip-label">Toplam İskonto</span>
+              <span class="summary-chip-value" style="color: #fb7185;">- <%= disc.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+            </div>
+            <div class="summary-chip">
+              <span class="summary-chip-label">KDV Toplam</span>
+              <span class="summary-chip-value" style="color: #fbbf24;"><%= tax.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+            </div>
+            <div class="summary-chip total">
+              <span class="summary-chip-label" style="color: #34d399;">Genel Toplam</span>
+              <span class="summary-chip-value" style="color: #34d399;"><%= total.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+            </div>
+          </div>
+
+          <!-- Hidden fields for order creation -->
+          <input type="hidden" name="quantity" value="<%= formData.quantity %>">
+          <input type="hidden" name="unitPrice" value="<%= formData.unitPrice %>">
+          <input type="hidden" name="currency" value="<%= formData.currency %>">
+        </div>
+
+        <!-- SECTION 3: Sipariş Ek Bilgileri (Düzenlenebilir) -->
+        <div class="form-card">
+          <div class="section-header">
+            <span class="section-icon" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4);">🚚</span>
+            Sipariş Ek Bilgileri (Düzenlenebilir)
+          </div>
+
+          <div class="info-grid">
             <div class="aesthetic-group">
               <label class="aesthetic-label">Sipariş No (Otomatik)</label>
-              <input type="text" name="orderNo" value="<%= nextOrderNo %>" class="aesthetic-input" readonly>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Tedarikçi Seçin *</label>
-              <select name="supplierId" class="aesthetic-input" id="supplierSelect" onchange="onSupplierChange(this)" required style="cursor: pointer;">
-                <option value="">— Tedarikçi Kartı Seçin —</option>
-                <% if (suppliers && suppliers.length > 0) { %>
-                  <% suppliers.forEach(sup => { %>
-                    <option value="<%= sup.id %>" data-name="<%= sup.companyName %>" data-tax="<%= sup.taxNo || '' %>" data-contact="<%= sup.contactPerson || '' %>" data-email="<%= sup.email || '' %>" data-phone="<%= sup.phone || '' %>" <%= (formData && formData.supplierId == sup.id) ? 'selected' : '' %>>
-                      <%= sup.supplierCode %> — <%= sup.companyName %>
-                    </option>
-                  <% }); %>
-                <% } %>
-              </select>
-              <input type="hidden" name="supplierName" id="supplierNameInput" value="<%= formData && formData.supplierName ? formData.supplierName : '' %>">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Tedarikçi Vergi No</label>
-              <input type="text" name="supplierTaxNo" id="supplierTaxNoInput" class="aesthetic-input" value="<%= formData && formData.supplierTaxNo ? formData.supplierTaxNo : '' %>">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Tedarikçi İletişim Kişisi</label>
-              <input type="text" name="supplierContactPerson" id="supplierContactInput" class="aesthetic-input" value="<%= formData && formData.supplierContactPerson ? formData.supplierContactPerson : '' %>">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Satın Alınacak Malzeme / Stok Kartı *</label>
-              <select name="stockItemId" class="aesthetic-input" id="stockSelect" onchange="onStockChange(this)" required style="cursor: pointer;">
-                <option value="">— Stok Kartı Seçin —</option>
-                <% stockItems.forEach(item => { %>
-                  <option value="<%= item.id %>" data-price="<%= item.purchasePrice || 0 %>" data-unit="<%= item.unit %>" <%= (formData && formData.stockItemId == item.id) ? 'selected' : '' %>><%= item.stockCode %> — <%= item.name %> (<%= item.category %>)</option>
-                <% }); %>
-              </select>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Miktar *</label>
-              <input type="number" name="quantity" id="quantityInput" value="<%= (formData && formData.quantity) ? formData.quantity : '100' %>" min="1" step="0.01" class="aesthetic-input" required oninput="calcTotals()">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Birim Alış Fiyatı (TL) *</label>
-              <input type="number" name="unitPrice" id="unitPriceInput" value="<%= (formData && formData.unitPrice) ? formData.unitPrice : '0.00' %>" min="0" step="0.01" class="aesthetic-input" required oninput="calcTotals()">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">İskonto Oranı (%)</label>
-              <input type="number" name="discountRate" id="discountRateInput" value="<%= (formData && formData.discountRate) ? formData.discountRate : '0' %>" min="0" max="100" step="0.1" class="aesthetic-input" oninput="calcTotals()">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">KDV Oranı (%)</label>
-              <select name="taxRate" id="taxRateSelect" class="aesthetic-input" onchange="calcTotals()" style="cursor: pointer;">
-                <option value="20" <%= (formData && formData.taxRate == 20) ? 'selected' : '' %>>KDV %20</option>
-                <option value="10" <%= (formData && formData.taxRate == 10) ? 'selected' : '' %>>KDV %10</option>
-                <option value="1" <%= (formData && formData.taxRate == 1) ? 'selected' : '' %>>KDV %1</option>
-                <option value="0" <%= (formData && formData.taxRate == 0) ? 'selected' : '' %>>KDV %0 (Muaf)</option>
-              </select>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Ödeme Vadesi / Koşulu</label>
-              <select name="paymentTerm" class="aesthetic-input" style="cursor: pointer;">
-                <option value="Vadeli_30" <%= (formData && formData.paymentTerm === 'Vadeli_30') ? 'selected' : '' %>>30 Gün Vadeli</option>
-                <option value="Vadeli_60" <%= (formData && formData.paymentTerm === 'Vadeli_60') ? 'selected' : '' %>>60 Gün Vadeli</option>
-                <option value="Vadeli_90" <%= (formData && formData.paymentTerm === 'Vadeli_90') ? 'selected' : '' %>>90 Gün Vadeli</option>
-                <option value="Pesin" <%= (formData && formData.paymentTerm === 'Pesin') ? 'selected' : '' %>>Peşin Ödeme</option>
-                <option value="Kredi_Karti" <%= (formData && formData.paymentTerm === 'Kredi_Karti') ? 'selected' : '' %>>Kredi Kartı</option>
-              </select>
+              <input type="text" name="orderNo" value="<%= nextOrderNo %>" class="aesthetic-input" readonly style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Sipariş Tarihi</label>
-              <input type="date" name="orderDate" value="<%= (formData && formData.orderDate) ? formData.orderDate : new Date().toISOString().split('T')[0] %>" class="aesthetic-input">
+              <input type="date" name="orderDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input">
             </div>
             <div class="aesthetic-group">
               <label class="aesthetic-label">Beklenen Teslimat Tarihi</label>
-              <input type="date" name="expectedDeliveryDate" value="<%= (formData && formData.expectedDeliveryDate) ? formData.expectedDeliveryDate : '' %>" class="aesthetic-input">
+              <input type="date" name="expectedDeliveryDate" value="<%= formData.expectedDeliveryDate %>" class="aesthetic-input">
+            </div>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Ödeme Vadesi</label>
+              <select name="paymentTerm" class="aesthetic-input">
+                <option value="Vadeli_30" <%= formData.paymentTerm === 'Vadeli_30' ? 'selected' : '' %>>30 Gün Vadeli</option>
+                <option value="Vadeli_60" <%= formData.paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
+                <option value="Vadeli_90" <%= formData.paymentTerm === 'Vadeli_90' ? 'selected' : '' %>>90 Gün Vadeli</option>
+                <option value="Pesin" <%= formData.paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin Ödeme</option>
+                <option value="Kredi_Karti" <%= formData.paymentTerm === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı</option>
+              </select>
             </div>
           </div>
 
-          <div class="aesthetic-group" style="margin-top: 14px;">
+          <div class="aesthetic-group">
             <label class="aesthetic-label">Sipariş Notu / Açıklama</label>
-            <input type="text" name="notes" class="aesthetic-input" value="<%= (formData && formData.notes) ? formData.notes : '' %>" placeholder="Örn: 2026-TEKLIF-01 onaylı siparişidir.">
+            <input type="text" name="notes" class="aesthetic-input" value="<%= formData.notes %>" placeholder="Sipariş hakkında ek not girebilirsiniz.">
           </div>
 
-          <!-- Total summary preview -->
-          <div class="total-preview-card">
-            <div>
-              <div style="font-size: 0.85rem; color: #94a3b8; font-weight: 700;">Tahmini Genel Toplam (KDV Dahil):</div>
-              <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">* 50.000 TL üzerindeki satın almalar otomatik olarak Yönetsel Onay Paneline düşer.</div>
-            </div>
-            <strong id="totalPreview" style="font-size: 1.5rem; color: #34d399; font-weight: 800;">0.00 TL</strong>
+          <div style="display: flex; gap: 14px; margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+            <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 1.05rem; font-weight: 800; padding: 16px 42px; border-radius: 14px; border: none; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45); cursor: pointer;">
+              ✅ Teklifi Onayla & Satın Alma Siparişi Oluştur
+            </button>
+            <a href="/purchase/rfq" class="btn btn-secondary" style="border-radius: 14px; padding: 16px 28px; font-weight: 700;">İptal — RFQ'ya Geri Dön</a>
           </div>
-
-          <div style="display: flex; gap: 14px; margin-top: 20px;">
-            <button type="submit" class="btn-indigo-gradient">📦 Satın Alma Siparişini Oluştur</button>
-            <a href="/purchase/orders" class="btn btn-secondary" style="border-radius: 10px; padding: 12px 20px;">İptal</a>
-          </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </main>
   </div>
 
   <script>
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
     updateClock(); setInterval(updateClock, 1000);
-
-    function onSupplierChange(select) {
-      const opt = select.options[select.selectedIndex];
-      document.getElementById('supplierNameInput').value = opt.getAttribute('data-name') || '';
-      document.getElementById('supplierTaxNoInput').value = opt.getAttribute('data-tax') || '';
-      document.getElementById('supplierContactInput').value = opt.getAttribute('data-contact') || '';
-    }
-
-    function onStockChange(select) {
-      const opt = select.options[select.selectedIndex];
-      const p = opt.getAttribute('data-price');
-      if (p) {
-        document.getElementById('unitPriceInput').value = parseFloat(p).toFixed(2);
-        calcTotals();
-      }
-    }
-
-    function calcTotals() {
-      const qty = parseFloat(document.getElementById('quantityInput').value) || 0;
-      const unitP = parseFloat(document.getElementById('unitPriceInput').value) || 0;
-      const discR = parseFloat(document.getElementById('discountRateInput').value) || 0;
-      const taxR = parseFloat(document.getElementById('taxRateSelect').value) || 0;
-
-      const subtotal = qty * unitP;
-      const discAmt = subtotal * (discR / 100);
-      const afterDisc = subtotal - discAmt;
-      const taxAmt = afterDisc * (taxR / 100);
-      const grandTotal = afterDisc + taxAmt;
-
-      document.getElementById('totalPreview').textContent = grandTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' TL';
-    }
   </script>
 </body>
 </html>

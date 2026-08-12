@@ -258,6 +258,33 @@
       transform: translateY(-1px);
       box-shadow: 0 6px 22px rgba(16, 185, 129, 0.5);
     }
+    .btn-accept-order.disabled {
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
+      box-shadow: none;
+      cursor: not-allowed;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    /* Locked group */
+    .product-box-card.is-locked {
+      opacity: 0.8;
+    }
+    .product-box-card.is-locked::before {
+      background: linear-gradient(90deg, #64748b 0%, #475569 50%, #64748b 100%);
+    }
+    .locked-banner {
+      background: rgba(100, 116, 139, 0.15);
+      border: 1.5px solid rgba(100, 116, 139, 0.4);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 14px 20px 0;
+      display: flex; align-items: center; gap: 10px;
+      color: #94a3b8; font-size: 0.82rem; font-weight: 700;
+    }
+    .pbc-offer-item.is-disabled {
+      opacity: 0.45;
+      filter: grayscale(40%);
+    }
   </style>
 </head>
 
@@ -362,11 +389,11 @@
         <% } else { %>
           <div class="product-cards-grid">
             <% groupedRfqs.forEach(group => { %>
-              <div class="product-box-card">
+              <div class="product-box-card <%= group.isLocked ? 'is-locked' : '' %>">
                 <!-- Product Header -->
                 <div class="pbc-header">
                   <div class="pbc-title-wrap">
-                    <div class="pbc-icon-box">📦</div>
+                    <div class="pbc-icon-box"><%= group.isLocked ? '🔒' : '📦' %></div>
                     <div>
                       <h3 class="pbc-title"><%= group.itemName %></h3>
                       <span class="pbc-code"><%= group.stockCode %> • <%= group.unit %></span>
@@ -375,7 +402,13 @@
                   <span class="pbc-count-badge"><%= group.items.length %> Teklif</span>
                 </div>
 
-                <% if (group.recommendedOffer) { %>
+                <% if (group.isLocked) { %>
+                  <div class="locked-banner">
+                    🔒 Bu ürün grubu kapatılmıştır — İlgili ürün için teklif kabul edilmiş ve sipariş oluşturulmuştur.
+                  </div>
+                <% } %>
+
+                <% if (group.recommendedOffer && !group.isLocked) { %>
                   <div class="pbc-winner-banner">
                     <div class="pbc-winner-tag">⭐ EN UYGUN ÖNERİLEN TEKLİF</div>
                     <div class="pbc-winner-details">
@@ -397,14 +430,15 @@
                     const totalPrice = parseFloat(item.offeredTotalPrice || item.subtotal || 0);
                     const curr = item.currency || 'TRY';
                     const currSymbol = curr === 'USD' ? '$' : (curr === 'EUR' ? '€' : '₺');
+                    const isItemDisabled = group.isLocked && item.status !== 'Accepted';
                   %>
-                    <div class="pbc-offer-item <%= item.isRecommended ? 'is-winner' : '' %>">
+                    <div class="pbc-offer-item <%= item.isRecommended ? 'is-winner' : '' %> <%= isItemDisabled ? 'is-disabled' : '' %>">
                       <!-- Supplier & Total -->
                       <div class="pbc-oi-top">
                         <div class="pbc-oi-supplier">
                           <span class="pbc-oi-supplier-name"><%= item.supplierName %></span>
                           <span class="pbc-oi-rfqno"><%= item.rfqNo %></span>
-                          <% if (item.isRecommended) { %><span class="pbc-winner-pill">⭐ Önerilen</span><% } %>
+                          <% if (item.isRecommended && !group.isLocked) { %><span class="pbc-winner-pill">⭐ Önerilen</span><% } %>
                         </div>
                         <div class="pbc-oi-total-price"><%= totalPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></div>
                       </div>
@@ -472,10 +506,14 @@
                           <% } %>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                          <span class="pbc-status-pill <%= item.status === 'Accepted' ? 'status-active' : (item.status === 'Rejected' ? 'status-rejected' : 'status-approved') %>">
-                            <%= item.status === 'Accepted' ? '✅ Kabul Edildi' : (item.status === 'Rejected' ? '❌ Reddedildi' : '📩 Teklif Alındı') %>
-                          </span>
-                          <% if (item.status === 'Received' || item.status === 'Sent' || item.status === 'Draft') { %>
+                          <% if (item.status === 'Accepted') { %>
+                            <span class="pbc-status-pill status-active">✅ Kabul Edildi</span>
+                          <% } else if (item.status === 'Rejected') { %>
+                            <span class="pbc-status-pill status-rejected">❌ Pasif (Reddedildi)</span>
+                          <% } else if (group.isLocked) { %>
+                            <span class="pbc-status-pill status-rejected">🔒 Pasif (İlgili ürünler başka teklifte kabul edildi)</span>
+                          <% } else { %>
+                            <span class="pbc-status-pill status-approved">📩 Teklif Alındı</span>
                             <a href="/purchase/orders/add?rfqId=<%= item.id %>" class="btn-accept-order">✅ Kabul Et & Sipariş Oluştur</a>
                           <% } %>
                         </div>

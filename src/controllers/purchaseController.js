@@ -5,7 +5,7 @@ const supplierRepository = require('../repositories/supplierRepository');
 const rfqRepository = require('../repositories/rfqRepository');
 const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const asyncHandler = require('../utils/asyncHandler');
-const { StockItem, PurchaseOrder, Supplier, PurchaseRequisition } = require('../../models');
+const { StockItem, PurchaseOrder, Supplier, PurchaseRequisition, PurchaseRfq } = require('../../models');
 const { Op } = require('sequelize');
 
 class PurchaseController {
@@ -35,57 +35,74 @@ class PurchaseController {
   });
 
   renderAddOrder = asyncHandler(async (req, res) => {
+    // Sipariş oluşturma SADECE RFQ'dan erişilebilir
+    if (!req.query.rfqId) {
+      return res.redirect('/purchase/rfq');
+    }
+
+    const rfq = await rfqRepository.findById(req.query.rfqId);
+    if (!rfq) {
+      return res.redirect('/purchase/rfq');
+    }
+
     const nextOrderNo = await purchaseService.getNextOrderNo();
-    const stockItems = await StockItem.findAll({
-      where: { status: 'Active' },
-      order: [['name', 'ASC']]
-    });
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
 
-    let formData = {};
-    if (req.query.rfqId) {
-      const rfq = await rfqRepository.findById(req.query.rfqId);
-      if (rfq) {
-        const firstItem = (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData[0]) ? rfq.itemsData[0] : null;
+    // RFQ'nun tüm ürün kalemlerini çıkar
+    const rfqItems = (rfq.itemsData && Array.isArray(rfq.itemsData)) ? rfq.itemsData : [];
+    const firstItem = rfqItems[0] || null;
 
-        const expectedDate = new Date();
-        if (rfq.deliveryDays) {
-          expectedDate.setDate(expectedDate.getDate() + parseInt(rfq.deliveryDays, 10));
-        } else {
-          expectedDate.setDate(expectedDate.getDate() + 7);
-        }
-
-        let supplierTaxNo = '';
-        let supplierContactPerson = '';
-        if (rfq.supplier) {
-          supplierTaxNo = rfq.supplier.taxNo || '';
-          supplierContactPerson = rfq.supplier.contactPerson || '';
-        }
-
-        formData = {
-          rfqId: rfq.id,
-          supplierId: rfq.supplierId,
-          supplierName: rfq.supplierName,
-          supplierTaxNo,
-          supplierContactPerson,
-          stockItemId: firstItem ? firstItem.stockItemId : rfq.stockItemId,
-          quantity: firstItem ? firstItem.quantity : rfq.requestedQuantity,
-          unitPrice: firstItem ? firstItem.unitPrice : rfq.offeredUnitPrice,
-          paymentTerm: rfq.paymentTerm || 'Pesin',
-          currency: rfq.currency || 'TRY',
-          expectedDeliveryDate: expectedDate.toISOString().split('T')[0],
-          notes: `[Sözleşmeli Teklif No: ${rfq.rfqNo}] ${rfq.notes || ''}`
-        };
-      }
+    const expectedDate = new Date();
+    if (rfq.deliveryDays) {
+      expectedDate.setDate(expectedDate.getDate() + parseInt(rfq.deliveryDays, 10));
+    } else {
+      expectedDate.setDate(expectedDate.getDate() + 7);
     }
+
+    let supplierTaxNo = '';
+    let supplierContactPerson = '';
+    let supplierEmail = '';
+    let supplierPhone = '';
+    if (rfq.supplier) {
+      supplierTaxNo = rfq.supplier.taxNo || '';
+      supplierContactPerson = rfq.supplier.contactPerson || '';
+      supplierEmail = rfq.supplier.email || '';
+      supplierPhone = rfq.supplier.phone || '';
+    }
+
+    const formData = {
+      rfqId: rfq.id,
+      rfqNo: rfq.rfqNo,
+      supplierId: rfq.supplierId,
+      supplierName: rfq.supplierName,
+      supplierTaxNo,
+      supplierContactPerson,
+      supplierEmail,
+      supplierPhone,
+      stockItemId: firstItem ? firstItem.stockItemId : rfq.stockItemId,
+      quantity: firstItem ? firstItem.quantity : rfq.requestedQuantity,
+      unitPrice: firstItem ? firstItem.unitPrice : rfq.offeredUnitPrice,
+      paymentTerm: rfq.paymentTerm || 'Pesin',
+      currency: rfq.currency || 'TRY',
+      deliveryDays: rfq.deliveryDays || 7,
+      expectedDeliveryDate: expectedDate.toISOString().split('T')[0],
+      notes: `[Sözleşmeli Teklif No: ${rfq.rfqNo}] ${rfq.notes || ''}`,
+      subtotal: rfq.subtotal || 0,
+      totalDiscount: rfq.totalDiscount || 0,
+      totalTax: rfq.totalTax || 0,
+      offeredTotalPrice: rfq.offeredTotalPrice || 0,
+      vatStatus: rfq.vatStatus || 'Hariç',
+      shippingStatus: rfq.shippingStatus || '',
+      deliveryPlace: rfq.deliveryPlace || ''
+    };
 
     res.render('purchase/add', {
       user: req.user,
       error: null,
       nextOrderNo,
-      stockItems,
       suppliers,
-      formData
+      formData,
+      rfqItems
     });
   });
 
@@ -120,7 +137,43 @@ class PurchaseController {
       // Now update RFQ status to Accepted ONLY AFTER order is created
       if (req.body.rfqId) {
         try {
-          await purchaseService.acceptRfq(parseInt(req.body.rfqId, 10), req.user, req.ip);
+          const rfqId = parseInt(req.body.rfqId, 10);
+          // 1. Kabul edilen RFQ'yu Accepted yap
+          await PurchaseRfq.update({ status: 'Accepted', isWinner: true }, { where: { id: rfqId } });
+
+          // 2. Kabul edilen RFQ'nun ürün ID'lerini çıkar
+          const acceptedRfq = await PurchaseRfq.findByPk(rfqId);
+          if (acceptedRfq) {
+            const acceptedItems = (acceptedRfq.itemsData && Array.isArray(acceptedRfq.itemsData)) ? acceptedRfq.itemsData : [];
+            const acceptedStockIds = acceptedItems.map(i => parseInt(i.stockItemId, 10)).filter(Boolean);
+            if (acceptedStockIds.length === 0 && acceptedRfq.stockItemId) {
+              acceptedStockIds.push(parseInt(acceptedRfq.stockItemId, 10));
+            }
+
+            // 3. Aynı ürünleri içeren diğer tüm aktif RFQ'ları Rejected yap
+            if (acceptedStockIds.length > 0) {
+              const allOtherRfqs = await PurchaseRfq.findAll({
+                where: {
+                  id: { [Op.ne]: rfqId },
+                  status: { [Op.in]: ['Received', 'Sent', 'Draft'] }
+                }
+              });
+
+              for (const otherRfq of allOtherRfqs) {
+                const otherItems = (otherRfq.itemsData && Array.isArray(otherRfq.itemsData)) ? otherRfq.itemsData : [];
+                const otherStockIds = otherItems.map(i => parseInt(i.stockItemId, 10)).filter(Boolean);
+                if (otherStockIds.length === 0 && otherRfq.stockItemId) {
+                  otherStockIds.push(parseInt(otherRfq.stockItemId, 10));
+                }
+
+                // Eğer diğer RFQ kabul edilenle ortak ürün içeriyorsa → Rejected
+                const hasOverlap = otherStockIds.some(sid => acceptedStockIds.includes(sid));
+                if (hasOverlap) {
+                  await PurchaseRfq.update({ status: 'Rejected' }, { where: { id: otherRfq.id } });
+                }
+              }
+            }
+          }
         } catch (e) {
           console.error('acceptRfq in addOrder error:', e);
         }
@@ -231,9 +284,25 @@ class PurchaseController {
     const { search, status, sourceModule } = req.query;
     const requisitions = await purchaseService.getAllRequisitions({ status, sourceModule });
 
+    // Kabul edilmiş RFQ'lardaki ürün ID'lerini hesapla
+    const acceptedRfqs = await PurchaseRfq.findAll({
+      where: { status: 'Accepted' }
+    });
+    const acceptedStockItemIds = new Set();
+    acceptedRfqs.forEach(rfq => {
+      const items = (rfq.itemsData && Array.isArray(rfq.itemsData)) ? rfq.itemsData : [];
+      items.forEach(item => {
+        if (item.stockItemId) acceptedStockItemIds.add(parseInt(item.stockItemId, 10));
+      });
+      if (items.length === 0 && rfq.stockItemId) {
+        acceptedStockItemIds.add(parseInt(rfq.stockItemId, 10));
+      }
+    });
+
     res.render('purchase/requisitions', {
       user: req.user,
       requisitions,
+      acceptedStockItemIds: Array.from(acceptedStockItemIds),
       filterSearch: search || '',
       filterStatus: status || '',
       filterSourceModule: sourceModule || ''
@@ -383,8 +452,26 @@ class PurchaseController {
 
     const groupedRfqs = Array.from(groupedMap.values());
 
-    // Price / Performance algorithm for each product group
+    // Kabul edilmiş RFQ'lardaki ürün ID'lerini hesapla (isLocked için)
+    const acceptedStockItemIds = new Set();
+    rfqs.forEach(rfq => {
+      const rfqObj = rfq.toJSON ? rfq.toJSON() : rfq;
+      if (rfqObj.status === 'Accepted') {
+        const items = (rfqObj.itemsData && Array.isArray(rfqObj.itemsData)) ? rfqObj.itemsData : [];
+        items.forEach(item => {
+          if (item.stockItemId) acceptedStockItemIds.add(parseInt(item.stockItemId, 10));
+        });
+        if (items.length === 0 && rfqObj.stockItemId) {
+          acceptedStockItemIds.add(parseInt(rfqObj.stockItemId, 10));
+        }
+      }
+    });
+
+    // Price / Performance algorithm for each product group + isLocked
     groupedRfqs.forEach(group => {
+      // isLocked: grubun ürünü kabul edilmiş bir teklifte yer alıyorsa true
+      group.isLocked = acceptedStockItemIds.has(group.stockItemId);
+
       const validOffers = group.items.filter(o => o.itemUnitPrice && parseFloat(o.itemUnitPrice) > 0);
 
       if (validOffers.length > 0) {
