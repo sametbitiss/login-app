@@ -524,8 +524,8 @@
 
   <!-- Requisitioned Products Data embedded for JS -->
   <script>
-    const REQUISITIONED_PRODUCTS = <% - JSON.stringify(requisitionedProducts) %>;
-    const TARGET_REQ_ID = <%= targetReqId ?targetReqId: 'null' %>;
+    const REQUISITIONED_PRODUCTS = <%- JSON.stringify(requisitionedProducts) %>;
+    const TARGET_REQ_ID = <%= targetReqId ? targetReqId : 'null' %>;
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));

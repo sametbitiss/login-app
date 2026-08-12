@@ -822,7 +822,3 @@ class PurchaseController {
 }
 
 module.exports = new PurchaseController();
-  });
-}
-
-module.exports = new PurchaseController();
