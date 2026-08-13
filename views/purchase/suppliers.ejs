@@ -63,7 +63,12 @@
       <div class="kpi-strip">
         <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--indigo">🏢</div><div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Tedarikçi</span><span class="kpi-chip-value"><%= supplierStats.totalSuppliers %></span></div></div>
         <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--emerald">✅</div><div class="kpi-chip-data"><span class="kpi-chip-label">Aktif Tedarikçiler</span><span class="kpi-chip-value"><%= supplierStats.activeSuppliers %></span></div></div>
-        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--amber">⭐</div><div class="kpi-chip-data"><span class="kpi-chip-label">Ort. Performans Puanı</span><span class="kpi-chip-value"><%= supplierStats.avgPerformance %> / 5.0</span></div></div>
+        <% 
+          let avgScore = parseFloat(supplierStats.avgPerformance || 85); 
+          if (avgScore <= 5) avgScore = avgScore * 20; 
+          avgScore = Math.min(100, Math.round(avgScore)); 
+        %>
+        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--amber">⭐</div><div class="kpi-chip-data"><span class="kpi-chip-label">Ort. Performans Puanı</span><span class="kpi-chip-value"><%= avgScore %> / 100</span></div></div>
       </div>
 
       <div class="filter-bar">
@@ -115,8 +120,14 @@
                     <div><%= sup.contactPerson || '—' %></div>
                     <div style="font-size: 0.75rem; color: var(--text-muted);"><%= sup.phone || '' %></div>
                   </td>
-                  <td style="font-size: 0.8rem;"><%= sup.paymentTerm === 'Pesin' ? 'Peşin' : sup.paymentTerm === 'Vadeli_30' ? '30 Gün Vadeli' : sup.paymentTerm === 'Vadeli_60' ? '60 Gün Vadeli' : '90 Gün Vadeli' %></td>
-                  <td><strong style="color: var(--amber);">⭐ <%= parseFloat(sup.performanceScore || 4.5).toFixed(1) %> / 5.0</strong></td>
+                  <td>
+                    <%
+                      let score = parseFloat(sup.performanceScore || 85);
+                      if (score <= 5) score = score * 20;
+                      score = Math.min(100, Math.round(score));
+                    %>
+                    <strong style="color: var(--amber); font-family: 'JetBrains Mono', monospace;">⭐ <%= score %> / 100 Puan</strong>
+                  </td>
                   <td>
                     <% if (sup.status === 'Active') { %>
                       <span class="status-pill status-active">● Aktif</span>

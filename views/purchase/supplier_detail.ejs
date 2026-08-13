@@ -71,7 +71,12 @@
           <div><div class="info-label">İletişim Kişisi</div><div class="info-val"><%= supplier.contactPerson || '—' %></div></div>
           <div><div class="info-label">E-Posta</div><div class="info-val"><%= supplier.email || '—' %></div></div>
           <div><div class="info-label">Telefon</div><div class="info-val"><%= supplier.phone || '—' %></div></div>
-          <div><div class="info-label">Performans Skor Puanı</div><div class="info-val" style="color: var(--amber);">⭐ <%= parseFloat(supplier.performanceScore || 4.5).toFixed(1) %> / 5.0</div></div>
+          <%
+            let scoreVal = parseFloat(supplier.performanceScore || 85);
+            if (scoreVal <= 5) scoreVal = scoreVal * 20;
+            scoreVal = Math.min(100, Math.round(scoreVal));
+          %>
+          <div><div class="info-label">Değerlendirme Performans Puanı</div><div class="info-val" style="color: var(--amber); font-family: 'JetBrains Mono', monospace;">⭐ <%= scoreVal %> / 100 Puan</div></div>
           <div><div class="info-label">Zamanında Teslim Oranı</div><div class="info-val" style="color: var(--emerald);">%<%= parseFloat(supplier.onTimeDeliveryRate || 95).toFixed(0) %></div></div>
           <div><div class="info-label">Kalite Uygunluk Oranı</div><div class="info-val" style="color: var(--cyan);">%<%= parseFloat(supplier.qualityScore || 98).toFixed(0) %></div></div>
         </div>
