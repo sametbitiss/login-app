@@ -24,21 +24,27 @@ class PurchaseController {
     const orders = await purchaseService.getAllOrders({ search, status, paymentTerm });
     const stats = await purchaseService.getStats();
 
+    let successMsg = null;
+    if (req.query.success === 'created') {
+      const orderNo = req.query.orderNo ? req.query.orderNo : '';
+      successMsg = `✅ Satın Alma Siparişi ${orderNo ? '(' + orderNo + ') ' : ''}teklif onaylanarak otomatik olarak başarıyla oluşturuldu ve siparişler listesine eklendi.`;
+    }
+
     res.render('purchase/list', {
       user: req.user,
       orders,
       stats,
       filterSearch: search || '',
       filterStatus: status || '',
-      filterPaymentTerm: paymentTerm || ''
+      filterPaymentTerm: paymentTerm || '',
+      successMsg
     });
   });
 
   renderAddOrder = asyncHandler(async (req, res) => {
-    // Sipariş oluşturma SADECE RFQ'dan erişilebilir
-    if (!req.query.rfqId) {
-      return res.redirect('/purchase/rfq');
-    }
+    // Manuel Sipariş Ekle formu kaldırıldı. RFQ kabul edildiğinde otomatik sipariş fırlatılıyor.
+    return res.redirect('/purchase/orders');
+  });
 
     const rfq = await rfqRepository.findById(req.query.rfqId);
     if (!rfq) {
@@ -803,8 +809,9 @@ class PurchaseController {
   });
 
   acceptRfq = asyncHandler(async (req, res) => {
-    await purchaseService.acceptRfq(req.params.id, req.user, req.ip);
-    res.redirect('/purchase/rfq');
+    const order = await purchaseService.acceptRfq(req.params.id, req.user, req.ip);
+    const orderNo = order ? order.orderNo : '';
+    res.redirect(`/purchase/orders?success=created&orderNo=${encodeURIComponent(orderNo)}`);
   });
 
   rejectRfq = asyncHandler(async (req, res) => {

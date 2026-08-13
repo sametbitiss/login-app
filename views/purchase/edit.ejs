@@ -7,114 +7,209 @@
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .form-card {
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.92) 100%);
-      backdrop-filter: blur(20px);
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: 22px;
-      padding: 2rem;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    /* Executive Purchase Order Form Document Styling */
+    .order-document-card {
+      background: linear-gradient(160deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%);
+      backdrop-filter: blur(25px);
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
       margin-bottom: 2rem;
       position: relative;
       overflow: hidden;
     }
-    .form-card::before {
+    .order-document-card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 4px;
+      top: 0; left: 0; right: 0; height: 5px;
       background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+      border-radius: 24px 24px 0 0;
     }
 
-    .form-card-header {
+    .doc-action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+
+    .doc-header-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 24px;
+      border-bottom: 2px dashed rgba(255, 255, 255, 0.12);
+      margin-bottom: 28px;
+    }
+
+    .doc-company-brand {
       display: flex;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 22px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 16px;
     }
-    .form-card-icon {
-      width: 44px; height: 44px;
-      border-radius: 14px;
+    .doc-company-logo {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem;
-      background: rgba(99, 102, 241, 0.18);
-      color: #818cf8;
-      border: 1px solid rgba(99, 102, 241, 0.4);
+      font-size: 1.8rem; color: #fff;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
     }
-    .form-card-title { font-size: 1.15rem; font-weight: 800; color: #f8fafc; }
-    .form-card-sub { font-size: 0.82rem; color: #94a3b8; margin-top: 2px; }
+    .doc-company-name { font-size: 1.35rem; font-weight: 900; color: #f8fafc; letter-spacing: -0.3px; }
+    .doc-company-sub { font-size: 0.8rem; color: #94a3b8; font-weight: 500; margin-top: 3px; }
 
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 18px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 18px; }
-    @media (max-width: 900px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
-
-    .aesthetic-group { margin-bottom: 16px; }
-    .aesthetic-label {
-      font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 8px; display: block;
+    .doc-title-badge-wrap { text-align: right; }
+    .doc-title-tag {
+      font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1.5px; color: #818cf8; background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3); padding: 5px 14px; border-radius: 20px;
+      display: inline-block; margin-bottom: 6px;
     }
+    .doc-title-main { font-size: 1.65rem; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; }
+    .doc-order-no-highlight {
+      font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; color: #34d399;
+      margin-top: 4px;
+    }
+
+    .doc-parties-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 900px) { .doc-parties-grid { grid-template-columns: 1fr; } }
+
+    .doc-info-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1.5px solid rgba(255, 255, 255, 0.09);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .doc-info-card-header {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.82rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1px; color: #818cf8; margin-bottom: 16px;
+      padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .doc-info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; font-size: 0.88rem;
+    }
+    .doc-info-row:last-child { margin-bottom: 0; }
+    .doc-info-label { color: #94a3b8; font-weight: 600; }
+    .doc-info-val { color: #f8fafc; font-weight: 700; text-align: right; }
+    .doc-info-val.mono { font-family: 'JetBrains Mono', monospace; }
+
     .aesthetic-input {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px; padding: 12px 16px;
-      color: #f8fafc; font-size: 0.9rem; font-weight: 600;
-      width: 100%; transition: all 0.25s ease; outline: none;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
-      font-family: inherit; box-sizing: border-box;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px; padding: 6px 12px;
+      color: #f8fafc; font-size: 0.85rem; font-weight: 600;
+      transition: all 0.2s ease; outline: none; box-sizing: border-box;
     }
     .aesthetic-input:focus {
-      border-color: #818cf8;
-      background: rgba(30, 41, 59, 0.9);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22);
-    }
-    .aesthetic-input[readonly] {
-      background: rgba(15, 23, 42, 0.5);
-      border-color: rgba(255, 255, 255, 0.06);
-      color: #94a3b8; cursor: not-allowed;
-    }
-    select.aesthetic-input {
-      cursor: pointer; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23818cf8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 14px center; padding-right: 42px;
+      border-color: #818cf8; background: rgba(30, 41, 59, 0.95);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
     }
 
-    /* Items Table */
-    .items-table-wrapper {
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    .doc-table-section {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1.5px solid rgba(255, 255, 255, 0.09);
+      border-radius: 20px;
       overflow: hidden;
-      margin-bottom: 22px;
+      margin-bottom: 28px;
     }
-    .items-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    .items-table th {
-      background: rgba(30, 41, 59, 0.8);
-      color: #64748b; font-weight: 800; font-size: 0.7rem;
-      text-transform: uppercase; letter-spacing: 0.7px;
-      padding: 14px 16px; text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    .doc-table-header-title {
+      padding: 18px 24px; font-size: 0.92rem; font-weight: 800; color: #f8fafc;
+      background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex; align-items: center; justify-content: space-between;
     }
-    .items-table td {
-      padding: 14px 16px; color: #cbd5e1; font-weight: 500;
+    .doc-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    .doc-table th {
+      background: rgba(15, 23, 42, 0.85); color: #94a3b8; font-size: 0.72rem;
+      font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;
+      padding: 14px 20px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .doc-table td {
+      padding: 16px 20px; color: #cbd5e1; font-weight: 500;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
-    .items-table tr:last-child td { border-bottom: none; }
-    .items-table .mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
-    .items-table .emerald { color: #34d399; }
-    .items-table .rose { color: #fb7185; }
+    .doc-table tr:last-child td { border-bottom: none; }
+    .doc-table .mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+    .doc-table .emerald { color: #34d399; }
+    .doc-table .rose { color: #fb7185; }
+
+    .doc-footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 22px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 900px) { .doc-footer-grid { grid-template-columns: 1fr; } }
+
+    .doc-notes-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1.5px solid rgba(255, 255, 255, 0.09);
+      border-radius: 20px; padding: 22px;
+    }
+    .doc-summary-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1.5px solid rgba(99, 102, 241, 0.35);
+      border-radius: 20px; padding: 22px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .doc-summary-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; font-size: 0.88rem; color: #94a3b8; font-weight: 600;
+    }
+    .doc-summary-row.grand-total {
+      margin-top: 16px; padding-top: 16px; border-top: 1.5px solid rgba(255, 255, 255, 0.12);
+      font-size: 1.25rem; font-weight: 900; color: #34d399;
+    }
+
+    .doc-signatures-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      padding-top: 24px;
+      border-top: 2px dashed rgba(255, 255, 255, 0.12);
+    }
+    .doc-signature-box {
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      border-radius: 16px; padding: 20px; text-align: center;
+      background: rgba(15, 23, 42, 0.4);
+    }
 
     .btn-indigo-gradient {
       background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-      color: #fff; font-size: 1rem; font-weight: 800;
-      padding: 14px 32px; border-radius: 14px; border: none;
-      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+      color: #fff; font-size: 0.95rem; font-weight: 800;
+      padding: 12px 28px; border-radius: 12px; border: none;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
       cursor: pointer; transition: all 0.2s ease;
       display: inline-flex; align-items: center; gap: 8px;
     }
-    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.6); }
+    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.5); }
+
+    /* Print CSS */
+    @media print {
+      body { background: #fff !important; color: #000 !important; font-family: 'Inter', sans-serif !important; }
+      .module-sidebar, .module-topbar, .module-subnav, .doc-action-bar, .mt-logout, .btn-indigo-gradient, .page-header { display: none !important; }
+      .module-main { margin: 0 !important; padding: 0 !important; }
+      .order-document-card {
+        background: #fff !important; color: #000 !important;
+        border: 1px solid #ccc !important; box-shadow: none !important; padding: 20px !important;
+      }
+      .doc-info-card, .doc-table-section, .doc-notes-card, .doc-summary-card, .doc-signature-box {
+        background: #fff !important; color: #000 !important; border: 1px solid #bbb !important;
+      }
+      .doc-company-name, .doc-title-main, .doc-info-val, strong { color: #000 !important; }
+      .doc-order-no-highlight, .doc-summary-row.grand-total { color: #059669 !important; }
+      .aesthetic-input { border: 1px solid #aaa !important; color: #000 !important; background: #fff !important; }
+    }
   </style>
 </head>
 <body class="module-body">
@@ -160,12 +255,16 @@
         <a href="/purchase/suppliers" class="msn-link">🏢 Tedarikçiler</a>
       </div>
 
-      <div class="page-header">
-        <div>
-          <h1>📋 Satın Alma Sipariş Formu — <%= order.orderNo %></h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Sipariş bilgilerini ve tüm ürün kalemlerini inceleyin ve güncelleyin.</p>
+      <!-- Action Top Bar -->
+      <div class="doc-action-bar">
+        <a href="/purchase/orders" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+          ← Sipariş Listesine Dön
+        </a>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" onclick="window.print()" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">
+            🖨️ Formu Yazdır / PDF İndir
+          </button>
         </div>
-        <a href="/purchase/orders" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;">← Sipariş Listesine Dön</a>
       </div>
 
       <% if (error) { %>
@@ -175,112 +274,144 @@
       <% } %>
 
       <form action="/purchase/orders/<%= order.id %>/edit" method="POST">
-        <!-- SECTION 1: Genel Sipariş ve Tedarikçi Bilgileri -->
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-icon">🏬</div>
-            <div>
-              <div class="form-card-title">Sipariş & Tedarikçi Detayları</div>
-              <div class="form-card-sub">Sipariş başlık ve tedarikçi firma bilgileri</div>
+        <!-- INTEGRATED CORPORATE PURCHASE ORDER DOCUMENT FORM -->
+        <div class="order-document-card">
+          
+          <!-- DOCUMENT HEADER SECTION -->
+          <div class="doc-header-grid">
+            <div class="doc-company-brand">
+              <div class="doc-company-logo">🏬</div>
+              <div>
+                <div class="doc-company-name">ENTERPRISE ERP A.Ş.</div>
+                <div class="doc-company-sub">Satın Alma & Tedarik Zinciri Direktörlüğü • Gebze OSB Mah. 100. Yıl Cad. No:45 Kocaeli</div>
+                <div class="doc-company-sub" style="color: #64748b; font-size: 0.75rem;">Vergi Dairesi: Marmara VD. • Vergi No: 1234567890 • Tel: +90 (262) 555 00 00</div>
+              </div>
+            </div>
+            <div class="doc-title-badge-wrap">
+              <div class="doc-title-tag">Resmi Belge / Form</div>
+              <div class="doc-title-main">SATIN ALMA SİPARİŞ FORMU</div>
+              <div class="doc-order-no-highlight">SİPARİŞ NO: <%= order.orderNo %></div>
             </div>
           </div>
 
-          <div class="grid-4">
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Sipariş No</label>
-              <input type="text" value="<%= order.orderNo %>" class="aesthetic-input" readonly style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">
+          <!-- PARTIES & METADATA GRID -->
+          <div class="doc-parties-grid">
+            <!-- Left Info Card: Supplier Party Info -->
+            <div class="doc-info-card">
+              <div class="doc-info-card-header">
+                <span>🏢 TEDARİKÇİ FİRMA BİLGİLERİ</span>
+              </div>
+              <div class="doc-info-row">
+                <span class="doc-info-label">Firma Unvanı:</span>
+                <input type="text" name="supplierName" value="<%= order.supplierName %>" class="aesthetic-input" style="width: 220px; font-weight: 800;" required>
+              </div>
+              <div class="doc-info-row">
+                <span class="doc-info-label">Vergi Dairesi / No:</span>
+                <input type="text" name="supplierTaxNo" value="<%= order.supplierTaxNo || '' %>" class="aesthetic-input" placeholder="Vergi No..." style="width: 180px;">
+              </div>
+              <div class="doc-info-row">
+                <span class="doc-info-label">İletişim Kişisi:</span>
+                <input type="text" name="supplierContactPerson" value="<%= order.supplierContactPerson || '' %>" class="aesthetic-input" placeholder="İlgili Kişi..." style="width: 180px;">
+              </div>
+              <div class="doc-info-row">
+                <span class="doc-info-label">E-Posta / Telefon:</span>
+                <span class="doc-info-val" style="font-size: 0.8rem;"><%= order.supplierEmail || '—' %> / <%= order.supplierPhone || '—' %></span>
+              </div>
             </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Tedarikçi Unvanı *</label>
-              <input type="text" name="supplierName" value="<%= order.supplierName %>" class="aesthetic-input" required>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Vergi No</label>
-              <input type="text" name="supplierTaxNo" value="<%= order.supplierTaxNo || '' %>" class="aesthetic-input" placeholder="—">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">İletişim Kişisi</label>
-              <input type="text" name="supplierContactPerson" value="<%= order.supplierContactPerson || '' %>" class="aesthetic-input" placeholder="—">
+
+            <!-- Right Info Card: Order Metadata & Dates -->
+            <div class="doc-info-card">
+              <div class="doc-info-card-header">
+                <span>📦 SİPARİŞ KONTROL VE TESLİMAT ŞARTLARI</span>
+              </div>
+              <div class="doc-info-row">
+                <span class="doc-info-label">Sipariş Tarihi:</span>
+                <input type="date" name="orderDate" value="<%= order.orderDate %>" class="aesthetic-input" style="width: 160px; font-family: 'JetBrains Mono', monospace;">
+              </div>
+              <div class="doc-info-row">
+                <span class="doc-info-label">Beklenen Teslimat Tarihi:</span>
+                <input type="date" name="expectedDeliveryDate" value="<%= order.expectedDeliveryDate || '' %>" class="aesthetic-input" style="width: 160px; font-family: 'JetBrains Mono', monospace;">
+              </div>
+              <div class="doc-info-row">
+                <span class="doc-info-label">Ödeme Koşulu:</span>
+                <select name="paymentTerm" class="aesthetic-input" style="width: 160px;">
+                  <option value="Vadeli_30" <%= order.paymentTerm === 'Vadeli_30' || order.paymentTerm === '30 Gün Vadeli' ? 'selected' : '' %>>30 Gün Vadeli</option>
+                  <option value="Vadeli_60" <%= order.paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
+                  <option value="Vadeli_90" <%= order.paymentTerm === 'Vadeli_90' ? 'selected' : '' %>>90 Gün Vadeli</option>
+                  <option value="Pesin" <%= order.paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin Ödeme</option>
+                  <option value="Kredi_Karti" <%= order.paymentTerm === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı</option>
+                </select>
+              </div>
+              <div class="doc-info-row">
+                <span class="doc-info-label">Sipariş Durumu:</span>
+                <select name="status" class="aesthetic-input" style="width: 160px; font-weight: 800; color: #34d399;">
+                  <option value="Ordered" <%= order.status === 'Ordered' ? 'selected' : '' %>>Ordered (Sipariş Verildi)</option>
+                  <option value="Pending_Approval" <%= order.status === 'Pending_Approval' ? 'selected' : '' %>>Pending_Approval (Onay Bekliyor)</option>
+                  <option value="Partial_Received" <%= order.status === 'Partial_Received' ? 'selected' : '' %>>Partial_Received (Kısmi Teslim)</option>
+                  <option value="Received" <%= order.status === 'Received' ? 'selected' : '' %>>Received (Teslim Alındı)</option>
+                  <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled (İptal)</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div class="grid-4">
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Sipariş Tarihi</label>
-              <input type="date" name="orderDate" value="<%= order.orderDate %>" class="aesthetic-input">
+          <!-- LINE ITEMS TABLE SECTION -->
+          <div class="doc-table-section">
+            <div class="doc-table-header-title">
+              <span>📋 SİPARİŞ EDİLEN MAL VE HİZMET KALEMLERİ (<%= itemsList.length %> KALEM)</span>
+              <span style="font-size: 0.78rem; color: #94a3b8; font-weight: 600;">Para Birimi: <%= order.currency || 'TRY' %></span>
             </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Beklenen Teslimat Tarihi</label>
-              <input type="date" name="expectedDeliveryDate" value="<%= order.expectedDeliveryDate || '' %>" class="aesthetic-input">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Ödeme Koşulu</label>
-              <select name="paymentTerm" class="aesthetic-input">
-                <option value="Vadeli_30" <%= order.paymentTerm === 'Vadeli_30' ? 'selected' : '' %>>30 Gün Vadeli</option>
-                <option value="Vadeli_60" <%= order.paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
-                <option value="Vadeli_90" <%= order.paymentTerm === 'Vadeli_90' ? 'selected' : '' %>>90 Gün Vadeli</option>
-                <option value="Pesin" <%= order.paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin Ödeme</option>
-                <option value="Kredi_Karti" <%= order.paymentTerm === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı</option>
-              </select>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Sipariş Durumu</label>
-              <select name="status" class="aesthetic-input">
-                <option value="Ordered" <%= order.status === 'Ordered' ? 'selected' : '' %>>Ordered (Sipariş Verildi)</option>
-                <option value="Pending_Approval" <%= order.status === 'Pending_Approval' ? 'selected' : '' %>>Pending_Approval (Onay Bekliyor)</option>
-                <option value="Partial_Received" <%= order.status === 'Partial_Received' ? 'selected' : '' %>>Partial_Received (Kısmi Teslim)</option>
-                <option value="Received" <%= order.status === 'Received' ? 'selected' : '' %>>Received (Teslim Alındı)</option>
-                <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled (İptal)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- SECTION 2: Sipariş Edilen Ürün Kalemleri Tablosu -->
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-icon">📦</div>
-            <div>
-              <div class="form-card-title">Sipariş Edilen Ürün Kalemleri (<%= itemsList.length %> Kalem)</div>
-              <div class="form-card-sub">Bu siparişte yer alan tüm hammadde ve stok malzemeleri</div>
-            </div>
-          </div>
-
-          <div class="items-table-wrapper">
-            <table class="items-table">
+            <table class="doc-table">
               <thead>
                 <tr>
                   <th style="width: 40px; text-align: center;">#</th>
-                  <th>Ürün / Malzeme Kalemi</th>
-                  <th style="width: 100px;">Miktar</th>
-                  <th style="width: 90px;">Birim</th>
-                  <th style="width: 130px;">Birim Fiyat</th>
-                  <th style="width: 100px;">İskonto (%)</th>
-                  <th style="width: 100px;">KDV (%)</th>
+                  <th>Stok Kodu</th>
+                  <th>Malzeme / Ürün Açıklaması</th>
+                  <th style="width: 110px; text-align: right;">Miktar</th>
+                  <th style="width: 80px; text-align: center;">Birim</th>
+                  <th style="width: 130px; text-align: right;">Birim Fiyat</th>
+                  <th style="width: 90px; text-align: center;">İskonto</th>
+                  <th style="width: 80px; text-align: center;">KDV</th>
                   <th style="width: 140px; text-align: right;">Net Tutar</th>
                 </tr>
               </thead>
               <tbody>
                 <% 
                   const curr = order.currency === 'USD' ? '$' : (order.currency === 'EUR' ? '€' : '₺');
+                  let calcSubtotal = 0;
+                  let calcTotalDisc = 0;
+                  let calcTotalTax = 0;
+
                   itemsList.forEach((it, idx) => {
                     const qty = parseFloat(it.quantity) || 1;
                     const price = parseFloat(it.unitPrice) || 0;
                     const disc = parseFloat(it.discountRate) || 0;
                     const vat = parseFloat(it.vatRate || it.taxRate) || 20;
-                    const net = parseFloat(it.netAmount) || (qty * price * (1 - disc/100) * (1 + vat/100));
+
+                    const raw = qty * price;
+                    const discAmt = raw * (disc / 100);
+                    const afterDisc = raw - discAmt;
+                    const taxAmt = afterDisc * (vat / 100);
+                    const net = parseFloat(it.netAmount) || (afterDisc + taxAmt);
+
+                    calcSubtotal += raw;
+                    calcTotalDisc += discAmt;
+                    calcTotalTax += taxAmt;
                 %>
                   <tr>
                     <td style="text-align: center; color: #64748b; font-weight: 800;"><%= idx + 1 %></td>
+                    <td class="mono" style="color: #818cf8;"><%= it.stockCode || (order.stockItem ? order.stockItem.stockCode : 'STK') %></td>
                     <td>
                       <strong style="color: #f8fafc;"><%= it.productName || it.name || (order.stockItem ? order.stockItem.name : 'Ürün Kalemi') %></strong>
-                      <div style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono', monospace;"><%= it.stockCode || (order.stockItem ? order.stockItem.stockCode : '') %></div>
+                      <% if (it.requisitionNo) { %>
+                        <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Talep No: <%= it.requisitionNo %></div>
+                      <% } %>
                     </td>
-                    <td class="mono"><%= qty %></td>
-                    <td><%= it.unit || (order.stockItem ? order.stockItem.unit : 'Adet') %></td>
-                    <td class="mono emerald"><%= price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></td>
-                    <td class="mono rose"><%= disc > 0 ? '%' + disc.toFixed(1) : '—' %></td>
-                    <td class="mono">%<%= vat %></td>
+                    <td class="mono emerald" style="text-align: right; font-size: 0.92rem;"><%= qty.toLocaleString('tr-TR') %></td>
+                    <td style="text-align: center;"><%= it.unit || (order.stockItem ? order.stockItem.unit : 'Adet') %></td>
+                    <td class="mono" style="text-align: right;"><%= price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></td>
+                    <td class="mono rose" style="text-align: center;"><%= disc > 0 ? '%' + disc.toFixed(1) : '—' %></td>
+                    <td class="mono" style="text-align: center;">%<%= vat %></td>
                     <td class="mono emerald" style="text-align: right; font-size: 0.95rem;"><%= net.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></td>
                   </tr>
                 <% }); %>
@@ -288,28 +419,71 @@
             </table>
           </div>
 
-          <!-- Hidden fallback values for backward compatibility -->
+          <!-- Hidden fallback values -->
           <input type="hidden" name="stockItemId" value="<%= order.stockItemId || (itemsList[0] ? itemsList[0].stockItemId : 1) %>">
           <input type="hidden" name="quantity" value="<%= order.quantity %>">
           <input type="hidden" name="unitPrice" value="<%= order.unitPrice %>">
 
-          <div class="grid-2">
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Sipariş Notu / Revizyon Notları</label>
-              <textarea name="notes" class="aesthetic-input" rows="3" placeholder="Sipariş notları..."><%= order.notes || '' %></textarea>
+          <!-- FINANCIAL BREAKDOWN & NOTES FOOTER -->
+          <div class="doc-footer-grid">
+            <div class="doc-notes-card">
+              <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.8px; margin-bottom: 8px;">
+                📝 SİPARİŞ ŞARTLARI VE NOTLAR
+              </div>
+              <textarea name="notes" class="aesthetic-input" rows="4" style="width: 100%; font-size: 0.85rem;" placeholder="Sipariş notları ve teslimat şartları..."><%= order.notes || '' %></textarea>
+              <div style="font-size: 0.74rem; color: #64748b; margin-top: 8px;">
+                ℹ️ Not: Mal kabul esnasında irsaliye ve fatura üzerinde işbu sipariş numarasının (<strong><%= order.orderNo %></strong>) belirtilmesi rica olunur.
+              </div>
             </div>
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1.5px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
-              <span style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">Sipariş Genel Toplamı</span>
-              <span style="font-size: 1.6rem; font-weight: 900; color: #34d399; font-family: 'JetBrains Mono', monospace;">
-                <%= parseFloat(order.totalAmount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %>
-              </span>
+
+            <div class="doc-summary-card">
+              <%
+                const subtotalVal = parseFloat(order.subtotal) || calcSubtotal;
+                const discVal = parseFloat(order.totalDiscount) || calcTotalDisc;
+                const taxVal = parseFloat(order.totalTax) || calcTotalTax;
+                const grandVal = parseFloat(order.totalAmount) || (subtotalVal - discVal + taxVal);
+              %>
+              <div class="doc-summary-row">
+                <span>Ara Toplam:</span>
+                <span class="mono"><%= subtotalVal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+              </div>
+              <div class="doc-summary-row">
+                <span>Toplam İskonto:</span>
+                <span class="mono rose">- <%= discVal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+              </div>
+              <div class="doc-summary-row">
+                <span>Hesaplanan KDV:</span>
+                <span class="mono">+ <%= taxVal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+              </div>
+              <div class="doc-summary-row grand-total">
+                <span>GENEL TOPLAM:</span>
+                <span class="mono"><%= grandVal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+              </div>
             </div>
           </div>
 
-          <div style="display: flex; gap: 14px; margin-top: 14px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-            <button type="submit" class="btn-indigo-gradient">💾 Değişiklikleri Kaydet</button>
-            <a href="/purchase/orders" class="btn btn-secondary" style="border-radius: 12px; padding: 14px 24px; font-weight: 700;">İptal — Sipariş Listesine Dön</a>
+          <!-- APPROVAL SIGNATURES GRID -->
+          <div class="doc-signatures-grid">
+            <div class="doc-signature-box">
+              <div style="font-size: 0.75rem; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                SATIN ALMA DİREKTÖRLÜĞÜ (ONAYLAYAN)
+              </div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc;"><%= order.purchasingAgent || (user.firstName ? user.firstName + ' ' + user.lastName : user.username) %></div>
+              <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px;">Sipariş Onayı Verildi • Dijital İmza Eşleşti</div>
+            </div>
+            <div class="doc-signature-box">
+              <div style="font-size: 0.75rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                TEDARİKÇİ FİRMA (KABUL / TESLİM)
+              </div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc;"><%= order.supplierName %></div>
+              <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px;">Sipariş Şartları Kabul Edilmiştir • İmza / Kaşe</div>
+            </div>
           </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 14px; margin-top: 24px;">
+            <button type="submit" class="btn-indigo-gradient">💾 Form Değişikliklerini Kaydet</button>
+          </div>
+
         </div>
       </form>
     </main>

@@ -609,7 +609,7 @@
                     </td>
                     <td style="white-space: nowrap;">
                       <% if (rfq.status === 'Received' || rfq.status === 'Sent' || rfq.status === 'Draft') { %>
-                        <a href="/purchase/orders/add?rfqId=<%= rfq.id %>" class="btn-accept-order" style="font-size: 0.75rem; padding: 6px 14px;">✅ Kabul Et & Sipariş Oluştur</a>
+                        <a href="/purchase/rfq/<%= rfq.id %>/accept" class="btn-accept-order" style="font-size: 0.75rem; padding: 6px 14px;" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">✅ Kabul Et & Sipariş Oluştur</a>
                       <% } else { %>
                         <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
                       <% } %>
