@@ -514,7 +514,7 @@
                             <span class="pbc-status-pill status-rejected">🔒 Pasif (İlgili ürünler başka teklifte kabul edildi)</span>
                           <% } else { %>
                             <span class="pbc-status-pill status-approved">📩 Teklif Alındı</span>
-                            <a href="/purchase/orders/add?rfqId=<%= item.id %>" class="btn-accept-order">✅ Kabul Et & Sipariş Oluştur</a>
+                            <a href="/purchase/rfq/<%= item.id %>/accept" class="btn-accept-order" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">✅ Kabul Et & Sipariş Oluştur</a>
                           <% } %>
                         </div>
                       </div>

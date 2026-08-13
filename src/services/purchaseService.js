@@ -166,7 +166,7 @@ class PurchaseService {
         const allOtherRfqs = await PurchaseRfq.findAll({
           where: {
             id: { [Op.ne]: rfqId },
-            status: { [Op.in]: ['Received', 'Sent', 'Draft', 'Pending'] }
+            status: { [Op.in]: ['Received', 'Sent', 'Draft'] }
           }
         });
 

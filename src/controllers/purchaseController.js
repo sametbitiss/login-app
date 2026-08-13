@@ -42,10 +42,21 @@ class PurchaseController {
   });
 
   renderAddOrder = asyncHandler(async (req, res) => {
+    if (req.query.rfqId) {
+      const newOrder = await purchaseService.acceptRfq(req.query.rfqId, req.user, req.ip);
+      const orderNo = newOrder ? newOrder.orderNo : '';
+      return res.redirect(`/purchase/orders?success=created&orderNo=${encodeURIComponent(orderNo)}`);
+    }
     return res.redirect('/purchase/orders');
   });
 
   addOrder = asyncHandler(async (req, res) => {
+    const rfqId = req.body.rfqId || req.query.rfqId;
+    if (rfqId) {
+      const newOrder = await purchaseService.acceptRfq(rfqId, req.user, req.ip);
+      const orderNo = newOrder ? newOrder.orderNo : '';
+      return res.redirect(`/purchase/orders?success=created&orderNo=${encodeURIComponent(orderNo)}`);
+    }
     return res.redirect('/purchase/orders');
   });
 
