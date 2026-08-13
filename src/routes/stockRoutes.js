@@ -36,6 +36,9 @@ router.post('/transfers/add', stockController.addTransfer);
 
 // 6. Goods Receipt (Satın Alma Mal Kabul)
 router.get('/goods-receipt', stockController.listGoodsReceipt);
+router.get('/goods-receipt/create', stockController.renderCreateGoodsReceipt);
+router.post('/goods-receipt/create', stockController.processGoodsReceipt);
+router.get('/goods-receipt/history/:orderId', stockController.viewGoodsReceiptHistory);
 router.post('/goods-receipt/:id/confirm', stockController.confirmGoodsReceipt);
 
 // 7. Dispatch (Sevkiyat & Çıkış)

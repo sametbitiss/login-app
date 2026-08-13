@@ -125,17 +125,75 @@ class GoodsReceiptRepository {
     return grn;
   }
 
+  async getReceiptsByOrderId(orderId) {
+    return await GoodsReceipt.findAll({
+      where: { purchaseOrderId: orderId },
+      order: [['createdAt', 'DESC']],
+      include: [
+        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
+        { model: Supplier, as: 'supplier', attributes: ['id', 'supplierCode', 'companyName'] }
+      ]
+    });
+  }
+
+  async getReceivedTotalsForOrder(orderId) {
+    const receipts = await GoodsReceipt.findAll({
+      where: { purchaseOrderId: orderId }
+    });
+
+    const receivedMap = {};
+    receipts.forEach(gr => {
+      let items = [];
+      if (gr.itemsData) {
+        try {
+          items = typeof gr.itemsData === 'string' ? JSON.parse(gr.itemsData) : gr.itemsData;
+        } catch (e) { items = []; }
+      }
+
+      if (Array.isArray(items) && items.length > 0) {
+        items.forEach(it => {
+          const sId = parseInt(it.stockItemId, 10);
+          const qty = parseFloat(it.currentReceivedQuantity || it.receivedQuantity || 0);
+          if (sId) {
+            receivedMap[sId] = (receivedMap[sId] || 0) + qty;
+          }
+        });
+      } else if (gr.stockItemId) {
+        const sId = parseInt(gr.stockItemId, 10);
+        const qty = parseFloat(gr.receivedQuantity || 0);
+        if (sId) {
+          receivedMap[sId] = (receivedMap[sId] || 0) + qty;
+        }
+      }
+    });
+
+    return receivedMap;
+  }
+
   async getNextGrnNo() {
     const year = new Date().getFullYear();
     const prefix = `GRN-${year}-`;
-    const last = await GoodsReceipt.findOne({
+    const receipts = await GoodsReceipt.findAll({
       where: { grnNo: { [Op.like]: `${prefix}%` } },
-      order: [['id', 'DESC']]
+      attributes: ['grnNo']
     });
-    if (!last) return `${prefix}0001`;
-    const parts = last.grnNo.split('-');
-    const lastNum = parseInt(parts[parts.length - 1], 10) || 0;
-    return `${prefix}${String(lastNum + 1).padStart(4, '0')}`;
+
+    let maxSeq = 0;
+    receipts.forEach(r => {
+      const numStr = r.grnNo.replace(prefix, '');
+      const num = parseInt(numStr, 10);
+      if (!isNaN(num) && num > maxSeq) {
+        maxSeq = num;
+      }
+    });
+
+    let nextSeq = maxSeq + 1;
+    let candidate = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+    while (await GoodsReceipt.findOne({ where: { grnNo: candidate } })) {
+      nextSeq++;
+      candidate = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+    }
+    return candidate;
   }
 
   async getStats() {

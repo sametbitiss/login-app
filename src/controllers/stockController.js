@@ -2,11 +2,13 @@ const stockRepository = require('../repositories/stockRepository');
 const stockValuationService = require('../services/stockValuationService');
 const purchaseRepository = require('../repositories/purchaseRepository');
 const purchaseService = require('../services/purchaseService');
+const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const salesRepository = require('../repositories/saleRepository');
 const requisitionRepository = require('../repositories/requisitionRepository');
 const asyncHandler = require('../utils/asyncHandler');
 const { NotFoundError, ValidationError } = require('../utils/appError');
 const { ALL_ROLES } = require('../middleware/rbacMiddleware');
+const { GoodsReceipt, PurchaseOrder, StockItem, StockMovement, Supplier, Warehouse } = require('../../models');
 
 const CATEGORIES = [
   { value: 'Hammadde', label: 'Hammadde' },
@@ -271,22 +273,298 @@ class StockController {
 
   // 5. GOODS RECEIPT (SATIN ALMA MAL KABUL)
   listGoodsReceipt = asyncHandler(async (req, res) => {
-    const purchaseOrders = await purchaseRepository.findAll();
+    // Mal kabul bekleyen veya kısmi teslim alınan tüm siparişleri getir (Received/Completed olanlar GİZLENİR!)
+    const allOrders = await purchaseRepository.findAll();
+    
+    // Filter active orders that are not fully received ('Received', 'Cancelled' hidden!)
+    const activeOrders = allOrders.filter(po => po.status === 'Ordered' || po.status === 'Partial_Received' || po.status === 'Pending_Approval');
+
+    const ordersWithDetails = await Promise.all(activeOrders.map(async (po) => {
+      const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
+      const pastReceipts = await goodsReceiptRepository.getReceiptsByOrderId(po.id);
+
+      // Parse order line items
+      let items = [];
+      if (po.itemsJson) {
+        try { items = typeof po.itemsJson === 'string' ? JSON.parse(po.itemsJson) : po.itemsJson; } catch (e) { items = []; }
+      }
+      if (!items || items.length === 0) {
+        items = [{
+          stockItemId: po.stockItemId,
+          stockCode: po.stockItem ? po.stockItem.stockCode : 'STK-001',
+          productName: po.stockItem ? po.stockItem.name : (po.productName || 'Ürün Kalemi'),
+          quantity: po.quantity,
+          unit: po.stockItem ? po.stockItem.unit : 'Adet',
+          unitPrice: po.unitPrice
+        }];
+      }
+
+      // Calculate total ordered, total received, remaining for each item
+      let totalOrderedQty = 0;
+      let totalReceivedQty = 0;
+      const parsedItems = items.map(it => {
+        const sId = parseInt(it.stockItemId, 10);
+        const ordered = parseFloat(it.quantity) || 0;
+        const rec = receivedTotals[sId] || 0;
+        const rem = Math.max(0, ordered - rec);
+
+        totalOrderedQty += ordered;
+        totalReceivedQty += rec;
+
+        return {
+          ...it,
+          orderedQuantity: ordered,
+          receivedQuantity: rec,
+          remainingQuantity: rem
+        };
+      });
+
+      return {
+        ...po.toJSON ? po.toJSON() : po,
+        items: parsedItems,
+        totalOrderedQty,
+        totalReceivedQty,
+        totalRemainingQty: Math.max(0, totalOrderedQty - totalReceivedQty),
+        receiptCount: pastReceipts.length
+      };
+    }));
+
     const warehouses = await stockRepository.findAllWarehouses();
+
+    let successMsg = null;
+    if (req.query.success === 'receipt_created') {
+      const grnNo = req.query.grnNo || '';
+      successMsg = `✅ Mal kabul ve stok girişi ${grnNo ? '(' + grnNo + ') ' : ''}başarıyla kaydedildi, ilgili ürünlerin stok sayıları güncellendi.`;
+    }
 
     res.render('stock/goods_receipt', {
       user: req.user,
-      purchaseOrders,
+      purchaseOrders: ordersWithDetails,
       warehouses,
       ALL_ROLES,
-      activeSubTab: 'goods-receipt'
+      activeSubTab: 'goods-receipt',
+      successMsg
+    });
+  });
+
+  renderCreateGoodsReceipt = asyncHandler(async (req, res) => {
+    const { orderId } = req.query;
+    if (!orderId) throw new ValidationError('Sipariş ID belirtilmelidir.');
+
+    const po = await PurchaseOrder.findByPk(orderId, {
+      include: [
+        { model: StockItem, as: 'stockItem' },
+        { model: Supplier, as: 'supplier' }
+      ]
+    });
+    if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
+
+    const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
+    const nextGrnNo = await goodsReceiptRepository.getNextGrnNo();
+    const warehouses = await stockRepository.findAllWarehouses();
+
+    // Parse order items
+    let items = [];
+    if (po.itemsJson) {
+      try { items = typeof po.itemsJson === 'string' ? JSON.parse(po.itemsJson) : po.itemsJson; } catch (e) { items = []; }
+    }
+    if (!items || items.length === 0) {
+      items = [{
+        stockItemId: po.stockItemId,
+        stockCode: po.stockItem ? po.stockItem.stockCode : 'STK-001',
+        productName: po.stockItem ? po.stockItem.name : (po.productName || 'Ürün Kalemi'),
+        quantity: po.quantity,
+        unit: po.stockItem ? po.stockItem.unit : 'Adet',
+        unitPrice: po.unitPrice
+      }];
+    }
+
+    const itemsForReceipt = items.map(it => {
+      const sId = parseInt(it.stockItemId, 10);
+      const ordered = parseFloat(it.quantity) || 0;
+      const prevRec = receivedTotals[sId] || 0;
+      const remaining = Math.max(0, ordered - prevRec);
+
+      return {
+        ...it,
+        stockItemId: sId,
+        orderedQuantity: ordered,
+        previouslyReceivedQuantity: prevRec,
+        remainingQuantity: remaining,
+        currentReceivedQuantity: remaining
+      };
+    });
+
+    res.render('stock/goods_receipt_create', {
+      user: req.user,
+      order: po,
+      nextGrnNo,
+      items: itemsForReceipt,
+      warehouses,
+      error: null
+    });
+  });
+
+  processGoodsReceipt = asyncHandler(async (req, res) => {
+    const {
+      purchaseOrderId,
+      warehouseLocation,
+      deliveryNoteNo,
+      deliveryNoteDate,
+      deliveryNotePhoto,
+      notes
+    } = req.body;
+
+    const po = await PurchaseOrder.findByPk(purchaseOrderId, {
+      include: [{ model: StockItem, as: 'stockItem' }]
+    });
+    if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
+
+    let itemsDataArray = [];
+    const stockItemIds = Array.isArray(req.body.itemStockItemId) ? req.body.itemStockItemId : [req.body.itemStockItemId];
+    const productNames = Array.isArray(req.body.itemProductName) ? req.body.itemProductName : [req.body.itemProductName];
+    const stockCodes = Array.isArray(req.body.itemStockCode) ? req.body.itemStockCode : [req.body.itemStockCode];
+    const orderedQtys = Array.isArray(req.body.itemOrderedQty) ? req.body.itemOrderedQty : [req.body.itemOrderedQty];
+    const prevReceivedQtys = Array.isArray(req.body.itemPrevReceivedQty) ? req.body.itemPrevReceivedQty : [req.body.itemPrevReceivedQty];
+    const currentReceivedQtys = Array.isArray(req.body.itemCurrentReceivedQty) ? req.body.itemCurrentReceivedQty : [req.body.itemCurrentReceivedQty];
+    const units = Array.isArray(req.body.itemUnit) ? req.body.itemUnit : [req.body.itemUnit];
+
+    let totalReceivedInThisBatch = 0;
+
+    for (let i = 0; i < stockItemIds.length; i++) {
+      const sId = parseInt(stockItemIds[i], 10);
+      const ordered = parseFloat(orderedQtys[i]) || 0;
+      const prevRec = parseFloat(prevReceivedQtys[i]) || 0;
+      const currRec = parseFloat(currentReceivedQtys[i]) || 0;
+
+      if (currRec > 0) {
+        totalReceivedInThisBatch += currRec;
+      }
+
+      itemsDataArray.push({
+        stockItemId: sId,
+        stockCode: stockCodes[i] || '',
+        productName: productNames[i] || '',
+        unit: units[i] || 'Adet',
+        orderedQuantity: ordered,
+        previouslyReceivedQuantity: prevRec,
+        currentReceivedQuantity: currRec,
+        netRemainingQuantity: Math.max(0, ordered - (prevRec + currRec))
+      });
+    }
+
+    if (totalReceivedInThisBatch <= 0) {
+      throw new ValidationError('Teslim alınan miktar 0\'dan büyük olmalıdır.');
+    }
+
+    const grnNo = await goodsReceiptRepository.getNextGrnNo();
+
+    const grn = await GoodsReceipt.create({
+      grnNo,
+      purchaseOrderId: po.id,
+      supplierId: po.supplierId || null,
+      stockItemId: itemsDataArray[0] ? itemsDataArray[0].stockItemId : null,
+      orderedQuantity: itemsDataArray[0] ? itemsDataArray[0].orderedQuantity : po.quantity,
+      receivedQuantity: totalReceivedInThisBatch,
+      acceptedQuantity: totalReceivedInThisBatch,
+      rejectedQuantity: 0,
+      receiptDate: new Date().toISOString().split('T')[0],
+      deliveryNoteNo: deliveryNoteNo ? deliveryNoteNo.trim() : null,
+      deliveryNoteDate: deliveryNoteDate || null,
+      deliveryNotePhoto: deliveryNotePhoto || null,
+      itemsData: JSON.stringify(itemsDataArray),
+      warehouseLocation: warehouseLocation || 'Ana Depo',
+      status: 'Completed',
+      qualityStatus: 'Approved',
+      notes: notes || null,
+      createdBy: req.user.id
+    });
+
+    for (const itemRec of itemsDataArray) {
+      if (itemRec.currentReceivedQuantity > 0 && itemRec.stockItemId) {
+        const stockItem = await StockItem.findByPk(itemRec.stockItemId);
+        if (stockItem) {
+          stockItem.currentStock = parseFloat(stockItem.currentStock) + itemRec.currentReceivedQuantity;
+          await stockItem.save();
+
+          const moveNo = `GRN-${Date.now().toString().slice(-6)}-${itemRec.stockItemId}`;
+          await StockMovement.create({
+            movementNo: moveNo,
+            stockItemId: stockItem.id,
+            targetWarehouseId: 1,
+            movementType: 'Inbound',
+            quantity: itemRec.currentReceivedQuantity,
+            unitPrice: po.unitPrice || 0,
+            referenceNo: grnNo,
+            notes: `[Mal Kabul Girişi] İrsaliye No: ${deliveryNoteNo || '—'} | Fiş: ${grnNo}`,
+            performedBy: req.user.id
+          });
+        }
+      }
+    }
+
+    const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
+    let orderItems = [];
+    if (po.itemsJson) {
+      try { orderItems = typeof po.itemsJson === 'string' ? JSON.parse(po.itemsJson) : po.itemsJson; } catch (e) { orderItems = []; }
+    }
+    if (!orderItems || orderItems.length === 0) {
+      orderItems = [{ stockItemId: po.stockItemId, quantity: po.quantity }];
+    }
+
+    let isAllFullyReceived = true;
+    for (const ordItem of orderItems) {
+      const sId = parseInt(ordItem.stockItemId, 10);
+      const ordQty = parseFloat(ordItem.quantity) || 0;
+      const totalRec = receivedTotals[sId] || 0;
+      if (totalRec < ordQty) {
+        isAllFullyReceived = false;
+        break;
+      }
+    }
+
+    if (isAllFullyReceived) {
+      await po.update({ status: 'Received' });
+    } else {
+      await po.update({ status: 'Partial_Received' });
+    }
+
+    res.redirect(`/stock/goods-receipt?success=receipt_created&grnNo=${encodeURIComponent(grnNo)}`);
+  });
+
+  viewGoodsReceiptHistory = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const po = await PurchaseOrder.findByPk(orderId, {
+      include: [
+        { model: StockItem, as: 'stockItem' },
+        { model: Supplier, as: 'supplier' }
+      ]
+    });
+    if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
+
+    const pastReceipts = await goodsReceiptRepository.getReceiptsByOrderId(orderId);
+
+    const formattedReceipts = pastReceipts.map(gr => {
+      let items = [];
+      if (gr.itemsData) {
+        try { items = typeof gr.itemsData === 'string' ? JSON.parse(gr.itemsData) : gr.itemsData; } catch (e) { items = []; }
+      }
+      return {
+        ...gr.toJSON(),
+        itemsList: items
+      };
+    });
+
+    res.render('stock/goods_receipt_history', {
+      user: req.user,
+      order: po,
+      receipts: formattedReceipts
     });
   });
 
   confirmGoodsReceipt = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    await purchaseRepository.updateStatus(id, 'Received', req.user, req.ip);
-    res.redirect('/stock/goods-receipt');
+    res.redirect(`/stock/goods-receipt/create?orderId=${id}`);
   });
 
   // 6. DISPATCH (SATIŞ SEVKİYAT VE ÇIKIŞ)

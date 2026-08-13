@@ -27,15 +27,17 @@ module.exports = (sequelize, DataTypes) => {
     },
     stockItemId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     orderedQuantity: {
       type: DataTypes.DECIMAL(15, 4),
-      allowNull: false
+      allowNull: true,
+      defaultValue: 0
     },
     receivedQuantity: {
       type: DataTypes.DECIMAL(15, 4),
-      allowNull: false
+      allowNull: true,
+      defaultValue: 0
     },
     acceptedQuantity: {
       type: DataTypes.DECIMAL(15, 4),
@@ -54,6 +56,18 @@ module.exports = (sequelize, DataTypes) => {
     },
     deliveryNoteNo: {
       type: DataTypes.STRING,
+      allowNull: true
+    },
+    deliveryNoteDate: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    deliveryNotePhoto: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    itemsData: {
+      type: DataTypes.TEXT,
       allowNull: true
     },
     qualityStatus: {

@@ -3,9 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Malzeme Kabul ve Giriş İşlemleri — Enterprise ERP</title>
+  <title>Malzeme Kabul ve Stok Giriş İşlemleri — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .grn-badge {
+      font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;
+      display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .grn-badge-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .grn-badge-partial { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    
+    .item-subtable {
+      width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 6px;
+      background: rgba(15, 23, 42, 0.4); border-radius: 8px; overflow: hidden;
+    }
+    .item-subtable th {
+      background: rgba(30, 41, 59, 0.6); color: #94a3b8; padding: 6px 10px; text-align: left;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    }
+    .item-subtable td { padding: 6px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #cbd5e1; }
+    .item-subtable tr:last-child td { border-bottom: none; }
+
+    .btn-grn-action {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff; font-size: 0.78rem; font-weight: 800; padding: 8px 16px; border-radius: 10px;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); transition: all 0.2s ease;
+    }
+    .btn-grn-action:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.45); }
+
+    .btn-history-action {
+      background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);
+      font-size: 0.75rem; font-weight: 700; padding: 8px 14px; border-radius: 10px;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-history-action:hover { background: rgba(99, 102, 241, 0.25); color: #a5b4fc; }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -65,53 +100,98 @@
       <div class="page-header">
         <div>
           <h1>Malzeme Kabul ve Ambar Giriş İşlemleri</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Satın alma siparişlerine istinaden tedarikçiden gelen malların muayenesi ve depo alımı.</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Satın alma siparişlerine istinaden tedarikçiden gelen malların irsaliyeli muayenesi ve depo alımı.</p>
         </div>
       </div>
+
+      <% if (typeof successMsg !== 'undefined' && successMsg) { %>
+        <div style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1.5px solid rgba(16, 185, 129, 0.35); padding: 16px 22px; border-radius: 16px; margin-bottom: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);">
+          <span style="font-size: 1.3rem;">✅</span> <%= successMsg %>
+        </div>
+      <% } %>
 
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Satın Alma Sipariş No</th>
+              <th>Sipariş No & Tarih</th>
               <th>Tedarikçi Firma</th>
-              <th>Malzeme Adı</th>
-              <th>Sipariş Miktarı</th>
-              <th>Birim Fiyat</th>
-              <th>Ödeme Koşulu</th>
-              <th>Durum</th>
-              <th>Aksiyon</th>
+              <th>Sipariş Edilen Ürün Kalemleri & Miktarlar</th>
+              <th>Teslimat Durumu</th>
+              <th style="text-align: right;">Aksiyonlar</th>
             </tr>
           </thead>
           <tbody>
             <% if (!purchaseOrders || purchaseOrders.length === 0) { %>
-              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Mal kabul bekleyen satın alma siparişi bulunmamaktadır.</td></tr>
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 3rem;">
+                  <div style="font-size: 2.2rem; margin-bottom: 8px;">📦</div>
+                  Mal kabul bekleyen veya kısmi teslimat aşamasında sipariş bulunmamaktadır.<br>
+                  <span style="font-size: 0.8rem; color: #64748b;">(Tüm ürünleri %100 teslim alınan siparişler listeden otomatik olarak kaldırılmıştır.)</span>
+                </td>
+              </tr>
             <% } else { %>
               <% purchaseOrders.forEach(po => { %>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= po.orderNo %></strong></td>
-                  <td><%= po.supplierName %></td>
-                  <td><%= po.stockItem ? po.stockItem.name : '—' %></td>
-                  <td><strong><%= po.quantity %> <%= po.stockItem ? po.stockItem.unit : '' %></strong></td>
-                  <td><%= parseFloat(po.unitPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= po.currency %></td>
-                  <td><%= po.paymentTerm %></td>
-                  <td>
-                    <% if (po.status === 'Received') { %>
-                      <span class="status-pill status-active">● Teslim Alındı (Stokta)</span>
-                    <% } else if (po.status === 'Ordered') { %>
-                      <span class="status-pill status-pending">● Mal Kabul Bekliyor</span>
-                    <% } else { %>
-                      <span class="status-pill status-approved">● <%= po.status %></span>
+                  <td style="vertical-align: top; white-space: nowrap;">
+                    <strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 1rem;"><%= po.orderNo %></strong>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">📅 <%= po.orderDate %></div>
+                  </td>
+                  <td style="vertical-align: top;">
+                    <strong style="color: #f8fafc; font-size: 0.95rem;"><%= po.supplierName %></strong>
+                    <% if (po.supplierTaxNo) { %>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">VN: <%= po.supplierTaxNo %></div>
                     <% } %>
                   </td>
-                  <td>
-                    <% if (po.status !== 'Received') { %>
-                      <form action="/stock/goods-receipt/<%= po.id %>/confirm" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-sm btn-success">📥 Mal Kabul Et & Stok Girişi Yap</button>
-                      </form>
+                  <td style="vertical-align: top;">
+                    <table class="item-subtable">
+                      <thead>
+                        <tr>
+                          <th>Stok Kodu / Malzeme</th>
+                          <th style="text-align: right;">Sipariş</th>
+                          <th style="text-align: right;">Teslim Alınan</th>
+                          <th style="text-align: right;">Kalan</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% po.items.forEach(it => { %>
+                          <tr>
+                            <td>
+                              <strong style="color: #f8fafc;"><%= it.productName %></strong>
+                              <span style="color: #64748b; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; margin-left: 4px;">(<%= it.stockCode %>)</span>
+                            </td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= it.orderedQuantity.toLocaleString('tr-TR') %> <%= it.unit %></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #34d399; font-weight: 700;"><%= it.receivedQuantity.toLocaleString('tr-TR') %> <%= it.unit %></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: <%= it.remainingQuantity > 0 ? '#fb7185' : '#64748b' %>; font-weight: 700;">
+                              <%= it.remainingQuantity.toLocaleString('tr-TR') %> <%= it.unit %>
+                            </td>
+                          </tr>
+                        <% }); %>
+                      </tbody>
+                    </table>
+                  </td>
+                  <td style="vertical-align: top; white-space: nowrap;">
+                    <% if (po.status === 'Partial_Received') { %>
+                      <span class="grn-badge grn-badge-partial">⌛ Kısmi Teslim Alındı</span>
                     <% } else { %>
-                      <span style="color: var(--text-muted); font-size: 0.8rem;">✓ Giriş Yapıldı</span>
+                      <span class="grn-badge grn-badge-pending">📦 Mal Kabul Bekliyor</span>
                     <% } %>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+                      Kalan: <strong><%= po.totalRemainingQty.toLocaleString('tr-TR') %></strong> birim
+                    </div>
+                  </td>
+                  <td style="vertical-align: top; text-align: right; white-space: nowrap;">
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                      <a href="/stock/goods-receipt/create?orderId=<%= po.id %>" class="btn-grn-action">
+                        📥 Mal Kabul Et & Stok Girişi Yap
+                      </a>
+                      
+                      <% if (po.receiptCount > 0) { %>
+                        <a href="/stock/goods-receipt/history/<%= po.id %>" class="btn-history-action">
+                          📜 Önceki Mal Kabulleri Gör (<%= po.receiptCount %>)
+                        </a>
+                      <% } %>
+                    </div>
                   </td>
                 </tr>
               <% }); %>
