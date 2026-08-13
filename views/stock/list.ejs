@@ -114,6 +114,12 @@
         </div>
       </div>
 
+      <% if (typeof successMsg !== 'undefined' && successMsg) { %>
+        <div style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1.5px solid rgba(16, 185, 129, 0.35); padding: 14px 20px; border-radius: 14px; margin-bottom: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+          <span>✅</span> <%= successMsg %>
+        </div>
+      <% } %>
+
       <!-- Filters -->
       <div class="filter-bar">
         <form method="GET" action="/stock/items" class="filter-form">
@@ -152,12 +158,13 @@
               <th>Satış Fiyatı</th>
               <th>Konum</th>
               <th>Durum</th>
+              <th>Aksiyon</th>
             </tr>
           </thead>
           <tbody>
             <% if (stockItems.length === 0) { %>
               <tr>
-                <td colspan="12" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <td colspan="14" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                   <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
                   Kayıtlı stok kartı bulunmamaktadır.
                   <br><a href="/stock/items/add" style="color: var(--indigo); font-weight: 600;">Yeni stok kartı ekleyin →</a>
@@ -214,6 +221,18 @@
                     <% } else { %>
                       <span class="status-pill status-rejected">● Pasif</span>
                     <% } %>
+                  </td>
+                  <td>
+                    <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
+                      <input type="hidden" name="stockItemId" value="<%= item.id %>">
+                      <input type="hidden" name="targetModule" value="purchase">
+                      <input type="hidden" name="requestedQuantity" value="<%= (parseFloat(item.minStock || 10) - parseFloat(item.currentStock || 0)) > 0 ? (parseFloat(item.minStock || 10) - parseFloat(item.currentStock || 0)) : 10 %>">
+                      <input type="hidden" name="urgency" value="Normal">
+                      <input type="hidden" name="redirectUrl" value="/stock/items?success=purchase">
+                      <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; font-size: 0.75rem; white-space: nowrap; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                        🛒 Satın Alma Talebi Aç
+                      </button>
+                    </form>
                   </td>
                 </tr>
               <% }); %>

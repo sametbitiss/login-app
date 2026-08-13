@@ -45,6 +45,13 @@ class StockController {
     const stockItems = await stockRepository.findAll({ search, category, status });
     const stats = await stockRepository.getStats();
 
+    let successMsg = null;
+    if (req.query.success === 'purchase') {
+      successMsg = '🛒 Satın Alma Talebi başarıyla oluşturuldu ve Satın Alma Modülüne (Talepler Kartına) iletildi.';
+    } else if (req.query.success === 'production') {
+      successMsg = '⚙️ Üretim Talebi başarıyla oluşturuldu ve Üretim Modülüne (Talepler Kartına) iletildi.';
+    }
+
     res.render('stock/list', {
       user: req.user,
       stockItems,
@@ -54,7 +61,8 @@ class StockController {
       activeSubTab: 'items',
       filterSearch: search || '',
       filterCategory: category || '',
-      filterStatus: status || ''
+      filterStatus: status || '',
+      successMsg
     });
   });
 
@@ -379,7 +387,7 @@ class StockController {
   });
 
   createStockRequisition = asyncHandler(async (req, res) => {
-    const { stockItemId, requestedQuantity, urgency, notes } = req.body;
+    const { stockItemId, requestedQuantity, urgency, notes, targetModule, redirectUrl } = req.body;
 
     if (!stockItemId) {
       throw new ValidationError('Malzeme seçimi zorunludur.');
@@ -392,8 +400,10 @@ class StockController {
 
     const missingAmount = parseFloat(item.minStock || 0) - parseFloat(item.currentStock || 0);
     const qty = parseFloat(requestedQuantity) || (missingAmount > 0 ? missingAmount : 10);
+
+    const forcePurchase = (targetModule === 'purchase' || targetModule === 'Purchase' || req.body.module === 'purchase');
     const pMethod = item.procurementMethod || ((item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul') ? 'Üretim' : 'Satın Alma');
-    const isProductionItem = (pMethod === 'Üretim' || pMethod === 'Production');
+    const isProductionItem = !forcePurchase && (pMethod === 'Üretim' || pMethod === 'Production');
 
     if (isProductionItem) {
       const productionRepository = require('../repositories/productionRepository');
@@ -414,11 +424,11 @@ class StockController {
         workCenter: item.category === 'Mamul' ? 'Montaj İstasyonu' : 'İşleme İstasyonu',
         plannedStartDate: today.toISOString().split('T')[0],
         plannedEndDate: nextWeek.toISOString().split('T')[0],
-        notes: `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir (Mevcut: ${item.currentStock} ${item.unit}, Min: ${item.minStock} ${item.unit}). Tedarik Yöntemi: Üretim. Lütfen acil imalatını tamamlayın.`,
+        notes: notes || `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir (Mevcut: ${item.currentStock} ${item.unit}, Min: ${item.minStock} ${item.unit}). Tedarik Yöntemi: Üretim. Lütfen acil imalatını tamamlayın.`,
         createdBy: req.user.id
       }, req.user, req.ip);
 
-      return res.redirect('/stock/alerts?success=production');
+      return res.redirect(redirectUrl || '/stock/alerts?success=production');
     } else {
       const nextReqNo = await purchaseService.getNextRequisitionNo();
 
@@ -428,14 +438,14 @@ class StockController {
         stockItemId: item.id,
         requestedQuantity: qty,
         unit: item.unit || 'Adet',
-        urgency: urgency === 'Urgent' ? 'Urgent' : 'High',
+        urgency: urgency === 'Urgent' ? 'Urgent' : (urgency === 'High' ? 'High' : 'Normal'),
         status: 'Pending',
         requesterName: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
-        notes: `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir (Mevcut: ${item.currentStock} ${item.unit}, Min: ${item.minStock} ${item.unit}). Tedarik Yöntemi: Satın Alma. Lütfen acil tedarik edin.`,
+        notes: notes || `🚨 [Stok Modülünden Gelen Talep] Depodan '${item.name}' malzemesi için satın alma talebi oluşturulmuştur. (Mevcut: ${item.currentStock} ${item.unit}, Min: ${item.minStock} ${item.unit}).`,
         createdBy: req.user.id
       }, req.user, req.ip);
 
-      return res.redirect('/stock/alerts?success=purchase');
+      return res.redirect(redirectUrl || '/stock/alerts?success=purchase');
     }
   });
 
