@@ -6,16 +6,29 @@ class RequisitionRepository {
   async generateRequisitionNo() {
     const year = new Date().getFullYear();
     const prefix = `TALEP-${year}-`;
-    const lastReq = await PurchaseRequisition.findOne({
+    const reqs = await PurchaseRequisition.findAll({
       where: { requisitionNo: { [Op.like]: `${prefix}%` } },
-      order: [['id', 'DESC']]
+      attributes: ['requisitionNo']
     });
 
-    if (!lastReq) return `${prefix}0001`;
+    let maxSeq = 0;
+    reqs.forEach(r => {
+      const numStr = r.requisitionNo.replace(prefix, '');
+      const num = parseInt(numStr, 10);
+      if (!isNaN(num) && num > maxSeq) {
+        maxSeq = num;
+      }
+    });
 
-    const lastNo = lastReq.requisitionNo.replace(prefix, '');
-    const nextSeq = parseInt(lastNo, 10) + 1;
-    return `${prefix}${String(nextSeq).padStart(4, '0')}`;
+    let nextSeq = maxSeq + 1;
+    let candidate = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+
+    while (await PurchaseRequisition.findOne({ where: { requisitionNo: candidate } })) {
+      nextSeq++;
+      candidate = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+    }
+
+    return candidate;
   }
 
   async findAll(filters = {}) {
@@ -34,15 +47,25 @@ class RequisitionRepository {
   }
 
   async create(reqData, currentUser = null, ipAddress = null) {
-    if (!reqData.requisitionNo) {
-      reqData.requisitionNo = await this.generateRequisitionNo();
-    }
+    let newReq = null;
+    let attempts = 0;
 
-    const newReq = await PurchaseRequisition.create({
-      ...reqData,
-      createdBy: currentUser ? currentUser.id : null,
-      requesterName: reqData.requesterName || (currentUser ? currentUser.username : 'Sistem')
-    });
+    while (!newReq && attempts < 10) {
+      attempts++;
+      reqData.requisitionNo = await this.generateRequisitionNo();
+      try {
+        newReq = await PurchaseRequisition.create({
+          ...reqData,
+          createdBy: currentUser ? currentUser.id : null,
+          requesterName: reqData.requesterName || (currentUser ? (currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : 'Sistem')
+        });
+      } catch (err) {
+        if (err.name === 'SequelizeUniqueConstraintError' && attempts < 10) {
+          continue;
+        }
+        throw err;
+      }
+    }
 
     await logService.logCrud({
       userId: currentUser ? currentUser.id : null,

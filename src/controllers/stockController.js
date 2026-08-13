@@ -1,6 +1,7 @@
 const stockRepository = require('../repositories/stockRepository');
 const stockValuationService = require('../services/stockValuationService');
 const purchaseRepository = require('../repositories/purchaseRepository');
+const purchaseService = require('../services/purchaseService');
 const salesRepository = require('../repositories/saleRepository');
 const requisitionRepository = require('../repositories/requisitionRepository');
 const asyncHandler = require('../utils/asyncHandler');
