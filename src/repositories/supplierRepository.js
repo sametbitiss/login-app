@@ -9,9 +9,7 @@ class SupplierRepository {
     if (filters.status) {
       where.status = filters.status;
     }
-    if (filters.category) {
-      where.category = filters.category;
-    }
+
     if (filters.search) {
       where[Op.or] = [
         { companyName: { [Op.iLike || Op.like]: `%${filters.search}%` } },

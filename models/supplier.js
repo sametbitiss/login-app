@@ -84,8 +84,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     category: {
       type: DataTypes.ENUM('Hammadde', 'Yari_Mamul', 'Hizmet', 'Yedek_Parca', 'Ambalaj', 'Diger'),
-      allowNull: false,
-      defaultValue: 'Hammadde'
+      allowNull: true,
+      defaultValue: 'Diger'
     },
     performanceScore: {
       type: DataTypes.DECIMAL(3, 1),

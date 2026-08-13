@@ -77,13 +77,6 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" name="search" placeholder="Tedarikçi kodu, firma unvanı veya vergi no..." value="<%= filterSearch %>" class="filter-input">
           </div>
-          <select name="category" class="filter-select" onchange="this.form.submit()">
-            <option value="">Tüm Kategoriler</option>
-            <option value="Hammadde" <%= filterCategory === 'Hammadde' ? 'selected' : '' %>>Hammadde</option>
-            <option value="Yari_Mamul" <%= filterCategory === 'Yari_Mamul' ? 'selected' : '' %>>Yarı Mamul</option>
-            <option value="Yedek_Parca" <%= filterCategory === 'Yedek_Parca' ? 'selected' : '' %>>Yedek Parça</option>
-            <option value="Hizmet" <%= filterCategory === 'Hizmet' ? 'selected' : '' %>>Hizmet</option>
-          </select>
           <button type="submit" class="btn btn-sm">Filtrele</button>
         </form>
       </div>
@@ -96,7 +89,6 @@
             <tr>
               <th>Tedarikçi Kodu</th>
               <th>Firma Unvanı</th>
-              <th>Kategori</th>
               <th>İletişim Kişisi</th>
               <th>Ödeme Vadesi</th>
               <th>Performans</th>
@@ -106,7 +98,7 @@
           </thead>
           <tbody>
             <% if (suppliers.length === 0) { %>
-              <tr><td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 8px;">🏢</div>Henüz kayıtlı tedarikçi kartı bulunmamaktadır.<br><a href="/purchase/suppliers/add" style="color: var(--indigo); font-weight: 600;">İlk tedarikçi kartını oluşturun →</a></td></tr>
+              <tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 8px;">🏢</div>Henüz kayıtlı tedarikçi kartı bulunmamaktadır.<br><a href="/purchase/suppliers/add" style="color: var(--indigo); font-weight: 600;">İlk tedarikçi kartını oluşturun →</a></td></tr>
             <% } else { %>
               <% suppliers.forEach(sup => { %>
                 <tr>
@@ -115,7 +107,6 @@
                     <div style="font-weight: 600;"><%= sup.companyName %></div>
                     <% if (sup.taxNo) { %><div style="font-size: 0.75rem; color: var(--text-muted);">VN: <%= sup.taxNo %></div><% } %>
                   </td>
-                  <td><span class="status-pill status-approved"><%= sup.category %></span></td>
                   <td>
                     <div><%= sup.contactPerson || '—' %></div>
                     <div style="font-size: 0.75rem; color: var(--text-muted);"><%= sup.phone || '' %></div>

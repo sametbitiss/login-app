@@ -675,8 +675,8 @@ class PurchaseController {
 
   // ═══════════════════════ SUPPLIERS ═══════════════════════
   listSuppliers = asyncHandler(async (req, res) => {
-    const { search, status, category } = req.query;
-    const suppliers = await purchaseService.getAllSuppliers({ search, status, category });
+    const { search, status } = req.query;
+    const suppliers = await purchaseService.getAllSuppliers({ search, status });
     const supplierStats = await purchaseService.getSupplierStats();
 
     res.render('purchase/suppliers', {
@@ -684,8 +684,7 @@ class PurchaseController {
       suppliers,
       supplierStats,
       filterSearch: search || '',
-      filterStatus: status || '',
-      filterCategory: category || ''
+      filterStatus: status || ''
     });
   });
 
