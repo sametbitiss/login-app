@@ -599,12 +599,51 @@
 
     let rowCount = 0;
 
+    function getCurrentlySelectedStockItemIds() {
+      const selected = [];
+      document.querySelectorAll('input[name="itemStockItemId"]').forEach(input => {
+        if (input.value) {
+          const val = parseInt(input.value, 10);
+          if (!isNaN(val)) selected.push(val);
+        }
+      });
+      return selected;
+    }
+
+    function refreshAllProductSelectOptions() {
+      const currentlySelected = getCurrentlySelectedStockItemIds();
+
+      document.querySelectorAll('#itemsTableBody tr').forEach(tr => {
+        const selectEl = tr.querySelector('.item-stock-select');
+        if (!selectEl || selectEl.disabled) return;
+
+        const hiddenInput = tr.querySelector('input[name="itemStockItemId"]');
+        const activeVal = hiddenInput && hiddenInput.value ? parseInt(hiddenInput.value, 10) : (selectEl.value ? parseInt(selectEl.value, 10) : null);
+
+        let productOptions = '<option value="">-- Talep Edilen Ürün Seçin --</option>';
+        REQUISITIONED_PRODUCTS.forEach(p => {
+          const pId = parseInt(p.stockItemId, 10);
+          const isAccepted = ACCEPTED_STOCK_ITEM_IDS.includes(pId);
+          const isSelectedForThisRow = activeVal && (activeVal === pId);
+
+          if (isAccepted && !isSelectedForThisRow) return;
+          if (currentlySelected.includes(pId) && !isSelectedForThisRow) return;
+
+          const isSel = isSelectedForThisRow ? 'selected' : '';
+          productOptions += `<option value="${p.stockItemId}" data-stockcode="${p.stockCode}" data-name="${p.name}" data-unit="${p.unit}" data-minstock="${p.minStock}" data-price="${p.purchasePrice}" data-reqno="${p.requisitionNo}" ${isSel}>${p.stockCode} — ${p.name} (Min: ${p.minStock} ${p.unit})</option>`;
+        });
+
+        selectEl.innerHTML = productOptions;
+      });
+    }
+
     function addRow(preselectedStockItemId = null, isLockedRow = false) {
       rowCount++;
       const tr = document.createElement('tr');
       tr.id = `row-${rowCount}`;
 
       const isFirstRow = (rowCount === 1) || isLockedRow;
+      const currentlySelectedIds = getCurrentlySelectedStockItemIds();
 
       let productOptions = '<option value="">-- Talep Edilen Ürün Seçin --</option>';
       REQUISITIONED_PRODUCTS.forEach(p => {
@@ -612,8 +651,13 @@
         const isAccepted = ACCEPTED_STOCK_ITEM_IDS.includes(pId);
         const isPreselected = preselectedStockItemId && (parseInt(preselectedStockItemId, 10) === pId);
 
-        // Teklif kabul/sipariş edilmiş olan ürünler 2. ve sonraki kalem seçeneklerinden çıkartılıyor!
+        // 1. Teklif kabul/sipariş edilmiş olan ürünler 2. ve sonraki kalem seçeneklerinden çıkartılıyor!
         if (isAccepted && !isPreselected) {
+          return;
+        }
+
+        // 2. Default/Ana ürün ve tablodaki diğer satırlarda seçili olan ürünler de seçeneklerden çıkartılıyor!
+        if (currentlySelectedIds.includes(pId) && !isPreselected) {
           return;
         }
 
@@ -708,6 +752,7 @@
       }
 
       calculateTotals();
+      refreshAllProductSelectOptions();
     }
 
     function validateMinStock(inputEl, rId) {
@@ -726,6 +771,7 @@
       if (tr) {
         tr.remove();
         calculateTotals();
+        refreshAllProductSelectOptions();
       }
     }
 
