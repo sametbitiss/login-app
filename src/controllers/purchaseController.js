@@ -718,9 +718,10 @@ class PurchaseController {
         paymentTerm: req.body.paymentTerm || 'Vadeli_30',
         currency: req.body.currency || 'TRY',
         riskLimit: parseFloat(req.body.riskLimit) || 100000,
+        performanceScore: parseFloat(req.body.performanceScore) || 85,
         category: req.body.category || 'Hammadde',
         status: 'Active',
-        notes: req.body.notes || null
+        notes: req.body.notes ? req.body.notes.trim() : null
       }, req.user, req.ip);
 
       res.redirect('/purchase/suppliers');

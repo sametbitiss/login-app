@@ -224,10 +224,22 @@
               <label class="aesthetic-label">Şehir</label>
               <input type="text" name="city" placeholder="İstanbul" class="aesthetic-input">
             </div>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Tedarikçi Risk & Kredi Limiti (₺)</label>
+              <input type="number" name="riskLimit" value="100000" step="1000" class="aesthetic-input">
+            </div>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Genel Değerlendirme & Performans Puanı (0 - 100)</label>
+              <input type="number" name="performanceScore" min="0" max="100" step="1" value="85" class="aesthetic-input" placeholder="Örn: 85">
+            </div>
           </div>
-          <div class="aesthetic-group" style="margin-top: 6px;">
+          <div class="aesthetic-group" style="margin-top: 14px;">
             <label class="aesthetic-label">Açık Adres</label>
-            <textarea name="address" class="aesthetic-input" rows="3" placeholder="Organize Sanayi Bölgesi..."></textarea>
+            <textarea name="address" class="aesthetic-input" rows="2" placeholder="Organize Sanayi Bölgesi..."></textarea>
+          </div>
+          <div class="aesthetic-group" style="margin-top: 14px;">
+            <label class="aesthetic-label">Tedarikçi Genel Değerlendirmesi & Özel Notlar</label>
+            <textarea name="notes" class="aesthetic-input" rows="3" placeholder="Tedarikçinin genel kalitesi, sevkiyat güvenilirliği, özel sözleşme notları ve genel değerlendirmesi..."></textarea>
           </div>
           <div style="display: flex; gap: 14px; margin-top: 14px;">
             <button type="submit" class="btn-indigo-gradient">🏢 Tedarikçi Kartını Kaydet</button>
