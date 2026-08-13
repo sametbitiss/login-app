@@ -827,12 +827,13 @@
 
     // Initialize first row
     let defaultStockItemId = null;
-    if (TARGET_REQ_ID) {
-      const target = REQUISITIONED_PRODUCTS.find(p => parseInt(p.requisitionId, 10) === parseInt(TARGET_REQ_ID, 10));
-      if (target) defaultStockItemId = target.stockItemId;
+    if (TARGET_STOCK_ITEM_ID) {
+      const targetByStock = REQUISITIONED_PRODUCTS.find(p => parseInt(p.stockItemId, 10) === parseInt(TARGET_STOCK_ITEM_ID, 10));
+      if (targetByStock) defaultStockItemId = targetByStock.stockItemId;
     }
-    if (!defaultStockItemId && TARGET_STOCK_ITEM_ID) {
-      defaultStockItemId = TARGET_STOCK_ITEM_ID;
+    if (!defaultStockItemId && TARGET_REQ_ID) {
+      const targetByReq = REQUISITIONED_PRODUCTS.find(p => parseInt(p.requisitionId, 10) === parseInt(TARGET_REQ_ID, 10));
+      if (targetByReq) defaultStockItemId = targetByReq.stockItemId;
     }
     if (!defaultStockItemId && REQUISITIONED_PRODUCTS.length > 0) {
       defaultStockItemId = REQUISITIONED_PRODUCTS[0].stockItemId;

@@ -593,7 +593,43 @@ class PurchaseController {
     }
 
     const targetReqId = req.query.requisitionId ? parseInt(req.query.requisitionId, 10) : null;
-    const targetStockItemId = req.query.stockItemId ? parseInt(req.query.stockItemId, 10) : null;
+    let targetStockItemId = req.query.stockItemId ? parseInt(req.query.stockItemId, 10) : null;
+
+    if (targetReqId && !targetStockItemId) {
+      try {
+        const reqObj = await PurchaseRequisition.findByPk(targetReqId);
+        if (reqObj && reqObj.stockItemId) {
+          targetStockItemId = reqObj.stockItemId;
+        }
+      } catch (e) {
+        console.error('Error finding target requisition:', e);
+      }
+    }
+
+    if (targetStockItemId) {
+      const existingIdx = requisitionedProducts.findIndex(p => parseInt(p.stockItemId, 10) === targetStockItemId);
+      if (existingIdx > 0) {
+        const [targetProd] = requisitionedProducts.splice(existingIdx, 1);
+        requisitionedProducts.unshift(targetProd);
+      } else if (existingIdx < 0) {
+        const targetItem = await StockItem.findByPk(targetStockItemId);
+        if (targetItem) {
+          const minStockVal = parseFloat(targetItem.minStock) || 10;
+          requisitionedProducts.unshift({
+            stockItemId: targetItem.id,
+            stockCode: targetItem.stockCode,
+            name: targetItem.name,
+            category: targetItem.category,
+            unit: targetItem.unit || 'Adet',
+            minStock: minStockVal > 0 ? minStockVal : 10,
+            purchasePrice: parseFloat(targetItem.purchasePrice) || 0,
+            requisitionNo: targetReqId ? `TALEP-#${targetReqId}` : 'TAL-GENEL',
+            requisitionId: targetReqId || 0,
+            requestedQuantity: minStockVal || 10
+          });
+        }
+      }
+    }
 
     // Fetch accepted RFQs to collect locked/accepted stockItemIds
     const acceptedRfqs = await PurchaseRfq.findAll({
