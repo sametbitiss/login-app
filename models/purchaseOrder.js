@@ -126,6 +126,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    itemsJson: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     createdBy: {
       type: DataTypes.INTEGER,
       allowNull: true

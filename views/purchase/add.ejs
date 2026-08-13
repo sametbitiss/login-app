@@ -354,6 +354,7 @@
           <input type="hidden" name="quantity" value="<%= formData.quantity %>">
           <input type="hidden" name="unitPrice" value="<%= formData.unitPrice %>">
           <input type="hidden" name="currency" value="<%= formData.currency %>">
+          <input type="hidden" name="itemsJson" value='<%= JSON.stringify(rfqItems || []) %>'>
         </div>
 
         <!-- SECTION 3: Sipariş Ek Bilgileri (Düzenlenebilir) -->

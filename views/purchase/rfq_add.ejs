@@ -570,6 +570,7 @@
   <script>
     const REQUISITIONED_PRODUCTS = <%- JSON.stringify(requisitionedProducts) %>;
     const TARGET_REQ_ID = <%= targetReqId ? targetReqId : 'null' %>;
+    const TARGET_STOCK_ITEM_ID = <%= typeof targetStockItemId !== 'undefined' && targetStockItemId ? targetStockItemId : 'null' %>;
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
@@ -597,10 +598,12 @@
 
     let rowCount = 0;
 
-    function addRow(preselectedStockItemId = null) {
+    function addRow(preselectedStockItemId = null, isLockedRow = false) {
       rowCount++;
       const tr = document.createElement('tr');
       tr.id = `row-${rowCount}`;
+
+      const isFirstRow = (rowCount === 1) || isLockedRow;
 
       let productOptions = '<option value="">-- Talep Edilen Ürün Seçin --</option>';
       REQUISITIONED_PRODUCTS.forEach(p => {
@@ -608,11 +611,14 @@
         productOptions += `<option value="${p.stockItemId}" data-stockcode="${p.stockCode}" data-name="${p.name}" data-unit="${p.unit}" data-minstock="${p.minStock}" data-price="${p.purchasePrice}" data-reqno="${p.requisitionNo}" ${isSel}>${p.stockCode} — ${p.name} (Min: ${p.minStock} ${p.unit})</option>`;
       });
 
+      const selectDisabledAttr = isFirstRow ? 'disabled style="font-size: 0.85rem; cursor: not-allowed; opacity: 0.85; background: rgba(15, 23, 42, 0.6); pointer-events: none;"' : 'style="font-size: 0.85rem;"';
+
       tr.innerHTML = `
         <td>
-          <select name="itemStockItemId" class="aesthetic-input item-stock-select" onchange="onProductSelect(this, ${rowCount})" style="font-size: 0.85rem;">
+          <select class="aesthetic-input item-stock-select" onchange="onProductSelect(this, ${rowCount})" ${selectDisabledAttr}>
             ${productOptions}
           </select>
+          <input type="hidden" name="itemStockItemId" id="itemStockItemIdHidden-${rowCount}" value="${preselectedStockItemId || ''}">
           <input type="hidden" name="itemStockCode" id="itemStockCode-${rowCount}" value="">
           <input type="hidden" name="itemProductName" id="itemProductName-${rowCount}" value="">
         </td>
@@ -644,8 +650,8 @@
           <input type="text" name="itemNetAmount" id="itemNetAmount-${rowCount}" class="aesthetic-input item-net" readonly style="font-weight: 800; color: #34d399; font-family: 'JetBrains Mono', monospace;">
         </td>
         <td style="text-align: center;">
-          ${rowCount === 1
-          ? `<span title="Ana talep ürünü tekliften çıkarılamaz" style="color: #64748b; font-size: 1.1rem; cursor: not-allowed;" aria-label="Kilitli">🔒</span>`
+          ${isFirstRow
+          ? `<span title="Ana talep ürünü tekliften çıkarılamaz ve değiştirilemez" style="color: #64748b; font-size: 1.1rem; cursor: not-allowed;" aria-label="Kilitli">🔒</span>`
           : `<button type="button" onclick="removeRow(${rowCount})" style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 800; transition: all 0.2s ease;">✕</button>`}
         </td>
       `;
@@ -663,6 +669,9 @@
       const opt = selectEl.options[selectEl.selectedIndex];
       if (!opt || !opt.value) return;
 
+      const hiddenStockId = document.getElementById(`itemStockItemIdHidden-${rId}`);
+      if (hiddenStockId) hiddenStockId.value = opt.value;
+
       const minStock = parseFloat(opt.getAttribute('data-minstock')) || 10;
       const unit = opt.getAttribute('data-unit') || 'Adet';
       const price = parseFloat(opt.getAttribute('data-price')) || 0;
@@ -679,7 +688,9 @@
       const qtyInput = document.getElementById(`itemQuantity-${rId}`);
       qtyInput.setAttribute('data-minstock', minStock);
       qtyInput.setAttribute('min', minStock);
-      qtyInput.value = minStock;
+      if (!qtyInput.value || parseFloat(qtyInput.value) === 0) {
+        qtyInput.value = minStock;
+      }
 
       const priceInput = document.getElementById(`itemUnitPrice-${rId}`);
       if (parseFloat(priceInput.value) === 0 && price > 0) {
@@ -764,11 +775,14 @@
       const target = REQUISITIONED_PRODUCTS.find(p => parseInt(p.requisitionId, 10) === parseInt(TARGET_REQ_ID, 10));
       if (target) defaultStockItemId = target.stockItemId;
     }
+    if (!defaultStockItemId && TARGET_STOCK_ITEM_ID) {
+      defaultStockItemId = TARGET_STOCK_ITEM_ID;
+    }
     if (!defaultStockItemId && REQUISITIONED_PRODUCTS.length > 0) {
       defaultStockItemId = REQUISITIONED_PRODUCTS[0].stockItemId;
     }
 
-    addRow(defaultStockItemId);
+    addRow(defaultStockItemId, true);
 
     // FORM SUBMISSION EVENT LISTENER & VALIDATION
     document.getElementById('rfqForm').addEventListener('submit', function(e) {

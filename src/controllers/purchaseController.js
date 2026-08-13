@@ -129,7 +129,8 @@ class PurchaseController {
         currency: req.body.currency || 'TRY',
         deliveryWarehouse: req.body.deliveryWarehouse && req.body.deliveryWarehouse.trim() ? req.body.deliveryWarehouse.trim() : null,
         purchasingAgent: req.body.purchasingAgent && req.body.purchasingAgent.trim() ? req.body.purchasingAgent.trim() : (req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username),
-        notes: req.body.notes && req.body.notes.trim() ? req.body.notes.trim() : null
+        notes: req.body.notes && req.body.notes.trim() ? req.body.notes.trim() : null,
+        itemsJson: req.body.itemsJson || null
       };
 
       await purchaseService.createOrder(data, req.user, req.ip);
@@ -208,9 +209,30 @@ class PurchaseController {
     });
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
 
+    let itemsList = [];
+    if (order.itemsJson) {
+      try { itemsList = typeof order.itemsJson === 'string' ? JSON.parse(order.itemsJson) : order.itemsJson; } catch (e) { itemsList = []; }
+    }
+    if (!Array.isArray(itemsList) || itemsList.length === 0) {
+      itemsList = [{
+        stockItemId: order.stockItemId,
+        stockCode: order.stockItem ? order.stockItem.stockCode : '',
+        productName: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
+        name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
+        quantity: order.quantity,
+        unit: order.stockItem ? order.stockItem.unit : 'Adet',
+        unitPrice: order.unitPrice,
+        discountRate: order.discountRate || 0,
+        vatRate: order.taxRate || 20,
+        subtotal: order.subtotal,
+        totalAmount: order.totalAmount
+      }];
+    }
+
     res.render('purchase/edit', {
       user: req.user,
       order,
+      itemsList,
       stockItems,
       suppliers,
       error: null
@@ -272,11 +294,7 @@ class PurchaseController {
   });
 
   viewOrderDetail = asyncHandler(async (req, res) => {
-    const order = await purchaseService.getOrderById(req.params.id);
-    res.render('purchase/order_detail', {
-      user: req.user,
-      order
-    });
+    return res.redirect(`/purchase/orders/${req.params.id}/edit`);
   });
 
   // ═══════════════════════ REQUISITIONS ═══════════════════════
@@ -575,6 +593,7 @@ class PurchaseController {
     }
 
     const targetReqId = req.query.requisitionId ? parseInt(req.query.requisitionId, 10) : null;
+    const targetStockItemId = req.query.stockItemId ? parseInt(req.query.stockItemId, 10) : null;
 
     res.render('purchase/rfq_add', {
       user: req.user,
@@ -583,6 +602,7 @@ class PurchaseController {
       suppliers,
       requisitionedProducts,
       targetReqId,
+      targetStockItemId,
       formData: {}
     });
   });
