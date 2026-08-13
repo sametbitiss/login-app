@@ -569,6 +569,7 @@
   <!-- Requisitioned Products Data embedded for JS -->
   <script>
     const REQUISITIONED_PRODUCTS = <%- JSON.stringify(requisitionedProducts) %>;
+    const ACCEPTED_STOCK_ITEM_IDS = <%- JSON.stringify(typeof acceptedStockItemIds !== 'undefined' ? acceptedStockItemIds : []) %>;
     const TARGET_REQ_ID = <%= targetReqId ? targetReqId : 'null' %>;
     const TARGET_STOCK_ITEM_ID = <%= typeof targetStockItemId !== 'undefined' && targetStockItemId ? targetStockItemId : 'null' %>;
 
@@ -607,7 +608,16 @@
 
       let productOptions = '<option value="">-- Talep Edilen Ürün Seçin --</option>';
       REQUISITIONED_PRODUCTS.forEach(p => {
-        const isSel = (preselectedStockItemId && parseInt(preselectedStockItemId, 10) === parseInt(p.stockItemId, 10)) ? 'selected' : '';
+        const pId = parseInt(p.stockItemId, 10);
+        const isAccepted = ACCEPTED_STOCK_ITEM_IDS.includes(pId);
+        const isPreselected = preselectedStockItemId && (parseInt(preselectedStockItemId, 10) === pId);
+
+        // Teklif kabul/sipariş edilmiş olan ürünler 2. ve sonraki kalem seçeneklerinden çıkartılıyor!
+        if (isAccepted && !isPreselected) {
+          return;
+        }
+
+        const isSel = isPreselected ? 'selected' : '';
         productOptions += `<option value="${p.stockItemId}" data-stockcode="${p.stockCode}" data-name="${p.name}" data-unit="${p.unit}" data-minstock="${p.minStock}" data-price="${p.purchasePrice}" data-reqno="${p.requisitionNo}" ${isSel}>${p.stockCode} — ${p.name} (Min: ${p.minStock} ${p.unit})</option>`;
       });
 

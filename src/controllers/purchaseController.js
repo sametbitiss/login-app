@@ -595,12 +595,28 @@ class PurchaseController {
     const targetReqId = req.query.requisitionId ? parseInt(req.query.requisitionId, 10) : null;
     const targetStockItemId = req.query.stockItemId ? parseInt(req.query.stockItemId, 10) : null;
 
+    // Fetch accepted RFQs to collect locked/accepted stockItemIds
+    const acceptedRfqs = await PurchaseRfq.findAll({
+      where: { status: 'Accepted' }
+    });
+    const acceptedStockItemIds = new Set();
+    acceptedRfqs.forEach(rfq => {
+      const items = (rfq.itemsData && Array.isArray(rfq.itemsData)) ? rfq.itemsData : [];
+      items.forEach(item => {
+        if (item.stockItemId) acceptedStockItemIds.add(parseInt(item.stockItemId, 10));
+      });
+      if (items.length === 0 && rfq.stockItemId) {
+        acceptedStockItemIds.add(parseInt(rfq.stockItemId, 10));
+      }
+    });
+
     res.render('purchase/rfq_add', {
       user: req.user,
       error: null,
       nextRfqNo,
       suppliers,
       requisitionedProducts,
+      acceptedStockItemIds: Array.from(acceptedStockItemIds),
       targetReqId,
       targetStockItemId,
       formData: {}
