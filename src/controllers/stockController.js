@@ -355,6 +355,8 @@ class StockController {
       include: [
         { model: StockItem, as: 'stockItem' },
         { model: Supplier, as: 'supplier' }
+      ]
+    });
     if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
     if (po.status === 'Pending_Approval') {
       throw new ValidationError('Bu sipariş bütçe limitini aştığı için yönetsel onay beklemektedir (Pending_Approval). Onaylanmadan mal kabul işlemi yapılamaz.');
