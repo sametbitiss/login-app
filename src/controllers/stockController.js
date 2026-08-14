@@ -176,22 +176,18 @@ class StockController {
 
     try {
       await stockRepository.update(item.id, {
-        name: req.body.name ? req.body.name.trim() : item.name,
-        barcode: req.body.barcode ? req.body.barcode.trim() : null,
-        category: req.body.category || item.category,
         procurementMethod: req.body.procurementMethod || item.procurementMethod,
-        unit: req.body.unit || item.unit,
-        brand: req.body.brand ? req.body.brand.trim() : null,
-        model: req.body.model ? req.body.model.trim() : null,
+        status: req.body.status || item.status,
         minStock: req.body.minStock !== undefined && req.body.minStock !== '' ? parseFloat(req.body.minStock) : 0,
         maxStock: req.body.maxStock !== undefined && req.body.maxStock !== '' ? parseFloat(req.body.maxStock) : null,
         purchasePrice: req.body.purchasePrice !== undefined && req.body.purchasePrice !== '' ? parseFloat(req.body.purchasePrice) : 0,
         salePrice: req.body.salePrice !== undefined && req.body.salePrice !== '' ? parseFloat(req.body.salePrice) : 0,
-        currency: req.body.currency || 'TRY',
-        taxRate: req.body.taxRate !== undefined && req.body.taxRate !== '' ? parseFloat(req.body.taxRate) : 20,
+        currency: req.body.currency || item.currency,
+        taxRate: req.body.taxRate !== undefined && req.body.taxRate !== '' ? parseFloat(req.body.taxRate) : item.taxRate,
         warehouseLocation: req.body.warehouseLocation ? req.body.warehouseLocation.trim() : null,
         supplier: req.body.supplier ? req.body.supplier.trim() : null,
-        status: req.body.status || 'Active',
+        brand: req.body.brand ? req.body.brand.trim() : null,
+        model: req.body.model ? req.body.model.trim() : null,
         notes: req.body.notes ? req.body.notes.trim() : null
       }, req.user, req.ip);
 
@@ -200,10 +196,7 @@ class StockController {
       let friendlyError = err.message;
       if (err.name === 'SequelizeUniqueConstraintError' || err.name === 'SequelizeValidationError') {
         if (err.errors && err.errors.length > 0) {
-          friendlyError = err.errors.map(e => {
-            if (e.path === 'barcode') return 'Bu barkod numarası başka bir stok kartında zaten kullanılmaktadır.';
-            return e.message;
-          }).join(' | ');
+          friendlyError = err.errors.map(e => e.message).join(' | ');
         }
       }
       res.redirect(`/stock/items/${item.id}/detail?error=` + encodeURIComponent(friendlyError));
