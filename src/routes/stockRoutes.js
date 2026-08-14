@@ -20,6 +20,8 @@ router.get('/add', stockController.renderAdd);
 router.get('/items/add', stockController.renderAdd);
 router.post('/add', stockController.addItem);
 router.post('/items/add', stockController.addItem);
+router.get('/items/:id/detail', stockController.getItemDetail);
+router.post('/items/:id/update', stockController.updateItem);
 
 // 3. Multi-Warehouse & Locations Routes
 router.get('/warehouses', stockController.listWarehouses);

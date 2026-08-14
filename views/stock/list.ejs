@@ -293,16 +293,9 @@
                     <% } %>
                   </td>
                   <td style="text-align: right;">
-                    <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
-                      <input type="hidden" name="stockItemId" value="<%= item.id %>">
-                      <input type="hidden" name="targetModule" value="purchase">
-                      <input type="hidden" name="requestedQuantity" value="<%= (minStk - curr) > 0 ? (minStk - curr) : 10 %>">
-                      <input type="hidden" name="urgency" value="Normal">
-                      <input type="hidden" name="redirectUrl" value="/stock/items?success=purchase">
-                      <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; font-size: 0.75rem; white-space: nowrap; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                        🛒 Satın Alma Talebi Aç
-                      </button>
-                    </form>
+                    <a href="/stock/items/<%= item.id %>/detail" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; border: none; font-weight: 700; font-size: 0.775rem; white-space: nowrap; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px;">
+                      🔍 Detay / Güncelle
+                    </a>
                   </td>
                 </tr>
               <% }); %>

@@ -149,6 +149,64 @@ class StockController {
         error: friendlyError || 'Stok kartı eklenirken bir hata oluştu.'
       });
     }
+  // 1.1. STOCK ITEM DETAIL & EDIT
+  getItemDetail = asyncHandler(async (req, res) => {
+    const item = await stockRepository.findById(req.params.id);
+    if (!item) throw new NotFoundError('Stok kalemi bulunamadı.');
+
+    const warehouses = await stockRepository.findAllWarehouses();
+    const suppliers = await Supplier.findAll({ where: { status: 'Active' }, order: [['companyName', 'ASC']] });
+
+    res.render('stock/item_detail', {
+      user: req.user,
+      item,
+      warehouses,
+      suppliers,
+      CATEGORIES,
+      activeSubTab: 'items',
+      successMsg: req.query.success === 'updated' ? 'Stok kartı bilgileri başarıyla güncellendi!' : null,
+      errorMsg: req.query.error || null
+    });
+  });
+
+  updateItem = asyncHandler(async (req, res) => {
+    const item = await stockRepository.findById(req.params.id);
+    if (!item) throw new NotFoundError('Stok kalemi bulunamadı.');
+
+    try {
+      await stockRepository.update(item.id, {
+        name: req.body.name ? req.body.name.trim() : item.name,
+        barcode: req.body.barcode ? req.body.barcode.trim() : null,
+        category: req.body.category || item.category,
+        procurementMethod: req.body.procurementMethod || item.procurementMethod,
+        unit: req.body.unit || item.unit,
+        brand: req.body.brand ? req.body.brand.trim() : null,
+        model: req.body.model ? req.body.model.trim() : null,
+        minStock: req.body.minStock !== undefined && req.body.minStock !== '' ? parseFloat(req.body.minStock) : 0,
+        maxStock: req.body.maxStock !== undefined && req.body.maxStock !== '' ? parseFloat(req.body.maxStock) : null,
+        purchasePrice: req.body.purchasePrice !== undefined && req.body.purchasePrice !== '' ? parseFloat(req.body.purchasePrice) : 0,
+        salePrice: req.body.salePrice !== undefined && req.body.salePrice !== '' ? parseFloat(req.body.salePrice) : 0,
+        currency: req.body.currency || 'TRY',
+        taxRate: req.body.taxRate !== undefined && req.body.taxRate !== '' ? parseFloat(req.body.taxRate) : 20,
+        warehouseLocation: req.body.warehouseLocation ? req.body.warehouseLocation.trim() : null,
+        supplier: req.body.supplier ? req.body.supplier.trim() : null,
+        status: req.body.status || 'Active',
+        notes: req.body.notes ? req.body.notes.trim() : null
+      }, req.user, req.ip);
+
+      res.redirect(`/stock/items/${item.id}/detail?success=updated`);
+    } catch (err) {
+      let friendlyError = err.message;
+      if (err.name === 'SequelizeUniqueConstraintError' || err.name === 'SequelizeValidationError') {
+        if (err.errors && err.errors.length > 0) {
+          friendlyError = err.errors.map(e => {
+            if (e.path === 'barcode') return 'Bu barkod numarası başka bir stok kartında zaten kullanılmaktadır.';
+            return e.message;
+          }).join(' | ');
+        }
+      }
+      res.redirect(`/stock/items/${item.id}/detail?error=` + encodeURIComponent(friendlyError));
+    }
   });
 
   // 2. MULTI-WAREHOUSE & LOCATIONS

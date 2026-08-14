@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stok Kartı Detayı & Güncelleme (<%= item.stockCode %>) — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .item-detail-hero {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%);
+      backdrop-filter: blur(20px);
+      border: 1.5px solid rgba(99, 102, 241, 0.25);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+      position: relative;
+    }
+    .item-detail-hero::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, #6366f1 0%, #3b82f6 50%, #10b981 100%);
+      border-radius: 24px 24px 0 0;
+    }
+
+    .hero-top-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1rem;
+    }
+
+    .hero-kpis {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    }
+    @media (max-width: 900px) { .hero-kpis { grid-template-columns: 1fr 1fr; } }
+
+    .hero-kpi-chip {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px; padding: 12px 16px;
+    }
+    .hero-kpi-lbl { font-size: 0.725rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .hero-kpi-val { font-size: 1.25rem; font-weight: 900; color: #ffffff; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+    .form-section-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1.5px solid rgba(255, 255, 255, 0.09);
+      border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .form-section-header {
+      font-size: 0.85rem; font-weight: 800; color: #818cf8; text-transform: uppercase;
+      letter-spacing: 0.8px; margin-bottom: 1.25rem; padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px;
+    }
+
+    .glass-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+    .glass-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+    @media (max-width: 800px) { .glass-grid-2, .glass-grid-3 { grid-template-columns: 1fr; } }
+
+    .glass-label { display: block; font-size: 0.8rem; font-weight: 700; color: #94a3b8; margin-bottom: 6px; }
+    .glass-input {
+      width: 100%; background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px; padding: 10px 14px; color: #ffffff; font-size: 0.9rem; font-weight: 600;
+      outline: none; transition: all 0.2s ease; box-sizing: border-box;
+    }
+    .glass-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); background: rgba(30, 41, 59, 0.95); }
+
+    .btn-update-submit {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff; font-size: 0.95rem; font-weight: 800; padding: 12px 30px;
+      border-radius: 14px; border: none; cursor: pointer;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;
+    }
+    .btn-update-submit:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(99, 102, 241, 0.5); }
+  </style>
+</head>
+<body class="module-body">
+
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
+    <div class="module-sidebar-section">
+      <div class="mss-label">📦 STOK & DEPO YÖNETİMİ</div>
+      <div class="mss-group-title">📊 DASHBOARD & RAPORLAR</div>
+      <div class="mss-sub">
+        <a href="/stock/analytics" class="mss-sub-link">📊 Stok Analitiği</a>
+        <a href="/stock/alerts" class="mss-sub-link">🚨 Min/Max & Kritik Stok</a>
+        <a href="/stock/valuation" class="mss-sub-link">💰 Stok Maliyetlendirme</a>
+      </div>
+      <div class="mss-group-title">📦 MALZEME & LOKASYON</div>
+      <div class="mss-sub">
+        <a href="/stock/items" class="mss-sub-link active">📦 Stok Kartları</a>
+        <a href="/stock/warehouses" class="mss-sub-link">🏬 Depo & Lokasyonlar</a>
+        <a href="/stock/lots" class="mss-sub-link">🏷️ Lot & Seri Numaraları</a>
+      </div>
+    </div>
+    <div class="module-sidebar-user"><div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div><div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div></div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/stock/items" class="mt-link">← Stok Kartları Listesine Dön</a>
+      </div>
+      <div class="mt-right"><span class="mt-time" id="liveTime"></span></div>
+    </header>
+
+    <main class="module-content">
+      <!-- HERO HEADER CARD -->
+      <div class="item-detail-hero">
+        <div class="hero-top-row">
+          <div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 1.1rem; color: #818cf8; background: rgba(99,102,241,0.15); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(99,102,241,0.3);"><%= item.stockCode %></span>
+              <% if (item.status === 'Active') { %>
+                <span class="status-pill status-active">● Aktif</span>
+              <% } else { %>
+                <span class="status-pill status-rejected">● Pasif</span>
+              <% } %>
+              <span class="status-pill status-approved"><%= item.category %></span>
+            </div>
+            <h1 style="font-size: 1.6rem; font-weight: 900; color: #ffffff; margin: 10px 0 0 0;"><%= item.name %></h1>
+            <% if (item.barcode) { %><div style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Barkod / EAN No: <strong style="font-family: 'JetBrains Mono', monospace; color: #cbd5e1;"><%= item.barcode %></strong></div><% } %>
+          </div>
+          <div>
+            <a href="/stock/items" class="btn btn-secondary" style="font-weight: 700;">← Listeye Dön</a>
+          </div>
+        </div>
+
+        <% 
+          const curr = parseFloat(item.currentStock || 0);
+          const resv = parseFloat(item.reservedStock || 0);
+          const avail = Math.max(0, curr - resv);
+          const pPrice = parseFloat(item.purchasePrice || 0);
+          const sPrice = parseFloat(item.salePrice || 0);
+          const margin = pPrice > 0 ? (((sPrice - pPrice) / pPrice) * 100).toFixed(1) : 0;
+        %>
+        <div class="hero-kpis">
+          <div class="hero-kpi-chip">
+            <div class="hero-kpi-lbl">Fiziksel Stok</div>
+            <div class="hero-kpi-val" style="color: #38bdf8;"><%= curr.toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %> <span style="font-size: 0.8rem; font-weight: 600;"><%= item.unit %></span></div>
+          </div>
+          <div class="hero-kpi-chip">
+            <div class="hero-kpi-lbl">Rezerve Stok</div>
+            <div class="hero-kpi-val" style="color: #fb7185;"><%= resv.toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %> <span style="font-size: 0.8rem; font-weight: 600;"><%= item.unit %></span></div>
+          </div>
+          <div class="hero-kpi-chip">
+            <div class="hero-kpi-lbl">Kullanılabilir Stok</div>
+            <div class="hero-kpi-val" style="color: #34d399;"><%= avail.toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %> <span style="font-size: 0.8rem; font-weight: 600;"><%= item.unit %></span></div>
+          </div>
+          <div class="hero-kpi-chip">
+            <div class="hero-kpi-lbl">Kar Marjı (%)</div>
+            <div class="hero-kpi-val" style="color: #fbbf24;"><%= margin %>%</div>
+          </div>
+        </div>
+      </div>
+
+      <% if (successMsg) { %>
+        <div style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1.5px solid rgba(16, 185, 129, 0.35); padding: 14px 20px; border-radius: 14px; margin-bottom: 20px; font-weight: 700;">
+          ✅ <%= successMsg %>
+        </div>
+      <% } %>
+
+      <% if (errorMsg) { %>
+        <div style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1.5px solid rgba(244, 63, 94, 0.35); padding: 14px 20px; border-radius: 14px; margin-bottom: 20px; font-weight: 700;">
+          ⚠️ <%= errorMsg %>
+        </div>
+      <% } %>
+
+      <!-- EDIT & UPDATE FORM -->
+      <form action="/stock/items/<%= item.id %>/update" method="POST">
+
+        <!-- SECTION 1: GENEL MALZEME TANIMI -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <span>📦 1. MALZEME TANIMI VE KİMLİK BİLGİLERİ</span>
+          </div>
+
+          <div class="glass-grid-3">
+            <div>
+              <label class="glass-label">Stok Kodu (Sistem Tarafından Değiştirilemez)</label>
+              <input type="text" value="<%= item.stockCode %>" class="glass-input" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8;">
+            </div>
+            <div>
+              <label class="glass-label">Malzeme / Ürün Adı *</label>
+              <input type="text" name="name" value="<%= item.name %>" class="glass-input" required>
+            </div>
+            <div>
+              <label class="glass-label">Barkod / EAN Numarası</label>
+              <input type="text" name="barcode" value="<%= item.barcode || '' %>" class="glass-input" placeholder="Örn: 8690000000001" style="font-family: 'JetBrains Mono', monospace;">
+            </div>
+          </div>
+
+          <div class="glass-grid-3">
+            <div>
+              <label class="glass-label">Kategori *</label>
+              <select name="category" class="glass-input" required>
+                <% CATEGORIES.forEach(cat => { %>
+                  <% const val = typeof cat === 'object' ? cat.value : cat; %>
+                  <% const lbl = typeof cat === 'object' ? cat.label : cat; %>
+                  <option value="<%= val %>" <%= item.category === val || (val === 'Yari_Mamul' && item.category === 'Yarı_Mamul') ? 'selected' : '' %>><%= lbl %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div>
+              <label class="glass-label">Tedarik Yöntemi *</label>
+              <select name="procurementMethod" class="glass-input" required>
+                <option value="Satın Alma" <%= item.procurementMethod === 'Satın Alma' ? 'selected' : '' %>>🛒 Satın Alma (Dış Tedarik)</option>
+                <option value="Üretim" <%= item.procurementMethod === 'Üretim' ? 'selected' : '' %>>⚙️ Üretim (İç İmalat)</option>
+              </select>
+            </div>
+            <div>
+              <label class="glass-label">Kart Durumu *</label>
+              <select name="status" class="glass-input" required>
+                <option value="Active" <%= item.status === 'Active' ? 'selected' : '' %>>● Aktif Kullanımda</option>
+                <option value="Passive" <%= item.status === 'Passive' ? 'selected' : '' %>>● Pasif / Kullanılmıyor</option>
+                <option value="Discontinued" <%= item.status === 'Discontinued' ? 'selected' : '' %>>● Üretimi/Tedariki Durduruldu</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: BİRİM VE EŞİK LİMLERİ -->
+        <div class="form-section-card">
+          <div class="form-section-header" style="color: #34d399;">
+            <span>📊 2. ÖLÇÜ BİRİMİ VE MİN/MAX STOK LİMİTLERİ</span>
+          </div>
+
+          <div class="glass-grid-3">
+            <div>
+              <label class="glass-label">Ölçü Birimi *</label>
+              <select name="unit" class="glass-input" required>
+                <% ['Adet', 'Kg', 'Lt', 'Mt', 'M2', 'M3', 'Paket', 'Koli', 'Ton', 'Set'].forEach(u => { %>
+                  <option value="<%= u %>" <%= item.unit === u ? 'selected' : '' %>><%= u %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div>
+              <label class="glass-label">Asgari (Min) Stok Eşiği *</label>
+              <input type="number" step="0.01" min="0" name="minStock" value="<%= item.minStock || 0 %>" class="glass-input" required style="font-family: 'JetBrains Mono', monospace;">
+            </div>
+            <div>
+              <label class="glass-label">Azami (Max) Stok Eşiği</label>
+              <input type="number" step="0.01" min="0" name="maxStock" value="<%= item.maxStock || '' %>" class="glass-input" placeholder="Limitsiz" style="font-family: 'JetBrains Mono', monospace;">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: FİYATLANDIRMA VE VERGİLER -->
+        <div class="form-section-card">
+          <div class="form-section-header" style="color: #fbbf24;">
+            <span>💰 3. FİYATLANDIRMA VE VERGİ BİLGİLERİ</span>
+          </div>
+
+          <div class="glass-grid-3">
+            <div>
+              <label class="glass-label">Tedarik / Alış Fiyatı (KDV Hariç)</label>
+              <input type="number" step="0.01" min="0" name="purchasePrice" value="<%= item.purchasePrice || 0 %>" class="glass-input" style="font-family: 'JetBrains Mono', monospace;">
+            </div>
+            <div>
+              <label class="glass-label">Birim Satış Fiyatı (KDV Hariç)</label>
+              <input type="number" step="0.01" min="0" name="salePrice" value="<%= item.salePrice || 0 %>" class="glass-input" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399;">
+            </div>
+            <div>
+              <label class="glass-label">Para Birimi & KDV Oranı (%)</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <select name="currency" class="glass-input">
+                  <option value="TRY" <%= item.currency === 'TRY' ? 'selected' : '' %>>TRY (₺)</option>
+                  <option value="USD" <%= item.currency === 'USD' ? 'selected' : '' %>>USD ($)</option>
+                  <option value="EUR" <%= item.currency === 'EUR' ? 'selected' : '' %>>EUR (€)</option>
+                </select>
+                <input type="number" step="1" min="0" max="100" name="taxRate" value="<%= item.taxRate || 20 %>" class="glass-input" placeholder="KDV %">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: TEDARİKÇİ VE LOKASYON BİLGİLERİ -->
+        <div class="form-section-card">
+          <div class="form-section-header" style="color: #e0e7ff;">
+            <span>🏢 4. TEDARİKÇİ, LOKASYON VE ÖZEL NOTLAR</span>
+          </div>
+
+          <div class="glass-grid-3">
+            <div>
+              <label class="glass-label">Ana Depo Konumu</label>
+              <select name="warehouseLocation" class="glass-input">
+                <option value="Depo-A" <%= item.warehouseLocation === 'Depo-A' ? 'selected' : '' %>>Ana Depo-A (Genel Envanter)</option>
+                <option value="Hammadde Deposu" <%= item.warehouseLocation === 'Hammadde Deposu' ? 'selected' : '' %>>Hammadde Deposu</option>
+                <option value="Yarı Mamul Deposu" <%= item.warehouseLocation === 'Yarı Mamul Deposu' ? 'selected' : '' %>>Yarı Mamul Deposu</option>
+                <option value="Mamul Deposu" <%= item.warehouseLocation === 'Mamul Deposu' ? 'selected' : '' %>>Mamul Deposu</option>
+              </select>
+            </div>
+            <div>
+              <label class="glass-label">Ana Tedarikçi Firma</label>
+              <select name="supplier" class="glass-input">
+                <option value="">Seçiniz / Belirtilmemiş</option>
+                <% if (suppliers && suppliers.length > 0) { %>
+                  <% suppliers.forEach(sup => { %>
+                    <option value="<%= sup.companyName %>" <%= item.supplier === sup.companyName ? 'selected' : '' %>><%= sup.companyName %></option>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
+            <div>
+              <label class="glass-label">Marka / Model</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <input type="text" name="brand" value="<%= item.brand || '' %>" placeholder="Marka" class="glass-input">
+                <input type="text" name="model" value="<%= item.model || '' %>" placeholder="Model" class="glass-input">
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px;">
+            <label class="glass-label">Stok Kartı Notları & Teknik Açıklama</label>
+            <textarea name="notes" class="glass-input" rows="3" placeholder="Özel depolama şartları, malzeme özellikleri veya notlar..."><%= item.notes || '' %></textarea>
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 3rem;">
+          <a href="/stock/items" class="btn btn-secondary" style="padding: 12px 24px; font-weight: 700;">← İptal / Listeye Dön</a>
+          <button type="submit" class="btn-update-submit">
+            <span>💾 Değişiklikleri Güncelle ve Kaydet</span>
+          </button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    updateClock(); setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
