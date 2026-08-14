@@ -3,9 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mal Kabul ve İrsaliye (GRN) — Enterprise ERP</title>
+  <title>Mal Kabul & Faturalandırma — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-card {
+      background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px; width: 92%; max-width: 800px; max-height: 90vh;
+      overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      padding: 30px; transform: scale(0.95); transition: transform 0.25s ease;
+    }
+    .modal-overlay.active .modal-card { transform: scale(1); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 16px; margin-bottom: 20px; }
+    .modal-title { font-size: 1.25rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .modal-close { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .modal-close:hover { background: rgba(244,63,94,0.3); border-color: #f43f5e; }
+    .invoice-item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; font-size: 0.85rem; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 6px; }
+    .photo-preview-box { background: #000; border-radius: 12px; overflow: hidden; display: flex; justify-content: center; align-items: center; max-height: 60vh; border: 1px solid rgba(255,255,255,0.1); }
+    .photo-preview-box img { max-width: 100%; max-height: 55vh; object-fit: contain; }
+  </style>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
@@ -22,7 +45,7 @@
         <a href="/purchase/requisitions" class="mss-sub-link">📩 Satın Alma Talepleri</a>
         <a href="/purchase/rfq" class="mss-sub-link">📨 Teklif Yönetimi (RFQ)</a>
         <a href="/purchase/orders" class="mss-sub-link">📦 Satın Alma Siparişleri</a>
-        <a href="/purchase/goods-receipt" class="mss-sub-link active">🚛 Mal Kabul (GRN)</a>
+        <a href="/purchase/goods-receipt" class="mss-sub-link active">🚛 Mal Kabul & Faturalar</a>
       </div>
       <div class="mss-group-title">🏭 TEDARİKÇİ YÖNETİMİ</div>
       <div class="mss-sub"><a href="/purchase/suppliers" class="mss-sub-link">🏢 Tedarikçi Kartları</a></div>
@@ -45,78 +68,152 @@
       <div class="module-subnav">
         <a href="/purchase/analytics" class="msn-link">📊 Analitik</a><a href="/purchase/approvals" class="msn-link">⚡ Onaylar</a>
         <a href="/purchase/requisitions" class="msn-link">📩 Talepler</a><a href="/purchase/rfq" class="msn-link">📨 RFQ</a>
-        <a href="/purchase/orders" class="msn-link">📦 Siparişler</a><a href="/purchase/goods-receipt" class="msn-link active">🚛 Mal Kabul</a>
+        <a href="/purchase/orders" class="msn-link">📦 Siparişler</a><a href="/purchase/goods-receipt" class="msn-link active">🚛 Mal Kabul & Faturalar</a>
         <a href="/purchase/suppliers" class="msn-link">🏢 Tedarikçiler</a>
       </div>
 
       <div class="page-header">
         <div>
-          <h1>İrsaliye ve Malzeme Kabul (GRN)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Tedarikçiden gelen siparişlerin depo teslim alımı, irsaliye eşleştirmesi ve kalite kontrolü.</p>
+          <h1>İrsaliye, Mal Kabul ve Fatura Yönetimi</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Depo kabulü yapılan siparişler, yüklenen irsaliyeler ve tamamlanan siparişlerin alış faturalandırma takibi.</p>
         </div>
-        <a href="/purchase/goods-receipt/add" class="btn">
+        <a href="/stock/goods-receipt" class="btn btn-indigo-gradient">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Yeni Mal Kabul Fişi
+          Depo Mal Kabul Girişi Yap
         </a>
       </div>
 
+      <% if (success === 'invoice_created') { %>
+        <div style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+          <span>✅</span> Satın alma alış faturası başarıyla oluşturuldu ve ilgili sipariş için kaydedildi!
+        </div>
+      <% } %>
+
+      <% if (error) { %>
+        <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+          <span>⚠️</span> <%= error %>
+        </div>
+      <% } %>
+
       <div class="kpi-strip">
-        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--indigo">🚛</div><div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Giriş Fişi</span><span class="kpi-chip-value"><%= grnStats.totalReceipts %></span></div></div>
+        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--indigo">🚛</div><div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Mal Kabul Fişi</span><span class="kpi-chip-value"><%= grnStats.totalReceipts %></span></div></div>
         <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--amber">🔍</div><div class="kpi-chip-data"><span class="kpi-chip-label">Kalite Kontrol Bekleyen</span><span class="kpi-chip-value"><%= grnStats.pendingInspection %></span></div></div>
-        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--emerald">✅</div><div class="kpi-chip-data"><span class="kpi-chip-label">Tamamlanan Kabul</span><span class="kpi-chip-value"><%= grnStats.completedReceipts %></span></div></div>
+        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--rose">🧾</div><div class="kpi-chip-data"><span class="kpi-chip-label">Fatura Bekleyen Siparişler</span><span class="kpi-chip-value"><%= awaitingOrders.filter(o => !o.hasInvoice).length %></span></div></div>
+        <div class="kpi-chip"><div class="kpi-chip-icon kpi-chip--emerald">✅</div><div class="kpi-chip-data"><span class="kpi-chip-label">Kesilen Alış Faturası</span><span class="kpi-chip-value"><%= awaitingOrders.filter(o => o.hasInvoice).length %></span></div></div>
       </div>
 
-      <div class="filter-bar">
-        <form method="GET" action="/purchase/goods-receipt" class="filter-form">
-          <div class="filter-input-wrap">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" name="search" placeholder="Fiş no, irsaliye no..." value="<%= filterSearch %>" class="filter-input">
+      <!-- SECTION 1: FATURALANDIRILMAYI BEKLEYENLER (TESLİM ALINAN SİPARİŞLER) -->
+      <div class="table-wrapper" style="margin-bottom: 2.5rem;">
+        <div style="padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="color: var(--indigo); font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+              <span>🧾</span> Faturalandırılmayı Bekleyenler (Teslim Alınan Siparişler)
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.825rem; margin-top: 2px;">Mal kabul süreci %100 tamamlanan siparişler burada listelenir. Her sipariş için sadece bir fatura kesilebilir.</p>
           </div>
-          <button type="submit" class="btn btn-sm">Filtrele</button>
-        </form>
-      </div>
-
-      <div class="results-info"><span>Toplam <strong><%= receipts.length %></strong> mal kabul kaydı listeleniyor</span></div>
-
-      <div class="table-wrapper">
+          <span class="status-pill status-active">Toplam <%= awaitingOrders.length %> Sipariş</span>
+        </div>
         <table class="data-table">
           <thead>
             <tr>
-              <th>GRN No</th>
-              <th>İrsaliye No</th>
-              <th>İlgili Sipariş</th>
-              <th>Tedarikçi</th>
-              <th>Malzeme</th>
-              <th>Teslim Alınan</th>
-              <th>Kabul Edilen</th>
-              <th>Kalite Durumu</th>
+              <th>Sipariş No</th>
+              <th>Tedarikçi Unvanı</th>
+              <th>Sipariş Tarihi</th>
+              <th>Malzeme Kalemleri</th>
+              <th>Genel Toplam (₺)</th>
+              <th>Fatura Durumu</th>
+              <th>Aksiyon</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (awaitingOrders.length === 0) { %>
+              <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem;"><div style="font-size: 2rem; margin-bottom: 8px;">📦</div>Henüz faturalandırılmayı bekleyen tamamlanmış sipariş bulunmamaktadır.<br><span style="font-size: 0.8rem;">Stok modülünde siparişlerin mal kabulü tamamlandıkça buraya düşecektir.</span></td></tr>
+            <% } else { %>
+              <% awaitingOrders.forEach(o => { %>
+                <tr>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.orderNo %></strong></td>
+                  <td><strong><%= o.supplierName %></strong></td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(o.orderDate).toLocaleDateString('tr-TR') %></td>
+                  <td style="font-size: 0.825rem;">
+                    <% if (o.items && o.items.length > 0) { %>
+                      <%= o.items.map(it => it.productName || it.stockCode).join(', ') %>
+                    <% } else { %>
+                      <%= o.stockItem ? o.stockItem.name : '—' %>
+                    <% } %>
+                  </td>
+                  <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= o.currency %></strong></td>
+                  <td>
+                    <% if (o.hasInvoice) { %>
+                      <span class="status-pill status-active">✅ Fatura Kesildi (<%= o.existingInvoice ? o.existingInvoice.invoiceNo : '' %>)</span>
+                    <% } else { %>
+                      <span class="status-pill status-pending">⏳ Fatura Bekliyor</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (!o.hasInvoice) { %>
+                      <button type="button" onclick='openInvoiceModal(<%- JSON.stringify(o) %>)' class="btn btn-sm btn-success" style="font-weight: 700;">🧾 Fatura Kes</button>
+                    <% } else { %>
+                      <button type="button" disabled class="btn btn-sm btn-secondary" style="opacity: 0.55; cursor: not-allowed; margin-right: 4px;">🔒 Fatura Kesildi</button>
+                      <a href="/purchase/invoices/<%= o.existingInvoice.id %>/detail" class="btn btn-sm btn-secondary" style="background: rgba(99,102,241,0.2); color: #818cf8; border: 1px solid rgba(99,102,241,0.3);">🔍 Fatura Görüntüle</a>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECTION 2: GERÇEKLEŞTİRİLEN MAL KABUL VE İRSALİYE KAYITLARI (GRN) -->
+      <div class="table-wrapper">
+        <div style="padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="color: var(--indigo); font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+              <span>🚛</span> Mal Kabul ve İrsaliye Kayıtları Detayı
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.825rem; margin-top: 2px;">Depoda yapılan mal kabul fişleri, irsaliye numaraları ve irsaliye fotoğrafları.</p>
+          </div>
+          <div class="filter-input-wrap" style="width: 250px;">
+            <input type="text" id="grnTableSearch" onkeyup="filterGrnTable()" placeholder="Tabloda ara..." class="filter-input" style="padding: 6px 12px; font-size: 0.8rem;">
+          </div>
+        </div>
+        <table class="data-table" id="grnTable">
+          <thead>
+            <tr>
+              <th>GRN Fiş No</th>
+              <th>İrsaliye No & Tarih</th>
+              <th>İrsaliye Fotoğrafı</th>
+              <th>İlgili Sipariş No</th>
+              <th>Tedarikçi Firma</th>
+              <th>Kabul Edilen Miktar</th>
+              <th>Depo Konumu</th>
               <th>Kabul Tarihi</th>
             </tr>
           </thead>
           <tbody>
             <% if (receipts.length === 0) { %>
-              <tr><td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 8px;">🚛</div>Henüz mal kabul kaydı bulunmamaktadır.<br><a href="/purchase/goods-receipt/add" style="color: var(--indigo); font-weight: 600;">İlk mal kabul fişini oluşturun →</a></td></tr>
+              <tr><td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 8px;">🚛</div>Henüz kayıtlı mal kabul işlemi bulunmamaktadır.<br><a href="/stock/goods-receipt" style="color: var(--indigo); font-weight: 600;">Depo modülünden ilk mal kabulü yapın →</a></td></tr>
             <% } else { %>
               <% receipts.forEach(grn => { %>
                 <tr>
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= grn.grnNo %></strong></td>
-                  <td><%= grn.deliveryNoteNo || '—' %></td>
-                  <td><%= grn.purchaseOrder ? grn.purchaseOrder.orderNo : '—' %></td>
-                  <td><%= grn.purchaseOrder ? grn.purchaseOrder.supplierName : '—' %></td>
                   <td>
-                    <strong style="color: var(--text-primary);"><%= grn.stockItem ? grn.stockItem.name : '—' %></strong>
+                    <div style="font-weight: 600;"><%= grn.deliveryNoteNo || '—' %></div>
+                    <% if (grn.deliveryNoteDate) { %><div style="font-size: 0.75rem; color: var(--text-muted);"><%= grn.deliveryNoteDate %></div><% } %>
                   </td>
-                  <td><strong><%= parseFloat(grn.receivedQuantity).toLocaleString('tr-TR') %> <%= grn.stockItem ? grn.stockItem.unit : '' %></strong></td>
-                  <td><strong style="color: var(--emerald);"><%= parseFloat(grn.acceptedQuantity).toLocaleString('tr-TR') %></strong></td>
                   <td>
-                    <% if (grn.qualityStatus === 'Approved') { %>
-                      <span class="status-pill status-active">✅ Kalite Onaylı</span>
-                    <% } else if (grn.qualityStatus === 'Pending_Inspection') { %>
-                      <span class="status-pill status-pending">🔍 Kontrolde</span>
+                    <% if (grn.deliveryNotePhoto) { %>
+                      <button type="button" onclick="viewPhotoModal('<%= grn.grnNo %>', '<%= grn.deliveryNoteNo || "" %>', '<%= grn.deliveryNotePhoto %>')" class="btn btn-sm btn-secondary" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); font-weight: 600;">
+                        🖼️ İrsaliye Fotoğrafı
+                      </button>
                     <% } else { %>
-                      <span class="status-pill status-rejected">❌ Red</span>
+                      <span style="color: var(--text-muted); font-size: 0.8rem;">— Fotoğraf Yok</span>
                     <% } %>
                   </td>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= grn.purchaseOrder ? grn.purchaseOrder.orderNo : '—' %></strong></td>
+                  <td><%= grn.purchaseOrder ? grn.purchaseOrder.supplierName : (grn.supplier ? grn.supplier.companyName : '—') %></td>
+                  <td><strong style="color: var(--emerald);"><%= parseFloat(grn.acceptedQuantity || grn.receivedQuantity).toLocaleString('tr-TR') %> <%= grn.stockItem ? grn.stockItem.unit : '' %></strong></td>
+                  <td><span class="status-pill status-approved"><%= grn.warehouseLocation || 'Ana Depo' %></span></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(grn.receiptDate).toLocaleDateString('tr-TR') %></td>
                 </tr>
               <% }); %>
@@ -127,9 +224,163 @@
     </main>
   </div>
 
+  <!-- MODAL 1: İRSALİYE FOTOĞRAFI GÖRÜNTÜLEME MODALI -->
+  <div id="photoModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 700px;">
+      <div class="modal-header">
+        <div class="modal-title">🖼️ İrsaliye Fotoğrafı — <span id="photoGrnTitle"></span></div>
+        <button type="button" class="modal-close" onclick="closePhotoModal()">✕</button>
+      </div>
+      <div style="margin-bottom: 14px; color: var(--text-secondary); font-size: 0.85rem;" id="photoDeliveryNoteInfo"></div>
+      <div class="photo-preview-box">
+        <img id="photoModalImg" src="" alt="İrsaliye Fotoğrafı">
+      </div>
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+        <button type="button" onclick="closePhotoModal()" class="btn btn-secondary">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: FATURA KESME MODALI -->
+  <div id="invoiceModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">🧾 Satın Alma Alış Faturası Oluştur</div>
+        <button type="button" class="modal-close" onclick="closeInvoiceModal()">✕</button>
+      </div>
+
+      <form id="modalInvoiceForm" action="" method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Numarası (Otomatik)</label>
+            <input type="text" name="invoiceNo" id="invNoInput" value="<%= nextInvoiceNo %>" class="aesthetic-input" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Tarihi *</label>
+            <input type="date" name="invoiceDate" id="invDateInput" class="aesthetic-input" required>
+          </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🏢 TEDARİKÇİ VE SİPARİŞ BİLGİLERİ</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
+            <div><strong>Tedarikçi:</strong> <span id="invSupplierName"></span></div>
+            <div><strong>Sipariş No:</strong> <span id="invOrderNo"></span></div>
+            <div><strong>Vergi Dairesi / No:</strong> <span id="invTaxInfo"></span></div>
+            <div><strong>Ödeme Vadesi:</strong> <span id="invPaymentTerm"></span></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <div style="font-weight: 800; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px;">📋 FATURA KALEMLERİ</div>
+          <div id="invItemsContainer"></div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">
+            Matrah: <strong id="invSubtotal" style="color: #fff;">0.00 TL</strong> | KDV (%20): <strong id="invTaxAmount" style="color: #fff;">0.00 TL</strong>
+          </div>
+          <div>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Fatura Genel Toplamı:</span>
+            <strong id="invGrandTotal" style="font-size: 1.2rem; color: var(--emerald); font-family: 'JetBrains Mono', monospace; margin-left: 8px;">0.00 TL</strong>
+          </div>
+        </div>
+
+        <div class="aesthetic-group" style="margin-bottom: 20px;">
+          <label class="aesthetic-label">Fatura Açıklaması / Özel Notlar</label>
+          <textarea name="notes" id="invNotesInput" class="aesthetic-input" rows="2" placeholder="Resmi fatura özel açıklamaları..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" onclick="closeInvoiceModal()" class="btn btn-secondary">İptal</button>
+          <button type="submit" class="btn btn-success" style="font-weight: 800;">🧾 Faturayı Kaydet ve Kes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
     updateClock(); setInterval(updateClock, 1000);
+
+    function viewPhotoModal(grnNo, noteNo, photoBase64) {
+      document.getElementById('photoGrnTitle').textContent = grnNo;
+      document.getElementById('photoDeliveryNoteInfo').textContent = noteNo ? ('İrsaliye Numarası: ' + noteNo) : 'İrsaliye Numarası Belirtilmemiş';
+      document.getElementById('photoModalImg').src = photoBase64;
+      document.getElementById('photoModal').classList.add('active');
+    }
+
+    function closePhotoModal() {
+      document.getElementById('photoModal').classList.remove('active');
+    }
+
+    function openInvoiceModal(order) {
+      const form = document.getElementById('modalInvoiceForm');
+      form.action = '/purchase/invoices/create-from-order/' + order.id;
+
+      document.getElementById('invDateInput').value = new Date().toISOString().split('T')[0];
+      document.getElementById('invSupplierName').textContent = order.supplierName || 'Tedarikçi';
+      document.getElementById('invOrderNo').textContent = order.orderNo;
+      document.getElementById('invTaxInfo').textContent = (order.supplierTaxNo ? ('VN: ' + order.supplierTaxNo) : 'Tanımsız');
+      document.getElementById('invPaymentTerm').textContent = order.paymentTerm === 'Pesin' ? 'Peşin' : 'Vadeli (30 Gün)';
+      document.getElementById('invNotesInput').value = `[Satın Alma Siparişi No: ${order.orderNo}] Mal kabulü tamamlanan sipariş için kesilen alış faturasıdır.`;
+
+      const totalAmount = parseFloat(order.totalAmount) || 0;
+      const subtotal = parseFloat(order.subtotal) || (totalAmount / 1.2);
+      const taxAmount = parseFloat(order.taxAmount) || (totalAmount - subtotal);
+
+      document.getElementById('invSubtotal').textContent = subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
+      document.getElementById('invTaxAmount').textContent = taxAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
+      document.getElementById('invGrandTotal').textContent = totalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
+
+      const itemsContainer = document.getElementById('invItemsContainer');
+      itemsContainer.innerHTML = '';
+
+      const items = order.items && order.items.length > 0 ? order.items : [{
+        productName: order.stockItem ? order.stockItem.name : 'Malzeme Kalemi',
+        stockCode: order.stockItem ? order.stockItem.stockCode : 'STK-001',
+        quantity: order.quantity || 1,
+        unit: order.stockItem ? order.stockItem.unit : 'Adet',
+        unitPrice: order.unitPrice || 0
+      }];
+
+      items.forEach(it => {
+        const row = document.createElement('div');
+        row.className = 'invoice-item-row';
+        const q = parseFloat(it.quantity) || 1;
+        const p = parseFloat(it.unitPrice) || 0;
+        const tot = q * p;
+        row.innerHTML = `
+          <div><strong>${it.productName || it.stockCode}</strong> <span style="color: var(--text-muted); font-size: 0.75rem;">(${it.stockCode || 'STK'})</span></div>
+          <div style="text-align: right;">${q.toLocaleString('tr-TR')} ${it.unit || 'Adet'}</div>
+          <div style="text-align: right;">${p.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${order.currency || 'TRY'}</div>
+          <div style="text-align: right; font-weight: 700; color: var(--emerald);">${tot.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${order.currency || 'TRY'}</div>
+        `;
+        itemsContainer.appendChild(row);
+      });
+
+      document.getElementById('invoiceModal').classList.add('active');
+    }
+
+    function closeInvoiceModal() {
+      document.getElementById('invoiceModal').classList.remove('active');
+    }
+
+    function filterGrnTable() {
+      const input = document.getElementById('grnTableSearch');
+      const filter = input.value.toUpperCase();
+      const table = document.getElementById('grnTable');
+      const tr = table.getElementsByTagName('tr');
+
+      for (let i = 1; i < tr.length; i++) {
+        let txtValue = tr[i].textContent || tr[i].innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = '';
+        } else {
+          tr[i].style.display = 'none';
+        }
+      }
+    }
   </script>
 </body>
 </html>

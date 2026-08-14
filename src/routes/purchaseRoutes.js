@@ -38,10 +38,13 @@ router.get('/orders/:id/detail', purchaseController.viewOrderDetail);
 router.get('/orders/detail/:id', purchaseController.viewOrderDetail);
 router.get('/orders/:id', purchaseController.viewOrderDetail);
 
-// 5. Mal Kabul (GRN)
+// 5. Mal Kabul (GRN) & Faturalandırma
 router.get('/goods-receipt', purchaseController.listGoodsReceipts);
 router.get('/goods-receipt/add', purchaseController.renderAddGoodsReceipt);
 router.post('/goods-receipt/add', purchaseController.addGoodsReceipt);
+router.post('/invoices/create-from-order/:id', purchaseController.createInvoiceFromOrder);
+router.get('/invoices/:id/detail', purchaseController.viewInvoiceDetail);
+router.get('/invoices/:id', purchaseController.viewInvoiceDetail);
 
 // 6. Tedarikçi Kartları
 router.get('/suppliers', purchaseController.listSuppliers);

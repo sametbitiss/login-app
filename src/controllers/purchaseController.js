@@ -1,3 +1,5 @@
+const purchaseInvoiceRepository = require('../repositories/purchaseInvoiceRepository');
+const purchaseRepository = require('../repositories/purchaseRepository');
 const purchaseService = require('../services/purchaseService');
 const stockService = require('../services/stockService');
 const requisitionRepository = require('../repositories/requisitionRepository');
@@ -5,7 +7,7 @@ const supplierRepository = require('../repositories/supplierRepository');
 const rfqRepository = require('../repositories/rfqRepository');
 const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const asyncHandler = require('../utils/asyncHandler');
-const { StockItem, PurchaseOrder, Supplier, PurchaseRequisition, PurchaseRfq } = require('../../models');
+const { StockItem, PurchaseOrder, Supplier, PurchaseRequisition, PurchaseRfq, PurchaseInvoice } = require('../../models');
 const { Op } = require('sequelize');
 
 class PurchaseController {
@@ -745,19 +747,127 @@ class PurchaseController {
     });
   });
 
-  // ═══════════════════════ GOODS RECEIPT ═══════════════════════
+  // ═══════════════════════ GOODS RECEIPT & INVOICING ═══════════════════════
   listGoodsReceipts = asyncHandler(async (req, res) => {
     const { search, status, qualityStatus } = req.query;
     const receipts = await purchaseService.getAllGoodsReceipts({ search, status, qualityStatus });
     const grnStats = await purchaseService.getGoodsReceiptStats();
 
+    // Fetch all completed / fully received orders awaiting invoicing (status: 'Received')
+    const receivedOrders = await PurchaseOrder.findAll({
+      where: { status: 'Received' },
+      include: [
+        { model: StockItem, as: 'stockItem' },
+        { model: Supplier, as: 'supplier' }
+      ],
+      order: [['updatedAt', 'DESC']]
+    });
+
+    // Attach existing invoice check for each order
+    const awaitingOrders = await Promise.all(receivedOrders.map(async (order) => {
+      const invoice = await purchaseInvoiceRepository.findByOrderId(order.id);
+      let items = [];
+      if (order.itemsJson) {
+        try { items = typeof order.itemsJson === 'string' ? JSON.parse(order.itemsJson) : order.itemsJson; } catch (e) { items = []; }
+      }
+      if (!items || items.length === 0) {
+        items = [{
+          stockItemId: order.stockItemId,
+          stockCode: order.stockItem ? order.stockItem.stockCode : 'STK-001',
+          productName: order.stockItem ? order.stockItem.name : (order.productName || 'Ürün Kalemi'),
+          quantity: order.quantity,
+          unit: order.stockItem ? order.stockItem.unit : 'Adet',
+          unitPrice: order.unitPrice
+        }];
+      }
+
+      return {
+        ...(order.toJSON ? order.toJSON() : order),
+        items,
+        hasInvoice: !!invoice,
+        existingInvoice: invoice ? (invoice.toJSON ? invoice.toJSON() : invoice) : null
+      };
+    }));
+
+    const nextInvoiceNo = await purchaseInvoiceRepository.getNextInvoiceNo();
+
     res.render('purchase/goods_receipt', {
       user: req.user,
       receipts,
       grnStats,
+      awaitingOrders,
+      nextInvoiceNo,
       filterSearch: search || '',
       filterStatus: status || '',
-      filterQualityStatus: qualityStatus || ''
+      filterQualityStatus: qualityStatus || '',
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  });
+
+  createInvoiceFromOrder = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const order = await purchaseRepository.findById(id);
+    if (!order) {
+      return res.redirect('/purchase/goods-receipt?error=' + encodeURIComponent('Satın alma siparişi bulunamadı.'));
+    }
+
+    if (order.status !== 'Received') {
+      return res.redirect('/purchase/goods-receipt?error=' + encodeURIComponent('Sadece mal kabul süreci tamamlanan (Teslim Alındı) siparişler için fatura kesilebilir.'));
+    }
+
+    const existingInvoice = await purchaseInvoiceRepository.findByOrderId(order.id);
+    if (existingInvoice) {
+      return res.redirect('/purchase/goods-receipt?error=' + encodeURIComponent(`⚠️ Bu sipariş (${order.orderNo}) için daha önce ${existingInvoice.invoiceNo} numaralı alış faturası kesilmiştir! Her sipariş için sadece bir fatura oluşturulabilir.`));
+    }
+
+    const nextInvoiceNo = await purchaseInvoiceRepository.getNextInvoiceNo();
+    const invoiceNo = req.body.invoiceNo ? req.body.invoiceNo.trim() : nextInvoiceNo;
+    const invoiceDate = req.body.invoiceDate || new Date().toISOString().split('T')[0];
+
+    const grandTotal = parseFloat(order.totalAmount) || 0;
+    const subtotal = parseFloat(req.body.subtotal) || (parseFloat(order.subtotal) || grandTotal / 1.2);
+    const taxAmount = parseFloat(req.body.taxAmount) || (parseFloat(order.taxAmount) || grandTotal - subtotal);
+
+    await purchaseInvoiceRepository.create({
+      invoiceNo,
+      purchaseOrderId: order.id,
+      supplierId: order.supplierId,
+      supplierName: order.supplierName || (order.supplier ? order.supplier.companyName : 'Tedarikçi Firma'),
+      supplierTaxOffice: order.supplier ? order.supplier.taxOffice : (order.supplierTaxNo || 'Kadıköy V.D.'),
+      supplierTaxNo: order.supplierTaxNo || (order.supplier ? order.supplier.taxNo : '1234567890'),
+      billingAddress: order.supplier ? order.supplier.address : 'Organize Sanayi Bölgesi',
+      supplierPhone: order.supplierPhone || (order.supplier ? order.supplier.phone : ''),
+      supplierEmail: order.supplierEmail || (order.supplier ? order.supplier.email : ''),
+      invoiceDate,
+      orderNo: order.orderNo,
+      orderDate: order.orderDate,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      discountAmount: parseFloat(order.discountAmount) || 0,
+      taxAmount: parseFloat(taxAmount.toFixed(2)),
+      totalAmount: parseFloat(grandTotal.toFixed(2)),
+      currency: order.currency || 'TRY',
+      paymentTerm: order.paymentTerm || 'Vadeli_30',
+      itemsJson: order.itemsJson,
+      notes: req.body.notes || `[Satın Alma Siparişi No: ${order.orderNo}] Mal kabulü tamamlanan sipariş için kesilen alış faturasıdır.`
+    }, req.user, req.ip);
+
+    res.redirect('/purchase/goods-receipt?success=invoice_created');
+  });
+
+  viewInvoiceDetail = asyncHandler(async (req, res) => {
+    const invoice = await purchaseInvoiceRepository.findById(req.params.id);
+    if (!invoice) throw new NotFoundError('Satın alma faturası bulunamadı.');
+
+    let items = [];
+    if (invoice.itemsJson) {
+      try { items = typeof invoice.itemsJson === 'string' ? JSON.parse(invoice.itemsJson) : invoice.itemsJson; } catch (e) { items = []; }
+    }
+
+    res.render('purchase/invoice_view', {
+      user: req.user,
+      invoice,
+      items
     });
   });
 
