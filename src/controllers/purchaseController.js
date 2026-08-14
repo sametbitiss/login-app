@@ -7,7 +7,7 @@ const supplierRepository = require('../repositories/supplierRepository');
 const rfqRepository = require('../repositories/rfqRepository');
 const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const asyncHandler = require('../utils/asyncHandler');
-const { StockItem, PurchaseOrder, Supplier, PurchaseRequisition, PurchaseRfq, PurchaseInvoice, GoodsReceipt } = require('../../models');
+const { StockItem, PurchaseOrder, Supplier, PurchaseRequisition, PurchaseRfq, PurchaseInvoice, GoodsReceipt, Warehouse } = require('../../models');
 const { Op } = require('sequelize');
 
 class PurchaseController {
@@ -508,6 +508,12 @@ class PurchaseController {
       }
     });
 
+    // Fetch active company warehouses from Stock & Warehouse module
+    const warehouses = await Warehouse.findAll({
+      where: { status: 'Active' },
+      order: [['name', 'ASC']]
+    });
+
     res.render('purchase/rfq_add', {
       user: req.user,
       error: null,
@@ -517,6 +523,7 @@ class PurchaseController {
       acceptedStockItemIds: Array.from(acceptedStockItemIds),
       targetReqId,
       targetStockItemId,
+      warehouses,
       formData: {}
     });
   });
@@ -652,6 +659,8 @@ class PurchaseController {
         }
       });
 
+      const warehouses = await Warehouse.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+
       res.render('purchase/rfq_add', {
         user: req.user,
         error: err.message || 'Teklif kaydedilirken hata oluştu.',
@@ -659,6 +668,7 @@ class PurchaseController {
         suppliers,
         requisitionedProducts: Array.from(reqMap.values()),
         targetReqId: null,
+        warehouses,
         formData: req.body
       });
     }

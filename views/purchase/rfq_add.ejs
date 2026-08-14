@@ -412,8 +412,20 @@
               </div>
 
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Teslimat Yeri</label>
-                <input type="text" name="deliveryPlace" value="Merkez Depo / İstanbul" class="aesthetic-input" placeholder="Örn: Ankara Depo / Raf-02">
+                <label class="aesthetic-label">Teslim Edilecek Depo (Stok & Depo Modülü) *</label>
+                <select name="deliveryPlace" id="deliveryPlaceSelect" class="aesthetic-input" required>
+                  <option value="">-- Teslim Alınacak Depoyu Seçiniz --</option>
+                  <% if (typeof warehouses !== 'undefined' && warehouses && warehouses.length > 0) { %>
+                    <% warehouses.forEach(wh => { %>
+                      <option value="<%= wh.name %>" <%= (formData && formData.deliveryPlace === wh.name) ? 'selected' : (wh.name.includes('Ana') || wh.name.includes('Merkez') ? 'selected' : '') %>>🏬 <%= wh.warehouseCode ? wh.warehouseCode + ' — ' : '' %><%= wh.name %> (<%= wh.type || 'Depo' %><% if (wh.city) { %> | <%= wh.city %><% } %>)</option>
+                    <% }); %>
+                  <% } else { %>
+                    <option value="Ana Depo-A" selected>🏬 Ana Depo-A (Genel Envanter)</option>
+                    <option value="Hammadde Deposu">🏬 Hammadde Deposu</option>
+                    <option value="Yarı Mamul Deposu">🏬 Yarı Mamul Deposu</option>
+                    <option value="Mamul Deposu">🏬 Mamul Deposu</option>
+                  <% } %>
+                </select>
               </div>
 
               <div class="aesthetic-group">
