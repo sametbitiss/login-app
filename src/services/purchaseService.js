@@ -314,15 +314,7 @@ class PurchaseService {
       order: [['createdAt', 'DESC']]
     });
 
-    const pendingRequisitions = await PurchaseRequisition.findAll({
-      where: { status: 'Pending' },
-      include: [
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit'] }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
-
-    return { pendingOrders, pendingRequisitions };
+    return { pendingOrders, pendingRequisitions: [] };
   }
 
   async approveOrder(id, action, currentUser, ipAddress) {

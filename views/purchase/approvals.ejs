@@ -102,49 +102,7 @@
         </table>
       </div>
 
-      <!-- Pending Requisitions Table -->
-      <div class="table-wrapper">
-        <h3 style="color: var(--indigo); font-size: 1.05rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-weight: 700;">
-          📩 Onay Bekleyen Satın Alma Talepleri (<%= pendingRequisitions.length %>)
-        </h3>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Talep No</th>
-              <th>Kaynak Modül</th>
-              <th>Malzeme</th>
-              <th>Miktar</th>
-              <th>Talep Eden</th>
-              <th>Aksiyon</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (pendingRequisitions.length === 0) { %>
-              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Onay bekleyen malzeme talebi bulunmamaktadır.</td></tr>
-            <% } else { %>
-              <% pendingRequisitions.forEach(r => { %>
-                <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= r.requisitionNo %></strong></td>
-                  <td><span class="status-pill status-approved"><%= r.sourceModule %></span></td>
-                  <td><%= r.stockItem ? r.stockItem.name : '—' %></td>
-                  <td><%= r.requestedQuantity %> <%= r.unit || 'Adet' %></td>
-                  <td><%= r.requesterName || '—' %></td>
-                  <td>
-                    <form action="/purchase/approvals/requisition/<%= r.id %>/action" method="POST" style="display: inline;">
-                      <input type="hidden" name="action" value="approve">
-                      <button type="submit" class="btn btn-sm btn-success">⚡ Onayla</button>
-                    </form>
-                    <form action="/purchase/approvals/requisition/<%= r.id %>/action" method="POST" style="display: inline; margin-left: 4px;">
-                      <input type="hidden" name="action" value="reject">
-                      <button type="submit" class="btn btn-sm" style="background: var(--rose);">❌ Reddet</button>
-                    </form>
-                  </td>
-                </tr>
-              <% }); %>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
+      <!-- Pending Requisitions Table REMOVED per user directive -->
     </main>
   </div>
 

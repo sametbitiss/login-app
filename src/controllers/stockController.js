@@ -276,8 +276,8 @@ class StockController {
     // Mal kabul bekleyen veya kısmi teslim alınan tüm siparişleri getir (Received/Completed olanlar GİZLENİR!)
     const allOrders = await purchaseRepository.findAll();
     
-    // Filter active orders that are not fully received ('Received', 'Cancelled' hidden!)
-    const activeOrders = allOrders.filter(po => po.status === 'Ordered' || po.status === 'Partial_Received' || po.status === 'Pending_Approval');
+    // Filter active orders that are ready for receipt (Pending_Approval and Received/Cancelled hidden!)
+    const activeOrders = allOrders.filter(po => po.status === 'Ordered' || po.status === 'Partial_Received');
 
     const ordersWithDetails = await Promise.all(activeOrders.map(async (po) => {
       const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
@@ -355,9 +355,10 @@ class StockController {
       include: [
         { model: StockItem, as: 'stockItem' },
         { model: Supplier, as: 'supplier' }
-      ]
-    });
     if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
+    if (po.status === 'Pending_Approval') {
+      throw new ValidationError('Bu sipariş bütçe limitini aştığı için yönetsel onay beklemektedir (Pending_Approval). Onaylanmadan mal kabul işlemi yapılamaz.');
+    }
 
     const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
     const nextGrnNo = await goodsReceiptRepository.getNextGrnNo();
@@ -419,6 +420,9 @@ class StockController {
       include: [{ model: StockItem, as: 'stockItem' }]
     });
     if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
+    if (po.status === 'Pending_Approval') {
+      throw new ValidationError('Bu sipariş bütçe limitini aştığı için yönetsel onay beklemektedir (Pending_Approval). Onaylanmadan mal kabul işlemi yapılamaz.');
+    }
 
     let itemsDataArray = [];
     const stockItemIds = Array.isArray(req.body.itemStockItemId) ? req.body.itemStockItemId : [req.body.itemStockItemId];
