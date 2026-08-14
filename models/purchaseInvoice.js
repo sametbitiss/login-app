@@ -68,6 +68,22 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
+    dispatchNo: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    dispatchDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    bankName: {
+      type: DataTypes.STRING,
+      defaultValue: 'T.C. Ziraat Bankası A.Ş.'
+    },
+    ibanNo: {
+      type: DataTypes.STRING,
+      defaultValue: 'TR62 0001 0000 0000 0000 1234 56'
+    },
     subtotal: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00

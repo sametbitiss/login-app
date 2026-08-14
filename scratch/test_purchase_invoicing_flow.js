@@ -5,7 +5,7 @@ const purchaseRepository = require('../src/repositories/purchaseRepository');
 async function testPurchaseInvoicingFlow() {
   try {
     console.log('\n=== TEST: PURCHASE GOODS RECEIPT & INVOICING FLOW ===\n');
-    await PurchaseInvoice.sync();
+    await PurchaseInvoice.sync({ alter: true });
 
     const mockUser = { id: 1, username: 'admin', firstName: 'Samet', lastName: 'Bitiş', role: 'Admin' };
 

@@ -262,12 +262,30 @@
         </div>
 
         <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-          <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🏢 TEDARİKÇİ VE SİPARİŞ BİLGİLERİ</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
-            <div><strong>Tedarikçi:</strong> <span id="invSupplierName"></span></div>
-            <div><strong>Sipariş No:</strong> <span id="invOrderNo"></span></div>
-            <div><strong>Vergi Dairesi / No:</strong> <span id="invTaxInfo"></span></div>
-            <div><strong>Ödeme Vadesi:</strong> <span id="invPaymentTerm"></span></div>
+          <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🔗 3'LÜ EŞLEŞTİRME & İRSALİYE BAĞLANTISI</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="font-size: 0.775rem; font-weight: 700; color: var(--text-secondary);">Eşleşen Mal Kabul İrsaliye No *</label>
+              <input type="text" name="dispatchNo" id="invDispatchNoInput" class="aesthetic-input" style="padding: 8px 12px; font-size: 0.85rem;" required>
+            </div>
+            <div>
+              <label style="font-size: 0.775rem; font-weight: 700; color: var(--text-secondary);">İrsaliye Tarihi *</label>
+              <input type="date" name="dispatchDate" id="invDispatchDateInput" class="aesthetic-input" style="padding: 8px 12px; font-size: 0.85rem;" required>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🏦 TEDARİKÇİ ÖDEME VE BANKA BİLGİLERİ</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="font-size: 0.775rem; font-weight: 700; color: var(--text-secondary);">Tedarikçi Banka Adı</label>
+              <input type="text" name="bankName" id="invBankNameInput" value="T.C. Ziraat Bankası A.Ş. - Maslak Şubesi" class="aesthetic-input" style="padding: 8px 12px; font-size: 0.85rem;">
+            </div>
+            <div>
+              <label style="font-size: 0.775rem; font-weight: 700; color: var(--text-secondary);">Tedarikçi IBAN Numarası</label>
+              <input type="text" name="ibanNo" id="invIbanInput" value="TR62 0001 0000 0000 0000 1234 56" class="aesthetic-input" style="padding: 8px 12px; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;">
+            </div>
           </div>
         </div>
 
@@ -319,6 +337,8 @@
       form.action = '/purchase/invoices/create-from-order/' + order.id;
 
       document.getElementById('invDateInput').value = new Date().toISOString().split('T')[0];
+      document.getElementById('invDispatchNoInput').value = 'IRS-' + order.orderNo;
+      document.getElementById('invDispatchDateInput').value = new Date().toISOString().split('T')[0];
       document.getElementById('invSupplierName').textContent = order.supplierName || 'Tedarikçi';
       document.getElementById('invOrderNo').textContent = order.orderNo;
       document.getElementById('invTaxInfo').textContent = (order.supplierTaxNo ? ('VN: ' + order.supplierTaxNo) : 'Tanımsız');

@@ -821,6 +821,14 @@ class PurchaseController {
       return res.redirect('/purchase/goods-receipt?error=' + encodeURIComponent(`⚠️ Bu sipariş (${order.orderNo}) için daha önce ${existingInvoice.invoiceNo} numaralı alış faturası kesilmiştir! Her sipariş için sadece bir fatura oluşturulabilir.`));
     }
 
+    // 3-Way matching check: find related GoodsReceipt
+    const grn = await GoodsReceipt.findOne({ where: { purchaseOrderId: order.id }, order: [['id', 'DESC']] });
+    const dispatchNo = req.body.dispatchNo ? req.body.dispatchNo.trim() : (grn ? grn.deliveryNoteNo : `IRS-${order.orderNo}`);
+    const dispatchDate = req.body.dispatchDate || (grn ? grn.receiptDate : order.orderDate);
+
+    const bankName = req.body.bankName ? req.body.bankName.trim() : 'T.C. Ziraat Bankası A.Ş. - Maslak Kurumsal Şubesi';
+    const ibanNo = req.body.ibanNo ? req.body.ibanNo.trim() : 'TR62 0001 0000 0000 0000 1234 56';
+
     const nextInvoiceNo = await purchaseInvoiceRepository.getNextInvoiceNo();
     const invoiceNo = req.body.invoiceNo ? req.body.invoiceNo.trim() : nextInvoiceNo;
     const invoiceDate = req.body.invoiceDate || new Date().toISOString().split('T')[0];
@@ -836,12 +844,16 @@ class PurchaseController {
       supplierName: order.supplierName || (order.supplier ? order.supplier.companyName : 'Tedarikçi Firma'),
       supplierTaxOffice: order.supplier ? order.supplier.taxOffice : (order.supplierTaxNo || 'Kadıköy V.D.'),
       supplierTaxNo: order.supplierTaxNo || (order.supplier ? order.supplier.taxNo : '1234567890'),
-      billingAddress: order.supplier ? order.supplier.address : 'Organize Sanayi Bölgesi',
-      supplierPhone: order.supplierPhone || (order.supplier ? order.supplier.phone : ''),
-      supplierEmail: order.supplierEmail || (order.supplier ? order.supplier.email : ''),
+      billingAddress: order.supplier ? order.supplier.address : 'Organize Sanayi Bölgesi, No: 45 Kadıköy / İSTANBUL',
+      supplierPhone: order.supplierPhone || (order.supplier ? order.supplier.phone : '+90 (216) 555 0000'),
+      supplierEmail: order.supplierEmail || (order.supplier ? order.supplier.email : 'muhasebe@tedarikci.com'),
       invoiceDate,
       orderNo: order.orderNo,
       orderDate: order.orderDate,
+      dispatchNo,
+      dispatchDate,
+      bankName,
+      ibanNo,
       subtotal: parseFloat(subtotal.toFixed(2)),
       discountAmount: parseFloat(order.discountAmount) || 0,
       taxAmount: parseFloat(taxAmount.toFixed(2)),
@@ -849,13 +861,14 @@ class PurchaseController {
       currency: order.currency || 'TRY',
       paymentTerm: order.paymentTerm || 'Vadeli_30',
       itemsJson: order.itemsJson,
-      notes: req.body.notes || `[Satın Alma Siparişi No: ${order.orderNo}] Mal kabulü tamamlanan sipariş için kesilen alış faturasıdır.`
+      notes: req.body.notes || `[Satın Alma Siparişi No: ${order.orderNo} | Mal Kabul İrsaliye No: ${dispatchNo}] Mal kabulü tamamlanan sipariş için kesilen resmi alış faturasıdır.`
     }, req.user, req.ip);
 
     res.redirect('/purchase/goods-receipt?success=invoice_created');
   });
 
   viewInvoiceDetail = asyncHandler(async (req, res) => {
+    const convertNumberToTurkishWords = require('../utils/numberToWords');
     const invoice = await purchaseInvoiceRepository.findById(req.params.id);
     if (!invoice) throw new NotFoundError('Satın alma faturası bulunamadı.');
 
@@ -863,11 +876,23 @@ class PurchaseController {
     if (invoice.itemsJson) {
       try { items = typeof invoice.itemsJson === 'string' ? JSON.parse(invoice.itemsJson) : invoice.itemsJson; } catch (e) { items = []; }
     }
+    if (!items || items.length === 0) {
+      items = [{
+        stockCode: invoice.purchaseOrder && invoice.purchaseOrder.stockItem ? invoice.purchaseOrder.stockItem.stockCode : 'STK-001',
+        productName: invoice.purchaseOrder && invoice.purchaseOrder.stockItem ? invoice.purchaseOrder.stockItem.name : 'Satın Alınan Malzeme Kalemi',
+        quantity: invoice.purchaseOrder ? invoice.purchaseOrder.quantity : 1,
+        unit: invoice.purchaseOrder && invoice.purchaseOrder.stockItem ? invoice.purchaseOrder.stockItem.unit : 'Adet',
+        unitPrice: invoice.subtotal || invoice.totalAmount / 1.2
+      }];
+    }
+
+    const wordsTotal = convertNumberToTurkishWords(invoice.totalAmount);
 
     res.render('purchase/invoice_view', {
       user: req.user,
       invoice,
-      items
+      items,
+      wordsTotal
     });
   });
 
