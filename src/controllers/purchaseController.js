@@ -835,8 +835,10 @@ class PurchaseController {
     const bankName = req.body.bankName && req.body.bankName.trim() ? req.body.bankName.trim() : 'T.C. Ziraat Bankası A.Ş. - Maslak Kurumsal Şubesi';
     const ibanNo = req.body.ibanNo && req.body.ibanNo.trim() ? req.body.ibanNo.trim() : 'TR62 0001 0000 0000 0000 1234 56';
 
-    const nextInvoiceNo = await purchaseInvoiceRepository.getNextInvoiceNo();
-    const invoiceNo = req.body.invoiceNo && req.body.invoiceNo.trim() ? req.body.invoiceNo.trim() : nextInvoiceNo;
+    let invoiceNo = req.body.invoiceNo && req.body.invoiceNo.trim() ? req.body.invoiceNo.trim() : null;
+    if (!invoiceNo || (await purchaseInvoiceRepository.findByInvoiceNo(invoiceNo))) {
+      invoiceNo = await purchaseInvoiceRepository.getNextInvoiceNo();
+    }
     const invoiceDate = req.body.invoiceDate && req.body.invoiceDate.trim() ? req.body.invoiceDate.trim() : new Date().toISOString().split('T')[0];
 
     const grandTotal = parseFloat(order.totalAmount) || 0;

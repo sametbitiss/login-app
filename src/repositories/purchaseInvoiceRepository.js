@@ -41,11 +41,42 @@ class PurchaseInvoiceRepository {
     });
   }
 
+  async findByInvoiceNo(invoiceNo) {
+    if (!invoiceNo) return null;
+    return await PurchaseInvoice.findOne({
+      where: { invoiceNo }
+    });
+  }
+
   async getNextInvoiceNo() {
-    const last = await PurchaseInvoice.findOne({ order: [['id', 'DESC']] });
-    if (!last) return 'SAT-FAT-2026-0001';
-    const num = last.id + 1;
-    return `SAT-FAT-2026-${num.toString().padStart(4, '0')}`;
+    const invoices = await PurchaseInvoice.findAll({
+      attributes: ['invoiceNo'],
+      raw: true
+    });
+
+    let maxNum = 0;
+    const year = new Date().getFullYear();
+    const prefix = `SAT-FAT-${year}-`;
+
+    for (const inv of invoices) {
+      if (inv.invoiceNo && inv.invoiceNo.startsWith(prefix)) {
+        const parts = inv.invoiceNo.split('-');
+        const numPart = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(numPart) && numPart > maxNum) {
+          maxNum = numPart;
+        }
+      }
+    }
+
+    let nextNum = maxNum + 1;
+    let candidate = `${prefix}${nextNum.toString().padStart(4, '0')}`;
+
+    while (await PurchaseInvoice.findOne({ where: { invoiceNo: candidate } })) {
+      nextNum++;
+      candidate = `${prefix}${nextNum.toString().padStart(4, '0')}`;
+    }
+
+    return candidate;
   }
 
   async create(data, currentUser = null, ipAddress = null) {
