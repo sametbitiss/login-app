@@ -70,6 +70,10 @@ class PurchaseController {
       order: [['name', 'ASC']]
     });
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
+    const warehouses = await Warehouse.findAll({
+      where: { status: 'Active' },
+      order: [['name', 'ASC']]
+    });
 
     let itemsList = [];
     if (order.itemsJson) {
@@ -97,6 +101,7 @@ class PurchaseController {
       itemsList,
       stockItems,
       suppliers,
+      warehouses,
       error: null
     });
   });
@@ -123,9 +128,11 @@ class PurchaseController {
         supplierEmail: req.body.supplierEmail || null,
         supplierPhone: req.body.supplierPhone || null,
         orderDate: req.body.orderDate,
+        expectedDeliveryDate: req.body.expectedDeliveryDate || null,
         paymentTerm: req.body.paymentTerm,
         status: req.body.status,
         priority: req.body.priority,
+        deliveryWarehouse: req.body.deliveryWarehouse ? req.body.deliveryWarehouse.trim() : null,
         stockItemId: parseInt(req.body.stockItemId, 10),
         quantity,
         unitPrice,
@@ -144,12 +151,14 @@ class PurchaseController {
       const order = await purchaseService.getOrderById(id);
       const stockItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
       const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
+      const warehouses = await Warehouse.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
 
       res.render('purchase/edit', {
         user: req.user,
         order,
         stockItems,
         suppliers,
+        warehouses,
         error: err.message || 'Sipariş güncellenirken hata oluştu.'
       });
     }
