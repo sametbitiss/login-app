@@ -41,6 +41,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Active'
+    },
+    itemsJson: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     sequelize,

@@ -153,7 +153,7 @@
         </a>
       </div>
 
-      <% if (error) { %>
+      <% if (typeof error !== 'undefined' && error) { %>
         <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1.5px solid rgba(244,63,94,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600;">
           ⚠️ <%= error %>
         </div>
@@ -191,15 +191,13 @@
                 <span>🏬 TESLİMAT VE HEDEF DEPO BİLGİLERİ</span>
               </div>
               <div class="aesthetic-field">
-                <label class="aesthetic-label">Teslim Alınacak Hedef Depo / Lokasyon:</label>
-                <select name="warehouseLocation" class="aesthetic-input" required>
-                  <% warehouses.forEach(wh => { %>
-                    <option value="<%= wh.name %>"><%= wh.name %> (<%= wh.code || 'DEPO' %>)</option>
-                  <% }); %>
-                  <option value="Ana Depo">Ana Depo (Genel)</option>
-                  <option value="Hammadde Deposu">Hammadde Deposu</option>
-                  <option value="Yarı Mamul Deposu">Yarı Mamul Deposu</option>
-                </select>
+                <label class="aesthetic-label" style="color: #fbbf24;">🔒 Teslim Alınacak Hedef Depo (Siparişte Belirlenmiş — Değiştirilemez):</label>
+                <% const targetWhName = (order && (order.deliveryWarehouse || order.deliveryPlace)) ? (order.deliveryWarehouse || order.deliveryPlace) : 'Ana Depo-A'; %>
+                <div style="position: relative;">
+                  <input type="text" value="🏬 <%= targetWhName %>" class="aesthetic-input" readonly style="background: rgba(15, 23, 42, 0.6); border-color: rgba(99, 102, 241, 0.4); color: #818cf8; font-weight: 800; cursor: not-allowed; padding-right: 35px;">
+                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;">🔒</span>
+                </div>
+                <input type="hidden" name="warehouseLocation" value="<%= targetWhName %>">
               </div>
 
               <div class="aesthetic-field">

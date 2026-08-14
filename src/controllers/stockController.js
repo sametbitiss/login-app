@@ -538,6 +538,8 @@ class StockController {
       createdBy: req.user.id
     });
 
+    const targetWhName = warehouseLocation || po.deliveryWarehouse || po.deliveryPlace || 'Ana Depo-A';
+
     for (const itemRec of itemsDataArray) {
       if (itemRec.currentReceivedQuantity > 0 && itemRec.stockItemId) {
         const stockItem = await StockItem.findByPk(itemRec.stockItemId);
@@ -554,11 +556,53 @@ class StockController {
             quantity: itemRec.currentReceivedQuantity,
             unitPrice: po.unitPrice || 0,
             referenceNo: grnNo,
-            notes: `[Mal Kabul Girişi] İrsaliye No: ${deliveryNoteNo || '—'} | Fiş: ${grnNo}`,
+            notes: `[Mal Kabul Girişi] İrsaliye No: ${deliveryNoteNo || '—'} | Fiş: ${grnNo} | Hedef Depo: ${targetWhName}`,
             performedBy: req.user.id
           });
         }
       }
+    }
+
+    // Update target Warehouse per-warehouse inventory balance
+    const { Warehouse } = require('../../models');
+    let targetWarehouse = await Warehouse.findOne({ where: { name: targetWhName } });
+    if (!targetWarehouse) {
+      targetWarehouse = await Warehouse.findOne({ where: { status: 'Active' }, order: [['id', 'ASC']] });
+    }
+
+    if (targetWarehouse) {
+      let whItems = [];
+      if (targetWarehouse.itemsJson) {
+        try {
+          whItems = typeof targetWarehouse.itemsJson === 'string' ? JSON.parse(targetWarehouse.itemsJson) : targetWarehouse.itemsJson;
+        } catch (e) { whItems = []; }
+      }
+      if (!Array.isArray(whItems)) whItems = [];
+
+      for (const itemRec of itemsDataArray) {
+        if (itemRec.currentReceivedQuantity > 0 && itemRec.stockItemId) {
+          const sId = parseInt(itemRec.stockItemId, 10);
+          const existingItem = whItems.find(it => parseInt(it.stockItemId, 10) === sId || (it.stockCode && it.stockCode === itemRec.stockCode));
+          
+          if (existingItem) {
+            existingItem.quantity = (parseFloat(existingItem.quantity) || 0) + itemRec.currentReceivedQuantity;
+            existingItem.lastUpdated = new Date().toISOString();
+          } else {
+            whItems.push({
+              stockItemId: sId,
+              stockCode: itemRec.stockCode || '',
+              name: itemRec.productName || 'Malzeme',
+              category: itemRec.category || 'Hammadde',
+              quantity: itemRec.currentReceivedQuantity,
+              unit: itemRec.unit || 'Adet',
+              lastUpdated: new Date().toISOString()
+            });
+          }
+        }
+      }
+
+      targetWarehouse.itemsJson = JSON.stringify(whItems);
+      await targetWarehouse.save();
     }
 
     const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
