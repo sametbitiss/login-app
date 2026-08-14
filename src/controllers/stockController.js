@@ -149,6 +149,7 @@ class StockController {
         error: friendlyError || 'Stok kartı eklenirken bir hata oluştu.'
       });
     }
+  });
   // 1.1. STOCK ITEM DETAIL & EDIT
   getItemDetail = asyncHandler(async (req, res) => {
     const item = await stockRepository.findById(req.params.id);
