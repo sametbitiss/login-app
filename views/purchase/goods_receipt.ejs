@@ -7,26 +7,78 @@
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    /* Ultra-Premium Glassmorphism Modal System */
     .modal-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px);
+      background: rgba(4, 7, 15, 0.85); backdrop-filter: blur(14px) saturate(180%);
       display: flex; align-items: center; justify-content: center;
-      z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+      z-index: 9999; opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .modal-overlay.active { opacity: 1; pointer-events: auto; }
     .modal-card {
-      background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 20px; width: 92%; max-width: 800px; max-height: 90vh;
-      overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-      padding: 30px; transform: scale(0.95); transition: transform 0.25s ease;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(11, 15, 25, 0.99));
+      border: 1px solid rgba(99, 102, 241, 0.28);
+      border-radius: 24px; width: 94%; max-width: 860px; max-height: 92vh;
+      overflow-y: auto; box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85), 0 0 40px rgba(99, 102, 241, 0.15);
+      padding: 0; transform: scale(0.92) translateY(20px); transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .modal-overlay.active .modal-card { transform: scale(1); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 16px; margin-bottom: 20px; }
-    .modal-title { font-size: 1.25rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
-    .modal-close { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .modal-close:hover { background: rgba(244,63,94,0.3); border-color: #f43f5e; }
-    .invoice-item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; font-size: 0.85rem; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 6px; }
-    .photo-preview-box { background: #000; border-radius: 12px; overflow: hidden; display: flex; justify-content: center; align-items: center; max-height: 60vh; border: 1px solid rgba(255,255,255,0.1); }
+    .modal-overlay.active .modal-card { transform: scale(1) translateY(0); }
+
+    .modal-header-hero {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.08));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 22px 30px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-hero-title { font-size: 1.35rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 12px; letter-spacing: -0.3px; }
+    .modal-hero-badge { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+
+    .modal-body-content { padding: 26px 30px; }
+
+    .modal-section-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px; padding: 18px 20px; margin-bottom: 18px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .modal-section-card:hover { border-color: rgba(99, 102, 241, 0.35); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
+    .modal-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    .modal-section-title { font-size: 0.85rem; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+
+    .glass-input-label { font-size: 0.775rem; font-weight: 700; color: #94a3b8; margin-bottom: 6px; display: block; }
+    .glass-input {
+      width: 100%; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px; color: #ffffff; padding: 10px 14px; font-size: 0.875rem;
+      transition: all 0.2s ease; outline: none; box-sizing: border-box;
+    }
+    .glass-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); background: rgba(15, 23, 42, 0.9); }
+
+    .items-table-header { display: grid; grid-template-columns: 2.2fr 1fr 1.2fr 1.2fr; padding: 8px 14px; font-size: 0.725rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .invoice-item-row {
+      display: grid; grid-template-columns: 2.2fr 1fr 1.2fr 1.2fr; gap: 10px;
+      font-size: 0.85rem; padding: 10px 14px; background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; margin-bottom: 6px;
+      align-items: center; transition: background 0.2s ease;
+    }
+    .invoice-item-row:hover { background: rgba(255, 255, 255, 0.05); }
+
+    .summary-gradient-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(99, 102, 241, 0.08));
+      border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 16px; padding: 20px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+    }
+    .summary-total-price { font-size: 1.5rem; font-weight: 900; color: #10b981; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 16px rgba(16, 185, 129, 0.35); }
+
+    .btn-create-invoice {
+      background: linear-gradient(135deg, #10b981, #059669); color: #ffffff;
+      font-weight: 800; padding: 12px 26px; border-radius: 12px; border: none;
+      font-size: 0.925rem; cursor: pointer; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+      transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-create-invoice:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); }
+
+    .modal-close-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+    .modal-close-btn:hover { background: rgba(244,63,94,0.3); border-color: #f43f5e; color: #fff; }
+    .photo-preview-box { background: #000; border-radius: 16px; overflow: hidden; display: flex; justify-content: center; align-items: center; max-height: 60vh; border: 1px solid rgba(255,255,255,0.1); }
     .photo-preview-box img { max-width: 100%; max-height: 55vh; object-fit: contain; }
   </style>
 </head>
@@ -241,87 +293,141 @@
     </div>
   </div>
 
-  <!-- MODAL 2: FATURA KESME MODALI -->
+  <!-- MODAL 2: FATURA KESME MODALI (WORLD-CLASS GLASSMORPHISM DESIGN) -->
   <div id="invoiceModal" class="modal-overlay">
     <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">🧾 Satın Alma Alış Faturası Oluştur</div>
-        <button type="button" class="modal-close" onclick="closeInvoiceModal()">✕</button>
+      <div class="modal-header-hero">
+        <div>
+          <div class="modal-hero-title">
+            <span>🧾 Satın Alma Alış Faturası Oluştur</span>
+            <span class="modal-hero-badge">Resmi e-Fatura Senaryosu</span>
+          </div>
+          <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">
+            Mal kabulü %100 tamamlanmış sipariş için 3'lü eşleştirmeli resmi alış faturası düzenleme paneli.
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeInvoiceModal()">✕</button>
       </div>
 
-      <form id="modalInvoiceForm" action="" method="POST">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+      <form id="modalInvoiceForm" action="" method="POST" class="modal-body-content">
+        
+        <!-- SECTION 1: FATURA VE SIPARIS KİMLİK KARTI -->
+        <div class="modal-section-card">
+          <div class="modal-section-header">
+            <div class="modal-section-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              1. FATURA KİMLİĞİ VE SİPARİŞ REFERANSI
+            </div>
+            <span style="font-size: 0.725rem; font-weight: 700; color: #64748b; background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius: 6px;">ADIM 1 / 4</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div>
+              <label class="glass-input-label">Fatura Numarası (Sistem Otomatik)</label>
+              <input type="text" name="invoiceNo" id="invNoInput" value="<%= nextInvoiceNo %>" class="glass-input" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8;">
+            </div>
+            <div>
+              <label class="glass-input-label">Fatura Düzenleme Tarihi *</label>
+              <input type="date" name="invoiceDate" id="invDateInput" class="glass-input" required>
+            </div>
+          </div>
+
+          <div style="background: rgba(99, 102, 241, 0.06); border: 1px dashed rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 12px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.825rem;">
+            <div><span style="color: #94a3b8;">Tedarikçi Firma:</span> <strong id="invSupplierName" style="color: #ffffff; margin-left: 6px;"></strong></div>
+            <div><span style="color: #94a3b8;">Sipariş Referans No:</span> <strong id="invOrderNo" style="color: #818cf8; font-family: 'JetBrains Mono', monospace; margin-left: 6px;"></strong></div>
+            <div><span style="color: #94a3b8;">Vergi Dairesi & VKN:</span> <span id="invTaxInfo" style="color: #cbd5e1; margin-left: 6px; font-family: 'JetBrains Mono', monospace;"></span></div>
+            <div><span style="color: #94a3b8;">Anlaşmalı Vade:</span> <span id="invPaymentTerm" style="color: #34d399; font-weight: 700; margin-left: 6px;"></span></div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: 3'LÜ EŞLEŞTİRME VE İRSALİYE BAĞLANTISI -->
+        <div class="modal-section-card">
+          <div class="modal-section-header">
+            <div class="modal-section-title" style="color: #34d399;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              2. 3'LÜ EŞLEŞTİRME & İRSALİYE BAĞLANTISI (GRN MATCH)
+            </div>
+            <span style="font-size: 0.725rem; font-weight: 700; color: #34d399; background: rgba(16, 185, 129, 0.1); padding: 3px 8px; border-radius: 6px;">ADIM 2 / 4</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div>
+              <label class="glass-input-label">Eşleşen Mal Kabul İrsaliye Numarası *</label>
+              <input type="text" name="dispatchNo" id="invDispatchNoInput" class="glass-input" placeholder="Örn: IRS-2026-0001" required style="font-family: 'JetBrains Mono', monospace;">
+            </div>
+            <div>
+              <label class="glass-input-label">İrsaliye Teslimat Tarihi *</label>
+              <input type="date" name="dispatchDate" id="invDispatchDateInput" class="glass-input" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: BANKA VE IBAN BİLGİLERİ -->
+        <div class="modal-section-card">
+          <div class="modal-section-header">
+            <div class="modal-section-title" style="color: #f59e0b;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              3. TEDARİKÇİ ÖDEME VE BANKA IBAN BİLGİLERİ
+            </div>
+            <span style="font-size: 0.725rem; font-weight: 700; color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 3px 8px; border-radius: 6px;">ADIM 3 / 4</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px;">
+            <div>
+              <label class="glass-input-label">Tedarikçi Banka Adı & Şube</label>
+              <input type="text" name="bankName" id="invBankNameInput" value="T.C. Ziraat Bankası A.Ş. - Maslak Kurumsal Şubesi" class="glass-input">
+            </div>
+            <div>
+              <label class="glass-input-label">Tedarikçi IBAN Numarası</label>
+              <input type="text" name="ibanNo" id="invIbanInput" value="TR62 0001 0000 0000 0000 1234 56" class="glass-input" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fbbf24;">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: FATURA KALEMLERİ -->
+        <div class="modal-section-card">
+          <div class="modal-section-header">
+            <div class="modal-section-title" style="color: #e0e7ff;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              4. FATURA FATURALANDIRILAN KALEMLER
+            </div>
+          </div>
+          <div class="items-table-header">
+            <div>Ürün / Malzeme Kodu & Adı</div>
+            <div style="text-align: right;">Miktar / Birim</div>
+            <div style="text-align: right;">Birim Fiyat (KDV Hariç)</div>
+            <div style="text-align: right;">Satır Tutarı</div>
+          </div>
+          <div id="invItemsContainer" style="margin-top: 8px;"></div>
+        </div>
+
+        <!-- GLOWING SUMMARY CARD -->
+        <div class="summary-gradient-card">
           <div>
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Numarası (Otomatik)</label>
-            <input type="text" name="invoiceNo" id="invNoInput" value="<%= nextInvoiceNo %>" class="aesthetic-input" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">
-          </div>
-          <div>
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">Fatura Tarihi *</label>
-            <input type="date" name="invoiceDate" id="invDateInput" class="aesthetic-input" required>
-          </div>
-        </div>
-
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-          <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🏢 TEDARİKÇİ VE SİPARİŞ BİLGİLERİ</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
-            <div><strong>Tedarikçi:</strong> <span id="invSupplierName"></span></div>
-            <div><strong>Sipariş No:</strong> <span id="invOrderNo"></span></div>
-            <div><strong>Vergi Dairesi / No:</strong> <span id="invTaxInfo"></span></div>
-            <div><strong>Ödeme Vadesi:</strong> <span id="invPaymentTerm"></span></div>
-          </div>
-        </div>
-
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-          <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🔗 3'LÜ EŞLEŞTİRME & İRSALİYE BAĞLANTISI</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-              <label style="font-size: 0.775rem; font-weight: 700; color: var(--text-secondary);">Eşleşen Mal Kabul İrsaliye No *</label>
-              <input type="text" name="dispatchNo" id="invDispatchNoInput" class="aesthetic-input" style="padding: 8px 12px; font-size: 0.85rem;" required>
-            </div>
-            <div>
-              <label style="font-size: 0.775rem; font-weight: 700; color: var(--text-secondary);">İrsaliye Tarihi *</label>
-              <input type="date" name="dispatchDate" id="invDispatchDateInput" class="aesthetic-input" style="padding: 8px 12px; font-size: 0.85rem;" required>
+            <div style="font-size: 0.775rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">MAL / HİZMET KDV HESAPLAMA DAĞILIMI</div>
+            <div style="font-size: 0.9rem; color: #ffffff; margin-top: 4px;">
+              Net Matrah: <strong id="invSubtotal" style="color: #818cf8; margin-right: 12px;">0.00 TL</strong>
+              KDV (%20): <strong id="invTaxAmount" style="color: #f43f5e;">0.00 TL</strong>
             </div>
           </div>
-        </div>
-
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-          <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🏦 TEDARİKÇİ ÖDEME VE BANKA BİLGİLERİ</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-              <label style="font-size: 0.775rem; font-weight: 700; color: var(--text-secondary);">Tedarikçi Banka Adı</label>
-              <input type="text" name="bankName" id="invBankNameInput" value="T.C. Ziraat Bankası A.Ş. - Maslak Şubesi" class="aesthetic-input" style="padding: 8px 12px; font-size: 0.85rem;">
-            </div>
-            <div>
-              <label style="font-size: 0.775rem; font-weight: 700; color: var(--text-secondary);">Tedarikçi IBAN Numarası</label>
-              <input type="text" name="ibanNo" id="invIbanInput" value="TR62 0001 0000 0000 0000 1234 56" class="aesthetic-input" style="padding: 8px 12px; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;">
-            </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.75rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px;">FATURA GENEL TOPLAMI (ÖDENECEK)</div>
+            <div id="invGrandTotal" class="summary-total-price">0.00 TL</div>
           </div>
         </div>
 
-        <div style="margin-bottom: 16px;">
-          <div style="font-weight: 800; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px;">📋 FATURA KALEMLERİ</div>
-          <div id="invItemsContainer"></div>
+        <!-- NOTES -->
+        <div style="margin-bottom: 24px;">
+          <label class="glass-input-label">Fatura Açıklaması / Resmi Notlar</label>
+          <textarea name="notes" id="invNotesInput" class="glass-input" rows="2" placeholder="Resmi fatura özel açıklamaları..."></textarea>
         </div>
 
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="font-size: 0.85rem; color: var(--text-secondary);">
-            Matrah: <strong id="invSubtotal" style="color: #fff;">0.00 TL</strong> | KDV (%20): <strong id="invTaxAmount" style="color: #fff;">0.00 TL</strong>
-          </div>
-          <div>
-            <span style="font-size: 0.85rem; color: var(--text-secondary);">Fatura Genel Toplamı:</span>
-            <strong id="invGrandTotal" style="font-size: 1.2rem; color: var(--emerald); font-family: 'JetBrains Mono', monospace; margin-left: 8px;">0.00 TL</strong>
-          </div>
-        </div>
-
-        <div class="aesthetic-group" style="margin-bottom: 20px;">
-          <label class="aesthetic-label">Fatura Açıklaması / Özel Notlar</label>
-          <textarea name="notes" id="invNotesInput" class="aesthetic-input" rows="2" placeholder="Resmi fatura özel açıklamaları..."></textarea>
-        </div>
-
-        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-          <button type="button" onclick="closeInvoiceModal()" class="btn btn-secondary">İptal</button>
-          <button type="submit" class="btn btn-success" style="font-weight: 800;">🧾 Faturayı Kaydet ve Kes</button>
+        <!-- ACTIONS -->
+        <div style="display: flex; gap: 14px; justify-content: flex-end; align-items: center;">
+          <button type="button" onclick="closeInvoiceModal()" class="btn btn-secondary" style="padding: 12px 22px; border-radius: 12px;">İptal</button>
+          <button type="submit" class="btn-create-invoice">
+            <span>🧾 Faturayı Kaydet ve Resmi Olarak Kes</span>
+          </button>
         </div>
       </form>
     </div>
