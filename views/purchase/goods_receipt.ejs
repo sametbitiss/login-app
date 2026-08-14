@@ -262,6 +262,16 @@
         </div>
 
         <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🏢 TEDARİKÇİ VE SİPARİŞ BİLGİLERİ</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
+            <div><strong>Tedarikçi:</strong> <span id="invSupplierName"></span></div>
+            <div><strong>Sipariş No:</strong> <span id="invOrderNo"></span></div>
+            <div><strong>Vergi Dairesi / No:</strong> <span id="invTaxInfo"></span></div>
+            <div><strong>Ödeme Vadesi:</strong> <span id="invPaymentTerm"></span></div>
+          </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
           <div style="font-weight: 800; font-size: 0.85rem; color: var(--indigo); margin-bottom: 8px;">🔗 3'LÜ EŞLEŞTİRME & İRSALİYE BAĞLANTISI</div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div>
@@ -334,52 +344,75 @@
 
     function openInvoiceModal(order) {
       const form = document.getElementById('modalInvoiceForm');
-      form.action = '/purchase/invoices/create-from-order/' + order.id;
+      if (form) form.action = '/purchase/invoices/create-from-order/' + order.id;
 
-      document.getElementById('invDateInput').value = new Date().toISOString().split('T')[0];
-      document.getElementById('invDispatchNoInput').value = 'IRS-' + order.orderNo;
-      document.getElementById('invDispatchDateInput').value = new Date().toISOString().split('T')[0];
-      document.getElementById('invSupplierName').textContent = order.supplierName || 'Tedarikçi';
-      document.getElementById('invOrderNo').textContent = order.orderNo;
-      document.getElementById('invTaxInfo').textContent = (order.supplierTaxNo ? ('VN: ' + order.supplierTaxNo) : 'Tanımsız');
-      document.getElementById('invPaymentTerm').textContent = order.paymentTerm === 'Pesin' ? 'Peşin' : 'Vadeli (30 Gün)';
-      document.getElementById('invNotesInput').value = `[Satın Alma Siparişi No: ${order.orderNo}] Mal kabulü tamamlanan sipariş için kesilen alış faturasıdır.`;
+      const dateEl = document.getElementById('invDateInput');
+      if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+
+      const dispNoEl = document.getElementById('invDispatchNoInput');
+      if (dispNoEl) dispNoEl.value = 'IRS-' + order.orderNo;
+
+      const dispDateEl = document.getElementById('invDispatchDateInput');
+      if (dispDateEl) dispDateEl.value = new Date().toISOString().split('T')[0];
+
+      const supNameEl = document.getElementById('invSupplierName');
+      if (supNameEl) supNameEl.textContent = order.supplierName || 'Tedarikçi';
+
+      const orderNoEl = document.getElementById('invOrderNo');
+      if (orderNoEl) orderNoEl.textContent = order.orderNo;
+
+      const taxInfoEl = document.getElementById('invTaxInfo');
+      if (taxInfoEl) taxInfoEl.textContent = (order.supplierTaxNo ? ('VN: ' + order.supplierTaxNo) : 'Tanımsız');
+
+      const payTermEl = document.getElementById('invPaymentTerm');
+      if (payTermEl) payTermEl.textContent = order.paymentTerm === 'Pesin' ? 'Peşin' : 'Vadeli (30 Gün)';
+
+      const notesEl = document.getElementById('invNotesInput');
+      if (notesEl) notesEl.value = `[Satın Alma Siparişi No: ${order.orderNo}] Mal kabulü tamamlanan sipariş için kesilen alış faturasıdır.`;
 
       const totalAmount = parseFloat(order.totalAmount) || 0;
       const subtotal = parseFloat(order.subtotal) || (totalAmount / 1.2);
       const taxAmount = parseFloat(order.taxAmount) || (totalAmount - subtotal);
 
-      document.getElementById('invSubtotal').textContent = subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
-      document.getElementById('invTaxAmount').textContent = taxAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
-      document.getElementById('invGrandTotal').textContent = totalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
+      const subEl = document.getElementById('invSubtotal');
+      if (subEl) subEl.textContent = subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
+
+      const taxEl = document.getElementById('invTaxAmount');
+      if (taxEl) taxEl.textContent = taxAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
+
+      const grandEl = document.getElementById('invGrandTotal');
+      if (grandEl) grandEl.textContent = totalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ' + (order.currency || 'TRY');
 
       const itemsContainer = document.getElementById('invItemsContainer');
-      itemsContainer.innerHTML = '';
+      if (itemsContainer) {
+        itemsContainer.innerHTML = '';
 
-      const items = order.items && order.items.length > 0 ? order.items : [{
-        productName: order.stockItem ? order.stockItem.name : 'Malzeme Kalemi',
-        stockCode: order.stockItem ? order.stockItem.stockCode : 'STK-001',
-        quantity: order.quantity || 1,
-        unit: order.stockItem ? order.stockItem.unit : 'Adet',
-        unitPrice: order.unitPrice || 0
-      }];
+        const items = order.items && order.items.length > 0 ? order.items : [{
+          productName: order.stockItem ? order.stockItem.name : 'Malzeme Kalemi',
+          stockCode: order.stockItem ? order.stockItem.stockCode : 'STK-001',
+          quantity: order.quantity || 1,
+          unit: order.stockItem ? order.stockItem.unit : 'Adet',
+          unitPrice: order.unitPrice || 0
+        }];
 
-      items.forEach(it => {
-        const row = document.createElement('div');
-        row.className = 'invoice-item-row';
-        const q = parseFloat(it.quantity) || 1;
-        const p = parseFloat(it.unitPrice) || 0;
-        const tot = q * p;
-        row.innerHTML = `
-          <div><strong>${it.productName || it.stockCode}</strong> <span style="color: var(--text-muted); font-size: 0.75rem;">(${it.stockCode || 'STK'})</span></div>
-          <div style="text-align: right;">${q.toLocaleString('tr-TR')} ${it.unit || 'Adet'}</div>
-          <div style="text-align: right;">${p.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${order.currency || 'TRY'}</div>
-          <div style="text-align: right; font-weight: 700; color: var(--emerald);">${tot.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${order.currency || 'TRY'}</div>
-        `;
-        itemsContainer.appendChild(row);
-      });
+        items.forEach(it => {
+          const row = document.createElement('div');
+          row.className = 'invoice-item-row';
+          const q = parseFloat(it.quantity) || 1;
+          const p = parseFloat(it.unitPrice) || 0;
+          const tot = q * p;
+          row.innerHTML = `
+            <div><strong>${it.productName || it.stockCode}</strong> <span style="color: var(--text-muted); font-size: 0.75rem;">(${it.stockCode || 'STK'})</span></div>
+            <div style="text-align: right;">${q.toLocaleString('tr-TR')} ${it.unit || 'Adet'}</div>
+            <div style="text-align: right;">${p.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${order.currency || 'TRY'}</div>
+            <div style="text-align: right; font-weight: 700; color: var(--emerald);">${tot.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${order.currency || 'TRY'}</div>
+          `;
+          itemsContainer.appendChild(row);
+        });
+      }
 
-      document.getElementById('invoiceModal').classList.add('active');
+      const modalEl = document.getElementById('invoiceModal');
+      if (modalEl) modalEl.classList.add('active');
     }
 
     function closeInvoiceModal() {
