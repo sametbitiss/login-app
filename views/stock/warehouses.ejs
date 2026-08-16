@@ -294,42 +294,93 @@
       <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">📋 Mevcut Depolar ve Lokasyon Haritası</h3>
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
         <% warehouses.forEach(wh => { %>
-          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
-              <div>
-                <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: rgba(99,102,241,0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(99,102,241,0.2);"><%= wh.warehouseCode %></strong>
-                <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin-top: 6px;"><%= wh.name %></h4>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;"><%= wh.city %> | Tip: <%= wh.type %></div>
+          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                  <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: rgba(99,102,241,0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(99,102,241,0.2);"><%= wh.warehouseCode %></strong>
+                  <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-top: 6px;"><%= wh.name %></h4>
+                  <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;"><%= wh.city %> | Tip: <%= wh.type %> • Sorumlu: <strong><%= wh.managerName || '—' %></strong></div>
+                </div>
+                <span class="status-pill status-active">● Active</span>
               </div>
-              <span class="status-pill status-active">● Active</span>
-            </div>
-            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">Sorumlu: <strong><%= wh.managerName || '—' %></strong></div>
-            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">Adres: <%= wh.address || '—' %></div>
 
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Depo İçi Tanımlı Lokasyonlar (<%= wh.locations ? wh.locations.length : 0 %>)</div>
-            <% if (!wh.locations || wh.locations.length === 0) { %>
-              <div style="font-size: 0.8rem; color: var(--text-muted);">Henüz lokasyon tanımlanmamış.</div>
-            <% } else { %>
-              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                <% wh.locations.forEach(loc => { %>
-                  <span style="background: #0f172a; border: 1px solid #1e293b; padding: 5px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #f8fafc; display: inline-flex; align-items: center; gap: 6px;">
-                    📍 <%= loc.locationCode %> <small style="color: #64748b;">(Kap: <%= loc.capacity %>)</small>
+              <!-- DEPO GİRİŞİ YAPILAN ÜRÜNLER CANLI LİSTESİ -->
+              <div style="margin-bottom: 16px; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <span style="font-size: 0.825rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                    <span>📦</span> Depoya Girilen Ürünler & Stok Miktarları
                   </span>
-                <% }); %>
-              </div>
-            <% } %>
+                  <span style="font-size: 0.72rem; background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); padding: 2px 8px; border-radius: 10px; font-weight: 700;">
+                    <%= wh.productSummary ? wh.productSummary.length : 0 %> Kalem Ürün
+                  </span>
+                </div>
 
-            <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <% if (!wh.productSummary || wh.productSummary.length === 0) { %>
+                  <div style="font-size: 0.8rem; color: var(--text-muted); padding: 10px 0; text-align: center;">
+                    Henüz bu depoya mal kabul girişi yapılmamıştır.
+                  </div>
+                <% } else { %>
+                  <div style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto; padding-right: 4px;">
+                    <% wh.productSummary.forEach(p => { %>
+                      <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.825rem;">
+                        <div>
+                          <strong style="color: #f8fafc;"><%= p.name %></strong>
+                          <span style="font-size: 0.72rem; color: #94a3b8; margin-left: 6px; font-family: 'JetBrains Mono', monospace;"><%= p.stockCode %></span>
+                        </div>
+                        <div style="text-align: right;">
+                          <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace;"><%= parseFloat(p.totalQuantity).toLocaleString('tr-TR') %> <%= p.unit %></strong>
+                          <div style="font-size: 0.7rem; color: #64748b;">Son Giriş: <%= p.lastReceiptDate %></div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                <% } %>
+              </div>
+
+              <!-- SON MAL KABUL HAREKETLERİ ÖZETİ -->
+              <% if (wh.receiptLogs && wh.receiptLogs.length > 0) { %>
+                <div style="margin-bottom: 16px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 12px;">
+                  <div style="font-size: 0.78rem; font-weight: 800; color: #818cf8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                    <span>🚛</span> Son Mal Kabul Kayıtları (<%= wh.receiptLogs.length %> Giriş Fişi)
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 4px; max-height: 90px; overflow-y: auto;">
+                    <% wh.receiptLogs.slice(0, 3).forEach(log => { %>
+                      <div style="font-size: 0.75rem; color: var(--text-secondary); display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 5px 8px; border-radius: 6px; align-items: center;">
+                        <span><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= log.orderNo %></strong> — <%= log.productName %></span>
+                        <strong style="color: #34d399;"><%= log.quantity %> <%= log.unit %></strong>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } %>
+
+              <!-- DEPO İÇİ LOKASYONLAR -->
+              <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Depo İçi Tanımlı Lokasyonlar (<%= wh.locations ? wh.locations.length : 0 %>)</div>
+              <% if (!wh.locations || wh.locations.length === 0) { %>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Henüz lokasyon tanımlanmamış.</div>
+              <% } else { %>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
+                  <% wh.locations.forEach(loc => { %>
+                    <span style="background: #0f172a; border: 1px solid #1e293b; padding: 4px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #f8fafc; display: inline-flex; align-items: center; gap: 4px;">
+                      📍 <%= loc.locationCode %> <small style="color: #64748b;">(<%= loc.capacity %>)</small>
+                    </span>
+                  <% }); %>
+                </div>
+              <% } %>
+            </div>
+
+            <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <div style="font-size: 0.85rem; font-weight: 800; color: #34d399;">
-                  📦 Depodaki Ürün Çeşidi: <strong><%= wh.productSummary ? wh.productSummary.length : 0 %> Kalem</strong>
+                  📦 <%= wh.productSummary ? wh.productSummary.length : 0 %> Çeşit Ürün Stokta
                 </div>
                 <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
-                  Giriş Kaydı: <%= wh.receiptLogs ? wh.receiptLogs.length : 0 %> Mal Kabul
+                  <%= wh.receiptLogs ? wh.receiptLogs.length : 0 %> Adet Mal Kabul İrsaliyesi
                 </div>
               </div>
               <button type="button" onclick="openWhModal('<%= wh.id %>')" class="btn-indigo-gradient" style="width: auto; padding: 10px 18px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px;">
-                🔍 Depodaki Ürünleri Göster
+                🔍 Tüm Ürün Detaylarını Göster
               </button>
             </div>
           </div>
