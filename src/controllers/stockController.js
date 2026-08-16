@@ -218,15 +218,16 @@ class StockController {
     const warehouseData = warehouses.map(wh => {
       const whPlain = wh.toJSON();
 
-      // Filter receipts for this warehouse
+      // Filter receipts for this warehouse (handling clean names and HTML entities)
       const receiptsForWh = allReceipts.filter(gr => {
         if (!gr.warehouseLocation) {
-          return whPlain.type === 'General' || whPlain.name.includes('Ana Depo');
+          return whPlain.id === 1 || whPlain.type === 'Hammadde' || whPlain.name.includes('Ana Hammadde');
         }
-        const locLower = gr.warehouseLocation.trim().toLowerCase();
-        const nameLower = whPlain.name.trim().toLowerCase();
-        const codeLower = whPlain.warehouseCode.trim().toLowerCase();
-        return locLower === nameLower || locLower === codeLower || nameLower.includes(locLower) || locLower.includes(nameLower);
+        const locClean = gr.warehouseLocation.replace(/&amp;/g, '&').trim().toLowerCase();
+        const nameClean = whPlain.name.replace(/&amp;/g, '&').trim().toLowerCase();
+        const codeClean = whPlain.warehouseCode.replace(/&amp;/g, '&').trim().toLowerCase();
+
+        return locClean === nameClean || locClean === codeClean || nameClean.includes(locClean) || locClean.includes(nameClean);
       });
 
       let receiptLogs = [];
@@ -640,7 +641,25 @@ class StockController {
       createdBy: req.user.id
     });
 
-    const targetWhName = warehouseLocation || po.deliveryWarehouse || po.deliveryPlace || 'Ana Hammadde & Üretim Ambarı';
+    const rawWhName = (warehouseLocation || po.deliveryWarehouse || po.deliveryPlace || 'Ana Hammadde & Üretim Ambarı').replace(/&amp;/g, '&').trim();
+    const { Op } = require('sequelize');
+    const { Warehouse } = require('../../models');
+
+    let targetWarehouse = await Warehouse.findOne({
+      where: {
+        [Op.or]: [
+          { name: { [Op.iLike || Op.like]: rawWhName } },
+          { name: { [Op.iLike || Op.like]: `%${rawWhName}%` } },
+          { warehouseCode: { [Op.iLike || Op.like]: `%${rawWhName}%` } }
+        ]
+      }
+    });
+
+    if (!targetWarehouse) {
+      targetWarehouse = await Warehouse.findOne({ where: { status: 'Active' }, order: [['id', 'ASC']] });
+    }
+
+    const targetWhName = targetWarehouse ? targetWarehouse.name : rawWhName;
 
     for (const itemRec of itemsDataArray) {
       if (itemRec.currentReceivedQuantity > 0 && itemRec.stockItemId) {
@@ -653,7 +672,7 @@ class StockController {
           await StockMovement.create({
             movementNo: moveNo,
             stockItemId: stockItem.id,
-            targetWarehouseId: 1,
+            targetWarehouseId: targetWarehouse ? targetWarehouse.id : 1,
             movementType: 'Inbound',
             quantity: itemRec.currentReceivedQuantity,
             unitPrice: po.unitPrice || 0,
@@ -667,12 +686,6 @@ class StockController {
 
     // Update target Warehouse per-warehouse inventory balance
     try {
-      const { Warehouse } = require('../../models');
-      let targetWarehouse = await Warehouse.findOne({ where: { name: targetWhName } });
-      if (!targetWarehouse) {
-        targetWarehouse = await Warehouse.findOne({ where: { status: 'Active' }, order: [['id', 'ASC']] });
-      }
-
       if (targetWarehouse) {
         let whItems = [];
         if (targetWarehouse.itemsJson) {
