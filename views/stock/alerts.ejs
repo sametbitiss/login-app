@@ -109,38 +109,53 @@
                       const pMethod = item.procurementMethod || ((item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul') ? 'Üretim' : 'Satın Alma');
                       const isProductionItem = (pMethod === 'Üretim' || pMethod === 'Production');
                     %>
-                    <% if (isProductionItem) { %>
-                      <% if (item.hasPendingProductionOrder) { %>
-                        <button type="button" disabled class="btn btn-sm" style="background: var(--bg-tertiary, #334155); color: #94a3b8; border: 1px solid #475569; cursor: not-allowed; opacity: 0.8; font-weight: 700;" title="Bu ürün için Üretim Modülünde aktif talep mevcuttur. Tekrar talep oluşturulamaz.">
-                          ✓ Üretim Modülüne Talep Oluşturuldu
-                        </button>
-                      <% } else { %>
-                        <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
-                          <input type="hidden" name="stockItemId" value="<%= item.id %>">
-                          <input type="hidden" name="requestedQuantity" value="<%= missing > 0 ? missing : 10 %>">
-                          <input type="hidden" name="urgency" value="Urgent">
-                          <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
-                            ⚙️ Üretim Modülüne Talep Oluştur
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                      <% if (isProductionItem) { %>
+                        <% if (item.hasPendingProductionOrder) { %>
+                          <button type="button" disabled class="btn btn-sm" style="background: var(--bg-tertiary, #334155); color: #94a3b8; border: 1px solid #475569; cursor: not-allowed; opacity: 0.85; font-weight: 700;" title="Bu ürün için Üretim Modülünde aktif talep mevcuttur.">
+                            ✓ Üretim Talebi Oluşturuldu
                           </button>
-                        </form>
-                      <% } %>
-                    <% } else { %>
-                      <% if (item.hasPendingPurchaseReq) { %>
-                        <button type="button" disabled class="btn btn-sm" style="background: var(--bg-tertiary, #334155); color: #94a3b8; border: 1px solid #475569; cursor: not-allowed; opacity: 0.8; font-weight: 700;" title="Bu ürün için Satın Alma Modülünde aktif talep mevcuttur. Tekrar talep oluşturulamaz.">
-                          ✓ Satın Alma Modülüne Talep Oluşturuldu
-                        </button>
+                        <% } else { %>
+                          <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
+                            <input type="hidden" name="stockItemId" value="<%= item.id %>">
+                            <input type="hidden" name="targetModule" value="production">
+                            <input type="hidden" name="requestedQuantity" value="<%= missing > 0 ? missing : 10 %>">
+                            <input type="hidden" name="urgency" value="Urgent">
+                            <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); cursor: pointer;">
+                              ⚙️ Üretim Talebi Oluştur
+                            </button>
+                          </form>
+                        <% } %>
                       <% } else { %>
-                        <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
-                          <input type="hidden" name="stockItemId" value="<%= item.id %>">
-                          <input type="hidden" name="targetModule" value="purchase">
-                          <input type="hidden" name="requestedQuantity" value="<%= missing > 0 ? missing : 10 %>">
-                          <input type="hidden" name="urgency" value="Urgent">
-                          <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                            🛒 Satın Alma Modülüne Talep Oluştur
+                        <% if (item.hasPendingPurchaseReq) { %>
+                          <button type="button" disabled class="btn btn-sm" style="background: var(--bg-tertiary, #334155); color: #94a3b8; border: 1px solid #475569; cursor: not-allowed; opacity: 0.85; font-weight: 700;" title="Bu ürün için Satın Alma Modülünde aktif talep mevcuttur.">
+                            ✓ Satın Alma Talebi Oluşturuldu
                           </button>
-                        </form>
+                        <% } else { %>
+                          <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
+                            <input type="hidden" name="stockItemId" value="<%= item.id %>">
+                            <input type="hidden" name="targetModule" value="purchase">
+                            <input type="hidden" name="requestedQuantity" value="<%= missing > 0 ? missing : 10 %>">
+                            <input type="hidden" name="urgency" value="Urgent">
+                            <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); cursor: pointer;">
+                              🛒 Satın Alma Talebi Oluştur
+                            </button>
+                          </form>
+                        <% } %>
+
+                        <% if (!item.hasPendingProductionOrder) { %>
+                          <form action="/stock/alerts/requisition" method="POST" style="display: inline;">
+                            <input type="hidden" name="stockItemId" value="<%= item.id %>">
+                            <input type="hidden" name="targetModule" value="production">
+                            <input type="hidden" name="requestedQuantity" value="<%= missing > 0 ? missing : 10 %>">
+                            <input type="hidden" name="urgency" value="Urgent">
+                            <button type="submit" class="btn btn-sm btn-secondary" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 600; cursor: pointer;" title="Bu malzeme için Üretim Talebi oluştur">
+                              ⚙️ Üretim Talebi
+                            </button>
+                          </form>
+                        <% } %>
                       <% } %>
-                    <% } %>
+                    </div>
                   </td>
                 </tr>
               <% }); %>
