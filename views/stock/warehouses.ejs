@@ -195,122 +195,117 @@
           <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Farklı şehir/şubelerdeki depolarınızı ve koridor, raf, göz detaylı lokasyon haritanızı yönetin.</p>
         </div>
         <div style="display: flex; gap: 12px;">
-          <button type="button" onclick="toggleForm('newWarehouseFormSection')" class="btn-indigo-gradient" style="width: auto; padding: 11px 20px; font-weight: 800; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <button type="button" onclick="openModal('createWarehouseModal')" class="btn-indigo-gradient" style="width: auto; padding: 11px 22px; font-weight: 800; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
             <span>➕</span> Yeni Depo Ekle
           </button>
-          <button type="button" onclick="toggleForm('newLocationFormSection')" class="btn-emerald-gradient" style="width: auto; padding: 11px 20px; font-weight: 800; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <button type="button" onclick="openModal('createLocationModal')" class="btn-emerald-gradient" style="width: auto; padding: 11px 22px; font-weight: 800; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
             <span>📍</span> Yeni Lokasyon Ekle
           </button>
         </div>
       </div>
 
-      <!-- Collapsible Forms Container -->
-      <div id="formsContainer">
-        <!-- 1. Form Container: Yeni Depo Tanımla -->
-        <div id="newWarehouseFormSection" style="display: none; margin-bottom: 28px;">
-          <div class="form-card form-card--indigo" style="max-width: 750px; margin: 0 auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
-              <div class="form-card-header" style="border: none; padding: 0; margin: 0;">
-                <div class="form-card-icon icon--indigo">🏬</div>
-                <div>
-                  <div class="form-card-title">Yeni Depo Tanımla</div>
-                  <div class="form-card-sub">Şehir, ambar tipi ve sorumlu personel tanımı</div>
-                </div>
-              </div>
-              <button type="button" onclick="toggleForm('newWarehouseFormSection')" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      <!-- MODAL 1: YENİ DEPO TANIMLA MODALI -->
+      <div id="createWarehouseModal" class="wh-modal-overlay" onclick="handleOverlayClick(event, 'createWarehouseModal')">
+        <div class="wh-modal-content" style="max-width: 650px;" onclick="event.stopPropagation()">
+          <button type="button" class="wh-modal-close" onclick="closeModal('createWarehouseModal')">&times;</button>
+          
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏬</div>
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight: 900; margin: 0; color: #f8fafc;">Yeni Depo Tanımla</h3>
+              <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 2px;">Şehir, ambar tipi ve sorumlu personel tanımı</div>
             </div>
-
-            <form action="/stock/warehouses/add" method="POST">
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Depo Adı *</label>
-                <input type="text" name="name" placeholder="Örn: Ankara Merkez Lojistik Deposu" class="aesthetic-input" required>
-              </div>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                <div class="aesthetic-group">
-                  <label class="aesthetic-label">Depo Tipi</label>
-                  <select name="type" class="aesthetic-input" style="cursor: pointer;">
-                    <option value="Hammadde">Hammadde Ambarı</option>
-                    <option value="Sevkiyat">Sevkiyat & Mamul Deposu</option>
-                    <option value="Yedek_Parca">Yedek Parça Ambarı</option>
-                    <option value="Genel">Genel Depo</option>
-                  </select>
-                </div>
-
-                <div class="aesthetic-group">
-                  <label class="aesthetic-label">Şehir</label>
-                  <input type="text" name="city" placeholder="Ankara" class="aesthetic-input">
-                </div>
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Depo Sorumlusu</label>
-                <input type="text" name="managerName" placeholder="Örn: Ahmet Yılmaz" class="aesthetic-input">
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Açık Adres</label>
-                <textarea name="address" class="aesthetic-input" rows="2" placeholder="Ambar açık adresi..."></textarea>
-              </div>
-
-              <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" onclick="toggleForm('newWarehouseFormSection')" class="btn btn-secondary" style="width: auto;">İptal</button>
-                <button type="submit" class="btn-indigo-gradient" style="width: auto;">🏬 Depoyu Kaydet ve Tanımla</button>
-              </div>
-            </form>
           </div>
-        </div>
 
-        <!-- 2. Form Container: Depo İçi Lokasyon Ekle -->
-        <div id="newLocationFormSection" style="display: none; margin-bottom: 28px;">
-          <div class="form-card form-card--emerald" style="max-width: 750px; margin: 0 auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
-              <div class="form-card-header" style="border: none; padding: 0; margin: 0;">
-                <div class="form-card-icon icon--emerald">📍</div>
-                <div>
-                  <div class="form-card-title">Depo İçi Lokasyon Ekle</div>
-                  <div class="form-card-sub">Koridor, raf ve göz (bin) detaylı adres haritası</div>
-                </div>
-              </div>
-              <button type="button" onclick="toggleForm('newLocationFormSection')" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+          <form action="/stock/warehouses/add" method="POST">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Depo Adı *</label>
+              <input type="text" name="name" placeholder="Örn: Ankara Merkez Lojistik Deposu" class="aesthetic-input" required>
             </div>
 
-            <form action="/stock/locations/add" method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Hedef Depo Seçin *</label>
-                <select name="warehouseId" class="aesthetic-input" required style="cursor: pointer;">
-                  <% warehouses.forEach(w => { %>
-                    <option value="<%= w.id %>"><%= w.warehouseCode %> — <%= w.name %></option>
-                  <% }); %>
+                <label class="aesthetic-label">Depo Tipi</label>
+                <select name="type" class="aesthetic-input" style="cursor: pointer;">
+                  <option value="Hammadde">Hammadde Ambarı</option>
+                  <option value="Sevkiyat">Sevkiyat & Mamul Deposu</option>
+                  <option value="Yedek_Parca">Yedek Parça Ambarı</option>
+                  <option value="Genel">Genel Depo</option>
                 </select>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <div class="aesthetic-group">
-                  <label class="aesthetic-label">Koridor *</label>
-                  <input type="text" name="aisle" placeholder="Koridor-A" class="aesthetic-input" required>
-                </div>
-                <div class="aesthetic-group">
-                  <label class="aesthetic-label">Raf *</label>
-                  <input type="text" name="shelf" placeholder="Raf-04" class="aesthetic-input" required>
-                </div>
-                <div class="aesthetic-group">
-                  <label class="aesthetic-label">Göz / Bin *</label>
-                  <input type="text" name="bin" placeholder="Göz-02" class="aesthetic-input" required>
-                </div>
-              </div>
-
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Kapasite Limit (Adet / Hacim)</label>
-                <input type="number" name="capacity" value="1000" class="aesthetic-input">
+                <label class="aesthetic-label">Şehir</label>
+                <input type="text" name="city" placeholder="Ankara" class="aesthetic-input">
               </div>
+            </div>
 
-              <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
-                <button type="button" onclick="toggleForm('newLocationFormSection')" class="btn btn-secondary" style="width: auto;">İptal</button>
-                <button type="submit" class="btn-emerald-gradient" style="width: auto;">📍 Lokasyonu Adrese Ekle</button>
-              </div>
-            </form>
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Depo Sorumlusu</label>
+              <input type="text" name="managerName" placeholder="Örn: Ahmet Yılmaz" class="aesthetic-input">
+            </div>
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Açık Adres</label>
+              <textarea name="address" class="aesthetic-input" rows="3" placeholder="Ambar açık adresi..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
+              <button type="button" onclick="closeModal('createWarehouseModal')" class="btn btn-secondary" style="width: auto; padding: 10px 20px;">İptal</button>
+              <button type="submit" class="btn-indigo-gradient" style="width: auto; padding: 10px 24px;">🏬 Depoyu Kaydet ve Tanımla</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- MODAL 2: DEPO İÇİ LOKASYON EKLE MODALI -->
+      <div id="createLocationModal" class="wh-modal-overlay" onclick="handleOverlayClick(event, 'createLocationModal')">
+        <div class="wh-modal-content" style="max-width: 650px;" onclick="event.stopPropagation()">
+          <button type="button" class="wh-modal-close" onclick="closeModal('createLocationModal')">&times;</button>
+          
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">📍</div>
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight: 900; margin: 0; color: #f8fafc;">Depo İçi Lokasyon Ekle</h3>
+              <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 2px;">Koridor, raf ve göz (bin) detaylı adres haritası</div>
+            </div>
           </div>
+
+          <form action="/stock/locations/add" method="POST">
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Hedef Depo Seçin *</label>
+              <select name="warehouseId" class="aesthetic-input" required style="cursor: pointer;">
+                <% warehouses.forEach(w => { %>
+                  <option value="<%= w.id %>"><%= w.warehouseCode %> — <%= w.name %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Koridor *</label>
+                <input type="text" name="aisle" placeholder="Koridor-A" class="aesthetic-input" required>
+              </div>
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Raf *</label>
+                <input type="text" name="shelf" placeholder="Raf-04" class="aesthetic-input" required>
+              </div>
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Göz / Bin *</label>
+                <input type="text" name="bin" placeholder="Göz-02" class="aesthetic-input" required>
+              </div>
+            </div>
+
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">Kapasite Limit (Adet / Hacim)</label>
+              <input type="number" name="capacity" value="1000" class="aesthetic-input">
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
+              <button type="button" onclick="closeModal('createLocationModal')" class="btn btn-secondary" style="width: auto; padding: 10px 20px;">İptal</button>
+              <button type="submit" class="btn-emerald-gradient" style="width: auto; padding: 10px 24px;">📍 Lokasyonu Adrese Ekle</button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -532,27 +527,20 @@
       if (modal) modal.classList.remove('active');
     }
 
-    function toggleForm(formId) {
-      const targetEl = document.getElementById(formId);
-      if (!targetEl) return;
-      
-      const allFormSections = ['newWarehouseFormSection', 'newLocationFormSection'];
-      
-      allFormSections.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-          if (id === formId) {
-            if (el.style.display === 'none' || !el.style.display) {
-              el.style.display = 'block';
-              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } else {
-              el.style.display = 'none';
-            }
-          } else {
-            el.style.display = 'none';
-          }
-        }
-      });
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.remove('active');
+    }
+
+    function handleOverlayClick(event, modalId) {
+      if (event.target && event.target.id === modalId) {
+        closeModal(modalId);
+      }
     }
 
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
