@@ -620,27 +620,6 @@ class StockController {
 
     const grnNo = await goodsReceiptRepository.getNextGrnNo();
 
-    const grn = await GoodsReceipt.create({
-      grnNo,
-      purchaseOrderId: po.id,
-      supplierId: po.supplierId || null,
-      stockItemId: itemsDataArray[0] ? itemsDataArray[0].stockItemId : null,
-      orderedQuantity: itemsDataArray[0] ? itemsDataArray[0].orderedQuantity : po.quantity,
-      receivedQuantity: totalReceivedInThisBatch,
-      acceptedQuantity: totalReceivedInThisBatch,
-      rejectedQuantity: 0,
-      receiptDate: new Date().toISOString().split('T')[0],
-      deliveryNoteNo: deliveryNoteNo ? deliveryNoteNo.trim() : null,
-      deliveryNoteDate: deliveryNoteDate || null,
-      deliveryNotePhoto: deliveryNotePhoto || null,
-      itemsData: JSON.stringify(itemsDataArray),
-      warehouseLocation: warehouseLocation || 'Ana Depo',
-      status: 'Completed',
-      qualityStatus: 'Approved',
-      notes: notes || null,
-      createdBy: req.user.id
-    });
-
     const rawWhName = (warehouseLocation || po.deliveryWarehouse || po.deliveryPlace || 'Ana Hammadde & Üretim Ambarı').replace(/&amp;/g, '&').trim();
     const { Op } = require('sequelize');
     const { Warehouse } = require('../../models');
@@ -660,6 +639,27 @@ class StockController {
     }
 
     const targetWhName = targetWarehouse ? targetWarehouse.name : rawWhName;
+
+    const grn = await GoodsReceipt.create({
+      grnNo,
+      purchaseOrderId: po.id,
+      supplierId: po.supplierId || null,
+      stockItemId: itemsDataArray[0] ? itemsDataArray[0].stockItemId : null,
+      orderedQuantity: itemsDataArray[0] ? itemsDataArray[0].orderedQuantity : po.quantity,
+      receivedQuantity: totalReceivedInThisBatch,
+      acceptedQuantity: totalReceivedInThisBatch,
+      rejectedQuantity: 0,
+      receiptDate: new Date().toISOString().split('T')[0],
+      deliveryNoteNo: deliveryNoteNo ? deliveryNoteNo.trim() : null,
+      deliveryNoteDate: deliveryNoteDate || null,
+      deliveryNotePhoto: deliveryNotePhoto || null,
+      itemsData: JSON.stringify(itemsDataArray),
+      warehouseLocation: targetWhName,
+      status: 'Completed',
+      qualityStatus: 'Approved',
+      notes: notes || null,
+      createdBy: req.user.id
+    });
 
     for (const itemRec of itemsDataArray) {
       if (itemRec.currentReceivedQuantity > 0 && itemRec.stockItemId) {
