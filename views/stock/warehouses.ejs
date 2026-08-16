@@ -107,6 +107,31 @@
       width: 100%;
     }
     .btn-emerald-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
+    .wh-modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.25s ease;
+      padding: 20px;
+    }
+    .wh-modal-overlay.active {
+      opacity: 1; visibility: visible;
+    }
+    .wh-modal-content {
+      background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px; width: 100%; max-width: 950px; max-height: 88vh;
+      overflow-y: auto; box-shadow: 0 30px 70px rgba(0,0,0,0.6); padding: 32px;
+      position: relative; color: #f8fafc;
+    }
+    .wh-modal-close {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: #f8fafc; width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.2rem; font-weight: 700; transition: all 0.2s ease;
+    }
+    .wh-modal-close:hover { background: rgba(244,63,94,0.2); color: #f43f5e; border-color: rgba(244,63,94,0.4); }
   </style>
 </head>
 <body class="module-body">
@@ -294,38 +319,120 @@
               </div>
             <% } %>
 
-            <% 
-              let whProducts = [];
-              if (wh.itemsJson) {
-                try { whProducts = typeof wh.itemsJson === 'string' ? JSON.parse(wh.itemsJson) : wh.itemsJson; } catch(e) { whProducts = []; }
-              }
-              if (!Array.isArray(whProducts)) whProducts = [];
-            %>
-            <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border);">
-              <div style="font-size: 0.8rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-                <span>📦 DEPODAKİ ÜRÜNLER VE STOK ADETLERİ (<%= whProducts.length %> KALEM)</span>
+            <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 0.85rem; font-weight: 800; color: #34d399;">
+                  📦 Depodaki Ürün Çeşidi: <strong><%= wh.productSummary ? wh.productSummary.length : 0 %> Kalem</strong>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                  Giriş Kaydı: <%= wh.receiptLogs ? wh.receiptLogs.length : 0 %> Mal Kabul
+                </div>
               </div>
-              <% if (whProducts.length === 0) { %>
-                <div style="font-size: 0.8rem; color: var(--text-muted); font-style: italic; background: rgba(15, 23, 42, 0.4); padding: 10px 14px; border-radius: 8px;">
-                  Henüz bu depoya mal kabul girişi yapılmamıştır.
+              <button type="button" onclick="openWhModal('<%= wh.id %>')" class="btn-indigo-gradient" style="width: auto; padding: 10px 18px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px;">
+                🔍 Depodaki Ürünleri Göster
+              </button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <!-- WAREHOUSE PRODUCT DETAILS MODALS -->
+      <% warehouses.forEach(wh => { %>
+        <div id="whModal-<%= wh.id %>" class="wh-modal-overlay">
+          <div class="wh-modal-content">
+            <button type="button" class="wh-modal-close" onclick="closeWhModal('<%= wh.id %>')">&times;</button>
+            
+            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+              <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏬</div>
+              <div>
+                <h3 style="font-size: 1.3rem; font-weight: 900; margin: 0; color: #f8fafc;"><%= wh.name %> — Depo Ürün Detayları & Giriş Kayıtları</h3>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 2px;">
+                  Depo Kodu: <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= wh.warehouseCode %></strong> • Şehir: <strong><%= wh.city %></strong> • Sorumlu: <strong><%= wh.managerName || '—' %></strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 1: Depodaki Mevcut Ürünler -->
+            <div style="margin-bottom: 28px;">
+              <h4 style="font-size: 0.95rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span>📦 DEPODAKİ GÜNCEL ÜRÜN KARTLARI VE STOK MİKTARLARI</span>
+                <span style="font-size: 0.75rem; background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); padding: 2px 10px; border-radius: 12px;"><%= wh.productSummary ? wh.productSummary.length : 0 %> Kalem</span>
+              </h4>
+
+              <% if (!wh.productSummary || wh.productSummary.length === 0) { %>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 18px; border-radius: 12px; text-align: center; color: #94a3b8; font-size: 0.88rem; border: 1px dashed rgba(255,255,255,0.1);">
+                  Henüz bu depoya mal kabul veya stok girişi yapılmamıştır.
                 </div>
               <% } else { %>
-                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden;">
-                  <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
                     <thead>
-                      <tr style="background: rgba(30, 41, 59, 0.8); color: #94a3b8; text-align: left;">
-                        <th style="padding: 8px 12px; font-weight: 700;">Stok Kodu</th>
-                        <th style="padding: 8px 12px; font-weight: 700;">Ürün / Malzeme Adı</th>
-                        <th style="padding: 8px 12px; text-align: right; font-weight: 700;">Mevcut Miktar</th>
+                      <tr style="background: rgba(30, 41, 59, 0.85); color: #94a3b8; text-align: left; font-size: 0.75rem; text-transform: uppercase;">
+                        <th style="padding: 12px 16px;">Stok Kodu</th>
+                        <th style="padding: 12px 16px;">Ürün / Malzeme Adı</th>
+                        <th style="padding: 12px 16px; text-align: right;">Depodaki Mevcut Miktar</th>
+                        <th style="padding: 12px 16px; text-align: right;">Son Giriş Tarihi</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <% whProducts.forEach(p => { %>
+                      <% wh.productSummary.forEach(ps => { %>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                          <td style="padding: 12px 16px; font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 700;"><%= ps.stockCode %></td>
+                          <td style="padding: 12px 16px; color: #f8fafc; font-weight: 600;"><%= ps.name %></td>
+                          <td style="padding: 12px 16px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; font-size: 1rem;">
+                            <%= parseFloat(ps.totalQuantity || 0).toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %> <%= ps.unit %>
+                          </td>
+                          <td style="padding: 12px 16px; text-align: right; font-size: 0.8rem; color: #94a3b8;"><%= ps.lastReceiptDate || '—' %></td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Section 2: Mal Kabul Giriş Geçmişi -->
+            <div>
+              <h4 style="font-size: 0.95rem; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span>📥 DEPO GİRİŞ & MAL KABUL HAREKET GEÇMİŞİ</span>
+                <span style="font-size: 0.75rem; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 10px; border-radius: 12px;"><%= wh.receiptLogs ? wh.receiptLogs.length : 0 %> Giriş Hareketi</span>
+              </h4>
+
+              <% if (!wh.receiptLogs || wh.receiptLogs.length === 0) { %>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 18px; border-radius: 12px; text-align: center; color: #94a3b8; font-size: 0.88rem; border: 1px dashed rgba(255,255,255,0.1);">
+                  Bu depoya ait geçmiş mal kabul kaydı bulunmamaktadır.
+                </div>
+              <% } else { %>
+                <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                      <tr style="background: rgba(30, 41, 59, 0.85); color: #94a3b8; text-align: left; font-size: 0.72rem; text-transform: uppercase;">
+                        <th style="padding: 10px 14px;">Giriş Tarihi</th>
+                        <th style="padding: 10px 14px;">İlişkili Sipariş No</th>
+                        <th style="padding: 10px 14px;">Fiş / İrsaliye No</th>
+                        <th style="padding: 10px 14px;">Tedarikçi Firma</th>
+                        <th style="padding: 10px 14px;">Gelen Ürün / Malzeme</th>
+                        <th style="padding: 10px 14px; text-align: right;">Gelen Miktar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% wh.receiptLogs.forEach(log => { %>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                          <td style="padding: 8px 12px; font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 700;"><%= p.stockCode %></td>
-                          <td style="padding: 8px 12px; color: #f8fafc; font-weight: 600;"><%= p.name %></td>
-                          <td style="padding: 8px 12px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;">
-                            <%= parseFloat(p.quantity || 0).toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %> <%= p.unit || 'Adet' %>
+                          <td style="padding: 10px 14px; color: #cbd5e1; font-weight: 600;"><%= log.receiptDate %></td>
+                          <td style="padding: 10px 14px; font-family: 'JetBrains Mono', monospace; color: #6366f1; font-weight: 700;"><%= log.orderNo %></td>
+                          <td style="padding: 10px 14px; font-size: 0.8rem; color: #94a3b8;">
+                            <strong><%= log.grnNo %></strong>
+                            <% if (log.deliveryNoteNo && log.deliveryNoteNo !== '—') { %>
+                              <br><small style="color: #64748b;">İrs: <%= log.deliveryNoteNo %></small>
+                            <% } %>
+                          </td>
+                          <td style="padding: 10px 14px; color: #f8fafc; font-weight: 500;"><%= log.supplierName %></td>
+                          <td style="padding: 10px 14px;">
+                            <strong style="color: #f8fafc;"><%= log.productName %></strong>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #64748b; margin-left: 4px;">(<%= log.stockCode %>)</span>
+                          </td>
+                          <td style="padding: 10px 14px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;">
+                            +<%= parseFloat(log.quantity).toLocaleString('tr-TR') %> <%= log.unit %>
                           </td>
                         </tr>
                       <% }); %>
@@ -335,12 +442,21 @@
               <% } %>
             </div>
           </div>
-        <% }); %>
-      </div>
+        </div>
+      <% }); %>
     </main>
   </div>
 
   <script>
+    function openWhModal(whId) {
+      const modal = document.getElementById('whModal-' + whId);
+      if (modal) modal.classList.add('active');
+    }
+    function closeWhModal(whId) {
+      const modal = document.getElementById('whModal-' + whId);
+      if (modal) modal.classList.remove('active');
+    }
+
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
     updateClock(); setInterval(updateClock, 1000);
   </script>

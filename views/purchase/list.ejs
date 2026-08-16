@@ -178,6 +178,7 @@
               <th>Tedarikçi Unvanı</th>
               <th>Sipariş Edilen Ürünler</th>
               <th>Miktar</th>
+              <th>Teslimat Deposu</th>
               <th>Toplam İskonto</th>
               <th>Genel Toplam</th>
               <th>Ödeme Koşulu</th>
@@ -189,7 +190,7 @@
           <tbody>
             <% if (orders.length === 0) { %>
               <tr>
-                <td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                   <div style="font-size: 2rem; margin-bottom: 8px;">🏭</div>
                   Henüz kayıtlı satın alma siparişi bulunmamaktadır.
                   <br><a href="/purchase/rfq" style="color: var(--indigo); font-weight: 600;">RFQ Teklif Yönetiminden sipariş oluşturabilirsiniz →</a>
@@ -237,6 +238,11 @@
                         <div><%= parseFloat(it.quantity || 1).toLocaleString('tr-TR') %> <%= it.unit || (order.stockItem ? order.stockItem.unit : 'Adet') %></div>
                       <% }); %>
                     </div>
+                  </td>
+                  <td>
+                    <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: #818cf8; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; white-space: nowrap;">
+                      🏬 <%= order.deliveryWarehouse || 'Ana Hammadde Ambarı' %>
+                    </span>
                   </td>
                   <% 
                     let totalDiscountVal = parseFloat(order.discountAmount) || 0;

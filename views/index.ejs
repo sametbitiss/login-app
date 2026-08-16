@@ -58,7 +58,7 @@
             </a>
           <% } %>
 
-          <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
+          <% if (user.role === 'Admin' || user.role === 'Stock_Manager' || user.role === 'Sales_Manager' || user.role === 'Purchase_Manager' || user.role === 'Production_Manager' || user.role === 'Quality_Manager' || user.role === 'Employee') { %>
             <a href="/stock" class="nlink" id="nav-stock">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               Stok & Depo
@@ -253,7 +253,7 @@
       <% } %>
 
       <!-- 2. Stok ve Depo Yönetimi -->
-      <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
+      <% if (user.role === 'Admin' || user.role === 'Stock_Manager' || user.role === 'Sales_Manager' || user.role === 'Purchase_Manager' || user.role === 'Production_Manager' || user.role === 'Quality_Manager' || user.role === 'Employee') { %>
         <a href="/stock" class="mod-card mod-card--active" data-status="active" id="card-stock">
           <div class="mod-card-glow mod-card-glow--cyan"></div>
           <div class="mod-card-header">
@@ -282,7 +282,7 @@
             </span>
           </div>
           <h3 class="mod-card-title">Stok & Depo Yönetimi</h3>
-          <p class="mod-card-desc">Bu modüle erişmek için Stok Yöneticisi veya Admin yetkisi gerekmektedir.</p>
+          <p class="mod-card-desc">Bu modüle erişmek için yetki gerekmektedir.</p>
         </div>
       <% } %>
 

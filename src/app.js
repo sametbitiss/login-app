@@ -39,10 +39,12 @@ app.use('/quality', qualityRoutes);
 app.use(errorHandler);
 
 // Database Sync and Data Seeding
-sequelize.sync({ alter: true }).then(async () => {
-  console.log('Database synced successfully with models.');
+(async () => {
   try {
     await sequelize.query(`ALTER TABLE "StockItems" ADD COLUMN IF NOT EXISTS "procurementMethod" VARCHAR(50) DEFAULT 'Satın Alma';`);
+    await sequelize.query(`ALTER TABLE "Warehouses" ADD COLUMN IF NOT EXISTS "itemsJson" TEXT;`);
+    await sequelize.query(`ALTER TABLE "PurchaseOrders" ADD COLUMN IF NOT EXISTS "deliveryWarehouse" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "GoodsReceipts" ADD COLUMN IF NOT EXISTS "warehouseLocation" VARCHAR(255);`);
     await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "rfqDate" DATE;`);
     await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "deliveryPlace" VARCHAR(255);`);
     await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "shippingStatus" VARCHAR(255);`);
@@ -53,11 +55,16 @@ sequelize.sync({ alter: true }).then(async () => {
     await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "totalTax" NUMERIC(15,4) DEFAULT 0;`);
     await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "itemsData" JSONB;`);
   } catch (e) {
-    console.log('procurementMethod / PurchaseRfqs alter query:', e.message);
+    console.log('Pre-sync alter table warning:', e.message);
   }
-  await seedInitialData();
-}).catch((err) => {
-  console.error('Database Sync Error:', err);
-});
+
+  try {
+    await sequelize.sync({ alter: true });
+    console.log('Database synced successfully with models.');
+    await seedInitialData();
+  } catch (err) {
+    console.error('Database Sync Error:', err);
+  }
+})();
 
 module.exports = app;

@@ -57,7 +57,7 @@
         <% if (user.role === 'Admin') { %>
           <a href="/admin" class="mt-link">Sistem Yönetimi</a>
         <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Stock_Manager') { %>
+        <% if (user.role === 'Admin' || user.role === 'Stock_Manager' || user.role === 'Sales_Manager' || user.role === 'Purchase_Manager' || user.role === 'Production_Manager' || user.role === 'Quality_Manager' || user.role === 'Employee') { %>
           <a href="/stock" class="mt-link">Stok & Depo</a>
         <% } %>
         <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
