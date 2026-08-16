@@ -769,7 +769,10 @@ class PurchaseController {
   // ═══════════════════════ GOODS RECEIPT & INVOICING ═══════════════════════
   listGoodsReceipts = asyncHandler(async (req, res) => {
     const { search, status, qualityStatus } = req.query;
-    const receipts = await purchaseService.getAllGoodsReceipts({ search, status, qualityStatus });
+    const allReceipts = await purchaseService.getAllGoodsReceipts({ search, status, qualityStatus });
+    
+    // Satın alma modülü mal kabul sayfasında sadece teslimatı %100 tamamlanmış (status: 'Received') siparişlerin mal kabul kayıtları listelenir
+    const receipts = allReceipts.filter(grn => grn.purchaseOrder && grn.purchaseOrder.status === 'Received');
     const grnStats = await purchaseService.getGoodsReceiptStats();
 
     // Fetch all completed / fully received orders awaiting invoicing (status: 'Received')

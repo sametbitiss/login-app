@@ -357,11 +357,11 @@
                 <select name="deliveryWarehouse" class="aesthetic-input" style="width: 190px; font-weight: 700; color: #818cf8;">
                   <option value="">-- Depo Seçiniz --</option>
                   <% if (typeof warehouses !== 'undefined' && warehouses && warehouses.length > 0) { %>
-                    <% warehouses.forEach(wh => { %>
-                      <option value="<%= wh.name %>" <%= (order.deliveryWarehouse === wh.name || (!order.deliveryWarehouse && wh.name.includes('Ana'))) ? 'selected' : '' %>>🏬 <%= wh.name %></option>
+                    <% warehouses.forEach((wh, idx) => { %>
+                      <option value="<%= wh.name %>" <%= (order.deliveryWarehouse === wh.name || (!order.deliveryWarehouse && idx === 0)) ? 'selected' : '' %>>🏬 <%= wh.name %></option>
                     <% }); %>
                   <% } else { %>
-                    <option value="<%= order.deliveryWarehouse || 'Ana Depo-A' %>" selected>🏬 <%= order.deliveryWarehouse || 'Ana Depo-A' %></option>
+                    <option value="<%= order.deliveryWarehouse || 'Ana Hammadde & Üretim Ambarı' %>" selected>🏬 <%= order.deliveryWarehouse || 'Ana Hammadde & Üretim Ambarı' %></option>
                   <% } %>
                 </select>
               </div>

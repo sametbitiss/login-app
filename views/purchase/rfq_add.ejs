@@ -416,14 +416,14 @@
                 <select name="deliveryPlace" id="deliveryPlaceSelect" class="aesthetic-input" required>
                   <option value="">-- Teslim Alınacak Depoyu Seçiniz --</option>
                   <% if (typeof warehouses !== 'undefined' && warehouses && warehouses.length > 0) { %>
-                    <% warehouses.forEach(wh => { %>
-                      <option value="<%= wh.name %>" <%= (formData && formData.deliveryPlace === wh.name) ? 'selected' : (wh.name.includes('Ana') || wh.name.includes('Merkez') ? 'selected' : '') %>>🏬 <%= wh.warehouseCode ? wh.warehouseCode + ' — ' : '' %><%= wh.name %> (<%= wh.type || 'Depo' %><% if (wh.city) { %> | <%= wh.city %><% } %>)</option>
+                    <% warehouses.forEach((wh, idx) => { %>
+                      <option value="<%= wh.name %>" <%= (formData && formData.deliveryPlace === wh.name) ? 'selected' : (!formData && idx === 0 ? 'selected' : '') %>>🏬 <%= wh.warehouseCode ? wh.warehouseCode + ' — ' : '' %><%= wh.name %> (<%= wh.type || 'Depo' %><% if (wh.city) { %> | <%= wh.city %><% } %>)</option>
                     <% }); %>
                   <% } else { %>
-                    <option value="Ana Depo-A" selected>🏬 Ana Depo-A (Genel Envanter)</option>
-                    <option value="Hammadde Deposu">🏬 Hammadde Deposu</option>
-                    <option value="Yarı Mamul Deposu">🏬 Yarı Mamul Deposu</option>
-                    <option value="Mamul Deposu">🏬 Mamul Deposu</option>
+                    <option value="Ana Hammadde & Üretim Ambarı" selected>🏬 Ana Hammadde & Üretim Ambarı</option>
+                    <option value="Gebze Sevkiyat & Lojistik Deposu">🏬 Gebze Sevkiyat & Lojistik Deposu</option>
+                    <option value="Ankara Bölge Sevkiyat Ambarı">🏬 Ankara Bölge Sevkiyat Ambarı</option>
+                    <option value="İzmir Hammadde & Üretim Ambarı">🏬 İzmir Hammadde & Üretim Ambarı</option>
                   <% } %>
                 </select>
               </div>

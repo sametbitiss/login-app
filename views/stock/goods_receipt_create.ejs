@@ -192,7 +192,7 @@
               </div>
               <div class="aesthetic-field">
                 <label class="aesthetic-label" style="color: #fbbf24;">🔒 Teslim Alınacak Hedef Depo (Siparişte Belirlenmiş — Değiştirilemez):</label>
-                <% const targetWhName = (order && (order.deliveryWarehouse || order.deliveryPlace)) ? (order.deliveryWarehouse || order.deliveryPlace) : 'Ana Depo-A'; %>
+                <% const targetWhName = (order && (order.deliveryWarehouse || order.deliveryPlace)) ? (order.deliveryWarehouse || order.deliveryPlace) : 'Ana Hammadde & Üretim Ambarı'; %>
                 <div style="position: relative;">
                   <input type="text" value="🏬 <%= targetWhName %>" class="aesthetic-input" readonly style="background: rgba(15, 23, 42, 0.6); border-color: rgba(99, 102, 241, 0.4); color: #818cf8; font-weight: 800; cursor: not-allowed; padding-right: 35px;">
                   <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;">🔒</span>

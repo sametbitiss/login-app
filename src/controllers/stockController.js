@@ -429,11 +429,9 @@ class StockController {
 
   // 5. GOODS RECEIPT (SATIN ALMA MAL KABUL)
   listGoodsReceipt = asyncHandler(async (req, res) => {
-    // Mal kabul bekleyen veya kısmi teslim alınan tüm siparişleri getir (Received/Completed olanlar GİZLENİR!)
     const allOrders = await purchaseRepository.findAll();
-    
-    // Filter active orders that are ready for receipt (Pending_Approval and Received/Cancelled hidden!)
-    const activeOrders = allOrders.filter(po => po.status === 'Ordered' || po.status === 'Partial_Received');
+    // Mal kabul bekleyen, onaylanan veya kısmi teslim alınan tüm aktif satın alma siparişlerini getir (Teslimatı tamamlanan Received/Cancelled olanlar gizlenir)
+    const activeOrders = allOrders.filter(po => po.status !== 'Received' && po.status !== 'Cancelled');
 
     const ordersWithDetails = await Promise.all(activeOrders.map(async (po) => {
       const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
@@ -642,7 +640,7 @@ class StockController {
       createdBy: req.user.id
     });
 
-    const targetWhName = warehouseLocation || po.deliveryWarehouse || po.deliveryPlace || 'Ana Depo-A';
+    const targetWhName = warehouseLocation || po.deliveryWarehouse || po.deliveryPlace || 'Ana Hammadde & Üretim Ambarı';
 
     for (const itemRec of itemsDataArray) {
       if (itemRec.currentReceivedQuantity > 0 && itemRec.stockItemId) {
