@@ -3,98 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rotalama ve Operasyonlar — Enterprise ERP</title>
+  <title>Üretim Rotaları ve Operasyon Mühendisliği — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    .form-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: var(--shadow-md);
-      margin-bottom: 28px;
-      position: relative;
-      overflow: hidden;
-    }
-    .form-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    }
-
-    .form-card-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 22px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    .form-card-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      background: rgba(99, 102, 241, 0.15);
-      color: #818cf8;
-      border: 1px solid rgba(99, 102, 241, 0.3);
-    }
-
-    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
-    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-
-    .aesthetic-group { margin-bottom: 16px; }
-    .aesthetic-label {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #94a3b8;
-      margin-bottom: 6px;
-      display: block;
-    }
-    .aesthetic-input {
-      width: 100%;
-      background: #0f172a;
-      border: 1.5px solid #1e293b;
-      color: #f8fafc;
-      font-size: 0.9rem;
-      font-family: 'Inter', sans-serif;
-      padding: 12px 14px;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-      box-sizing: border-box;
-    }
-    .aesthetic-input:focus {
-      outline: none;
-      border-color: #6366f1;
-      background: #090e1a;
-      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
-    }
-    .aesthetic-input::placeholder { color: #475569; }
-
     .btn-indigo-gradient {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: #ffffff;
+      color: #ffffff !important;
       font-weight: 700;
-      font-size: 0.95rem;
-      padding: 12px 28px;
+      font-size: 0.9rem;
+      padding: 10px 20px;
       border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
-      transition: all 0.2s ease;
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s;
     }
-    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+    .btn-indigo-gradient:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
+    .kpi-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow-sm); }
+    .kpi-icon-box { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .kpi-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-value { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin-top: 2px; }
+
+    .badge-cat-mamul { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .badge-cat-yarimamul { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-has-routing { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-no-routing { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    .btn-action-edit { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 6px 14px; border-radius: 8px; font-size: 0.825rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
+    .btn-action-edit:hover { background: rgba(99, 102, 241, 0.3); color: #fff; }
+
+    .btn-action-view { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 14px; border-radius: 8px; font-size: 0.825rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
+    .btn-action-view:hover { background: rgba(59, 130, 246, 0.3); color: #fff; }
+
+    .btn-action-delete { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 10px; border-radius: 8px; font-size: 0.825rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-action-delete:hover { background: rgba(239, 68, 68, 0.3); color: #fff; }
+
+    /* Modal Overlay */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #0f172a; border: 1.5px solid #1e293b; border-radius: 20px; width: 90%; max-width: 850px; max-height: 85vh; overflow-y: auto; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
   </style>
 </head>
 <body class="module-body">
@@ -103,12 +55,10 @@
     <div class="module-sidebar-section">
       <div class="mss-label">🏭 ÜRETİM & İMALAT YÖNETİMİ</div>
       <div class="mss-group-title">📊 DASHBOARD & PERFORMANS</div>
-      <div class="mss-sub">
-        <a href="/production/analytics" class="mss-sub-link">📊 Üretim Analitiği</a>
-      </div>
+      <div class="mss-sub"><a href="/production/analytics" class="mss-sub-link">📊 Üretim Analitiği</a></div>
       <div class="mss-group-title">⚙️ İMALAT & SİPARİŞ KONTROLÜ</div>
       <div class="mss-sub">
-        <a href="/production/requisitions" class="mss-sub-link">📩 Üretim Talepleri</a>
+        <a href="/production/requisitions" class="mss-sub-link">📩 Talepler</a>
         <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
         <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
         <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
@@ -140,7 +90,7 @@
     <main class="module-content">
       <div class="module-subnav">
         <a href="/production/analytics" class="msn-link">📊 Analitik</a>
-        <a href="/production/requisitions" class="msn-link">📩 Üretim Talepleri</a>
+        <a href="/production/requisitions" class="msn-link">📩 Talepler</a>
         <a href="/production/orders" class="msn-link">📋 İş Emirleri</a>
         <a href="/production/orders/add" class="msn-link">➕ İş Emri Ekle</a>
         <a href="/production/mrp" class="msn-link">⚡ MRP Hesaplama</a>
@@ -150,98 +100,113 @@
         <a href="/production/mes" class="msn-link">📱 MES Terminali</a>
       </div>
 
-      <div class="page-header">
+      <div class="page-header" style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
         <div>
-          <h1>Rotalama ve Operasyon Süreç Mühendisliği</h1>
-          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Ürünün imalat sürecinde geçeceği tezgah sırası, hazırlık ve birim işleme süreleri.</p>
+          <h1>🛠️ Üretim Rotaları ve Operasyon Adımları (Process Engineering)</h1>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Reçeteli Mamul ve Yarı Mamul ürünlerin istasyon sırası, operasyon kodları, ayar/hazırlık ve birim işlem sürelerini yönetin.</p>
         </div>
+        <a href="/production/routing/add" class="btn-indigo-gradient">
+          <span>➕ Yeni Rota / Operasyon Ekle</span>
+        </a>
       </div>
 
-      <!-- Add Routing Form -->
-      <div class="form-card">
-        <div class="form-card-header">
-          <div class="form-card-icon">🛠️</div>
+      <% 
+        const safeRoutingList = (typeof productRoutingList !== 'undefined' && productRoutingList) ? productRoutingList : [];
+        const routingDefinedOnly = safeRoutingList.filter(r => r.hasRouting);
+        const safeStats = (typeof stats !== 'undefined' && stats) ? stats : {
+          totalCandidateProducts: safeRoutingList.length,
+          withRouting: routingDefinedOnly.length,
+          withoutRouting: safeRoutingList.length - routingDefinedOnly.length
+        };
+      %>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon-box" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">🛠️</div>
           <div>
-            <div class="form-card-title">Rotalamaya Yeni Operasyon Adımı Ekle</div>
-            <div class="form-card-sub">Tezgah rotası, operasyon sırası (Seq 10, Seq 20...), ayar ve işleme süreleri</div>
+            <div class="kpi-title">Reçeteli Ürün Sayısı</div>
+            <div class="kpi-value"><%= safeStats.totalCandidateProducts %></div>
           </div>
         </div>
-
-        <form action="/production/routing" method="POST">
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;">
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Ürün Seçin *</label>
-              <select name="stockItemId" class="aesthetic-input" required style="cursor: pointer;">
-                <% stockItems.forEach(item => { %>
-                  <option value="<%= item.id %>"><%= item.stockCode %> — <%= item.name %></option>
-                <% }); %>
-              </select>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Operasyon Sırası (Seq) *</label>
-              <input type="number" name="operationSeq" value="10" step="10" class="aesthetic-input" required>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Operasyon Adı *</label>
-              <input type="text" name="operationName" placeholder="Örn: Lazer Kesim & Çapak Alma" class="aesthetic-input" required>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">İş İstasyonu / Tezgah *</label>
-              <select name="workCenter" class="aesthetic-input" required style="cursor: pointer;">
-                <% WORK_CENTERS.forEach(wc => { %>
-                  <option value="<%= wc %>"><%= wc %></option>
-                <% }); %>
-              </select>
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Hazırlık Süresi (Setup dk)</label>
-              <input type="number" name="setupTimeMinutes" value="15" min="0" class="aesthetic-input">
-            </div>
-            <div class="aesthetic-group">
-              <label class="aesthetic-label">Birim İşleme (Run Time dk/adet)</label>
-              <input type="number" name="runTimeMinutesPerUnit" value="5" min="0.1" step="0.1" class="aesthetic-input">
-            </div>
-            <div class="aesthetic-group" style="grid-column: span 2;">
-              <label class="aesthetic-label">Operatör Talimatı / Notlar</label>
-              <input type="text" name="instructions" placeholder="Örn: 0.05mm tolerans hassasiyeti, kumpas kontrolü..." class="aesthetic-input">
+        <div class="kpi-card">
+          <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">✓</div>
+          <div>
+            <div class="kpi-title">Rotası Tanımlanmış Ürünler</div>
+            <div class="kpi-value" style="color: #34d399;"><%= safeStats.withRouting %></div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-box" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⚠️</div>
+          <div>
+            <div class="kpi-title">Rotası Eksik Ürünler</div>
+            <div class="kpi-value" style="color: #fbbf24;"><%= safeStats.withoutRouting %></div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-box" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">⚡</div>
+          <div>
+            <div class="kpi-title">Rota Tamamlanma Oranı</div>
+            <div class="kpi-value" style="color: #c084fc;">
+              <%= safeStats.totalCandidateProducts > 0 ? Math.round((safeStats.withRouting / safeStats.totalCandidateProducts) * 100) : 0 %>%
             </div>
           </div>
-          <div style="margin-top: 12px;">
-            <button type="submit" class="btn-indigo-gradient">🛠️ Operasyon Adımını Kaydet</button>
-          </div>
-        </form>
+        </div>
       </div>
 
-      <!-- Routing Table -->
-      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">📋 Tanımlı İmalat Rotaları ve Operasyon Adımları</h3>
+      <!-- Main Routings Table -->
       <div class="table-wrapper">
-        <table class="data-table">
+        <table class="data-table" id="routingTable">
           <thead>
             <tr>
-              <th>Rota Kodu</th>
+              <th>Ürün Kodu</th>
               <th>Ürün Adı</th>
-              <th>Sıra (Seq)</th>
-              <th>Operasyon Adı</th>
-              <th>İş İstasyonu</th>
-              <th>Setup Süresi</th>
-              <th>Birim Süre</th>
-              <th>Operasyon Talimatı</th>
+              <th>Kategori</th>
+              <th>Adım Sayısı</th>
+              <th>Toplam Ayar Süresi</th>
+              <th>Birim İşlem Süresi</th>
+              <th>Kullanılan İş Merkezleri</th>
+              <th>Rota Durumu</th>
+              <th style="text-align: right;">İşlemler</th>
             </tr>
           </thead>
           <tbody>
-            <% if (routings.length === 0) { %>
-              <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Henüz kayıtlı rotalama operasyonu bulunmamaktadır.</td></tr>
+            <% if (routingDefinedOnly.length === 0) { %>
+              <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem;">Henüz tanımlanmış bir üretim rotası bulunmamaktadır. Ekranın sağ üstündeki <strong>'➕ Yeni Rota / Operasyon Ekle'</strong> butonuna basarak reçeteli ürünleriniz için operasyon adımları tanımlayabilirsiniz.</td></tr>
             <% } else { %>
-              <% routings.forEach(r => { %>
+              <% routingDefinedOnly.forEach(item => { %>
                 <tr>
-                  <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; background: rgba(99,102,241,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(99,102,241,0.2);"><%= r.routingCode %></strong></td>
-                  <td><strong style="color: var(--text-primary);"><%= r.stockItem ? r.stockItem.name : '—' %></strong></td>
-                  <td><span class="status-pill status-active">Seq <%= r.operationSeq %></span></td>
-                  <td><strong style="color: #22d3ee;"><%= r.operationName %></strong></td>
-                  <td style="font-size: 0.85rem; color: var(--text-muted);"><%= r.workCenter %></td>
-                  <td><%= r.setupTimeMinutes %> dk</td>
-                  <td><strong style="color: #34d399;"><%= r.runTimeMinutesPerUnit %> dk / adet</strong></td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= r.instructions || '—' %></td>
+                  <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= item.product.stockCode %></strong></td>
+                  <td><strong style="color: var(--text-primary);"><%= item.product.name %></strong></td>
+                  <td>
+                    <% if (item.product.category === 'Mamul') { %>
+                      <span class="badge-status badge-cat-mamul">🏭 Mamul</span>
+                    <% } else { %>
+                      <span class="badge-status badge-cat-yarimamul">⚙️ Yarı Mamul</span>
+                    <% } %>
+                  </td>
+                  <td><strong><%= item.totalOperations %> Adım</strong></td>
+                  <td><strong><%= item.totalSetupTime %> Dk</strong></td>
+                  <td><strong style="color: #34d399;"><%= item.totalRunTime %> Dk / Adet</strong></td>
+                  <td style="font-size: 0.82rem; color: var(--text-secondary);">
+                    <% if (item.workCenters.length > 0) { %>
+                      <%= item.workCenters.join(' • ') %>
+                    <% } else { %>
+                      —
+                    <% } %>
+                  </td>
+                  <td><span class="badge-status badge-has-routing">✓ Rota Tanımlı</span></td>
+                  <td style="text-align: right; white-space: nowrap;">
+                    <button type="button" class="btn-action-view" onclick="openRoutingDetailModal(<%= JSON.stringify(item) %>)">
+                      🔍 Detay
+                    </button>
+                    <a href="/production/routing/edit/<%= item.product.id %>" class="btn-action-edit">
+                      ✏️ Düzenle
+                    </a>
+                    <form action="/production/routing/delete/<%= item.product.id %>" method="POST" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('Bu ürünün tüm rotalama operasyon adımlarını silmek istediğinize emin misiniz?');">
+                      <button type="submit" class="btn-action-delete" title="Rotayı Sil">🗑️</button>
+                    </form>
+                  </td>
                 </tr>
               <% }); %>
             <% } %>
@@ -251,7 +216,65 @@
     </main>
   </div>
 
+  <!-- Routing Operation Detail Modal -->
+  <div id="routingDetailModal" class="modal-overlay">
+    <div class="modal-box">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
+        <h2 id="modalProductTitle" style="font-size: 1.2rem; color: #818cf8; margin: 0;">🛠️ Operasyon Adımları Detayı</h2>
+        <button type="button" onclick="closeRoutingDetailModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div id="modalContentContainer">
+        <!-- Operation steps dynamic list -->
+      </div>
+
+      <div style="text-align: right; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+        <button type="button" onclick="closeRoutingDetailModal()" class="btn btn-secondary" style="border-radius: 10px; padding: 10px 24px;">Kapat</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    function openRoutingDetailModal(itemData) {
+      document.getElementById('modalProductTitle').textContent = `🛠️ [${itemData.product.stockCode}] ${itemData.product.name} — Operasyon Adımları`;
+      
+      const container = document.getElementById('modalContentContainer');
+      let html = '';
+
+      if (!itemData.operations || itemData.operations.length === 0) {
+        html = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">Bu ürün için tanımlı operasyon adımı bulunamadı.</p>';
+      } else {
+        html = '<div style="display: flex; flex-direction: column; gap: 14px;">';
+        itemData.operations.forEach((op, idx) => {
+          html += `
+            <div style="background: #090e1a; border: 1.5px solid #1e293b; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px;">
+                <div style="font-weight: 800; color: #818cf8; font-size: 0.95rem;">
+                  <span style="background: #6366f1; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; margin-right: 8px;">Sıra: ${op.operationSeq}</span>
+                  ${op.operationCode ? op.operationCode + ' — ' : ''}${op.operationName}
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #34d399;">🏭 ${op.workCenter}</div>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 0.88rem;">
+                <div><span style="color: #94a3b8;">Hazırlık / Ayar Süresi:</span> <strong style="color: #fff;">${op.setupTimeMinutes} Dk</strong></div>
+                <div><span style="color: #94a3b8;">Parça İşlem Süresi:</span> <strong style="color: #34d399;">${op.runTimeMinutesPerUnit} Dk / Adet</strong></div>
+                <div><span style="color: #94a3b8;">Operatör Sayısı:</span> <strong style="color: #fbbf24;">${op.operatorCount || 1} Personel</strong></div>
+              </div>
+              ${op.instructions ? `<div style="background: rgba(30,41,59,0.5); padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: #cbd5e1; border-left: 3px solid #6366f1;"><strong>📝 İş Talimatı Notu:</strong> ${op.instructions}</div>` : ''}
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      container.innerHTML = html;
+      document.getElementById('routingDetailModal').classList.add('active');
+    }
+
+    function closeRoutingDetailModal() {
+      document.getElementById('routingDetailModal').classList.remove('active');
+    }
+
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
     updateClock(); setInterval(updateClock, 1000);
   </script>

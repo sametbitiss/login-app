@@ -34,7 +34,10 @@ router.post('/bom/delete/:finishedStockItemId', productionController.deleteBOM);
 
 // 4. Routing Operations Routes
 router.get('/routing', productionController.listRouting);
-router.post('/routing', productionController.addRouting);
+router.get('/routing/add', productionController.renderRoutingForm);
+router.get('/routing/edit/:stockItemId', productionController.renderRoutingForm);
+router.post('/routing/save', productionController.saveRouting);
+router.post('/routing/delete/:stockItemId', productionController.deleteRouting);
 
 // 5. Capacity Planning Routes
 router.get('/capacity', productionController.listCapacity);

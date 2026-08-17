@@ -325,24 +325,135 @@ class ProductionRepository {
   async findAllRoutings() {
     return await RoutingOperation.findAll({
       include: [
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name'] }
+        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit', 'category', 'currentStock'] }
       ],
       order: [['stockItemId', 'ASC'], ['operationSeq', 'ASC']]
     });
   }
 
-  async createRoutingOperation(routingData, currentUser = null, ipAddress = null) {
-    const newRouting = await RoutingOperation.create(routingData);
+  async findAllRoutingsGroupedByProduct() {
+    // 1. Fetch products with BOM (candidate products for routing)
+    const existingBOMs = await BOMItem.findAll({
+      attributes: ['finishedStockItemId'],
+      group: ['finishedStockItemId']
+    });
+    const finishedItemIds = existingBOMs.map(b => b.finishedStockItemId);
+
+    const candidateProducts = await StockItem.findAll({
+      where: {
+        id: { [Op.in]: finishedItemIds },
+        status: 'Active',
+        category: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
+        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+      },
+      order: [['category', 'ASC'], ['name', 'ASC']]
+    });
+
+    // 2. Fetch all routing operations
+    const allOperations = await this.findAllRoutings();
+
+    const routingMap = {};
+    allOperations.forEach(op => {
+      if (!routingMap[op.stockItemId]) {
+        routingMap[op.stockItemId] = [];
+      }
+      routingMap[op.stockItemId].push(op);
+    });
+
+    // 3. Build product-level routing summary
+    return candidateProducts.map(product => {
+      const ops = routingMap[product.id] || [];
+      const hasRouting = ops.length > 0;
+      let totalSetupTime = 0;
+      let totalRunTime = 0;
+      const workCentersSet = new Set();
+
+      ops.forEach(o => {
+        totalSetupTime += parseFloat(o.setupTimeMinutes || 0);
+        totalRunTime += parseFloat(o.runTimeMinutesPerUnit || 0);
+        if (o.workCenter) workCentersSet.add(o.workCenter);
+      });
+
+      return {
+        product: product.get({ plain: true }),
+        hasRouting,
+        operations: ops.map(o => o.get({ plain: true })),
+        totalOperations: ops.length,
+        totalSetupTime,
+        totalRunTime,
+        workCenters: Array.from(workCentersSet)
+      };
+    });
+  }
+
+  async saveProductRouting(stockItemId, operationsArray, currentUser = null, ipAddress = null) {
+    const validStockItemId = parseInt(stockItemId, 10);
+    const targetProduct = await StockItem.findByPk(validStockItemId);
+    if (!targetProduct) {
+      throw new Error('Geçersiz ürün kimliği.');
+    }
+
+    // Replace existing operations for this product
+    await RoutingOperation.destroy({ where: { stockItemId: validStockItemId } });
+
+    const createdOperations = [];
+    if (Array.isArray(operationsArray) && operationsArray.length > 0) {
+      for (let i = 0; i < operationsArray.length; i++) {
+        const op = operationsArray[i];
+        const seq = parseInt(op.operationSeq, 10) || (i + 1) * 10;
+        const code = op.operationCode || `OPS-${String(seq).padStart(2, '0')}`;
+        const name = op.operationName || `Operasyon Adımı #${i + 1}`;
+        const wc = op.workCenter || 'İstasyon-1 (Kesim & Büküm)';
+        const setup = parseFloat(op.setupTimeMinutes) || 15.0;
+        const run = parseFloat(op.runTimeMinutesPerUnit) || 5.0;
+        const operators = parseInt(op.operatorCount, 10) || 1;
+        const inst = op.instructions || null;
+
+        const newOp = await RoutingOperation.create({
+          routingCode: `ROT-${targetProduct.stockCode}-v1`,
+          stockItemId: validStockItemId,
+          operationSeq: seq,
+          operationCode: code,
+          operationName: name,
+          workCenter: wc,
+          setupTimeMinutes: setup,
+          runTimeMinutesPerUnit: run,
+          operatorCount: operators,
+          instructions: inst
+        });
+
+        createdOperations.push(newOp);
+      }
+    }
+
     await logService.logCrud({
       userId: currentUser ? currentUser.id : null,
       username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
+      action: 'UPDATE',
       entity: 'RoutingOperation',
-      entityId: newRouting.id,
-      details: routingData,
+      entityId: validStockItemId,
+      details: { stockItemId: validStockItemId, count: createdOperations.length },
       ipAddress
     });
-    return newRouting;
+
+    return createdOperations;
+  }
+
+  async deleteProductRouting(stockItemId, currentUser = null, ipAddress = null) {
+    const validStockItemId = parseInt(stockItemId, 10);
+    const deletedCount = await RoutingOperation.destroy({ where: { stockItemId: validStockItemId } });
+
+    await logService.logCrud({
+      userId: currentUser ? currentUser.id : null,
+      username: currentUser ? currentUser.username : 'System',
+      action: 'DELETE',
+      entity: 'RoutingOperation',
+      entityId: validStockItemId,
+      details: { stockItemId: validStockItemId, deletedCount },
+      ipAddress
+    });
+
+    return deletedCount;
   }
 
   // --- MES (MANUFACTURING EXECUTION SYSTEM) SHOP FLOOR UPDATE ---

@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 10
     },
+    operationCode: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     operationName: {
       type: DataTypes.STRING,
       allowNull: false
@@ -39,6 +43,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(8, 2),
       allowNull: false,
       defaultValue: 5.0
+    },
+    operatorCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1
     },
     instructions: {
       type: DataTypes.TEXT,

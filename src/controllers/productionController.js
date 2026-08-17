@@ -418,39 +418,127 @@ class ProductionController {
 
   // 4. ROUTING & OPERATIONS
   listRouting = asyncHandler(async (req, res) => {
-    const routings = await productionRepository.findAllRoutings();
-    const stockItems = await stockRepository.findAll();
+    const productRoutingList = await productionRepository.findAllRoutingsGroupedByProduct();
+
+    const totalCandidateProducts = productRoutingList.length;
+    const withRouting = productRoutingList.filter(p => p.hasRouting).length;
+    const withoutRouting = totalCandidateProducts - withRouting;
 
     res.render('production/routing', {
       user: req.user,
-      routings,
-      stockItems,
+      productRoutingList,
+      stats: { totalCandidateProducts, withRouting, withoutRouting },
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'routing'
     });
   });
 
-  addRouting = asyncHandler(async (req, res) => {
-    const { stockItemId, operationSeq, operationName, workCenter, setupTimeMinutes, runTimeMinutesPerUnit, instructions } = req.body;
+  renderRoutingForm = asyncHandler(async (req, res) => {
+    const { StockItem, BOMItem, RoutingOperation } = require('../../models');
+    const { Op } = require('sequelize');
 
-    if (!stockItemId || !operationName || !workCenter) {
-      throw new ValidationError('Ürün, operasyon adı ve iş merkezi zorunludur.');
+    const stockItemId = req.params.stockItemId || req.query.productId || null;
+
+    // 1. Get all products with a BOM (candidate products for routing)
+    const existingBOMs = await BOMItem.findAll({
+      attributes: ['finishedStockItemId'],
+      group: ['finishedStockItemId']
+    });
+    const finishedItemIds = existingBOMs.map(b => b.finishedStockItemId);
+
+    const bomProducts = await StockItem.findAll({
+      where: {
+        id: { [Op.in]: finishedItemIds },
+        status: 'Active',
+        category: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
+        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+      },
+      order: [['name', 'ASC']]
+    });
+
+    // 2. Identify products that already have a routing
+    const existingRoutings = await RoutingOperation.findAll({
+      attributes: ['stockItemId'],
+      group: ['stockItemId']
+    });
+    const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stockItemId));
+
+    const processedBOMProducts = bomProducts.map(p => {
+      const plain = p.get({ plain: true });
+      plain.hasRouting = productsWithRoutingSet.has(p.id);
+      return plain;
+    });
+
+    let targetProduct = null;
+    let existingOperations = [];
+    let targetBOMComponents = [];
+
+    if (stockItemId) {
+      targetProduct = await StockItem.findByPk(stockItemId);
+      if (targetProduct) {
+        existingOperations = await RoutingOperation.findAll({
+          where: { stockItemId },
+          order: [['operationSeq', 'ASC'], ['id', 'ASC']]
+        });
+
+        // Fetch target product's BOM components for visual reference
+        const bomItems = await BOMItem.findAll({
+          where: { finishedStockItemId: stockItemId },
+          include: [{ model: StockItem, as: 'componentItem' }],
+          order: [['level', 'ASC'], ['id', 'ASC']]
+        });
+
+        targetBOMComponents = bomItems.map(b => ({
+          code: b.componentItem ? b.componentItem.stockCode : '',
+          name: b.componentItem ? b.componentItem.name : '',
+          category: b.componentItem ? b.componentItem.category : '',
+          qty: b.quantityRequired,
+          unit: b.unit,
+          level: b.level
+        }));
+      }
     }
 
-    const routingCode = `ROTA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    res.render('production/routing_form', {
+      user: req.user,
+      targetProduct,
+      existingOperations,
+      targetBOMComponents,
+      candidateProducts: processedBOMProducts,
+      WORK_CENTERS,
+      ALL_ROLES,
+      activeSubTab: 'routing'
+    });
+  });
 
-    await productionRepository.createRoutingOperation({
-      routingCode,
-      stockItemId,
-      operationSeq: parseInt(operationSeq, 10) || 10,
-      operationName,
-      workCenter,
-      setupTimeMinutes: parseFloat(setupTimeMinutes) || 15,
-      runTimeMinutesPerUnit: parseFloat(runTimeMinutesPerUnit) || 5,
-      instructions
-    }, req.user, req.ip);
+  saveRouting = asyncHandler(async (req, res) => {
+    const { stockItemId, operationsJson } = req.body;
 
+    if (!stockItemId) {
+      throw new ValidationError('Lütfen rotası oluşturulacak ürünü seçiniz.');
+    }
+
+    let operations = [];
+    if (operationsJson) {
+      try {
+        operations = JSON.parse(operationsJson);
+      } catch (err) {
+        throw new ValidationError('Operasyon verileri geçersiz formatta.');
+      }
+    }
+
+    await productionRepository.saveProductRouting(stockItemId, operations, req.user, req.ip);
+    res.redirect('/production/routing');
+  });
+
+  deleteRouting = asyncHandler(async (req, res) => {
+    const { stockItemId } = req.params;
+    if (!stockItemId) {
+      throw new ValidationError('Ürün kimliği gereklidir.');
+    }
+
+    await productionRepository.deleteProductRouting(stockItemId, req.user, req.ip);
     res.redirect('/production/routing');
   });
 

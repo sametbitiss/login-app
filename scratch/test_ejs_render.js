@@ -1,6 +1,7 @@
 const ejs = require('ejs');
 const path = require('path');
 const productionController = require('../src/controllers/productionController');
+const productionRepository = require('../src/repositories/productionRepository');
 
 async function testRender() {
   const req = { user: { id: 1, username: 'admin', role: 'Admin' }, params: {}, query: {} };
@@ -20,8 +21,11 @@ async function testRender() {
   console.log('Testing listBOM render...');
   await productionController.listBOM(req, res, console.error);
 
-  console.log('Testing renderBOMForm render...');
-  await productionController.renderBOMForm(req, res, console.error);
+  console.log('Testing listRouting render...');
+  await productionController.listRouting(req, res, console.error);
+
+  console.log('Testing renderRoutingForm render...');
+  await productionController.renderRoutingForm(req, res, console.error);
 }
 
 testRender();
