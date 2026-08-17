@@ -26,7 +26,9 @@ router.post('/mrp/execute', productionController.executeMRP);
 
 // 3. BOM (Bill of Materials) Routes
 router.get('/bom', productionController.listBOM);
-router.post('/bom', productionController.addBOM);
+router.post('/bom', productionController.saveBOM);
+router.post('/bom/save', productionController.saveBOM);
+router.post('/bom/delete/:finishedStockItemId', productionController.deleteBOM);
 
 // 4. Routing Operations Routes
 router.get('/routing', productionController.listRouting);

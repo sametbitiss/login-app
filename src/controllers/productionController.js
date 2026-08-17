@@ -166,46 +166,111 @@ class ProductionController {
   listBOM = asyncHandler(async (req, res) => {
     const { StockItem } = require('../../models');
     const { Op } = require('sequelize');
-    const bomItems = await productionRepository.findAllBOM();
+
+    const productBOMList = await productionRepository.findAllBOMGroupedByProduct();
 
     const finishedStockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal', 'Yarı_Mamul', 'Yari_Mamul'] } },
+      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
       order: [['name', 'ASC']]
     });
 
     const componentStockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Ticari_Mal', 'Diger'] } },
+      where: { 
+        status: 'Active',
+        category: { [Op.in]: ['Hammadde', 'Yarı_Mamul', 'Yari_Mamul', 'Ticari_Mal'] }
+      },
       order: [['name', 'ASC']]
     });
 
+    const totalProducts = productBOMList.length;
+    const withBOM = productBOMList.filter(p => p.hasBOM).length;
+    const withoutBOM = totalProducts - withBOM;
+
     res.render('production/bom', {
       user: req.user,
-      bomItems,
+      productBOMList,
       finishedStockItems,
       componentStockItems,
+      WORK_CENTERS,
+      stats: { totalProducts, withBOM, withoutBOM },
       ALL_ROLES,
       activeSubTab: 'bom'
     });
   });
 
-  addBOM = asyncHandler(async (req, res) => {
-    const { finishedStockItemId, componentStockItemId, quantityRequired, scrapPercentage, notes } = req.body;
+  saveBOM = asyncHandler(async (req, res) => {
+    const {
+      finishedStockItemId,
+      version,
+      baseQuantity,
+      componentsJson,
+      componentStockItemId,
+      quantityRequired,
+      unit,
+      scrapPercentage,
+      operationCode,
+      alternativeComponentItemId,
+      alternativeNotes,
+      notes
+    } = req.body;
 
-    if (!finishedStockItemId || !componentStockItemId) {
-      throw new ValidationError('Üretilecek ürün ve hammadde seçimi zorunludur.');
+    if (!finishedStockItemId) {
+      throw new ValidationError('Lütfen reçetesi yazılacak ürünü seçiniz.');
     }
 
-    const bomCode = `BOM-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    let components = [];
 
-    await productionRepository.createBOMItem({
-      bomCode,
+    if (componentsJson) {
+      try {
+        components = JSON.parse(componentsJson);
+      } catch (err) {
+        throw new ValidationError('Bileşen verileri geçersiz formatta.');
+      }
+    } else if (Array.isArray(componentStockItemId)) {
+      components = componentStockItemId.map((compItemId, idx) => ({
+        componentStockItemId: compItemId,
+        quantityRequired: Array.isArray(quantityRequired) ? quantityRequired[idx] : quantityRequired,
+        unit: Array.isArray(unit) ? unit[idx] : unit,
+        scrapPercentage: Array.isArray(scrapPercentage) ? scrapPercentage[idx] : scrapPercentage,
+        operationCode: Array.isArray(operationCode) ? operationCode[idx] : operationCode,
+        alternativeComponentItemId: Array.isArray(alternativeComponentItemId) ? alternativeComponentItemId[idx] : alternativeComponentItemId,
+        alternativeNotes: Array.isArray(alternativeNotes) ? alternativeNotes[idx] : alternativeNotes,
+        notes: Array.isArray(notes) ? notes[idx] : notes
+      }));
+    } else if (componentStockItemId) {
+      components = [{
+        componentStockItemId,
+        quantityRequired,
+        unit,
+        scrapPercentage,
+        operationCode,
+        alternativeComponentItemId,
+        alternativeNotes,
+        notes
+      }];
+    }
+
+    await productionRepository.saveProductBOM(
       finishedStockItemId,
-      componentStockItemId,
-      quantityRequired: parseFloat(quantityRequired) || 1,
-      scrapPercentage: parseFloat(scrapPercentage) || 0,
-      notes
-    }, req.user, req.ip);
+      {
+        version: version || 'Rev.01',
+        baseQuantity: parseFloat(baseQuantity) || 1.0,
+        components
+      },
+      req.user,
+      req.ip
+    );
 
+    res.redirect('/production/bom');
+  });
+
+  deleteBOM = asyncHandler(async (req, res) => {
+    const { finishedStockItemId } = req.params;
+    if (!finishedStockItemId) {
+      throw new ValidationError('Ürün kimliği gereklidir.');
+    }
+
+    await productionRepository.deleteProductBOM(finishedStockItemId, req.user, req.ip);
     res.redirect('/production/bom');
   });
 

@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       BOMItem.belongsTo(models.StockItem, { foreignKey: 'finishedStockItemId', as: 'finishedProduct' });
       BOMItem.belongsTo(models.StockItem, { foreignKey: 'componentStockItemId', as: 'componentItem' });
+      BOMItem.belongsTo(models.StockItem, { foreignKey: 'alternativeComponentItemId', as: 'alternativeComponentItem' });
     }
   }
 
@@ -22,6 +23,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
+    version: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'Rev.01'
+    },
+    baseQuantity: {
+      type: DataTypes.DECIMAL(12, 4),
+      allowNull: false,
+      defaultValue: 1.0
+    },
     quantityRequired: {
       type: DataTypes.DECIMAL(12, 4),
       allowNull: false,
@@ -37,8 +48,25 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0.0
     },
-    notes: {
+    level: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1
+    },
+    operationCode: {
       type: DataTypes.STRING,
+      allowNull: true
+    },
+    alternativeComponentItemId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    alternativeNotes: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    notes: {
+      type: DataTypes.TEXT,
       allowNull: true
     }
   }, {

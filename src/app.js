@@ -54,6 +54,12 @@ app.use(errorHandler);
     await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "totalDiscount" NUMERIC(15,4) DEFAULT 0;`);
     await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "totalTax" NUMERIC(15,4) DEFAULT 0;`);
     await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "itemsData" JSONB;`);
+    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "version" VARCHAR(50) DEFAULT 'Rev.01';`);
+    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "baseQuantity" NUMERIC(12,4) DEFAULT 1.0;`);
+    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "operationCode" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "level" INTEGER DEFAULT 1;`);
+    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "alternativeComponentItemId" INTEGER;`);
+    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "alternativeNotes" TEXT;`);
   } catch (e) {
     console.log('Pre-sync alter table warning:', e.message);
   }

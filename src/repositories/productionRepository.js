@@ -158,11 +158,63 @@ class ProductionRepository {
   async findAllBOM() {
     return await BOMItem.findAll({
       include: [
-        { model: StockItem, as: 'finishedProduct', attributes: ['id', 'stockCode', 'name', 'unit'] },
-        { model: StockItem, as: 'componentItem', attributes: ['id', 'stockCode', 'name', 'unit', 'currentStock', 'purchasePrice', 'currency'] }
+        { model: StockItem, as: 'finishedProduct', attributes: ['id', 'stockCode', 'name', 'unit', 'category', 'currentStock'] },
+        { model: StockItem, as: 'componentItem', attributes: ['id', 'stockCode', 'name', 'unit', 'currentStock', 'purchasePrice', 'currency', 'category'] },
+        { model: StockItem, as: 'alternativeComponentItem', attributes: ['id', 'stockCode', 'name', 'unit'] }
       ],
-      order: [['finishedStockItemId', 'ASC'], ['id', 'ASC']]
+      order: [['finishedStockItemId', 'ASC'], ['level', 'ASC'], ['id', 'ASC']]
     });
+  }
+
+  async findAllBOMGroupedByProduct() {
+    // 1. Get all finished/semi-finished products (Mamul & Yarı Mamul)
+    const targetProducts = await StockItem.findAll({
+      where: {
+        status: 'Active',
+        category: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] }
+      },
+      order: [['category', 'ASC'], ['name', 'ASC']]
+    });
+
+    // 2. Get all BOM Items
+    const allBOMItems = await this.findAllBOM();
+
+    // Map BOM Items by finishedStockItemId
+    const bomMap = {};
+    allBOMItems.forEach(item => {
+      if (!bomMap[item.finishedStockItemId]) {
+        bomMap[item.finishedStockItemId] = [];
+      }
+      bomMap[item.finishedStockItemId].push(item);
+    });
+
+    // 3. Construct product-based list with BOM status
+    const productBOMList = targetProducts.map(product => {
+      const items = bomMap[product.id] || [];
+      const hasBOM = items.length > 0;
+      const version = hasBOM ? items[0].version : 'Rev.01';
+      const baseQuantity = hasBOM ? parseFloat(items[0].baseQuantity || 1.0) : 1.0;
+
+      let totalUnitCost = 0;
+      items.forEach(b => {
+        const compPrice = b.componentItem ? parseFloat(b.componentItem.purchasePrice || 0) : 0;
+        const reqQty = parseFloat(b.quantityRequired || 0);
+        const scrap = parseFloat(b.scrapPercentage || 0);
+        totalUnitCost += reqQty * compPrice * (1 + scrap / 100);
+      });
+
+      return {
+        product,
+        hasBOM,
+        version,
+        baseQuantity,
+        bomItems: items,
+        componentCount: items.length,
+        totalUnitCost
+      };
+    });
+
+    return productBOMList;
   }
 
   async createBOMItem(bomData, currentUser = null, ipAddress = null) {
@@ -177,6 +229,74 @@ class ProductionRepository {
       ipAddress
     });
     return newBOM;
+  }
+
+  async saveProductBOM(finishedStockItemId, bomHeaderData, currentUser = null, ipAddress = null) {
+    const { version, baseQuantity, components } = bomHeaderData;
+
+    // Delete existing BOM Items for this product
+    await BOMItem.destroy({ where: { finishedStockItemId } });
+
+    const createdItems = [];
+    if (components && components.length > 0) {
+      const finishedProduct = await StockItem.findByPk(finishedStockItemId);
+      const codePrefix = finishedProduct ? finishedProduct.stockCode.replace(/[^a-zA-Z0-9]/g, '') : `PRD${finishedStockItemId}`;
+      const bomCode = `BOM-${codePrefix}-${version ? version.replace(/[^a-zA-Z0-9]/g, '') : 'V1'}`;
+
+      for (const comp of components) {
+        if (!comp.componentStockItemId) continue;
+
+        // Check if component itself is a Yarı Mamul (for Level estimation)
+        const compItem = await StockItem.findByPk(comp.componentStockItemId);
+        const calcLevel = compItem && (compItem.category === 'Yari_Mamul' || compItem.category === 'Yarı_Mamul') ? 2 : (parseInt(comp.level, 10) || 1);
+
+        const newBOM = await BOMItem.create({
+          bomCode,
+          finishedStockItemId: parseInt(finishedStockItemId, 10),
+          componentStockItemId: parseInt(comp.componentStockItemId, 10),
+          version: version || 'Rev.01',
+          baseQuantity: parseFloat(baseQuantity) || 1.0,
+          quantityRequired: parseFloat(comp.quantityRequired) || 1.0,
+          unit: comp.unit || (compItem ? compItem.unit : 'Adet'),
+          scrapPercentage: parseFloat(comp.scrapPercentage) || 0.0,
+          level: calcLevel,
+          operationCode: comp.operationCode || null,
+          alternativeComponentItemId: comp.alternativeComponentItemId ? parseInt(comp.alternativeComponentItemId, 10) : null,
+          alternativeNotes: comp.alternativeNotes || null,
+          notes: comp.notes || null
+        });
+
+        createdItems.push(newBOM);
+      }
+    }
+
+    await logService.logCrud({
+      userId: currentUser ? currentUser.id : null,
+      username: currentUser ? currentUser.username : 'System',
+      action: 'UPDATE',
+      entity: 'BOMItem',
+      entityId: finishedStockItemId,
+      details: { finishedStockItemId, version, baseQuantity, count: createdItems.length },
+      ipAddress
+    });
+
+    return createdItems;
+  }
+
+  async deleteProductBOM(finishedStockItemId, currentUser = null, ipAddress = null) {
+    const deletedCount = await BOMItem.destroy({ where: { finishedStockItemId } });
+
+    await logService.logCrud({
+      userId: currentUser ? currentUser.id : null,
+      username: currentUser ? currentUser.username : 'System',
+      action: 'DELETE',
+      entity: 'BOMItem',
+      entityId: finishedStockItemId,
+      details: { finishedStockItemId, deletedCount },
+      ipAddress
+    });
+
+    return deletedCount;
   }
 
   // --- ROUTING OPERATIONS METHODS ---
