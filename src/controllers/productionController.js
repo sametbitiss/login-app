@@ -204,9 +204,21 @@ class ProductionController {
 
     const finishedStockItemId = req.params.finishedStockItemId || req.query.productId || null;
 
+    const existingBOMs = await BOMItem.findAll({
+      attributes: ['finishedStockItemId'],
+      group: ['finishedStockItemId']
+    });
+    const productsWithBOMSet = new Set(existingBOMs.map(b => b.finishedStockItemId));
+
     const finishedStockItems = await StockItem.findAll({
       where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
       order: [['name', 'ASC']]
+    });
+
+    const processedFinishedItems = finishedStockItems.map(item => {
+      const itemPlain = item.get({ plain: true });
+      itemPlain.hasBOM = productsWithBOMSet.has(item.id);
+      return itemPlain;
     });
 
     const componentStockItems = await StockItem.findAll({
@@ -236,7 +248,7 @@ class ProductionController {
       user: req.user,
       targetProduct,
       existingBOMItems,
-      finishedStockItems,
+      finishedStockItems: processedFinishedItems,
       componentStockItems,
       WORK_CENTERS,
       ALL_ROLES,

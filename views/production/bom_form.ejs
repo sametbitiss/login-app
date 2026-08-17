@@ -280,6 +280,13 @@
         const safeExistingBOMItems = (typeof existingBOMItems !== 'undefined' && existingBOMItems) ? existingBOMItems : [];
         const initialVersion = safeExistingBOMItems.length > 0 && safeExistingBOMItems[0].version ? safeExistingBOMItems[0].version : 'Rev.01';
         const initialBaseQty = safeExistingBOMItems.length > 0 && safeExistingBOMItems[0].baseQuantity ? safeExistingBOMItems[0].baseQuantity : 1;
+
+        // Filter: Active BOM items are excluded when creating a NEW BOM
+        const availableMainProducts = safeFinishedStockItems.filter(item => {
+          if (!['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.category)) return false;
+          if (targetProduct && String(targetProduct.id) === String(item.id)) return true;
+          return !item.hasBOM;
+        });
       %>
 
       <form action="/production/bom/save" method="POST" id="bomFullForm" onsubmit="prepareFormSubmit(event)">
@@ -294,15 +301,19 @@
             </div>
             <div class="form-stack-column">
               <div class="form-group">
-                <label class="form-label">Reçetesi Yazılacak Ürün (Yalnızca Mamul veya Yarı Mamul) *</label>
+                <label class="form-label">Reçetesi Yazılacak Ürün (Yalnızca Reçetesi Olmayan Mamul veya Yarı Mamul) *</label>
                 <select id="finishedStockItemIdSelect" class="form-control" onchange="onFinishedProductSelectChange(this)" required style="cursor: pointer;">
-                  <option value="">-- Reçete Yazılacak Ürünü (Mamul veya Yarı Mamul) Seçiniz --</option>
-                  <% safeFinishedStockItems.filter(item => ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.category)).forEach(item => { %>
-                    <% const isSelected = targetProduct && String(targetProduct.id) === String(item.id); %>
-                    <option value="<%= item.id %>" data-code="<%= item.stockCode %>" data-name="<%= item.name.replace(/"/g, '\\"') %>" data-cat="<%= item.category %>" data-unit="<%= item.unit %>" <%= isSelected ? 'selected' : '' %>>
-                      [<%= item.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>] <%= item.stockCode %> — <%= item.name %> (Mevcut Stok: <%= item.currentStock %> <%= item.unit %>)
-                    </option>
-                  <% }); %>
+                  <option value="">-- Reçete Yazılacak Ürünü (Reçetesi Olmayan Mamul / Yarı Mamul) Seçiniz --</option>
+                  <% if (availableMainProducts.length === 0) { %>
+                    <option value="" disabled style="color: #f87171;">(Sistemdeki tüm Mamul ve Yarı Mamul ürünlerin reçetesi mevcuttur)</option>
+                  <% } else { %>
+                    <% availableMainProducts.forEach(item => { %>
+                      <% const isSelected = targetProduct && String(targetProduct.id) === String(item.id); %>
+                      <option value="<%= item.id %>" data-code="<%= item.stockCode %>" data-name="<%= item.name.replace(/"/g, '\\"') %>" data-cat="<%= item.category %>" data-unit="<%= item.unit %>" <%= isSelected ? 'selected' : '' %>>
+                        [<%= item.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>] <%= item.stockCode %> — <%= item.name %> (Mevcut Stok: <%= item.currentStock %> <%= item.unit %>)
+                      </option>
+                    <% }); %>
+                  <% } %>
                 </select>
               </div>
               <div class="form-row-2">
