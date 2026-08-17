@@ -470,6 +470,28 @@ class ProductionController {
       return plain;
     });
 
+    // 3. Fetch all BOM items for candidate products to build client-side BOM reference map
+    const allBOMItems = await BOMItem.findAll({
+      where: { finishedStockItemId: { [Op.in]: finishedItemIds } },
+      include: [{ model: StockItem, as: 'componentItem' }],
+      order: [['level', 'ASC'], ['id', 'ASC']]
+    });
+
+    const bomComponentsMap = {};
+    allBOMItems.forEach(b => {
+      if (!bomComponentsMap[b.finishedStockItemId]) {
+        bomComponentsMap[b.finishedStockItemId] = [];
+      }
+      bomComponentsMap[b.finishedStockItemId].push({
+        code: b.componentItem ? b.componentItem.stockCode : '',
+        name: b.componentItem ? b.componentItem.name : '',
+        category: b.componentItem ? b.componentItem.category : '',
+        qty: b.quantityRequired,
+        unit: b.unit,
+        level: b.level
+      });
+    });
+
     let targetProduct = null;
     let existingOperations = [];
     let targetBOMComponents = [];
@@ -481,22 +503,7 @@ class ProductionController {
           where: { stockItemId },
           order: [['operationSeq', 'ASC'], ['id', 'ASC']]
         });
-
-        // Fetch target product's BOM components for visual reference
-        const bomItems = await BOMItem.findAll({
-          where: { finishedStockItemId: stockItemId },
-          include: [{ model: StockItem, as: 'componentItem' }],
-          order: [['level', 'ASC'], ['id', 'ASC']]
-        });
-
-        targetBOMComponents = bomItems.map(b => ({
-          code: b.componentItem ? b.componentItem.stockCode : '',
-          name: b.componentItem ? b.componentItem.name : '',
-          category: b.componentItem ? b.componentItem.category : '',
-          qty: b.quantityRequired,
-          unit: b.unit,
-          level: b.level
-        }));
+        targetBOMComponents = bomComponentsMap[stockItemId] || [];
       }
     }
 
@@ -506,6 +513,7 @@ class ProductionController {
       existingOperations,
       targetBOMComponents,
       candidateProducts: processedBOMProducts,
+      bomComponentsMap,
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'routing'

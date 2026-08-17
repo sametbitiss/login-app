@@ -197,13 +197,10 @@
                   </td>
                   <td><span class="badge-status badge-has-routing">✓ Rota Tanımlı</span></td>
                   <td style="text-align: right; white-space: nowrap;">
-                    <button type="button" class="btn-action-view" onclick="openRoutingDetailModal(<%= JSON.stringify(item) %>)">
-                      🔍 Detay
-                    </button>
                     <a href="/production/routing/edit/<%= item.product.id %>" class="btn-action-edit">
-                      ✏️ Düzenle
+                      ✏️ Rota / Operasyon Düzenle
                     </a>
-                    <form action="/production/routing/delete/<%= item.product.id %>" method="POST" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('Bu ürünün tüm rotalama operasyon adımlarını silmek istediğinize emin misiniz?');">
+                    <form action="/production/routing/delete/<%= item.product.id %>" method="POST" style="display: inline-block; margin-left: 6px;" onsubmit="return confirm('Bu ürünün tüm rotalama operasyon adımlarını silmek istediğinize emin misiniz?');">
                       <button type="submit" class="btn-action-delete" title="Rotayı Sil">🗑️</button>
                     </form>
                   </td>
@@ -216,65 +213,7 @@
     </main>
   </div>
 
-  <!-- Routing Operation Detail Modal -->
-  <div id="routingDetailModal" class="modal-overlay">
-    <div class="modal-box">
-      <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
-        <h2 id="modalProductTitle" style="font-size: 1.2rem; color: #818cf8; margin: 0;">🛠️ Operasyon Adımları Detayı</h2>
-        <button type="button" onclick="closeRoutingDetailModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">✕</button>
-      </div>
-
-      <div id="modalContentContainer">
-        <!-- Operation steps dynamic list -->
-      </div>
-
-      <div style="text-align: right; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
-        <button type="button" onclick="closeRoutingDetailModal()" class="btn btn-secondary" style="border-radius: 10px; padding: 10px 24px;">Kapat</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    function openRoutingDetailModal(itemData) {
-      document.getElementById('modalProductTitle').textContent = `🛠️ [${itemData.product.stockCode}] ${itemData.product.name} — Operasyon Adımları`;
-      
-      const container = document.getElementById('modalContentContainer');
-      let html = '';
-
-      if (!itemData.operations || itemData.operations.length === 0) {
-        html = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">Bu ürün için tanımlı operasyon adımı bulunamadı.</p>';
-      } else {
-        html = '<div style="display: flex; flex-direction: column; gap: 14px;">';
-        itemData.operations.forEach((op, idx) => {
-          html += `
-            <div style="background: #090e1a; border: 1.5px solid #1e293b; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px;">
-                <div style="font-weight: 800; color: #818cf8; font-size: 0.95rem;">
-                  <span style="background: #6366f1; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; margin-right: 8px;">Sıra: ${op.operationSeq}</span>
-                  ${op.operationCode ? op.operationCode + ' — ' : ''}${op.operationName}
-                </div>
-                <div style="font-size: 0.85rem; font-weight: 700; color: #34d399;">🏭 ${op.workCenter}</div>
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 0.88rem;">
-                <div><span style="color: #94a3b8;">Hazırlık / Ayar Süresi:</span> <strong style="color: #fff;">${op.setupTimeMinutes} Dk</strong></div>
-                <div><span style="color: #94a3b8;">Parça İşlem Süresi:</span> <strong style="color: #34d399;">${op.runTimeMinutesPerUnit} Dk / Adet</strong></div>
-                <div><span style="color: #94a3b8;">Operatör Sayısı:</span> <strong style="color: #fbbf24;">${op.operatorCount || 1} Personel</strong></div>
-              </div>
-              ${op.instructions ? `<div style="background: rgba(30,41,59,0.5); padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: #cbd5e1; border-left: 3px solid #6366f1;"><strong>📝 İş Talimatı Notu:</strong> ${op.instructions}</div>` : ''}
-            </div>
-          `;
-        });
-        html += '</div>';
-      }
-
-      container.innerHTML = html;
-      document.getElementById('routingDetailModal').classList.add('active');
-    }
-
-    function closeRoutingDetailModal() {
-      document.getElementById('routingDetailModal').classList.remove('active');
-    }
-
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
     updateClock(); setInterval(updateClock, 1000);
   </script>

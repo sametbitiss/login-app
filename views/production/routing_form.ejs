@@ -376,6 +376,7 @@
       "İstasyon-6 (Paketleme & Sevkiyat)"
     ];
 
+    const bomComponentsMap = <%- JSON.stringify(typeof bomComponentsMap !== 'undefined' ? bomComponentsMap : {}) %>;
     const existingOperationsData = <%- JSON.stringify(safeExistingOperations) %>;
     let cardCounter = 0;
 
@@ -402,15 +403,57 @@
         addOperationCard({ operationSeq: 20, operationName: 'Montaj & Birleştirme Operasyonu', workCenter: 'İstasyon-5 (Montaj & Test)' });
       }
 
+      const selectEl = document.getElementById('stockItemIdSelect');
+      if (selectEl && selectEl.value) {
+        onTargetProductSelectChange(selectEl);
+      }
+
       calculateRoutingTotals();
     });
 
     function onTargetProductSelectChange(selectEl) {
       const selectedOption = selectEl.options[selectEl.selectedIndex];
+      const container = document.getElementById('bomReferenceContainer');
+
       if (selectedOption && selectedOption.value) {
-        document.getElementById('stockItemId').value = selectedOption.value;
+        const prodId = selectedOption.value;
+        document.getElementById('stockItemId').value = prodId;
+
+        const components = bomComponentsMap[prodId] || [];
+        if (components.length > 0) {
+          let compsHtml = `
+            <div class="bom-reference-box">
+              <div style="font-size: 0.9rem; font-weight: 800; color: #818cf8; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                <span>📜 Seçilen Ürünün Reçete Bileşenleri (${components.length} Kalem):</span>
+              </div>
+              <p style="font-size: 0.82rem; color: #94a3b8; margin: 0 0 12px 0;">
+                💡 <strong>Mühendislik İpucu:</strong> Aşağıdaki reçete bileşenlerini (bükümlü parçalar, kaynaklı montaj grupları, civata vb.) girdi olarak kullanarak Kesim, Büküm, Kaynak, Montaj veya Kalite Kontrol operasyon adımlarını aşağıda sırasıyla tanımlayabilirsiniz.
+              </p>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          `;
+          components.forEach(c => {
+            const isYari = c.category === 'Yarı_Mamul' || c.category === 'Yari_Mamul';
+            const catBadge = c.category === 'Hammadde' ? '📦 Hammadde' : (isYari ? '⚙️ Yarı Mamul' : '🏷️ Ticari Mal');
+            const badgeColor = c.category === 'Hammadde' ? 'rgba(59, 130, 246, 0.25)' : (isYari ? 'rgba(245, 158, 11, 0.25)' : 'rgba(16, 185, 129, 0.25)');
+            const textColor = c.category === 'Hammadde' ? '#60a5fa' : (isYari ? '#fbbf24' : '#34d399');
+
+            compsHtml += `
+              <div style="background: #0f172a; border: 1.5px solid rgba(99, 102, 241, 0.3); padding: 8px 14px; border-radius: 10px; font-size: 0.84rem; color: #f8fafc; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                <span style="font-size: 0.75rem; background: ${badgeColor}; color: ${textColor}; padding: 2px 6px; border-radius: 6px; font-weight: 700;">${catBadge}</span>
+                <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace;">${c.code}</strong>
+                <span style="font-weight: 600;">${c.name}</span>
+                <span style="color: #fbbf24; font-weight: 800; margin-left: 4px;">(${c.qty} ${c.unit})</span>
+              </div>
+            `;
+          });
+          compsHtml += `</div></div>`;
+          container.innerHTML = compsHtml;
+        } else {
+          container.innerHTML = '<div style="margin-top: 10px; font-size: 0.85rem; color: #fbbf24;">⚠️ Bu ürünün reçetesinde kayıtlı bileşen bulunamadı.</div>';
+        }
       } else {
         document.getElementById('stockItemId').value = '';
+        container.innerHTML = '';
       }
     }
 
