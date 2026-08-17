@@ -198,6 +198,52 @@ class ProductionController {
     });
   });
 
+  renderBOMForm = asyncHandler(async (req, res) => {
+    const { StockItem, BOMItem } = require('../../models');
+    const { Op } = require('sequelize');
+
+    const finishedStockItemId = req.params.finishedStockItemId || req.query.productId || null;
+
+    const finishedStockItems = await StockItem.findAll({
+      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
+      order: [['name', 'ASC']]
+    });
+
+    const componentStockItems = await StockItem.findAll({
+      where: { 
+        status: 'Active',
+        category: { [Op.in]: ['Hammadde', 'Yarı_Mamul', 'Yari_Mamul', 'Ticari_Mal'] }
+      },
+      order: [['name', 'ASC']]
+    });
+
+    let targetProduct = null;
+    let existingBOMItems = [];
+
+    if (finishedStockItemId) {
+      targetProduct = await StockItem.findByPk(finishedStockItemId);
+      existingBOMItems = await BOMItem.findAll({
+        where: { finishedStockItemId },
+        include: [
+          { model: StockItem, as: 'componentItem' },
+          { model: StockItem, as: 'alternativeComponentItem' }
+        ],
+        order: [['level', 'ASC'], ['id', 'ASC']]
+      });
+    }
+
+    res.render('production/bom_form', {
+      user: req.user,
+      targetProduct,
+      existingBOMItems,
+      finishedStockItems,
+      componentStockItems,
+      WORK_CENTERS,
+      ALL_ROLES,
+      activeSubTab: 'bom'
+    });
+  });
+
   saveBOM = asyncHandler(async (req, res) => {
     const {
       finishedStockItemId,

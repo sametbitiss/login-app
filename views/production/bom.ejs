@@ -122,7 +122,6 @@
     .badge-no-bom { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
     .badge-cat-mamul { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
     .badge-cat-yarimamul { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-level { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); font-size: 0.72rem; padding: 2px 7px; border-radius: 6px; }
 
     .btn-indigo-gradient {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
@@ -133,259 +132,14 @@
       border-radius: 12px;
       border: none;
       cursor: pointer;
+      text-decoration: none;
       box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       gap: 8px;
     }
-    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(99, 102, 241, 0.6); }
-
-    /* Modal Backdrop & Scrollable Container */
-    .modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(3, 7, 18, 0.85);
-      backdrop-filter: blur(8px);
-      z-index: 1000;
-      display: none;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 30px 16px;
-      overflow-y: auto;
-    }
-    .modal-backdrop.show { display: flex; }
-
-    .bom-modal {
-      background: #0f172a;
-      border: 1.5px solid rgba(99, 102, 241, 0.35);
-      border-radius: 24px;
-      width: 100%;
-      max-width: 960px;
-      margin: auto;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
-      overflow: hidden;
-      max-height: calc(100vh - 60px);
-      animation: modalSlide 0.25s ease-out;
-    }
-
-    @keyframes modalSlide {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    .bom-modal-header {
-      padding: 20px 28px;
-      background: rgba(30, 41, 59, 0.95);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .bom-modal-title { font-size: 1.2rem; font-weight: 800; color: #f8fafc; display: flex; align-items: center; gap: 10px; }
-    .bom-modal-close {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #94a3b8;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      transition: all 0.2s;
-    }
-    .bom-modal-close:hover { background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4); }
-
-    .bom-modal-body {
-      padding: 24px 28px;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      flex: 1 1 auto;
-      max-height: calc(85vh - 130px);
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      touch-action: pan-y;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Modal Form Sections - Stacked Vertically */
-    .form-section {
-      background: rgba(30, 41, 59, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .section-title {
-      font-size: 0.95rem;
-      font-weight: 800;
-      color: #818cf8;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* Stacked Form Group Structure */
-    .form-stack-column {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .form-label {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #94a3b8;
-    }
-    .form-control {
-      background: #090e1a;
-      border: 1.5px solid #1e293b;
-      color: #f8fafc;
-      padding: 11px 14px;
-      border-radius: 10px;
-      font-size: 0.88rem;
-      font-family: 'Inter', sans-serif;
-      outline: none;
-      transition: all 0.2s;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .form-control:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
-    }
-    .form-control[readonly] {
-      background: #111827;
-      color: #cbd5e1;
-      border-color: #1f2937;
-    }
-
-    /* Component Vertical Cards List */
-    .comp-card-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .comp-card {
-      background: #090e1a;
-      border: 1.5px solid #1e293b;
-      border-radius: 14px;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      transition: all 0.2s;
-    }
-    .comp-card:hover {
-      border-color: rgba(99, 102, 241, 0.4);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-    }
-
-    .comp-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 10px;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-    }
-    .comp-card-title {
-      font-size: 0.88rem;
-      font-weight: 800;
-      color: #818cf8;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .form-row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    .form-row-3 {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr;
-      gap: 14px;
-    }
-
-    .btn-add-row {
-      background: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      padding: 9px 18px;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 0.84rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-add-row:hover { background: rgba(16, 185, 129, 0.25); transform: translateY(-1px); }
-
-    .btn-del-card {
-      background: rgba(239, 68, 68, 0.15);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      padding: 5px 12px;
-      border-radius: 8px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.2s;
-    }
-    .btn-del-card:hover { background: rgba(239, 68, 68, 0.3); color: #fff; }
-
-    .bom-modal-footer {
-      padding: 16px 28px;
-      background: rgba(30, 41, 59, 0.95);
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-
-    .btn-save-bom {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 0.92rem;
-      padding: 12px 28px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-save-bom:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(99, 102, 241, 0.6); }
+    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(99, 102, 241, 0.6); color: #fff; }
 
     .btn-action-create {
       background: linear-gradient(135deg, #10b981, #059669);
@@ -395,6 +149,7 @@
       padding: 7px 14px;
       border-radius: 8px;
       border: none;
+      text-decoration: none;
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
       transition: all 0.2s;
@@ -402,7 +157,7 @@
       align-items: center;
       gap: 6px;
     }
-    .btn-action-create:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5); }
+    .btn-action-create:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5); color: #fff; }
 
     .btn-action-edit {
       background: rgba(99, 102, 241, 0.15);
@@ -412,6 +167,7 @@
       font-size: 0.82rem;
       padding: 7px 14px;
       border-radius: 8px;
+      text-decoration: none;
       cursor: pointer;
       transition: all 0.2s;
       display: inline-flex;
@@ -487,26 +243,25 @@
         <a href="/production/mes" class="msn-link">📱 MES Terminali</a>
       </div>
 
-      <!-- Page Header with prominent Yeni Reçete Ekle Button -->
+      <!-- Page Header with prominent Navigation link to dedicated BOM preparation page -->
       <div class="page-header" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
         <div>
           <h1>Üretim Reçeteleri ve Ürün Ağacı Yönetimi (Bill of Materials)</h1>
           <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Stok & Depo modülündeki Mamul ve Yarı Mamul ürünler için hiyerarşik reçete tanımı ve operasyon planlaması.</p>
         </div>
-        <button class="btn-indigo-gradient" onclick="openNewBOMModal()">
+        <a href="/production/bom/add" class="btn-indigo-gradient">
           <span>➕ Yeni Reçete Ekle</span>
-        </button>
+        </a>
       </div>
 
       <% 
         const safeProductBOMList = (typeof productBOMList !== 'undefined' && productBOMList) ? productBOMList : [];
+        const bomListOnly = safeProductBOMList.filter(p => p.hasBOM);
         const safeStats = (typeof stats !== 'undefined' && stats) ? stats : {
           totalProducts: safeProductBOMList.length,
-          withBOM: safeProductBOMList.filter(p => p.hasBOM).length,
-          withoutBOM: safeProductBOMList.filter(p => !p.hasBOM).length
+          withBOM: bomListOnly.length,
+          withoutBOM: safeProductBOMList.length - bomListOnly.length
         };
-        const safeFinishedStockItems = (typeof finishedStockItems !== 'undefined' && finishedStockItems) ? finishedStockItems : [];
-        const safeComponentStockItems = (typeof componentStockItems !== 'undefined' && componentStockItems) ? componentStockItems : [];
       %>
 
       <!-- KPI Summary Cards -->
@@ -546,11 +301,9 @@
       <!-- Filter Bar -->
       <div class="filter-bar">
         <div class="filter-tabs">
-          <button class="filter-tab active" onclick="filterCategory('all', this)">Tüm Ürünler (<%= safeStats.totalProducts %>)</button>
+          <button class="filter-tab active" onclick="filterCategory('all', this)">Tüm Reçeteler (<%= bomListOnly.length %>)</button>
           <button class="filter-tab" onclick="filterCategory('Mamul', this)">Mamuller</button>
           <button class="filter-tab" onclick="filterCategory('Yarı_Mamul', this)">Yarı Mamuller</button>
-          <button class="filter-tab" onclick="filterStatus('has_bom', this)">Reçetesi Var (<%= safeStats.withBOM %>)</button>
-          <button class="filter-tab" onclick="filterStatus('no_bom', this)">Reçetesi Yok (<%= safeStats.withoutBOM %>)</button>
         </div>
         <div class="search-box">
           <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -575,11 +328,11 @@
             </tr>
           </thead>
           <tbody>
-            <% if (safeProductBOMList.length === 0) { %>
-              <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem;">Stok & Depo modülünde kayıtlı Mamul veya Yarı Mamul ürün bulunamadı.</td></tr>
+            <% if (bomListOnly.length === 0) { %>
+              <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem;">Henüz tanımlanmış bir ürün reçetesi bulunamadı. Ekranın sağ üstündeki <strong>'➕ Yeni Reçete Ekle'</strong> butonunu kullanarak yeni bir reçete tanımlayabilirsiniz.</td></tr>
             <% } else { %>
-              <% safeProductBOMList.forEach(item => { %>
-                <tr data-cat="<%= item.product.category %>" data-status="<%= item.hasBOM ? 'has_bom' : 'no_bom' %>">
+              <% bomListOnly.forEach(item => { %>
+                <tr data-cat="<%= item.product.category %>" data-status="has_bom">
                   <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= item.product.stockCode %></strong></td>
                   <td><strong style="color: var(--text-primary);"><%= item.product.name %></strong></td>
                   <td>
@@ -591,11 +344,7 @@
                   </td>
                   <td><strong><%= item.product.currentStock %> <%= item.product.unit %></strong></td>
                   <td>
-                    <% if (item.hasBOM) { %>
-                      <span class="badge-status badge-has-bom">✓ Reçetesi Var</span>
-                    <% } else { %>
-                      <span class="badge-status badge-no-bom">✕ Reçetesi Yok</span>
-                    <% } %>
+                    <span class="badge-status badge-has-bom">✓ Reçetesi Var</span>
                   </td>
                   <td>
                     <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #cbd5e1;"><%= item.version %></span>
@@ -607,19 +356,12 @@
                     </strong>
                   </td>
                   <td style="text-align: right; white-space: nowrap;">
-                    <% const jsonItems = JSON.stringify(item.bomItems); %>
-                    <% if (item.hasBOM) { %>
-                      <button class="btn-action-edit" onclick='openBOMModal("<%= item.product.id %>", "<%= item.product.name %>", "<%= item.product.stockCode %>", "<%= item.product.category %>", "<%= item.product.unit %>", "<%= item.version %>", "<%= item.baseQuantity %>", `<%= jsonItems %>`)'>
-                        ✏️ Reçeteyi Düzenle
-                      </button>
-                      <form action="/production/bom/delete/<%= item.product.id %>" method="POST" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('Bu ürünün tüm reçete bileşenlerini silmek istediğinize emin misiniz?');">
-                        <button type="submit" class="btn-action-delete" title="Reçeteyi Sil">🗑️</button>
-                      </form>
-                    <% } else { %>
-                      <button class="btn-action-create" onclick='openBOMModal("<%= item.product.id %>", "<%= item.product.name %>", "<%= item.product.stockCode %>", "<%= item.product.category %>", "<%= item.product.unit %>", "Rev.01", 1, "[]")'>
-                        ➕ Reçete Oluştur
-                      </button>
-                    <% } %>
+                    <a href="/production/bom/edit/<%= item.product.id %>" class="btn-action-edit">
+                      ✏️ Reçeteyi Düzenle
+                    </a>
+                    <form action="/production/bom/delete/<%= item.product.id %>" method="POST" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('Bu ürünün tüm reçete bileşenlerini silmek istediğinize emin misiniz?');">
+                      <button type="submit" class="btn-action-delete" title="Reçeteyi Sil">🗑️</button>
+                    </form>
                   </td>
                 </tr>
               <% }); %>
@@ -630,376 +372,7 @@
     </main>
   </div>
 
-  <!-- Create / Edit BOM Modal -->
-  <div class="modal-backdrop" id="bomModalBackdrop">
-    <div class="bom-modal">
-      <div class="bom-modal-header">
-        <div class="bom-modal-title">
-          <span>📜</span>
-          <span id="modalHeaderTitle">Ürün Üretim Reçetesi (BOM) Hazırlama Ekranı</span>
-        </div>
-        <button class="bom-modal-close" onclick="closeBOMModal()">✕</button>
-      </div>
-
-      <form action="/production/bom/save" method="POST" id="bomForm" onsubmit="prepareFormSubmit(event)">
-        <input type="hidden" name="finishedStockItemId" id="modalFinishedStockItemId">
-        <input type="hidden" name="componentsJson" id="modalComponentsJson">
-
-        <div class="bom-modal-body" id="bomModalBody">
-          <!-- 1. Üst Ürün (Ana Malzeme) Bilgileri - Vertical Stack -->
-          <div class="form-section">
-            <div class="section-title">
-              <span>1. Üst Ürün (Ana Malzeme) Bilgileri</span>
-            </div>
-            <div class="form-stack-column">
-              <div class="form-group">
-                <label class="form-label">Reçetesi Yazılacak Ürün (Yalnızca Mamul veya Yarı Mamul) *</label>
-                <select id="modalFinishedStockItemIdSelect" class="form-control" onchange="onFinishedProductSelectChange(this)" required style="cursor: pointer;">
-                  <option value="">-- Reçete Yazılacak Ürünü (Mamul veya Yarı Mamul) Seçiniz --</option>
-                  <% safeFinishedStockItems.filter(item => ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.category)).forEach(item => { %>
-                    <option value="<%= item.id %>" data-code="<%= item.stockCode %>" data-name="<%= item.name.replace(/"/g, '\\"') %>" data-cat="<%= item.category %>" data-unit="<%= item.unit %>">
-                      [<%= item.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>] <%= item.stockCode %> — <%= item.name %> (Mevcut Stok: <%= item.currentStock %> <%= item.unit %>)
-                    </option>
-                  <% }); %>
-                </select>
-              </div>
-              <div class="form-row-2">
-                <div class="form-group">
-                  <label class="form-label">Ürün Versiyonu / Revizyon No *</label>
-                  <input type="text" name="version" id="modalVersion" class="form-control" placeholder="Örn: Rev.01, Rev.02, v1.0" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Temel Üretim Miktarı (Base Qty) *</label>
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="number" name="baseQuantity" id="modalBaseQuantity" class="form-control" value="1" min="0.0001" step="0.0001" required>
-                    <span id="modalBaseUnitDisplay" style="font-weight: 700; color: #94a3b8; font-size: 0.85rem; width: 60px;">Adet</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. Alt Bileşenler (Satırlar / Bileşen Listesi) - Stacked Vertical Cards -->
-          <div class="form-section">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div class="section-title">
-                <span>2. Alt Bileşenler (Satırlar / Bileşen Listesi)</span>
-              </div>
-              <button type="button" class="btn-add-row" onclick="addComponentCard()">
-                ➕ Yeni Bileşen / Satır Ekle
-              </button>
-            </div>
-            
-            <div id="componentCardContainer" class="comp-card-list">
-              <!-- Dynamic component vertical cards inserted via JS -->
-            </div>
-          </div>
-
-          <!-- 3. Yapısal ve Süreç Bilgileri - Vertical Stack -->
-          <div class="form-section">
-            <div class="section-title">
-              <span>3. Yapısal ve Süreç Bilgileri (Multi-Level BOM & Maliyet Özeti)</span>
-            </div>
-            <div class="form-stack-column">
-              <div style="background: #090e1a; padding: 14px 18px; border-radius: 12px; border: 1.5px solid #1e293b; font-size: 0.85rem; color: #94a3b8;">
-                <div><strong style="color: #818cf8;">📌 Multi-Level BOM Hiyerarşisi:</strong> Reçete içindeki alt malzemelerden "Yarı Mamul" kategorisinde olanlar otomatik olarak <strong>Seviye-2 (Sub-Assembly)</strong> olarak işlenir ve alt reçeteleri varsa ürün ağacı hiyerarşisine dahil edilir.</div>
-              </div>
-              <div style="background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.3); padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
-                <div style="font-size: 0.85rem; font-weight: 700; color: #a7f3d0; text-transform: uppercase;">Tahmini Birim Hammadde Maliyeti Özeti:</div>
-                <div id="modalCalculatedCost" style="font-size: 1.5rem; font-weight: 800; color: #34d399;">0.00 TL</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bom-modal-footer">
-          <button type="button" class="filter-tab" onclick="closeBOMModal()">İptal</button>
-          <button type="submit" class="btn-save-bom">
-            💾 Reçeteyi Kaydet ve Güncelle
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Available Components Options Template Data -->
   <script>
-    // Strict Filter for Components: ONLY Hammadde, Yarı Mamul, and Ticari Mal
-    const availableComponents = [
-      <% safeComponentStockItems.filter(c => ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Ticari_Mal', 'Ticari Mal'].includes(c.category)).forEach(c => { %>
-        {
-          id: <%= c.id %>,
-          code: "<%= c.stockCode %>",
-          name: "<%= c.name.replace(/"/g, '\\"') %>",
-          unit: "<%= c.unit %>",
-          category: "<%= c.category %>",
-          price: <%= parseFloat(c.purchasePrice || 0) %>
-        },
-      <% }); %>
-    ];
-
-    const workCentersList = [
-      "İstasyon-1 (Kesim & Büküm)",
-      "İstasyon-2 (Kaynak & Sac İşleme)",
-      "İstasyon-3 (CNC & Talaşlı İmalat)",
-      "İstasyon-4 (Boya & Kaplama)",
-      "İstasyon-5 (Montaj & Test)",
-      "İstasyon-6 (Paketleme & Sevkiyat)"
-    ];
-
-    let cardCounter = 0;
-
-    function openNewBOMModal() {
-      document.getElementById('modalHeaderTitle').textContent = '➕ Yeni Reçete Hazırlama Ekranı';
-      document.getElementById('modalFinishedStockItemId').value = '';
-      const selectEl = document.getElementById('modalFinishedStockItemIdSelect');
-      selectEl.value = '';
-      selectEl.disabled = false;
-      document.getElementById('modalVersion').value = 'Rev.01';
-      document.getElementById('modalBaseQuantity').value = 1;
-      document.getElementById('modalBaseUnitDisplay').textContent = 'Adet';
-
-      const container = document.getElementById('componentCardContainer');
-      container.innerHTML = '';
-      cardCounter = 0;
-
-      addComponentCard();
-      addComponentCard();
-
-      calculateTotalBOMCost();
-      document.getElementById('bomModalBackdrop').classList.add('show');
-    }
-
-    function openBOMModal(productId, productName, productCode, category, unit, version, baseQuantity, jsonComponentsStr) {
-      document.getElementById('modalHeaderTitle').textContent = '✏️ ' + productCode + ' — Reçeteyi Düzenle';
-      document.getElementById('modalFinishedStockItemId').value = productId;
-      
-      const selectEl = document.getElementById('modalFinishedStockItemIdSelect');
-      selectEl.value = productId;
-      selectEl.disabled = false;
-
-      document.getElementById('modalVersion').value = version || 'Rev.01';
-      document.getElementById('modalBaseQuantity').value = baseQuantity || 1;
-      document.getElementById('modalBaseUnitDisplay').textContent = unit || 'Adet';
-
-      const container = document.getElementById('componentCardContainer');
-      container.innerHTML = '';
-      cardCounter = 0;
-
-      let components = [];
-      try {
-        components = JSON.parse(jsonComponentsStr);
-      } catch(e) { components = []; }
-
-      if (components.length > 0) {
-        components.forEach(comp => {
-          addComponentCard({
-            componentStockItemId: comp.componentStockItemId,
-            quantityRequired: comp.quantityRequired,
-            unit: comp.unit,
-            scrapPercentage: comp.scrapPercentage,
-            level: comp.level,
-            operationCode: comp.operationCode,
-            alternativeComponentItemId: comp.alternativeComponentItemId,
-            alternativeNotes: comp.alternativeNotes,
-            notes: comp.notes
-          });
-        });
-      } else {
-        addComponentCard();
-        addComponentCard();
-      }
-
-      calculateTotalBOMCost();
-      document.getElementById('bomModalBackdrop').classList.add('show');
-    }
-
-    function onFinishedProductSelectChange(selectEl) {
-      const selectedOption = selectEl.options[selectEl.selectedIndex];
-      if (selectedOption && selectedOption.value) {
-        document.getElementById('modalFinishedStockItemId').value = selectedOption.value;
-        const unit = selectedOption.getAttribute('data-unit') || 'Adet';
-        document.getElementById('modalBaseUnitDisplay').textContent = unit;
-      }
-    }
-
-    function closeBOMModal() {
-      document.getElementById('bomModalBackdrop').classList.remove('show');
-    }
-
-    function addComponentCard(data = {}) {
-      cardCounter++;
-      const container = document.getElementById('componentCardContainer');
-      const card = document.createElement('div');
-      card.className = 'comp-card';
-
-      let compOptionsHtml = '<option value="">-- Bileşen Seçiniz (Hammadde, Yarı Mamul veya Ticari Mal) --</option>';
-      availableComponents.forEach(c => {
-        const selected = data.componentStockItemId && String(data.componentStockItemId) === String(c.id) ? 'selected' : '';
-        let catTag = '📦 [Hammadde]';
-        if (c.category === 'Yari_Mamul' || c.category === 'Yarı_Mamul') catTag = '⚙️ [Yarı Mamul]';
-        else if (c.category === 'Ticari_Mal' || c.category === 'Ticari Mal') catTag = '🛒 [Ticari Mal]';
-        compOptionsHtml += `<option value="${c.id}" data-unit="${c.unit}" data-price="${c.price}" data-cat="${c.category}" ${selected}>${c.code} — ${c.name} ${catTag}</option>`;
-      });
-
-      let altCompOptionsHtml = '<option value="">(Yok / Belirtilmedi)</option>';
-      availableComponents.forEach(c => {
-        const selected = data.alternativeComponentItemId && String(data.alternativeComponentItemId) === String(c.id) ? 'selected' : '';
-        altCompOptionsHtml += `<option value="${c.id}" ${selected}>${c.code} — ${c.name}</option>`;
-      });
-
-      let opOptionsHtml = '<option value="">-- Operasyon / İstasyon Kodu Seçiniz --</option>';
-      workCentersList.forEach(wc => {
-        const selected = data.operationCode === wc ? 'selected' : '';
-        opOptionsHtml += `<option value="${wc}" ${selected}>${wc}</option>`;
-      });
-
-      const currentLevel = data.level ? parseInt(data.level, 10) : 1;
-
-      card.innerHTML = `
-        <div class="comp-card-header">
-          <div class="comp-card-title">
-            <span>⚙️ Alt Bileşen Kalemi #${cardCounter}</span>
-          </div>
-          <button type="button" class="btn-del-card" onclick="removeComponentCard(this)">🗑️ Kalemi Sil</button>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Bileşen Kodu ve Adı (Hammadde, Yarı Mamul veya Ticari Mal) *</label>
-          <select class="form-control comp-select" onchange="onComponentSelectChange(this)" required>
-            ${compOptionsHtml}
-          </select>
-        </div>
-
-        <div class="form-row-3">
-          <div class="form-group">
-            <label class="form-label">Miktar (Requirement Qty) *</label>
-            <input type="number" class="form-control comp-qty" value="${data.quantityRequired || 1.0}" min="0.0001" step="0.0001" oninput="calculateTotalBOMCost()" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Ölçü Birimi (UOM)</label>
-            <input type="text" class="form-control comp-unit" value="${data.unit || 'Adet'}" readonly>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Fire Oranı (%) *</label>
-            <input type="number" class="form-control comp-scrap" value="${data.scrapPercentage !== undefined ? data.scrapPercentage : 0.0}" min="0" step="0.5" oninput="calculateTotalBOMCost()">
-          </div>
-        </div>
-
-        <!-- Section 3 Fields inside Component Card -->
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Seviye Bilgisi (Multi-Level BOM) *</label>
-            <select class="form-control comp-level">
-              <option value="1" ${currentLevel === 1 ? 'selected' : ''}>Seviye 1: Ana Ürün Doğrudan Bileşeni</option>
-              <option value="2" ${currentLevel === 2 ? 'selected' : ''}>Seviye 2: Yarı Mamul / Alt Reçeteli Bileşen</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Operasyon / İstasyon Kodu *</label>
-            <select class="form-control comp-op">
-              ${opOptionsHtml}
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Alternatif Malzeme Bilgisi (Yedek Malzeme)</label>
-            <select class="form-control comp-alt">
-              ${altCompOptionsHtml}
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Alternatif Malzeme Tanımı / Notu</label>
-            <input type="text" class="form-control comp-alt-notes" value="${data.alternativeNotes || ''}" placeholder="Örn: Stok bittiğinde onaylı alternatif HAM-052 kullanılabilir">
-          </div>
-        </div>
-      `;
-
-      container.appendChild(card);
-
-      // Smooth scroll to the newly added card inside modal body
-      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    function removeComponentCard(btn) {
-      const card = btn.closest('.comp-card');
-      if (card) card.remove();
-      calculateTotalBOMCost();
-    }
-
-    function onComponentSelectChange(selectEl) {
-      const selectedOption = selectEl.options[selectEl.selectedIndex];
-      const card = selectEl.closest('.comp-card');
-      if (selectedOption && card) {
-        const unit = selectedOption.getAttribute('data-unit') || 'Adet';
-        const cat = selectedOption.getAttribute('data-cat');
-        card.querySelector('.comp-unit').value = unit;
-        
-        // Auto-detect level if semi-finished
-        if (cat === 'Yari_Mamul' || cat === 'Yarı_Mamul') {
-          const levelSelect = card.querySelector('.comp-level');
-          if (levelSelect) levelSelect.value = '2';
-        }
-      }
-      calculateTotalBOMCost();
-    }
-
-    function calculateTotalBOMCost() {
-      const cards = document.querySelectorAll('#componentCardContainer .comp-card');
-      let total = 0;
-
-      cards.forEach(card => {
-        const selectEl = card.querySelector('.comp-select');
-        const qty = parseFloat(card.querySelector('.comp-qty').value) || 0;
-        const scrap = parseFloat(card.querySelector('.comp-scrap').value) || 0;
-        if (selectEl && selectEl.selectedIndex > 0) {
-          const opt = selectEl.options[selectEl.selectedIndex];
-          const price = parseFloat(opt.getAttribute('data-price')) || 0;
-          total += qty * price * (1 + (scrap / 100));
-        }
-      });
-
-      document.getElementById('modalCalculatedCost').textContent = total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
-    }
-
-    function prepareFormSubmit(event) {
-      const finishedSelect = document.getElementById('modalFinishedStockItemIdSelect');
-      const hiddenFinished = document.getElementById('modalFinishedStockItemId');
-      
-      if (!hiddenFinished.value && finishedSelect.value) {
-        hiddenFinished.value = finishedSelect.value;
-      }
-
-      if (!hiddenFinished.value) {
-        alert('Lütfen reçetesi yazılacak ürünü seçiniz!');
-        event.preventDefault();
-        return false;
-      }
-
-      const cards = document.querySelectorAll('#componentCardContainer .comp-card');
-      const componentsArr = [];
-
-      cards.forEach(card => {
-        const compId = card.querySelector('.comp-select').value;
-        if (compId) {
-          componentsArr.push({
-            componentStockItemId: parseInt(compId, 10),
-            quantityRequired: parseFloat(card.querySelector('.comp-qty').value) || 1.0,
-            unit: card.querySelector('.comp-unit').value || 'Adet',
-            scrapPercentage: parseFloat(card.querySelector('.comp-scrap').value) || 0.0,
-            level: parseInt(card.querySelector('.comp-level').value, 10) || 1,
-            operationCode: card.querySelector('.comp-op').value || null,
-            alternativeComponentItemId: card.querySelector('.comp-alt').value ? parseInt(card.querySelector('.comp-alt').value, 10) : null,
-            alternativeNotes: card.querySelector('.comp-alt-notes').value || null
-          });
-        }
-      });
-
-      document.getElementById('modalComponentsJson').value = JSON.stringify(componentsArr);
-    }
-
     /* Table Search & Filter Functions */
     function filterTable() {
       const query = document.getElementById('searchInput').value.toLowerCase();

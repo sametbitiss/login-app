@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Üretim Reçetesi Hazırlama — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bom-card-bg: rgba(15, 23, 42, 0.75);
+      --bom-glass-border: rgba(99, 102, 241, 0.2);
+    }
+
+    .form-container-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 30px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .form-section {
+      background: rgba(30, 41, 59, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-title {
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #818cf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .form-stack-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-label {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .form-control {
+      background: #090e1a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: all 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .form-control:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
+    }
+    .form-control[readonly] {
+      background: #111827;
+      color: #cbd5e1;
+      border-color: #1f2937;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Component Vertical Cards List */
+    .comp-card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .comp-card {
+      background: #090e1a;
+      border: 1.5px solid #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.2s;
+    }
+    .comp-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .comp-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+    .comp-card-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #818cf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-add-row {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-add-row:hover { background: rgba(16, 185, 129, 0.25); transform: translateY(-1px); }
+
+    .btn-del-card {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-del-card:hover { background: rgba(239, 68, 68, 0.3); color: #fff; }
+
+    .form-actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+    }
+
+    .btn-save-bom {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 14px 32px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-save-bom:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99, 102, 241, 0.6); }
+
+    .btn-back-link {
+      background: rgba(148, 163, 184, 0.1);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-back-link:hover { background: rgba(148, 163, 184, 0.2); color: #fff; }
+  </style>
+</head>
+<body class="module-body">
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
+    <div class="module-sidebar-section">
+      <div class="mss-label">🏭 ÜRETİM & İMALAT YÖNETİMİ</div>
+      <div class="mss-group-title">📊 DASHBOARD & PERFORMANS</div>
+      <div class="mss-sub">
+        <a href="/production/analytics" class="mss-sub-link">📊 Üretim Analitiği</a>
+      </div>
+      <div class="mss-group-title">⚙️ İMALAT & SİPARİŞ KONTROLÜ</div>
+      <div class="mss-sub">
+        <a href="/production/requisitions" class="mss-sub-link">📩 Üretim Talepleri</a>
+        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
+        <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
+        <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
+      </div>
+      <div class="mss-group-title">📜 REÇETE & PROCESS MÜHENDİSLİĞİ</div>
+      <div class="mss-sub">
+        <a href="/production/bom" class="mss-sub-link active">📜 Üretim Reçeteleri (BOM)</a>
+        <a href="/production/routing" class="mss-sub-link">🛠️ Rotalama & Operasyonlar</a>
+      </div>
+      <div class="mss-group-title">🏭 KAPASİTE & SAHA TAKİBİ (MES)</div>
+      <div class="mss-sub">
+        <a href="/production/capacity" class="mss-sub-link">🏭 Kapasite Planlaması</a>
+        <a href="/production/mes" class="mss-sub-link">📱 MES Saha Terminali</a>
+      </div>
+    </div>
+    <div class="module-sidebar-user"><div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div><div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div></div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link">Satın Alma</a><a href="/production" class="mt-link active">Üretim Planlama</a><a href="/quality" class="mt-link">Kalite Kontrol</a>
+      </div>
+      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
+    </header>
+
+    <main class="module-content">
+      <div class="module-subnav">
+        <a href="/production/analytics" class="msn-link">📊 Analitik</a>
+        <a href="/production/requisitions" class="msn-link">📩 Üretim Talepleri</a>
+        <a href="/production/orders" class="msn-link">📋 İş Emirleri</a>
+        <a href="/production/orders/add" class="msn-link">➕ İş Emri Ekle</a>
+        <a href="/production/mrp" class="msn-link">⚡ MRP Hesaplama</a>
+        <a href="/production/bom" class="msn-link active">📜 Reçeteler (BOM)</a>
+        <a href="/production/routing" class="msn-link">🛠️ Rotalama</a>
+        <a href="/production/capacity" class="msn-link">🏭 Kapasite</a>
+        <a href="/production/mes" class="msn-link">📱 MES Terminali</a>
+      </div>
+
+      <!-- Page Header & Navigation Breadcrumb -->
+      <div class="page-header" style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-size: 0.85rem; color: #818cf8; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <a href="/production/bom" style="color: #818cf8; text-decoration: none;">📜 Üretim Reçeteleri</a>
+            <span>›</span>
+            <span style="color: var(--text-secondary);"><%= targetProduct ? targetProduct.stockCode + ' — Reçete Düzenleme' : 'Yeni Reçete Oluşturma' %></span>
+          </div>
+          <h1><%= targetProduct ? '📜 Reçeteyi Düzenle: ' + targetProduct.name : '➕ Yeni Ürün Üretim Reçetesi (BOM) Hazırlama' %></h1>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Mamul ve Yarı Mamul ürünlerin alt bileşen, reçete revizyonu, fire oranları ve süreç operasyon tanımlarını yönetin.</p>
+        </div>
+        <a href="/production/bom" class="btn-back-link">
+          <span>← Reçeteler Listesine Dön</span>
+        </a>
+      </div>
+
+      <% 
+        const safeFinishedStockItems = (typeof finishedStockItems !== 'undefined' && finishedStockItems) ? finishedStockItems : [];
+        const safeComponentStockItems = (typeof componentStockItems !== 'undefined' && componentStockItems) ? componentStockItems : [];
+        const safeExistingBOMItems = (typeof existingBOMItems !== 'undefined' && existingBOMItems) ? existingBOMItems : [];
+        const initialVersion = safeExistingBOMItems.length > 0 && safeExistingBOMItems[0].version ? safeExistingBOMItems[0].version : 'Rev.01';
+        const initialBaseQty = safeExistingBOMItems.length > 0 && safeExistingBOMItems[0].baseQuantity ? safeExistingBOMItems[0].baseQuantity : 1;
+      %>
+
+      <form action="/production/bom/save" method="POST" id="bomFullForm" onsubmit="prepareFormSubmit(event)">
+        <input type="hidden" name="finishedStockItemId" id="finishedStockItemId" value="<%= targetProduct ? targetProduct.id : '' %>">
+        <input type="hidden" name="componentsJson" id="componentsJson">
+
+        <div class="form-container-card">
+          <!-- 1. Üst Ürün (Ana Malzeme) Bilgileri -->
+          <div class="form-section">
+            <div class="section-title">
+              <span>1. Üst Ürün (Ana Malzeme) Bilgileri</span>
+            </div>
+            <div class="form-stack-column">
+              <div class="form-group">
+                <label class="form-label">Reçetesi Yazılacak Ürün (Yalnızca Mamul veya Yarı Mamul) *</label>
+                <select id="finishedStockItemIdSelect" class="form-control" onchange="onFinishedProductSelectChange(this)" required style="cursor: pointer;">
+                  <option value="">-- Reçete Yazılacak Ürünü (Mamul veya Yarı Mamul) Seçiniz --</option>
+                  <% safeFinishedStockItems.filter(item => ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.category)).forEach(item => { %>
+                    <% const isSelected = targetProduct && String(targetProduct.id) === String(item.id); %>
+                    <option value="<%= item.id %>" data-code="<%= item.stockCode %>" data-name="<%= item.name.replace(/"/g, '\\"') %>" data-cat="<%= item.category %>" data-unit="<%= item.unit %>" <%= isSelected ? 'selected' : '' %>>
+                      [<%= item.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>] <%= item.stockCode %> — <%= item.name %> (Mevcut Stok: <%= item.currentStock %> <%= item.unit %>)
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Ürün Versiyonu / Revizyon No *</label>
+                  <input type="text" name="version" id="formVersion" class="form-control" value="<%= initialVersion %>" placeholder="Örn: Rev.01, Rev.02, v1.0" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Temel Üretim Miktarı (Base Qty) *</label>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="number" name="baseQuantity" id="formBaseQuantity" class="form-control" value="<%= initialBaseQty %>" min="0.0001" step="0.0001" required>
+                    <span id="formBaseUnitDisplay" style="font-weight: 700; color: #94a3b8; font-size: 0.9rem; width: 80px;"><%= targetProduct ? targetProduct.unit : 'Adet' %></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Alt Bileşenler (Satırlar / Bileşen Listesi) -->
+          <div class="form-section">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div class="section-title" style="border-bottom: none; padding-bottom: 0;">
+                <span>2. Alt Bileşenler (Satırlar / Bileşen Listesi)</span>
+              </div>
+              <button type="button" class="btn-add-row" onclick="addComponentCard()">
+                ➕ Yeni Bileşen / Satır Ekle
+              </button>
+            </div>
+            
+            <div id="componentCardContainer" class="comp-card-list">
+              <!-- Dynamic component vertical cards inserted via JS -->
+            </div>
+          </div>
+
+          <!-- 3. Yapısal ve Süreç Bilgileri -->
+          <div class="form-section">
+            <div class="section-title">
+              <span>3. Yapısal ve Süreç Bilgileri (Multi-Level BOM & Maliyet Özeti)</span>
+            </div>
+            <div class="form-stack-column">
+              <div style="background: #090e1a; padding: 16px 20px; border-radius: 12px; border: 1.5px solid #1e293b; font-size: 0.88rem; color: #94a3b8;">
+                <div><strong style="color: #818cf8;">📌 Multi-Level BOM Hiyerarşisi & Döngüsel Kontrol:</strong> Reçete içindeki alt malzemelerden "Yarı Mamul" olanlar otomatik olarak <strong>Seviye-2 (Sub-Assembly)</strong> olarak işlenir. Ana ürün olarak seçilen ürün, döngüsel bağımlılığı önlemek amacıyla alt bileşen listesinde seçilemez.</div>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.3); padding: 18px 24px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="font-size: 0.9rem; font-weight: 700; color: #a7f3d0; text-transform: uppercase;">Tahmini Birim Hammadde Maliyeti Özeti:</div>
+                <div id="formCalculatedCost" style="font-size: 1.6rem; font-weight: 800; color: #34d399;">0.00 TL</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions Bar -->
+          <div class="form-actions-bar">
+            <a href="/production/bom" class="btn-back-link">İptal ve Geri Dön</a>
+            <button type="submit" class="btn-save-bom">
+              💾 Reçeteyi Kaydet ve Güncelle
+            </button>
+          </div>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <!-- Available Components Options Template Data -->
+  <script>
+    // Strict Filter for Components: ONLY Hammadde, Yarı Mamul, and Ticari Mal
+    const availableComponents = [
+      <% safeComponentStockItems.filter(c => ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Ticari_Mal', 'Ticari Mal'].includes(c.category)).forEach(c => { %>
+        {
+          id: <%= c.id %>,
+          code: "<%= c.stockCode %>",
+          name: "<%= c.name.replace(/"/g, '\\"') %>",
+          unit: "<%= c.unit %>",
+          category: "<%= c.category %>",
+          price: <%= parseFloat(c.purchasePrice || 0) %>
+        },
+      <% }); %>
+    ];
+
+    const workCentersList = [
+      "İstasyon-1 (Kesim & Büküm)",
+      "İstasyon-2 (Kaynak & Sac İşleme)",
+      "İstasyon-3 (CNC & Talaşlı İmalat)",
+      "İstasyon-4 (Boya & Kaplama)",
+      "İstasyon-5 (Montaj & Test)",
+      "İstasyon-6 (Paketleme & Sevkiyat)"
+    ];
+
+    const existingBOMItemsData = <%- JSON.stringify(safeExistingBOMItems) %>;
+    let cardCounter = 0;
+
+    // Load initial BOM items or empty cards on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('componentCardContainer');
+      container.innerHTML = '';
+      cardCounter = 0;
+
+      if (existingBOMItemsData && existingBOMItemsData.length > 0) {
+        existingBOMItemsData.forEach(comp => {
+          addComponentCard({
+            componentStockItemId: comp.componentStockItemId,
+            quantityRequired: comp.quantityRequired,
+            unit: comp.unit,
+            scrapPercentage: comp.scrapPercentage,
+            level: comp.level,
+            operationCode: comp.operationCode,
+            alternativeComponentItemId: comp.alternativeComponentItemId,
+            alternativeNotes: comp.alternativeNotes,
+            notes: comp.notes
+          });
+        });
+      } else {
+        addComponentCard();
+        addComponentCard();
+      }
+
+      refreshSelfExclusion();
+      calculateTotalBOMCost();
+    });
+
+    function onFinishedProductSelectChange(selectEl) {
+      const selectedOption = selectEl.options[selectEl.selectedIndex];
+      if (selectedOption && selectedOption.value) {
+        document.getElementById('finishedStockItemId').value = selectedOption.value;
+        const unit = selectedOption.getAttribute('data-unit') || 'Adet';
+        document.getElementById('formBaseUnitDisplay').textContent = unit;
+      } else {
+        document.getElementById('finishedStockItemId').value = '';
+      }
+
+      refreshSelfExclusion();
+    }
+
+    // Prevents selecting main product as its own component
+    function refreshSelfExclusion() {
+      const selectedMainProductId = document.getElementById('finishedStockItemId').value;
+
+      const compSelects = document.querySelectorAll('.comp-select, .comp-alt');
+      compSelects.forEach(selectEl => {
+        const options = selectEl.options;
+        for (let i = 0; i < options.length; i++) {
+          const opt = options[i];
+          if (selectedMainProductId && String(opt.value) === String(selectedMainProductId)) {
+            opt.disabled = true;
+            opt.style.color = '#ef4444';
+            if (opt.selected) {
+              selectEl.value = '';
+              alert('⚠️ Ana ürün olarak seçilen ürün kendisinin alt bileşeni veya alternatifi olarak seçilemez!');
+            }
+          } else {
+            opt.disabled = false;
+            opt.style.color = '';
+          }
+        }
+      });
+    }
+
+    function addComponentCard(data = {}) {
+      cardCounter++;
+      const container = document.getElementById('componentCardContainer');
+      const card = document.createElement('div');
+      card.className = 'comp-card';
+
+      const selectedMainProductId = document.getElementById('finishedStockItemId').value;
+
+      let compOptionsHtml = '<option value="">-- Bileşen Seçiniz (Hammadde, Yarı Mamul veya Ticari Mal) --</option>';
+      availableComponents.forEach(c => {
+        const isSelf = selectedMainProductId && String(c.id) === String(selectedMainProductId);
+        const selected = data.componentStockItemId && String(data.componentStockItemId) === String(c.id) ? 'selected' : '';
+        const disabledAttr = isSelf ? 'disabled style="color: #ef4444;"' : '';
+        let catTag = '📦 [Hammadde]';
+        if (c.category === 'Yari_Mamul' || c.category === 'Yarı_Mamul') catTag = '⚙️ [Yarı Mamul]';
+        else if (c.category === 'Ticari_Mal' || c.category === 'Ticari Mal') catTag = '🛒 [Ticari Mal]';
+        const labelText = isSelf ? `${c.code} — ${c.name} (⚠️ Ana Ürün - Seçilemez)` : `${c.code} — ${c.name} ${catTag}`;
+        compOptionsHtml += `<option value="${c.id}" data-unit="${c.unit}" data-price="${c.price}" data-cat="${c.category}" ${disabledAttr} ${selected}>${labelText}</option>`;
+      });
+
+      let altCompOptionsHtml = '<option value="">(Yok / Belirtilmedi)</option>';
+      availableComponents.forEach(c => {
+        const isSelf = selectedMainProductId && String(c.id) === String(selectedMainProductId);
+        const selected = data.alternativeComponentItemId && String(data.alternativeComponentItemId) === String(c.id) ? 'selected' : '';
+        const disabledAttr = isSelf ? 'disabled style="color: #ef4444;"' : '';
+        const labelText = isSelf ? `${c.code} — ${c.name} (⚠️ Ana Ürün - Seçilemez)` : `${c.code} — ${c.name}`;
+        altCompOptionsHtml += `<option value="${c.id}" ${disabledAttr} ${selected}>${labelText}</option>`;
+      });
+
+      let opOptionsHtml = '<option value="">-- Operasyon / İstasyon Kodu Seçiniz --</option>';
+      workCentersList.forEach(wc => {
+        const selected = data.operationCode === wc ? 'selected' : '';
+        opOptionsHtml += `<option value="${wc}" ${selected}>${wc}</option>`;
+      });
+
+      const currentLevel = data.level ? parseInt(data.level, 10) : 1;
+
+      card.innerHTML = `
+        <div class="comp-card-header">
+          <div class="comp-card-title">
+            <span>⚙️ Alt Bileşen Kalemi #${cardCounter}</span>
+          </div>
+          <button type="button" class="btn-del-card" onclick="removeComponentCard(this)">🗑️ Kalemi Sil</button>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Bileşen Kodu ve Adı (Hammadde, Yarı Mamul veya Ticari Mal) *</label>
+          <select class="form-control comp-select" onchange="onComponentSelectChange(this)" required>
+            ${compOptionsHtml}
+          </select>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Miktar (Requirement Qty) *</label>
+            <input type="number" class="form-control comp-qty" value="${data.quantityRequired || 1.0}" min="0.0001" step="0.0001" oninput="calculateTotalBOMCost()" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ölçü Birimi (UOM)</label>
+            <input type="text" class="form-control comp-unit" value="${data.unit || 'Adet'}" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fire Oranı (%) *</label>
+            <input type="number" class="form-control comp-scrap" value="${data.scrapPercentage !== undefined ? data.scrapPercentage : 0.0}" min="0" step="0.5" oninput="calculateTotalBOMCost()">
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Seviye Bilgisi (Multi-Level BOM) *</label>
+            <select class="form-control comp-level">
+              <option value="1" ${currentLevel === 1 ? 'selected' : ''}>Seviye 1: Ana Ürün Doğrudan Bileşeni</option>
+              <option value="2" ${currentLevel === 2 ? 'selected' : ''}>Seviye 2: Yarı Mamul / Alt Reçeteli Bileşen</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Operasyon / İstasyon Kodu *</label>
+            <select class="form-control comp-op">
+              ${opOptionsHtml}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Alternatif Malzeme Bilgisi (Yedek Malzeme)</label>
+            <select class="form-control comp-alt">
+              ${altCompOptionsHtml}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Alternatif Malzeme Tanımı / Notu</label>
+            <input type="text" class="form-control comp-alt-notes" value="${data.alternativeNotes || ''}" placeholder="Örn: Stok bittiğinde onaylı alternatif HAM-052 kullanılabilir">
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    }
+
+    function removeComponentCard(btn) {
+      const card = btn.closest('.comp-card');
+      if (card) card.remove();
+      calculateTotalBOMCost();
+    }
+
+    function onComponentSelectChange(selectEl) {
+      const selectedOption = selectEl.options[selectEl.selectedIndex];
+      const card = selectEl.closest('.comp-card');
+      if (selectedOption && card) {
+        const unit = selectedOption.getAttribute('data-unit') || 'Adet';
+        const cat = selectedOption.getAttribute('data-cat');
+        card.querySelector('.comp-unit').value = unit;
+        
+        if (cat === 'Yari_Mamul' || cat === 'Yarı_Mamul') {
+          const levelSelect = card.querySelector('.comp-level');
+          if (levelSelect) levelSelect.value = '2';
+        }
+      }
+      calculateTotalBOMCost();
+    }
+
+    function calculateTotalBOMCost() {
+      const cards = document.querySelectorAll('#componentCardContainer .comp-card');
+      let total = 0;
+
+      cards.forEach(card => {
+        const selectEl = card.querySelector('.comp-select');
+        const qty = parseFloat(card.querySelector('.comp-qty').value) || 0;
+        const scrap = parseFloat(card.querySelector('.comp-scrap').value) || 0;
+        if (selectEl && selectEl.selectedIndex > 0) {
+          const opt = selectEl.options[selectEl.selectedIndex];
+          const price = parseFloat(opt.getAttribute('data-price')) || 0;
+          total += qty * price * (1 + (scrap / 100));
+        }
+      });
+
+      document.getElementById('formCalculatedCost').textContent = total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
+    }
+
+    function prepareFormSubmit(event) {
+      const finishedSelect = document.getElementById('finishedStockItemIdSelect');
+      const hiddenFinished = document.getElementById('finishedStockItemId');
+      
+      if (!hiddenFinished.value && finishedSelect.value) {
+        hiddenFinished.value = finishedSelect.value;
+      }
+
+      if (!hiddenFinished.value) {
+        alert('Lütfen reçetesi yazılacak ürünü seçiniz!');
+        event.preventDefault();
+        return false;
+      }
+
+      const cards = document.querySelectorAll('#componentCardContainer .comp-card');
+      const componentsArr = [];
+
+      cards.forEach(card => {
+        const compId = card.querySelector('.comp-select').value;
+        if (compId) {
+          componentsArr.push({
+            componentStockItemId: parseInt(compId, 10),
+            quantityRequired: parseFloat(card.querySelector('.comp-qty').value) || 1.0,
+            unit: card.querySelector('.comp-unit').value || 'Adet',
+            scrapPercentage: parseFloat(card.querySelector('.comp-scrap').value) || 0.0,
+            level: parseInt(card.querySelector('.comp-level').value, 10) || 1,
+            operationCode: card.querySelector('.comp-op').value || null,
+            alternativeComponentItemId: card.querySelector('.comp-alt').value ? parseInt(card.querySelector('.comp-alt').value, 10) : null,
+            alternativeNotes: card.querySelector('.comp-alt-notes').value || null
+          });
+        }
+      });
+
+      document.getElementById('componentsJson').value = JSON.stringify(componentsArr);
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock(); setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
