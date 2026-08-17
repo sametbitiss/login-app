@@ -138,17 +138,48 @@ class ProductionController {
   });
 
   renderAddOrder = asyncHandler(async (req, res) => {
-    const { StockItem } = require('../../models');
+    const { stockItemId, plannedQty, requisitionId, requisitionNo } = req.query;
+    const { StockItem, ProductionOrder } = require('../../models');
     const { Op } = require('sequelize');
+
     const stockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal', 'Yari_Mamul', 'Yarı_Mamul'] } },
+      where: {
+        status: 'Active',
+        category: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
+        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+      },
       order: [['name', 'ASC']]
     });
+
+    let targetProduct = null;
+    let multiLevelPlan = [];
+    let sourceRequisition = null;
+
+    if (requisitionId) {
+      sourceRequisition = await ProductionOrder.findByPk(requisitionId);
+    }
+
+    const effectiveStockItemId = stockItemId || (sourceRequisition ? sourceRequisition.stockItemId : null);
+    const effectiveQty = parseFloat(plannedQty) || (sourceRequisition ? parseFloat(sourceRequisition.plannedQuantity || 100) : 100);
+    const effectiveOrderSource = requisitionNo || (sourceRequisition ? sourceRequisition.workOrderNo : `SOP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+
+    if (effectiveStockItemId) {
+      targetProduct = await StockItem.findByPk(effectiveStockItemId);
+      if (targetProduct) {
+        multiLevelPlan = await productionRepository.getMultiLevelProductionPlan(effectiveStockItemId, effectiveQty);
+      }
+    }
+
     const nextWorkOrderNo = await productionRepository.generateWorkOrderNo();
 
     res.render('production/add', {
       user: req.user,
       stockItems,
+      targetProduct,
+      multiLevelPlan,
+      sourceRequisition,
+      effectiveQty,
+      effectiveOrderSource,
       nextWorkOrderNo,
       WORK_CENTERS,
       ALL_ROLES,
@@ -159,6 +190,8 @@ class ProductionController {
 
   addOrder = asyncHandler(async (req, res) => {
     const {
+      ordersJson,
+      requisitionId,
       productionTitle,
       stockItemId,
       plannedQuantity,
@@ -174,6 +207,49 @@ class ProductionController {
       notes
     } = req.body;
 
+    const { ProductionOrder } = require('../../models');
+
+    // Batch work orders creation from multi-level plan
+    if (ordersJson) {
+      let ordersArray = [];
+      try {
+        ordersArray = JSON.parse(ordersJson);
+      } catch (err) {
+        throw new ValidationError('İş emri verileri geçersiz formatta.');
+      }
+
+      for (let i = 0; i < ordersArray.length; i++) {
+        const item = ordersArray[i];
+        const woNo = await productionRepository.generateWorkOrderNo();
+
+        await productionRepository.create({
+          workOrderNo: woNo,
+          productionTitle: item.productionTitle || `[Seviye ${item.level}] İmalat İş Emri — ${item.productName}`,
+          stockItemId: item.stockItemId,
+          plannedQuantity: parseFloat(item.plannedQuantity) || 1,
+          unit: item.unit || 'Adet',
+          status: item.status || 'Planned',
+          priority: item.priority || 'Normal',
+          workCenter: item.workCenter || WORK_CENTERS[0],
+          plannedStartDate: item.plannedStartDate,
+          plannedEndDate: item.plannedEndDate,
+          notes: item.notes || `Sipariş Kaynağı: ${item.orderSource || 'Manuel'}`
+        }, req.user, req.ip);
+      }
+
+      // If created from a requisition, update the requisition status to Completed
+      if (requisitionId) {
+        const reqOrder = await ProductionOrder.findByPk(requisitionId);
+        if (reqOrder) {
+          reqOrder.status = 'Completed';
+          await reqOrder.save();
+        }
+      }
+
+      return res.redirect('/production/orders');
+    }
+
+    // Single work order creation fallback
     await productionRepository.create({
       productionTitle,
       stockItemId,
@@ -185,11 +261,18 @@ class ProductionController {
       plannedStartDate,
       plannedEndDate,
       estimatedHours: parseFloat(estimatedHours) || 0,
-      productionManager: productionManager ? productionManager.trim() : req.user.username,
+      productionManager,
       bomNotes,
-      notes,
-      createdBy: req.user.id
+      notes
     }, req.user, req.ip);
+
+    if (requisitionId) {
+      const reqOrder = await ProductionOrder.findByPk(requisitionId);
+      if (reqOrder) {
+        reqOrder.status = 'Completed';
+        await reqOrder.save();
+      }
+    }
 
     res.redirect('/production/orders');
   });

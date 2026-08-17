@@ -386,6 +386,67 @@ class ProductionRepository {
     });
   }
 
+  async getMultiLevelProductionPlan(stockItemId, plannedQuantity = 1) {
+    const validStockItemId = parseInt(stockItemId, 10);
+    const mainProduct = await StockItem.findByPk(validStockItemId);
+    if (!mainProduct) return [];
+
+    const planItemsMap = new Map();
+
+    // Helper recursive function to traverse BOM & Routings
+    const traverseBOM = async (productId, requiredQty, currentLevel = 1) => {
+      const product = await StockItem.findByPk(productId);
+      if (!product) return;
+
+      // Fetch product's BOM items
+      const bomItems = await BOMItem.findAll({
+        where: { finishedStockItemId: productId },
+        include: [{ model: StockItem, as: 'componentItem' }],
+        order: [['level', 'ASC'], ['id', 'ASC']]
+      });
+
+      // Fetch product's Routing Operations
+      const routingOperations = await RoutingOperation.findAll({
+        where: { stockItemId: productId },
+        order: [['operationSeq', 'ASC']]
+      });
+
+      const maxLevel = bomItems.length > 0 ? Math.max(...bomItems.map(b => b.level || (currentLevel + 1))) : currentLevel;
+      const effectiveLevel = currentLevel === 1 ? 1 : maxLevel;
+
+      if (!planItemsMap.has(productId)) {
+        planItemsMap.set(productId, {
+          product: product.get({ plain: true }),
+          level: effectiveLevel,
+          plannedQuantity: parseFloat(requiredQty) || 1,
+          bomItems: bomItems.map(b => b.get({ plain: true })),
+          routingOperations: routingOperations.map(r => r.get({ plain: true }))
+        });
+      } else {
+        const existing = planItemsMap.get(productId);
+        existing.plannedQuantity += (parseFloat(requiredQty) || 1);
+        if (effectiveLevel > existing.level) existing.level = effectiveLevel;
+      }
+
+      // Recursively traverse sub-assemblies (Yarı Mamul with procurementMethod = Üretim)
+      for (const b of bomItems) {
+        const comp = b.componentItem;
+        if (comp && ['Yarı_Mamul', 'Yari_Mamul'].includes(comp.category) && ['Üretim', 'Production'].includes(comp.procurementMethod)) {
+          const compQty = requiredQty * (parseFloat(b.quantityRequired || 1) / parseFloat(b.baseQuantity || 1));
+          await traverseBOM(comp.id, compQty, b.level || (currentLevel + 1));
+        }
+      }
+    };
+
+    await traverseBOM(validStockItemId, parseFloat(plannedQuantity) || 1, 1);
+
+    // Convert map to array and SORT BY LEVEL DESC! (Higher level number = deeper component = MUST BE PRODUCED FIRST!)
+    const planItems = Array.from(planItemsMap.values());
+    planItems.sort((a, b) => b.level - a.level);
+
+    return planItems;
+  }
+
   async saveProductRouting(stockItemId, operationsArray, currentUser = null, ipAddress = null) {
     const validStockItemId = parseInt(stockItemId, 10);
     const targetProduct = await StockItem.findByPk(validStockItemId);

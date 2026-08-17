@@ -24,8 +24,8 @@ async function testRender() {
   console.log('Testing listRouting render...');
   await productionController.listRouting(req, res, console.error);
 
-  console.log('Testing renderRoutingForm render...');
-  await productionController.renderRoutingForm(req, res, console.error);
+  console.log('Testing renderAddOrder render...');
+  await productionController.renderAddOrder(req, res, console.error);
 }
 
 testRender();
