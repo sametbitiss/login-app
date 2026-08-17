@@ -61,13 +61,22 @@ class StockRepository {
   }
 
   async create(data, currentUser = null, ipAddress = null) {
+    const targetCategory = data.category || 'Ticari_Mal';
+    let targetProcurementMethod = data.procurementMethod;
+
+    if (['Hammadde', 'Ticari_Mal', 'Ticari Mal'].includes(targetCategory)) {
+      targetProcurementMethod = 'Satın Alma';
+    } else if (['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(targetCategory)) {
+      targetProcurementMethod = targetProcurementMethod || 'Üretim';
+    } else {
+      targetProcurementMethod = targetProcurementMethod || 'Satın Alma';
+    }
+
     const cleanData = {
       ...data,
       barcode: (data.barcode && data.barcode.trim()) ? data.barcode.trim() : null,
-      category: data.category || 'Ticari_Mal',
-      procurementMethod: data.procurementMethod || (
-        (data.category === 'Yari_Mamul' || data.category === 'Yarı_Mamul' || data.category === 'Mamul') ? 'Üretim' : 'Satın Alma'
-      ),
+      category: targetCategory,
+      procurementMethod: targetProcurementMethod,
       unit: data.unit || 'Adet',
       currency: data.currency || 'TRY',
       currentStock: (data.currentStock !== undefined && data.currentStock !== '' && !isNaN(parseFloat(data.currentStock))) ? parseFloat(data.currentStock) : 0,
@@ -89,8 +98,11 @@ class StockRepository {
 
     const item = await StockItem.create(cleanData);
 
-    // If newly created stock item is Mamul or Yarı_Mamul, automatically create a BOM Creation Requisition
-    if (['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.category)) {
+    // Automatic BOM Requisition created ONLY IF category is Mamul/Yarı_Mamul AND procurementMethod is Üretim
+    const isProductionItem = ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.category) &&
+                             ['Üretim', 'Production'].includes(item.procurementMethod);
+
+    if (isProductionItem) {
       try {
         const { ProductionOrder } = require('../../models');
         const reqNo = `REQ-BOM-${Date.now().toString().slice(-6)}`;

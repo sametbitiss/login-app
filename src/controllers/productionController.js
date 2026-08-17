@@ -41,10 +41,14 @@ class ProductionController {
     const { StockItem, BOMItem, ProductionOrder } = require('../../models');
     const { Op } = require('sequelize');
 
-    // Auto-sync: Ensure all active Mamul/Yarı_Mamul stock items without a BOM have a BOM Requisition
+    // Auto-sync: Ensure active Mamul/Yarı_Mamul stock items with procurementMethod='Üretim' without a BOM have a BOM Requisition
     try {
       const finishedStockItems = await StockItem.findAll({
-        where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }
+        where: {
+          status: 'Active',
+          category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
+          procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+        }
       });
 
       const existingBOMs = await BOMItem.findAll({ attributes: ['finishedStockItemId'], group: ['finishedStockItemId'] });
@@ -230,14 +234,24 @@ class ProductionController {
     const productBOMList = await productionRepository.findAllBOMGroupedByProduct();
 
     const finishedStockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
+      where: {
+        status: 'Active',
+        category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
+        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+      },
       order: [['name', 'ASC']]
     });
 
     const componentStockItems = await StockItem.findAll({
       where: { 
         status: 'Active',
-        category: { [Op.in]: ['Hammadde', 'Yarı_Mamul', 'Yari_Mamul', 'Ticari_Mal'] }
+        [Op.or]: [
+          { category: { [Op.in]: ['Hammadde', 'Ticari_Mal'] } },
+          {
+            category: { [Op.in]: ['Yarı_Mamul', 'Yari_Mamul'] },
+            procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+          }
+        ]
       },
       order: [['name', 'ASC']]
     });
@@ -271,7 +285,11 @@ class ProductionController {
     const productsWithBOMSet = new Set(existingBOMs.map(b => b.finishedStockItemId));
 
     const finishedStockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
+      where: {
+        status: 'Active',
+        category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
+        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+      },
       order: [['name', 'ASC']]
     });
 
@@ -284,7 +302,13 @@ class ProductionController {
     const componentStockItems = await StockItem.findAll({
       where: { 
         status: 'Active',
-        category: { [Op.in]: ['Hammadde', 'Yarı_Mamul', 'Yari_Mamul', 'Ticari_Mal'] }
+        [Op.or]: [
+          { category: { [Op.in]: ['Hammadde', 'Ticari_Mal'] } },
+          {
+            category: { [Op.in]: ['Yarı_Mamul', 'Yari_Mamul'] },
+            procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+          }
+        ]
       },
       order: [['name', 'ASC']]
     });

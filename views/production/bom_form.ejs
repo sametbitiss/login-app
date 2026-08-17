@@ -378,15 +378,22 @@
 
   <!-- Available Components Options Template Data -->
   <script>
-    // Strict Filter for Components: ONLY Hammadde, Yarı Mamul, and Ticari Mal
+    // Strict Filter for Components: Hammadde/Ticari Mal (Satın Alma) + Yarı Mamul (ONLY procurementMethod = Üretim)
     const availableComponents = [
-      <% safeComponentStockItems.filter(c => ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Ticari_Mal', 'Ticari Mal'].includes(c.category)).forEach(c => { %>
+      <% safeComponentStockItems.filter(c => {
+        if (['Hammadde', 'Ticari_Mal', 'Ticari Mal'].includes(c.category)) return true;
+        if (['Yari_Mamul', 'Yarı_Mamul'].includes(c.category)) {
+          return ['Üretim', 'Production'].includes(c.procurementMethod);
+        }
+        return false;
+      }).forEach(c => { %>
         {
           id: <%= c.id %>,
           code: "<%= c.stockCode %>",
           name: "<%= c.name.replace(/"/g, '\\"') %>",
           unit: "<%= c.unit %>",
           category: "<%= c.category %>",
+          procurementMethod: "<%= c.procurementMethod %>",
           price: <%= parseFloat(c.purchasePrice || 0) %>
         },
       <% }); %>

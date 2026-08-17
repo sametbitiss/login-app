@@ -171,7 +171,8 @@ class ProductionRepository {
     const targetProducts = await StockItem.findAll({
       where: {
         status: 'Active',
-        category: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] }
+        category: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
+        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
       },
       order: [['category', 'ASC'], ['name', 'ASC']]
     });

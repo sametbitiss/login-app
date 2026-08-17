@@ -282,7 +282,7 @@
 
               <div class="aesthetic-group">
                 <label class="aesthetic-label">Kategori *</label>
-                <select name="category" class="aesthetic-input" required style="cursor: pointer;">
+                <select name="category" id="categorySelect" class="aesthetic-input" onchange="handleCategoryChange(this)" required style="cursor: pointer;">
                   <% CATEGORIES.forEach(cat => { %>
                     <% const val = typeof cat === 'object' ? cat.value : cat; %>
                     <% const lbl = typeof cat === 'object' ? cat.label : cat; %>
@@ -310,11 +310,11 @@
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
                   <span>Tedarik Yöntemi *</span>
-                  <span style="color: #818cf8; font-size: 0.72rem;">🔄 SÜREÇ TÜRÜ</span>
+                  <span id="procurementHint" style="color: #818cf8; font-size: 0.72rem;">🔄 SÜREÇ TÜRÜ</span>
                 </label>
                 <select name="procurementMethod" id="procurementMethodSelect" class="aesthetic-input" required style="cursor: pointer;">
-                  <option value="Satın Alma" <%= (formData && formData.procurementMethod === 'Satın Alma') ? 'selected' : '' %>>🛒 Satın Alma (Tedarikçiden Alınır)</option>
-                  <option value="Üretim" <%= (formData && formData.procurementMethod === 'Üretim') ? 'selected' : '' %>>⚙️ Üretim (Fabrikada İmal Edilir)</option>
+                  <option value="Satın Alma" id="optProcurementSatinalma" <%= (formData && formData.procurementMethod === 'Satın Alma') ? 'selected' : '' %>>🛒 Satın Alma (Dış Tedarikçiden Alınır)</option>
+                  <option value="Üretim" id="optProcurementUretim" <%= (formData && formData.procurementMethod === 'Üretim') ? 'selected' : '' %>>⚙️ Üretim (Fabrikada İmal Edilir)</option>
                 </select>
               </div>
 
@@ -347,8 +347,22 @@
               </div>
 
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Varsayılan Depo / Raf Konumu</label>
-                <input type="text" name="warehouseLocation" placeholder="Örn: Ankara Depo / Koridor-A / Raf-04" class="aesthetic-input">
+                <label class="aesthetic-label">
+                  <span>Varsayılan Depo *</span>
+                  <span style="color: #34d399; font-size: 0.72rem;">🏬 DİNAMİK DEPO LİSTESİ</span>
+                </label>
+                <select name="warehouseLocation" class="aesthetic-input" style="cursor: pointer;">
+                  <option value="">-- Depolar Kartından Varsayılan Depoyu Seçiniz --</option>
+                  <% if (typeof warehouses !== 'undefined' && warehouses && warehouses.length > 0) { %>
+                    <% warehouses.forEach(wh => { %>
+                      <option value="<%= wh.name %>">[<%= wh.warehouseCode %>] <%= wh.name %> (<%= wh.type %> — <%= wh.city || 'İstanbul' %>)</option>
+                    <% }); %>
+                  <% } else { %>
+                    <option value="Ana Depo">Ana Depo (Merkez)</option>
+                    <option value="Hammadde Deposu">Hammadde Deposu</option>
+                    <option value="Mamul Deposu">Mamul Deposu</option>
+                  <% } %>
+                </select>
               </div>
             </div>
           </div>
@@ -437,12 +451,34 @@
       }
     }
 
-    function updateNavButtons() {
-      const btnPrev = document.getElementById('btnPrev');
-      const btnNext = document.getElementById('btnNext');
-      btnPrev.style.display = currentTab === 1 ? 'none' : 'inline-block';
-      btnNext.style.display = currentTab === totalTabs ? 'none' : 'inline-block';
+    function handleCategoryChange(selectEl) {
+      const cat = selectEl ? selectEl.value : document.getElementById('categorySelect').value;
+      const procSelect = document.getElementById('procurementMethodSelect');
+      const optSatinalma = document.getElementById('optProcurementSatinalma');
+      const optUretim = document.getElementById('optProcurementUretim');
+      const hint = document.getElementById('procurementHint');
+
+      if (['Hammadde', 'Ticari_Mal', 'Ticari Mal'].includes(cat)) {
+        procSelect.value = 'Satın Alma';
+        optUretim.disabled = true;
+        optSatinalma.disabled = false;
+        if (hint) hint.textContent = '🔒 HAMMADDE/TİCARİ MAL SATIN ALINIR';
+      } else if (['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(cat)) {
+        optUretim.disabled = false;
+        optSatinalma.disabled = false;
+        if (!procSelect.value) procSelect.value = 'Üretim';
+        if (hint) hint.textContent = '🔄 ÜRETİM VEYA SATIN ALMA SEÇİLEBİLİR';
+      } else {
+        optUretim.disabled = false;
+        optSatinalma.disabled = false;
+        if (hint) hint.textContent = '🔄 SÜREÇ TÜRÜ';
+      }
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const catSelect = document.getElementById('categorySelect');
+      if (catSelect) handleCategoryChange(catSelect);
+    });
   </script>
 </body>
 </html>
