@@ -411,6 +411,56 @@
       calculateRoutingTotals();
     });
 
+    function getSelectedTargetProductId() {
+      const selectEl = document.getElementById('stockItemIdSelect');
+      return (selectEl && selectEl.value) ? selectEl.value : document.getElementById('stockItemId').value;
+    }
+
+    function renderOperationComponentsChecklist(prodId, preselectedCodes = []) {
+      const components = bomComponentsMap[prodId] || [];
+      if (!prodId || components.length === 0) {
+        return '<div style="font-size: 0.82rem; color: #94a3b8; font-style: italic;">(Bu operasyon adımına reçeteden parça/bileşen bağlamak için yukarıdan hedef ürün seçiniz)</div>';
+      }
+
+      let html = '<div class="op-components-checklist" style="display: flex; flex-wrap: wrap; gap: 8px;">';
+      components.forEach(c => {
+        let isChecked = false;
+        if (Array.isArray(preselectedCodes)) {
+          isChecked = preselectedCodes.includes(c.code) || preselectedCodes.includes(String(c.id));
+        } else if (typeof preselectedCodes === 'string') {
+          isChecked = preselectedCodes.includes(c.code);
+        }
+
+        const isYari = c.category === 'Yarı_Mamul' || c.category === 'Yari_Mamul';
+        const catBadge = c.category === 'Hammadde' ? '📦 Hammadde' : (isYari ? '⚙️ Yarı Mamul' : '🏷️ Ticari Mal');
+
+        html += `
+          <label class="comp-pill-label" style="background: rgba(30, 41, 59, 0.7); border: 1.5px solid rgba(255, 255, 255, 0.1); padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; color: #f8fafc; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <input type="checkbox" class="op-comp-checkbox" value="${c.code}" ${isChecked ? 'checked' : ''} style="cursor: pointer; accent-color: #6366f1; width: 15px; height: 15px;">
+            <span style="font-size: 0.72rem; color: #818cf8; font-weight: 700;">${catBadge}</span>
+            <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace;">${c.code}</strong>
+            <span>${c.name}</span>
+            <span style="color: #fbbf24; font-weight: 700;">(${c.qty} ${c.unit})</span>
+          </label>
+        `;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function refreshAllOperationCardComponentChecklists() {
+      const prodId = getSelectedTargetProductId();
+      const cards = document.querySelectorAll('#operationCardContainer .op-card');
+      cards.forEach(card => {
+        const container = card.querySelector('.op-components-checklist-container');
+        if (container) {
+          // preserve existing checked values
+          const checked = Array.from(card.querySelectorAll('.op-comp-checkbox:checked')).map(cb => cb.value);
+          container.innerHTML = renderOperationComponentsChecklist(prodId, checked);
+        }
+      });
+    }
+
     function onTargetProductSelectChange(selectEl) {
       const selectedOption = selectEl.options[selectEl.selectedIndex];
       const container = document.getElementById('bomReferenceContainer');
@@ -455,6 +505,8 @@
         document.getElementById('stockItemId').value = '';
         container.innerHTML = '';
       }
+
+      refreshAllOperationCardComponentChecklists();
     }
 
     function addOperationCard(data = {}) {
@@ -471,6 +523,18 @@
         const selected = data.workCenter === wc ? 'selected' : '';
         opOptionsHtml += `<option value="${wc}" ${selected}>${wc}</option>`;
       });
+
+      const currentTargetProdId = getSelectedTargetProductId();
+      let preselectedUsedComponents = [];
+      if (data.usedComponents) {
+        try {
+          preselectedUsedComponents = typeof data.usedComponents === 'string' ? JSON.parse(data.usedComponents) : data.usedComponents;
+        } catch (e) {
+          preselectedUsedComponents = [data.usedComponents];
+        }
+      }
+
+      const compChecklistHtml = renderOperationComponentsChecklist(currentTargetProdId, preselectedUsedComponents);
 
       card.innerHTML = `
         <div class="op-card-header">
@@ -498,6 +562,16 @@
             <select class="form-control op-wc" required>
               ${opOptionsHtml}
             </select>
+          </div>
+        </div>
+
+        <!-- Operation Step Component Assignment Checklist -->
+        <div class="form-group" style="background: rgba(15, 23, 42, 0.6); padding: 12px 16px; border-radius: 12px; border: 1px dashed rgba(99, 102, 241, 0.25);">
+          <label class="form-label" style="color: #818cf8; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+            <span>📦 Bu Operasyon Adımında İşlenen / Birleştirilen Reçete Bileşenleri (Çoklu Seçilebilir)</span>
+          </label>
+          <div class="op-components-checklist-container">
+            ${compChecklistHtml}
           </div>
         </div>
 
@@ -569,6 +643,8 @@
       cards.forEach(card => {
         const name = card.querySelector('.op-name').value;
         if (name) {
+          const checkedCheckboxes = Array.from(card.querySelectorAll('.op-comp-checkbox:checked')).map(cb => cb.value);
+
           opsArr.push({
             operationSeq: parseInt(card.querySelector('.op-seq').value, 10) || 10,
             operationCode: card.querySelector('.op-code').value || 'OPS-01',
@@ -577,7 +653,8 @@
             setupTimeMinutes: parseFloat(card.querySelector('.op-setup').value) || 15.0,
             runTimeMinutesPerUnit: parseFloat(card.querySelector('.op-run').value) || 5.0,
             operatorCount: parseInt(card.querySelector('.op-operators').value, 10) || 1,
-            instructions: card.querySelector('.op-instructions').value || null
+            instructions: card.querySelector('.op-instructions').value || null,
+            usedComponents: checkedCheckboxes
           });
         }
       });

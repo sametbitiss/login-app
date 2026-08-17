@@ -408,6 +408,12 @@ class ProductionRepository {
         const run = parseFloat(op.runTimeMinutesPerUnit) || 5.0;
         const operators = parseInt(op.operatorCount, 10) || 1;
         const inst = op.instructions || null;
+        let usedComps = null;
+        if (Array.isArray(op.usedComponents)) {
+          usedComps = JSON.stringify(op.usedComponents);
+        } else if (typeof op.usedComponents === 'string') {
+          usedComps = op.usedComponents;
+        }
 
         const newOp = await RoutingOperation.create({
           routingCode: `ROT-${targetProduct.stockCode}-v1`,
@@ -419,7 +425,8 @@ class ProductionRepository {
           setupTimeMinutes: setup,
           runTimeMinutesPerUnit: run,
           operatorCount: operators,
-          instructions: inst
+          instructions: inst,
+          usedComponents: usedComps
         });
 
         createdOperations.push(newOp);

@@ -52,6 +52,10 @@ module.exports = (sequelize, DataTypes) => {
     instructions: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    usedComponents: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     sequelize,

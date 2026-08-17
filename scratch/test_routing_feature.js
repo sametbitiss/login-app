@@ -56,7 +56,7 @@ async function testRoutingFeature() {
       throw new Error('HATA: Henüz rota kaydedilmeden hasRouting = true oldu!');
     }
 
-    // 4. Save a Routing with 2 operation steps
+    // 4. Save a Routing with 2 operation steps and assigned components
     console.log('3. Ürün İçin Rota Operasyon Adımları Kaydediliyor...');
     await productionRepository.saveProductRouting(
       mainProduct.id,
@@ -69,7 +69,8 @@ async function testRoutingFeature() {
           setupTimeMinutes: 30,
           runTimeMinutesPerUnit: 6.5,
           operatorCount: 2,
-          instructions: 'Kesim yapılan sac parçaların çapaksız büküldüğü mikrometre ile ölçülecek.'
+          instructions: 'Kesim yapılan sac parçaların çapaksız büküldüğü mikrometre ile ölçülecek.',
+          usedComponents: [rawItem.stockCode]
         },
         {
           operationSeq: 20,
@@ -79,7 +80,8 @@ async function testRoutingFeature() {
           setupTimeMinutes: 20,
           runTimeMinutesPerUnit: 4.0,
           operatorCount: 1,
-          instructions: 'Kaynak nüfuziyeti %100 tahribatsız muayene ile kontrol edilecek.'
+          instructions: 'Kaynak nüfuziyeti %100 tahribatsız muayene ile kontrol edilecek.',
+          usedComponents: [rawItem.stockCode]
         }
       ]
     );
