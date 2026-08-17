@@ -89,6 +89,32 @@ class StockRepository {
 
     const item = await StockItem.create(cleanData);
 
+    // If newly created stock item is Mamul or Yarı_Mamul, automatically create a BOM Creation Requisition
+    if (['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.category)) {
+      try {
+        const { ProductionOrder } = require('../../models');
+        const reqNo = `REQ-BOM-${Date.now().toString().slice(-6)}`;
+        const today = new Date().toISOString().split('T')[0];
+
+        await ProductionOrder.create({
+          workOrderNo: reqNo,
+          productionTitle: `📜 Reçete Oluşturma Talebi — ${item.name}`,
+          stockItemId: item.id,
+          plannedQuantity: 1,
+          unit: item.unit || 'Adet',
+          status: 'Planned',
+          priority: 'High',
+          workCenter: 'İstasyon-1 (Kesim & Büküm)',
+          plannedStartDate: today,
+          plannedEndDate: today,
+          notes: `Stok & Depo Modülünden yeni eklenen [${item.stockCode}] ${item.name} (${item.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul'}) için otomatik reçete oluşturma talebi açıldı.`,
+          createdBy: currentUser ? currentUser.id : null
+        });
+      } catch (err) {
+        console.error('Error creating automatic BOM Requisition:', err);
+      }
+    }
+
     await logService.logCrud({
       userId: currentUser ? currentUser.id : null,
       username: currentUser ? currentUser.username : 'System',

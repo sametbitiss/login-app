@@ -271,6 +271,26 @@ class ProductionRepository {
       }
     }
 
+    // Auto-complete any pending BOM Requisitions for this product
+    try {
+      const { ProductionOrder } = require('../../models');
+      await ProductionOrder.update(
+        { status: 'Completed', completedQuantity: 1 },
+        {
+          where: {
+            stockItemId: finishedStockItemId,
+            [Op.or]: [
+              { workOrderNo: { [Op.like]: 'REQ-BOM-%' } },
+              { productionTitle: { [Op.like]: '%Reçete Oluşturma%' } }
+            ],
+            status: 'Planned'
+          }
+        }
+      );
+    } catch (err) {
+      console.error('Error auto-completing BOM Requisition:', err);
+    }
+
     await logService.logCrud({
       userId: currentUser ? currentUser.id : null,
       username: currentUser ? currentUser.username : 'System',

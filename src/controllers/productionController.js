@@ -35,19 +35,79 @@ class ProductionController {
     });
   });
 
-  // 1. REQUISITIONS & WORK ORDERS LIST
+  // 1. REQUISITIONS & WORK ORDERS LIST (Talepler: Üretim ve Reçete Oluşturma Talepleri)
   listRequisitions = asyncHandler(async (req, res) => {
-    const { search, status, priority } = req.query;
-    const orders = await productionRepository.findAll({ search, status, priority });
+    const { search, status, priority, tab } = req.query;
+    const { StockItem, BOMItem, ProductionOrder } = require('../../models');
+    const { Op } = require('sequelize');
+
+    // Auto-sync: Ensure all active Mamul/Yarı_Mamul stock items without a BOM have a BOM Requisition
+    try {
+      const finishedStockItems = await StockItem.findAll({
+        where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }
+      });
+
+      const existingBOMs = await BOMItem.findAll({ attributes: ['finishedStockItemId'], group: ['finishedStockItemId'] });
+      const productsWithBOM = new Set(existingBOMs.map(b => b.finishedStockItemId));
+
+      const existingBOMReqs = await ProductionOrder.findAll({
+        where: {
+          [Op.or]: [
+            { workOrderNo: { [Op.like]: 'REQ-BOM-%' } },
+            { productionTitle: { [Op.like]: '%Reçete Oluşturma%' } }
+          ]
+        },
+        attributes: ['stockItemId']
+      });
+      const productsWithReq = new Set(existingBOMReqs.map(r => r.stockItemId));
+
+      const today = new Date().toISOString().split('T')[0];
+      for (const item of finishedStockItems) {
+        if (!productsWithBOM.has(item.id) && !productsWithReq.has(item.id)) {
+          const reqNo = `REQ-BOM-${Date.now().toString().slice(-6)}-${item.id}`;
+          await ProductionOrder.create({
+            workOrderNo: reqNo,
+            productionTitle: `📜 Reçete Oluşturma Talebi — ${item.name}`,
+            stockItemId: item.id,
+            plannedQuantity: 1,
+            unit: item.unit || 'Adet',
+            status: 'Planned',
+            priority: 'High',
+            workCenter: 'İstasyon-1 (Kesim & Büküm)',
+            plannedStartDate: today,
+            plannedEndDate: today,
+            notes: `Stok & Depo Modülündeki [${item.stockCode}] ${item.name} (${item.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul'}) ürünü için otomatik reçete oluşturma talebi açıldı.`,
+            createdBy: req.user ? req.user.id : null
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error syncing BOM requisitions:', err);
+    }
+
+    const allOrders = await productionRepository.findAll({ search, status, priority });
     const stats = await productionRepository.getStats();
+
+    // Split requisitions into Production Requisitions and BOM Requisitions
+    const productionRequisitions = allOrders.filter(o => {
+      const isBOMReq = (o.workOrderNo && o.workOrderNo.startsWith('REQ-BOM')) || (o.productionTitle && o.productionTitle.includes('Reçete Oluşturma'));
+      return !isBOMReq;
+    });
+
+    const bomRequisitions = allOrders.filter(o => {
+      return (o.workOrderNo && o.workOrderNo.startsWith('REQ-BOM')) || (o.productionTitle && o.productionTitle.includes('Reçete Oluşturma'));
+    });
 
     res.render('production/requisitions', {
       user: req.user,
-      orders,
+      orders: allOrders,
+      productionRequisitions,
+      bomRequisitions,
       stats,
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'requisitions',
+      activeTab: tab || 'production',
       filterSearch: search || '',
       filterStatus: status || '',
       filterPriority: priority || ''
