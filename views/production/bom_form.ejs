@@ -267,7 +267,7 @@
             <span style="color: var(--text-secondary);"><%= targetProduct ? targetProduct.stockCode + ' — Reçete Düzenleme' : 'Yeni Reçete Oluşturma' %></span>
           </div>
           <h1><%= targetProduct ? '📜 Reçeteyi Düzenle: ' + targetProduct.name : '➕ Yeni Ürün Üretim Reçetesi (BOM) Hazırlama' %></h1>
-          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Mamul ve Yarı Mamul ürünlerin alt bileşen, reçete revizyonu, fire oranları ve süreç operasyon tanımlarını yönetin.</p>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Ana ürün Seviye-1, Yarı Mamul alt bileşenler Seviye-2, Hammadde ve Ticari Mal bileşenleri Seviye-3 olarak otomatik işlenir.</p>
         </div>
         <a href="/production/bom" class="btn-back-link">
           <span>← Reçeteler Listesine Dön</span>
@@ -297,7 +297,7 @@
           <!-- 1. Üst Ürün (Ana Malzeme) Bilgileri -->
           <div class="form-section">
             <div class="section-title">
-              <span>1. Üst Ürün (Ana Malzeme) Bilgileri</span>
+              <span>1. Üst Ürün (Ana Malzeme) Bilgileri — <span style="color: #34d399;">⚡ Seviye 1 (Ana İmalat Ürünü)</span></span>
             </div>
             <div class="form-stack-column">
               <div class="form-group">
@@ -351,11 +351,11 @@
           <!-- 3. Yapısal ve Süreç Bilgileri -->
           <div class="form-section">
             <div class="section-title">
-              <span>3. Yapısal ve Süreç Bilgileri (Multi-Level BOM & Maliyet Özeti)</span>
+              <span>3. Yapısal ve Süreç Bilgileri (Otomatik Seviye Sınıflandırma & Maliyet)</span>
             </div>
             <div class="form-stack-column">
               <div style="background: #090e1a; padding: 16px 20px; border-radius: 12px; border: 1.5px solid #1e293b; font-size: 0.88rem; color: #94a3b8;">
-                <div><strong style="color: #818cf8;">📌 Multi-Level BOM Hiyerarşisi & Döngüsel Kontrol:</strong> Reçete içindeki alt malzemelerden "Yarı Mamul" olanlar otomatik olarak <strong>Seviye-2 (Sub-Assembly)</strong> olarak işlenir. Ana ürün olarak seçilen ürün, döngüsel bağımlılığı önlemek amacıyla alt bileşen listesinde seçilemez.</div>
+                <div><strong style="color: #818cf8;">📌 Otomatik Hiyerarşik Seviye Mantığı:</strong> Reçetesi yazılan Ana Ürün <strong>Seviye-1</strong> kabul edilir. Seçilen alt bileşenlerden "Yarı Mamul" türünde olanlar <strong>Seviye-2 (Sub-Assembly)</strong>, "Hammadde" ve "Ticari Mal" türünde olanlar <strong>Seviye-3 (Hammadde / Satın Alınan Kalem)</strong> olarak sistem tarafından otomatik atanır.</div>
               </div>
               <div style="background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.3); padding: 18px 24px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
                 <div style="font-size: 0.9rem; font-weight: 700; color: #a7f3d0; text-transform: uppercase;">Tahmini Birim Hammadde Maliyeti Özeti:</div>
@@ -505,7 +505,25 @@
         opOptionsHtml += `<option value="${wc}" ${selected}>${wc}</option>`;
       });
 
-      const currentLevel = data.level ? parseInt(data.level, 10) : 1;
+      // Initial level calculation
+      let initLevelVal = 3;
+      let initLevelText = "📦 Seviye 3: Hammadde / Ticari Mal";
+      let initLevelColor = "#94a3b8";
+
+      if (data.componentStockItemId) {
+        const matchingComp = availableComponents.find(c => String(c.id) === String(data.componentStockItemId));
+        if (matchingComp) {
+          if (matchingComp.category === 'Yari_Mamul' || matchingComp.category === 'Yarı_Mamul') {
+            initLevelVal = 2;
+            initLevelText = "⚙️ Seviye 2: Yarı Mamul (Sub-Assembly)";
+            initLevelColor = "#fbbf24";
+          } else if (matchingComp.category === 'Ticari_Mal' || matchingComp.category === 'Ticari Mal') {
+            initLevelVal = 3;
+            initLevelText = "🛒 Seviye 3: Ticari Mal (Commercial Item)";
+            initLevelColor = "#a7f3d0";
+          }
+        }
+      }
 
       card.innerHTML = `
         <div class="comp-card-header">
@@ -539,11 +557,9 @@
 
         <div class="form-row-2">
           <div class="form-group">
-            <label class="form-label">Seviye Bilgisi (Multi-Level BOM) *</label>
-            <select class="form-control comp-level">
-              <option value="1" ${currentLevel === 1 ? 'selected' : ''}>Seviye 1: Ana Ürün Doğrudan Bileşeni</option>
-              <option value="2" ${currentLevel === 2 ? 'selected' : ''}>Seviye 2: Yarı Mamul / Alt Reçeteli Bileşen</option>
-            </select>
+            <label class="form-label">Otomatik Seviye Bilgisi (Multi-Level BOM) *</label>
+            <input type="text" class="form-control comp-level-display" value="${initLevelText}" readonly style="font-weight: 700; color: ${initLevelColor}; background: #111827;">
+            <input type="hidden" class="comp-level-val" value="${initLevelVal}">
           </div>
           <div class="form-group">
             <label class="form-label">Operasyon / İstasyon Kodu *</label>
@@ -584,9 +600,21 @@
         const cat = selectedOption.getAttribute('data-cat');
         card.querySelector('.comp-unit').value = unit;
         
+        const levelDisplayInput = card.querySelector('.comp-level-display');
+        const levelValInput = card.querySelector('.comp-level-val');
+
         if (cat === 'Yari_Mamul' || cat === 'Yarı_Mamul') {
-          const levelSelect = card.querySelector('.comp-level');
-          if (levelSelect) levelSelect.value = '2';
+          levelValInput.value = "2";
+          levelDisplayInput.value = "⚙️ Seviye 2: Yarı Mamul (Sub-Assembly)";
+          levelDisplayInput.style.color = "#fbbf24";
+        } else if (cat === 'Ticari_Mal' || cat === 'Ticari Mal') {
+          levelValInput.value = "3";
+          levelDisplayInput.value = "🛒 Seviye 3: Ticari Mal (Commercial Item)";
+          levelDisplayInput.style.color = "#a7f3d0";
+        } else {
+          levelValInput.value = "3";
+          levelDisplayInput.value = "📦 Seviye 3: Hammadde (Raw Material)";
+          levelDisplayInput.style.color = "#94a3b8";
         }
       }
       calculateTotalBOMCost();
@@ -630,12 +658,13 @@
       cards.forEach(card => {
         const compId = card.querySelector('.comp-select').value;
         if (compId) {
+          const levelVal = parseInt(card.querySelector('.comp-level-val').value, 10) || 3;
           componentsArr.push({
             componentStockItemId: parseInt(compId, 10),
             quantityRequired: parseFloat(card.querySelector('.comp-qty').value) || 1.0,
             unit: card.querySelector('.comp-unit').value || 'Adet',
             scrapPercentage: parseFloat(card.querySelector('.comp-scrap').value) || 0.0,
-            level: parseInt(card.querySelector('.comp-level').value, 10) || 1,
+            level: levelVal,
             operationCode: card.querySelector('.comp-op').value || null,
             alternativeComponentItemId: card.querySelector('.comp-alt').value ? parseInt(card.querySelector('.comp-alt').value, 10) : null,
             alternativeNotes: card.querySelector('.comp-alt-notes').value || null

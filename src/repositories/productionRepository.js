@@ -248,7 +248,8 @@ class ProductionRepository {
 
         // Check if component itself is a Yarı Mamul (for Level estimation)
         const compItem = await StockItem.findByPk(comp.componentStockItemId);
-        const calcLevel = compItem && (compItem.category === 'Yari_Mamul' || compItem.category === 'Yarı_Mamul') ? 2 : (parseInt(comp.level, 10) || 1);
+        const isSemiFinished = compItem && (compItem.category === 'Yari_Mamul' || compItem.category === 'Yarı_Mamul');
+        const calcLevel = isSemiFinished ? 2 : 3;
 
         const newBOM = await BOMItem.create({
           bomCode,
