@@ -172,13 +172,15 @@ class ProductionController {
       targetProduct = await StockItem.findByPk(effectiveStockItemId);
       if (targetProduct) {
         minStockLimit = parseFloat(targetProduct.minStock || 0);
+        const reqQty = sourceRequisition ? parseFloat(sourceRequisition.plannedQuantity || 0) : 0;
+        const qtyFloor = Math.max(minStockLimit, reqQty, 1);
 
         if (plannedQty) {
-          effectiveQty = Math.max(minStockLimit, parseFloat(plannedQty));
+          effectiveQty = Math.max(qtyFloor, parseFloat(plannedQty) || 1);
         } else if (sourceRequisition) {
-          effectiveQty = Math.max(minStockLimit, parseFloat(sourceRequisition.plannedQuantity || 100));
+          effectiveQty = qtyFloor;
         } else {
-          effectiveQty = minStockLimit > 0 ? minStockLimit : 100;
+          effectiveQty = qtyFloor > 1 ? qtyFloor : 100;
         }
 
         multiLevelPlan = await productionRepository.getMultiLevelProductionPlan(effectiveStockItemId, effectiveQty);
@@ -225,7 +227,7 @@ class ProductionController {
       notes
     } = req.body;
 
-    const { ProductionOrder } = require('../../models');
+    const { ProductionOrder, StockItem } = require('../../models');
 
     // Batch work orders creation from multi-level plan
     if (ordersJson) {
@@ -240,11 +242,16 @@ class ProductionController {
         const item = ordersArray[i];
         const woNo = await productionRepository.generateWorkOrderNo();
 
+        // Enforce minimum floor limit on server side
+        const itemProduct = await StockItem.findByPk(item.stockItemId);
+        const itemMinStock = itemProduct ? parseFloat(itemProduct.minStock || 0) : 0;
+        const validQty = Math.max(parseFloat(item.plannedQuantity) || 1, itemMinStock, 1);
+
         await productionRepository.create({
           workOrderNo: woNo,
           productionTitle: item.productionTitle || `[Seviye ${item.level}] İmalat İş Emri — ${item.productName}`,
           stockItemId: item.stockItemId,
-          plannedQuantity: parseFloat(item.plannedQuantity) || 1,
+          plannedQuantity: validQty,
           unit: item.unit || 'Adet',
           status: item.status || 'Planned',
           priority: item.priority || 'Normal',

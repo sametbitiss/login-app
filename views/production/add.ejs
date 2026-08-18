@@ -214,7 +214,43 @@
         const defaultOrderSource = (typeof effectiveOrderSource !== 'undefined' && effectiveOrderSource) ? effectiveOrderSource : `SOP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
         const isLocked = typeof isLockedProduct !== 'undefined' ? isLockedProduct : false;
         const mainMinStock = typeof minStockLimit !== 'undefined' ? minStockLimit : 0;
+        const reqMinQty = safeRequisition ? parseFloat(safeRequisition.plannedQuantity || 0) : 0;
+        const mainQtyFloor = Math.max(mainMinStock, reqMinQty, 1);
       %>
+
+      <!-- Prominent Selected / Locked Target Product Info Banner -->
+      <% if (targetProduct) { %>
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(16, 185, 129, 0.12)); border: 1.5px solid rgba(99, 102, 241, 0.4); border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 24px rgba(0,0,0,0.3);">
+          <div style="display: flex; align-items: center; gap: 18px;">
+            <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+              🏭
+            </div>
+            <div>
+              <div style="font-size: 0.78rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px;">
+                <%= isLocked ? '🔒 TALEP EDİLEN İMALAT ÜRÜNÜ (SABİTLENDİ)' : '📦 SEÇİLEN HEDEF İMALAT ÜRÜNÜ' %>
+              </div>
+              <div style="font-size: 1.3rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+                <span style="color: #34d399; font-family: 'JetBrains Mono', monospace;">[<%= targetProduct.stockCode %>]</span>
+                <span><%= targetProduct.name %></span>
+              </div>
+              <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 6px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span>Kategori: <strong style="color: #fbbf24;"><%= targetProduct.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %></strong></span>
+                <span style="color: #475569;">•</span>
+                <span>Birim: <strong><%= targetProduct.unit || 'Adet' %></strong></span>
+                <span style="color: #475569;">•</span>
+                <span>Varsayılan Depo: <strong><%= targetProduct.warehouseLocation || 'Ana Depo' %></strong></span>
+                <span style="color: #475569;">•</span>
+                <span>Minimum Stok Alt Sınırı: <strong style="color: #34d399;"><%= mainMinStock %> <%= targetProduct.unit || 'Adet' %></strong></span>
+              </div>
+            </div>
+          </div>
+          <% if (isLocked) { %>
+            <div style="background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 10px 18px; border-radius: 12px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+              🔒 Ürün Kilitli (Değiştirilemez)
+            </div>
+          <% } %>
+        </div>
+      <% } %>
 
       <!-- 1. Hedef Ürün & Sipariş Kaynağı Seçimi Formu -->
       <div class="form-container-card" style="margin-bottom: 20px;">
@@ -234,10 +270,10 @@
                 <label class="form-label">
                   İmal Edilecek Hedef Ürün *
                   <% if (isLocked) { %>
-                    <span style="color: #fbbf24; font-size: 0.8rem; margin-left: 6px;">🔒 (Talep Edilen Ürün Kilitlendi)</span>
+                    <span style="color: #fbbf24; font-size: 0.8rem; margin-left: 6px;">🔒 (Kilitli)</span>
                   <% } %>
                 </label>
-                <select name="stockItemId" id="stockItemIdSelect" class="form-control" onchange="document.getElementById('selectProductForm').submit()" required <%= isLocked ? 'disabled' : '' %> style="cursor: pointer;">
+                <select name="stockItemId" id="stockItemIdSelect" class="form-control" onchange="document.getElementById('selectProductForm').submit()" required <%= isLocked ? 'disabled' : '' %> style="cursor: pointer; <%= isLocked ? 'background: #0f172a; color: #60a5fa; border-color: #3b82f6; font-weight: 700;' : '' %>">
                   <option value="">-- Üretilecek Ürünü Seçiniz --</option>
                   <% safeStockItems.forEach(item => { %>
                     <% const isSelected = targetProduct && String(targetProduct.id) === String(item.id); %>
@@ -256,11 +292,9 @@
               <div class="form-group">
                 <label class="form-label">
                   Ana Üretim Miktarı *
-                  <% if (targetProduct && mainMinStock > 0) { %>
-                    <span style="color: #34d399; font-size: 0.78rem; margin-left: 6px;">🔒 Min Stok Sınırı: <%= mainMinStock %> <%= targetProduct.unit %></span>
-                  <% } %>
+                  <span style="color: #34d399; font-size: 0.78rem; margin-left: 6px;">🔒 Min Alt Sınır: <%= mainQtyFloor %> <%= targetProduct ? targetProduct.unit : 'Adet' %> (Düşürülemez)</span>
                 </label>
-                <input type="number" name="plannedQty" id="mainPlannedQtyInput" class="form-control" value="<%= defaultQty %>" min="<%= mainMinStock > 0 ? mainMinStock : 1 %>" step="1" onchange="validateMainQty(this, <%= mainMinStock %>)" required>
+                <input type="number" name="plannedQty" id="mainPlannedQtyInput" class="form-control" value="<%= Math.max(defaultQty, mainQtyFloor) %>" min="<%= mainQtyFloor %>" step="1" data-floor="<%= mainQtyFloor %>" oninput="clampFloorQty(this, <%= mainQtyFloor %>)" onchange="onMainQtyChangeSubmit(this, <%= mainQtyFloor %>)" onblur="clampFloorQty(this, <%= mainQtyFloor %>)" onkeydown="preventFloorDown(event, this, <%= mainQtyFloor %>)" required style="border-color: #10b981; font-weight: 700;">
               </div>
             </div>
           </div>
@@ -282,7 +316,7 @@
               </div>
               
               <div style="background: rgba(99, 102, 241, 0.1); border: 1.5px solid rgba(99, 102, 241, 0.25); padding: 14px 18px; border-radius: 12px; margin-bottom: 16px; color: #a5b4fc; font-size: 0.88rem;">
-                📌 <strong>Öncelikli Üretim Kuralı:</strong> Reçete seviyesi sayısal olarak büyük olan alt montajlar (Seviye 2/3), nihai montajın (Seviye 1) zamanında tamamlanabilmesi için **listenin en başında ve ilk öncelikli olarak** listelenmiştir.
+                📌 <strong>Öncelikli Üretim Kuralı:</strong> Reçete seviyesi sayısal olarak büyük olan alt montajlar (Seviye 2/3), nihai montajın (Seviye 1) zamanında tamamlanabilmesi için **listenin en başında ve ilk öncelikli olarak** listelenmiştir. Miktarlar belirlenen alt sınırların altına düşürülemez.
               </div>
 
               <div id="woCardsContainer" style="display: flex; flex-direction: column; gap: 20px;">
@@ -291,7 +325,8 @@
                     const isSubAssembly = planItem.level > 1;
                     const cardClass = isSubAssembly ? 'wo-level-card priority-high' : 'wo-level-card priority-level1';
                     const itemMinStock = parseFloat(planItem.product.minStock || 0);
-                    const effectiveCardQty = Math.max(planItem.plannedQuantity, itemMinStock);
+                    const cardFloorLimit = Math.max(itemMinStock, planItem.plannedQuantity, 1);
+                    const effectiveCardQty = Math.max(planItem.plannedQuantity, cardFloorLimit);
                     
                     // Auto-calculate suggested dates based on level priority
                     const today = new Date();
@@ -317,9 +352,7 @@
                       </div>
                       <div style="font-size: 0.85rem; color: #cbd5e1;">
                         Kategori: <strong><%= planItem.product.category %></strong>
-                        <% if (itemMinStock > 0) { %>
-                          | Min Stok: <strong style="color: #34d399;"><%= itemMinStock %> <%= planItem.product.unit %></strong>
-                        <% } %>
+                        | Min Alt Sınır: <strong style="color: #34d399;"><%= cardFloorLimit %> <%= planItem.product.unit %></strong>
                       </div>
                     </div>
 
@@ -347,7 +380,7 @@
                     <div class="form-row-4">
                       <div class="form-group">
                         <label class="form-label">Ürün Adı (Otomatik)</label>
-                        <input type="text" class="form-control" value="[<%= planItem.product.stockCode %>] <%= planItem.product.name %>" readonly>
+                        <input type="text" class="form-control" value="[<%= planItem.product.stockCode %>] <%= planItem.product.name %>" readonly style="color: #38bdf8; font-weight: 700;">
                       </div>
                       <div class="form-group">
                         <label class="form-label">Sipariş Kaynağı (Otomatik)</label>
@@ -356,11 +389,9 @@
                       <div class="form-group">
                         <label class="form-label">
                           Üretim Miktarı *
-                          <% if (itemMinStock > 0) { %>
-                            <span style="color: #34d399; font-size: 0.75rem;">(Min: <%= itemMinStock %> <%= planItem.product.unit %>)</span>
-                          <% } %>
+                          <span style="color: #34d399; font-size: 0.75rem;">(Min Alt Sınır: <%= cardFloorLimit %>)</span>
                         </label>
-                        <input type="number" class="form-control wo-qty" value="<%= effectiveCardQty %>" min="<%= itemMinStock > 0 ? itemMinStock : 1 %>" data-minstock="<%= itemMinStock %>" data-prodname="<%= planItem.product.name %>" onchange="validateCardQty(this)" step="1" required>
+                        <input type="number" class="form-control wo-qty" value="<%= effectiveCardQty %>" min="<%= cardFloorLimit %>" data-floor="<%= cardFloorLimit %>" data-prodname="<%= planItem.product.name %>" oninput="clampCardFloorQty(this)" onchange="clampCardFloorQty(this)" onblur="clampCardFloorQty(this)" onkeydown="preventFloorDown(event, this, parseFloat(this.dataset.floor))" step="1" required style="border-color: #10b981; font-weight: 700;">
                       </div>
                       <div class="form-group">
                         <label class="form-label">Öncelik Seviyesi *</label>
@@ -420,24 +451,37 @@
   </div>
 
   <script>
-    function validateMainQty(inputEl, minLimit) {
-      const val = parseFloat(inputEl.value) || 0;
-      if (minLimit > 0 && val < minLimit) {
-        alert(`⚠️ Üretim miktarı minimum stok seviyesi olan ${minLimit} altına inemez! Miktar ${minLimit} olarak ayarlandı.`);
-        inputEl.value = minLimit;
+    function clampFloorQty(inputEl, floorVal) {
+      let val = parseFloat(inputEl.value);
+      if (isNaN(val) || val < floorVal) {
+        inputEl.value = floorVal;
       }
-      document.getElementById('selectProductForm').submit();
     }
 
-    function validateCardQty(inputEl) {
-      const minLimit = parseFloat(inputEl.dataset.minstock || 0);
-      const prodName = inputEl.dataset.prodname || 'Ürün';
-      const val = parseFloat(inputEl.value) || 0;
-
-      if (minLimit > 0 && val < minLimit) {
-        alert(`⚠️ [${prodName}] için üretim miktarı minimum stok seviyesi olan ${minLimit} altına inemez! Miktar ${minLimit} olarak güncellendi.`);
-        inputEl.value = minLimit;
+    function preventFloorDown(e, inputEl, floorVal) {
+      if (e.key === 'ArrowDown') {
+        let val = parseFloat(inputEl.value) || 0;
+        if (val <= floorVal) {
+          e.preventDefault();
+          inputEl.value = floorVal;
+        }
       }
+    }
+
+    function clampCardFloorQty(inputEl) {
+      const floorVal = parseFloat(inputEl.dataset.floor || 1);
+      const prodName = inputEl.dataset.prodname || 'Ürün';
+      let val = parseFloat(inputEl.value);
+
+      if (isNaN(val) || val < floorVal) {
+        alert(`⚠️ [${prodName}] için imalat miktarı belirlenen minimum stok / talep alt sınırı olan ${floorVal} altına inemez! Miktar ${floorVal} seviyesine sabitlendi.`);
+        inputEl.value = floorVal;
+      }
+    }
+
+    function onMainQtyChangeSubmit(inputEl, floorVal) {
+      clampFloorQty(inputEl, floorVal);
+      document.getElementById('selectProductForm').submit();
     }
 
     function prepareBatchOrderSubmit(event) {
@@ -446,12 +490,12 @@
 
       cards.forEach(card => {
         const qtyInput = card.querySelector('.wo-qty');
-        const minLimit = parseFloat(qtyInput.dataset.minstock || 0);
-        let qtyVal = parseFloat(qtyInput.value) || 1;
+        const floorVal = parseFloat(qtyInput.dataset.floor || 1);
+        let qtyVal = parseFloat(qtyInput.value);
 
-        if (minLimit > 0 && qtyVal < minLimit) {
-          qtyVal = minLimit;
-          qtyInput.value = minLimit;
+        if (isNaN(qtyVal) || qtyVal < floorVal) {
+          qtyVal = floorVal;
+          qtyInput.value = floorVal;
         }
 
         ordersArr.push({
