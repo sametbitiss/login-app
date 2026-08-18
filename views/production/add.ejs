@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>İş Emri Oluşturma & Çapraz Rota Planlama — Enterprise ERP</title>
+  <title>Çok Seviyeli Rota & İş Emri Hazırlama — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -62,51 +62,60 @@
     .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
     .form-row-4 { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr 1fr; gap: 16px; }
 
-    /* Hierarchical Work Order Card */
-    .wo-level-card {
+    /* Hierarchy Stage Card */
+    .stage-card {
       background: #090e1a;
       border: 1.5px solid #1e293b;
-      border-radius: 16px;
-      padding: 22px;
+      border-radius: 18px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      gap: 20px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
     }
-    .wo-level-card.priority-high {
+    .stage-card.sub-assembly {
       border-color: rgba(245, 158, 11, 0.4);
-      background: linear-gradient(180deg, rgba(245, 158, 11, 0.04), #090e1a);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.05), #090e1a);
     }
-    .wo-level-card.priority-level1 {
+    .stage-card.main-assembly {
       border-color: rgba(99, 102, 241, 0.4);
-      background: linear-gradient(180deg, rgba(99, 102, 241, 0.04), #090e1a);
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.05), #090e1a);
     }
 
-    .wo-card-header {
+    .stage-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-bottom: 12px;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+      padding-bottom: 14px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
     }
 
-    .badge-priority-sub {
-      background: rgba(245, 158, 11, 0.15);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      padding: 4px 12px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 800;
+    /* Operation Row Card */
+    .op-step-row {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s;
     }
-    .badge-priority-main {
-      background: rgba(99, 102, 241, 0.15);
-      color: #818cf8;
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      padding: 4px 12px;
+    .op-step-row:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .component-badge {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 6px 12px;
       border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 800;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .btn-submit-workorders {
@@ -197,9 +206,9 @@
       <!-- Page Header -->
       <div class="page-header" style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
         <div>
-          <div style="font-size: 0.85rem; color: #818cf8; font-weight: 700; margin-bottom: 4px;">🏭 ÜRETİM PLANLAMA MÜHENDİSLİĞİ</div>
-          <h1>📋 Çok Seviyeli İş Emri Hazırlama ve Çapraz Rota Analizi</h1>
-          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Seçilen ürünün reçetesine ve rotalarına bakılarak alt montajlar (Seviye 2/3) öncelikli olmak üzere ilişkili iş emirleri oluşturulur.</p>
+          <div style="font-size: 0.85rem; color: #818cf8; font-weight: 700; margin-bottom: 4px;">🏭 PROCESS MÜHENDİSLİĞİ VE ÇOK SEVİYELİ ROTA PLANLAMA</div>
+          <h1>📋 Entegre İş Emri Hazırlama ve Operasyon Rota Yönetimi</h1>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Hedef ürünün ve reçetede bulunan alt yarı mamullerin operasyon adımları adım adım sıraya konularak imalat iş emri oluşturulur.</p>
         </div>
         <a href="/production/orders" class="btn-back-link">
           <span>← İş Emirleri Listesine Dön</span>
@@ -246,7 +255,7 @@
           </div>
           <% if (isLocked) { %>
             <div style="background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 10px 18px; border-radius: 12px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
-              🔒 Ürün Kilitli (Değiştirilemez)
+              🔒 Ürün Sabitlendi (Değiştirilemez)
             </div>
           <% } %>
         </div>
@@ -301,7 +310,7 @@
         </form>
       </div>
 
-      <!-- 2. Hierarchical Work Orders List (Sorted Level DESC) -->
+      <!-- 2. Multi-Stage Operational Work Order Hierarchy -->
       <% if (targetProduct && safePlan.length > 0) { %>
         <form action="/production/orders/add" method="POST" id="batchWorkOrderForm" onsubmit="prepareBatchOrderSubmit(event)">
           <input type="hidden" name="ordersJson" id="ordersJson">
@@ -312,23 +321,23 @@
           <div class="form-container-card">
             <div class="form-section">
               <div class="section-title">
-                <span>2. Ürün Reçetesi ve Rotalarına Göre Öncelikli İş Emri İmalat Kartları (Seviye Öncelikli)</span>
+                <span>2. Ürün Reçetesi ve Alt Yarı Mamul İmalat Aşamaları (Sıralı Operasyonel Rota Girişleri)</span>
               </div>
               
-              <div style="background: rgba(99, 102, 241, 0.1); border: 1.5px solid rgba(99, 102, 241, 0.25); padding: 14px 18px; border-radius: 12px; margin-bottom: 16px; color: #a5b4fc; font-size: 0.88rem;">
-                📌 <strong>Öncelikli Üretim Kuralı:</strong> Reçete seviyesi sayısal olarak büyük olan alt montajlar (Seviye 2/3), nihai montajın (Seviye 1) zamanında tamamlanabilmesi için **listenin en başında ve ilk öncelikli olarak** listelenmiştir. Miktarlar belirlenen alt sınırların altına düşürülemez.
+              <div style="background: rgba(99, 102, 241, 0.1); border: 1.5px solid rgba(99, 102, 241, 0.25); padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; color: #a5b4fc; font-size: 0.88rem;">
+                📌 <strong>İmalat Mantığı:</strong> Nihai montajın (A Mamulü) gerçekleşebilmesi için reçetede bulunan alt yarı mamulün (B Yarı Mamulü) gerekli hammaddeleri (D & E) işlenerek önce alt imalat adımları (Aşama 1) tamamlanacak, ardından nihai birleştirme (Aşama 2) yapılacaktır.
               </div>
 
-              <div id="woCardsContainer" style="display: flex; flex-direction: column; gap: 20px;">
+              <!-- Stage Cards Container -->
+              <div id="woCardsContainer" style="display: flex; flex-direction: column; gap: 24px;">
                 <% safePlan.forEach((planItem, idx) => { %>
                   <% 
                     const isSubAssembly = planItem.level > 1;
-                    const cardClass = isSubAssembly ? 'wo-level-card priority-high' : 'wo-level-card priority-level1';
+                    const cardClass = isSubAssembly ? 'stage-card sub-assembly' : 'stage-card main-assembly';
                     const itemMinStock = parseFloat(planItem.product.minStock || 0);
                     const cardFloorLimit = Math.max(itemMinStock, planItem.plannedQuantity, 1);
                     const effectiveCardQty = Math.max(planItem.plannedQuantity, cardFloorLimit);
                     
-                    // Auto-calculate suggested dates based on level priority
                     const today = new Date();
                     const startDateObj = new Date(today);
                     startDateObj.setDate(today.getDate() + (isSubAssembly ? 0 : 2));
@@ -340,43 +349,125 @@
                   %>
 
                   <div class="<%= cardClass %>" data-stockid="<%= planItem.product.id %>" data-code="<%= planItem.product.stockCode %>" data-name="<%= planItem.product.name %>" data-unit="<%= planItem.product.unit %>" data-level="<%= planItem.level %>">
-                    <div class="wo-card-header">
-                      <div style="display: flex; align-items: center; gap: 12px;">
+                    <!-- Stage Card Header -->
+                    <div class="stage-header">
+                      <div style="display: flex; align-items: center; gap: 14px;">
                         <% if (isSubAssembly) { %>
-                          <span class="badge-priority-sub">🚨 Öncelik 1: Alt Montaj İmalatı (Seviye <%= planItem.level %> - İlk Önce Bu Üretilecek)</span>
+                          <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 6px 14px; border-radius: 10px; font-weight: 800; font-size: 0.85rem;">
+                            ⚙️ AŞAMA 1: ALT PARÇA İMALATI (Seviye <%= planItem.level %> Yarı Mamul)
+                          </span>
                         <% } else { %>
-                          <span class="badge-priority-main">🏭 Öncelik 2: Nihai Ürün İmalatı (Seviye <%= planItem.level %> - Alt Parçalar Bittiğinde Üretilecek)</span>
+                          <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 6px 14px; border-radius: 10px; font-weight: 800; font-size: 0.85rem;">
+                            🏁 AŞAMA 2: NİHAİ ÜRÜN MONTAJI (Seviye 1 Main Assembly)
+                          </span>
                         <% } %>
-                        <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;">[<%= planItem.product.stockCode %>]</strong>
-                        <strong style="color: #fff; font-size: 1rem;"><%= planItem.product.name %></strong>
+                        <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 1rem;">[<%= planItem.product.stockCode %>]</strong>
+                        <strong style="color: #fff; font-size: 1.1rem;"><%= planItem.product.name %></strong>
                       </div>
-                      <div style="font-size: 0.85rem; color: #cbd5e1;">
-                        Kategori: <strong><%= planItem.product.category %></strong>
-                        | Min Alt Sınır: <strong style="color: #34d399;"><%= cardFloorLimit %> <%= planItem.product.unit %></strong>
+                      <div style="font-size: 0.88rem; color: #cbd5e1;">
+                        Gerekli İmalat Miktarı: <strong style="color: #34d399; font-size: 1rem;"><%= effectiveCardQty %> <%= planItem.product.unit %></strong>
                       </div>
                     </div>
 
-                    <!-- Routing Operations Chips Preview -->
-                    <div style="background: rgba(15, 23, 42, 0.7); padding: 12px 16px; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-                      <div style="font-size: 0.82rem; font-weight: 700; color: #818cf8; margin-bottom: 6px;">
-                        🛠️ Ürünün Tanımlı Rota ve Operasyon Adımları:
+                    <!-- Component Requirements Badge Card -->
+                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); padding: 14px 18px; border-radius: 12px;">
+                      <div style="font-size: 0.82rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                        📥 Bu Aşamada Kullanılacak Reçete Bileşenleri & Hammaddeler:
                       </div>
-                      <% if (planItem.routingOperations && planItem.routingOperations.length > 0) { %>
-                        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
-                          <% planItem.routingOperations.forEach((op, opIdx) => { %>
-                            <div style="background: #1e293b; border: 1px solid #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #f8fafc;">
-                              <strong style="color: #60a5fa;">OPS-<%= op.operationSeq %>:</strong> <%= op.operationName %> 
-                              <span style="color: #34d399; font-weight: 700; margin-left: 4px;">(${op.workCenter})</span>
+                      <% if (planItem.bomItems && planItem.bomItems.length > 0) { %>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                          <% planItem.bomItems.forEach(b => { %>
+                            <% const compQty = effectiveCardQty * (parseFloat(b.quantityRequired || 1) / parseFloat(b.baseQuantity || 1)); %>
+                            <div class="component-badge">
+                              <strong style="color: #60a5fa;">[<%= b.componentItem ? b.componentItem.stockCode : 'BOM' %>]</strong>
+                              <span><%= b.componentItem ? b.componentItem.name : 'Bileşen' %></span>
+                              <span style="color: #fbbf24; font-weight: 700;">(<%= compQty %> <%= b.unit %>)</span>
+                              <span style="color: #94a3b8; font-size: 0.75rem;">— <%= b.componentItem ? (b.componentItem.category === 'Hammadde' ? '🛒 Satın Alma' : '🏭 Alt Üretim') : '' %></span>
                             </div>
-                            <% if (opIdx < planItem.routingOperations.length - 1) { %><span style="color: #64748b; font-weight: 800;">→</span><% } %>
                           <% }); %>
                         </div>
                       <% } else { %>
-                        <div style="font-size: 0.82rem; color: #fbbf24;">⚠️ Bu ürünün rotası henüz tanımlanmamış. Varsayılan iş merkezi atanacaktır.</div>
+                        <div style="color: #94a3b8; font-size: 0.82rem;">Reçete bileşeni bulunmuyor.</div>
                       <% } %>
                     </div>
 
-                    <!-- Inputs Form Grid -->
+                    <!-- Operations & Routing Steps Table/Cards -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                      <div style="font-size: 0.88rem; font-weight: 800; color: #818cf8; display: flex; align-items: center; justify-content: space-between;">
+                        <span>🛠️ Bu Aşamanın Operasyonel Rota Adımları ve İşlem Detayları:</span>
+                        <span style="font-size: 0.78rem; color: #64748b; font-weight: 600;"><%= planItem.routingOperations.length %> Adım Tanımlı</span>
+                      </div>
+
+                      <% if (planItem.routingOperations && planItem.routingOperations.length > 0) { %>
+                        <% planItem.routingOperations.forEach((op, opIdx) => { %>
+                          <div class="op-step-row">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                              <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="background: #312e81; color: #a5b4fc; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">
+                                  ADIM <%= op.operationSeq %>
+                                </span>
+                                <strong style="color: #f8fafc; font-size: 0.95rem;"><%= op.operationName %></strong>
+                                <span style="color: #64748b; font-size: 0.8rem;">(<%= op.operationCode || 'OPS' %>)</span>
+                              </div>
+                              <div style="font-size: 0.82rem; color: #34d399; font-weight: 700;">
+                                ⏱️ Standart İşlem Süresi: <%= op.runTimeMinutesPerUnit || 5 %> Dk/Adet
+                              </div>
+                            </div>
+
+                            <div class="form-row-3">
+                              <div class="form-group">
+                                <label class="form-label">Atanan İş Merkezi / Tezgah *</label>
+                                <select class="form-control op-workcenter" required>
+                                  <% WORK_CENTERS.forEach(wc => { %>
+                                    <% const isSelectedWc = op.workCenter === wc; %>
+                                    <option value="<%= wc %>" <%= isSelectedWc ? 'selected' : '' %>><%= wc %></option>
+                                  <% }); %>
+                                </select>
+                              </div>
+                              <div class="form-group">
+                                <label class="form-label">Planlanan Başlangıç Tarihi *</label>
+                                <input type="date" class="form-control op-start-date" value="<%= startDateStr %>" required>
+                              </div>
+                              <div class="form-group">
+                                <label class="form-label">Planlanan Bitiş Tarihi *</label>
+                                <input type="date" class="form-control op-end-date" value="<%= endDateStr %>" required>
+                              </div>
+                            </div>
+
+                            <div class="form-group">
+                              <label class="form-label">Operasyon Talimatı / İşlem Notu</label>
+                              <input type="text" class="form-control op-notes" value="<%= op.instructions || (isSubAssembly ? 'Alt montaj operasyonu: ' + op.operationName : 'Nihai birleştirme operasyonu: ' + op.operationName) %>" placeholder="Operatör için işlem detayları...">
+                            </div>
+                          </div>
+                        <% }); %>
+                      <% } else { %>
+                        <div class="op-step-row" style="border-color: rgba(245, 158, 11, 0.3);">
+                          <div style="color: #fbbf24; font-size: 0.85rem; font-weight: 700;">
+                            ⚠️ Bu ürünün özel rotası henüz tanımlanmamış. Varsayılan Genel İmalat İş Merkezi atanacaktır.
+                          </div>
+                          <div class="form-row-3">
+                            <div class="form-group">
+                              <label class="form-label">Varsayılan İş Merkezi *</label>
+                              <select class="form-control op-workcenter" required>
+                                <% WORK_CENTERS.forEach(wc => { %>
+                                  <option value="<%= wc %>"><%= wc %></option>
+                                <% }); %>
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Başlangıç Tarihi *</label>
+                              <input type="date" class="form-control op-start-date" value="<%= startDateStr %>" required>
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Bitiş Tarihi *</label>
+                              <input type="date" class="form-control op-end-date" value="<%= endDateStr %>" required>
+                            </div>
+                          </div>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <!-- General Inputs Grid for Stage -->
                     <div class="form-row-4">
                       <div class="form-group">
                         <label class="form-label">Ürün Adı (Otomatik)</label>
@@ -403,31 +494,6 @@
                         </select>
                       </div>
                     </div>
-
-                    <div class="form-row-3">
-                      <div class="form-group">
-                        <label class="form-label">Planlanan Başlangıç Tarihi *</label>
-                        <input type="date" class="form-control wo-start-date" value="<%= startDateStr %>" required>
-                      </div>
-                      <div class="form-group">
-                        <label class="form-label">Planlanan Bitiş Tarihi *</label>
-                        <input type="date" class="form-control wo-end-date" value="<%= endDateStr %>" required>
-                      </div>
-                      <div class="form-group">
-                        <label class="form-label">Atanan Tezgah / İş Merkezi *</label>
-                        <select class="form-control wo-workcenter" required>
-                          <% WORK_CENTERS.forEach(wc => { %>
-                            <% const isWcSelected = planItem.routingOperations.length > 0 && planItem.routingOperations[0].workCenter === wc; %>
-                            <option value="<%= wc %>" <%= isWcSelected ? 'selected' : '' %>><%= wc %></option>
-                          <% }); %>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">Açıklama / İş Emri Notu</label>
-                      <input type="text" class="form-control wo-notes" value="<%= isSubAssembly ? 'Seviye ' + planItem.level + ' Alt Montaj İmalat İş Emri (Nihai üründen önce tamamlanmalı)' : 'Seviye 1 Nihai Ürün İmalat İş Emri' %>" placeholder="Örn: Acil parti, bükümlere dikkat edilsin...">
-                    </div>
                   </div>
                 <% }); %>
               </div>
@@ -437,7 +503,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px;">
               <a href="/production/orders" class="btn-back-link">İptal ve Geri Dön</a>
               <button type="submit" class="btn-submit-workorders">
-                🚀 Tüm Seviye İş Emirlerini Oluştur ve Yayınla (<%= safePlan.length %> Adet İş Emri)
+                🚀 Tüm Rota Aşamaları İçin İş Emirlerini Yayınla (<%= safePlan.length %> Aşama)
               </button>
             </div>
           </div>
@@ -485,7 +551,7 @@
     }
 
     function prepareBatchOrderSubmit(event) {
-      const cards = document.querySelectorAll('#woCardsContainer .wo-level-card');
+      const cards = document.querySelectorAll('#woCardsContainer .stage-card');
       const ordersArr = [];
 
       cards.forEach(card => {
@@ -498,6 +564,19 @@
           qtyInput.value = floorVal;
         }
 
+        // Collect primary work center from the first operation step input
+        const firstWcSelect = card.querySelector('.op-workcenter');
+        const primaryWorkCenter = firstWcSelect ? firstWcSelect.value : 'İstasyon-1';
+
+        const firstStartDateInput = card.querySelector('.op-start-date');
+        const primaryStartDate = firstStartDateInput ? firstStartDateInput.value : new Date().toISOString().split('T')[0];
+
+        const firstEndDateInput = card.querySelector('.op-end-date');
+        const primaryEndDate = firstEndDateInput ? firstEndDateInput.value : new Date().toISOString().split('T')[0];
+
+        const firstNoteInput = card.querySelector('.op-notes');
+        const stageNotes = firstNoteInput ? firstNoteInput.value : '';
+
         ordersArr.push({
           stockItemId: parseInt(card.dataset.stockid, 10),
           productCode: card.dataset.code,
@@ -507,11 +586,11 @@
           orderSource: card.querySelector('.wo-source').value,
           plannedQuantity: qtyVal,
           priority: card.querySelector('.wo-priority').value || 'Normal',
-          plannedStartDate: card.querySelector('.wo-start-date').value,
-          plannedEndDate: card.querySelector('.wo-end-date').value,
-          workCenter: card.querySelector('.wo-workcenter').value,
-          notes: card.querySelector('.wo-notes').value,
-          productionTitle: `[Seviye ${card.dataset.level}] İmalat İş Emri — ${card.dataset.name}`
+          plannedStartDate: primaryStartDate,
+          plannedEndDate: primaryEndDate,
+          workCenter: primaryWorkCenter,
+          notes: stageNotes || `Sipariş Kaynağı: ${card.querySelector('.wo-source').value}`,
+          productionTitle: `[Aşama ${card.dataset.level}] İmalat Rota İş Emri — ${card.dataset.name}`
         });
       });
 
