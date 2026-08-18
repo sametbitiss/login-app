@@ -154,22 +154,38 @@ class ProductionController {
     let targetProduct = null;
     let multiLevelPlan = [];
     let sourceRequisition = null;
+    let isLockedProduct = false;
 
     if (requisitionId) {
       sourceRequisition = await ProductionOrder.findByPk(requisitionId);
     }
 
     const effectiveStockItemId = stockItemId || (sourceRequisition ? sourceRequisition.stockItemId : null);
-    const effectiveQty = parseFloat(plannedQty) || (sourceRequisition ? parseFloat(sourceRequisition.plannedQuantity || 100) : 100);
-    const effectiveOrderSource = requisitionNo || (sourceRequisition ? sourceRequisition.workOrderNo : `SOP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+    if (requisitionId || stockItemId) {
+      isLockedProduct = true;
+    }
+
+    let minStockLimit = 0;
+    let effectiveQty = 100;
 
     if (effectiveStockItemId) {
       targetProduct = await StockItem.findByPk(effectiveStockItemId);
       if (targetProduct) {
+        minStockLimit = parseFloat(targetProduct.minStock || 0);
+
+        if (plannedQty) {
+          effectiveQty = Math.max(minStockLimit, parseFloat(plannedQty));
+        } else if (sourceRequisition) {
+          effectiveQty = Math.max(minStockLimit, parseFloat(sourceRequisition.plannedQuantity || 100));
+        } else {
+          effectiveQty = minStockLimit > 0 ? minStockLimit : 100;
+        }
+
         multiLevelPlan = await productionRepository.getMultiLevelProductionPlan(effectiveStockItemId, effectiveQty);
       }
     }
 
+    const effectiveOrderSource = requisitionNo || (sourceRequisition ? sourceRequisition.workOrderNo : `SOP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
     const nextWorkOrderNo = await productionRepository.generateWorkOrderNo();
 
     res.render('production/add', {
@@ -179,6 +195,8 @@ class ProductionController {
       multiLevelPlan,
       sourceRequisition,
       effectiveQty,
+      minStockLimit,
+      isLockedProduct,
       effectiveOrderSource,
       nextWorkOrderNo,
       WORK_CENTERS,
