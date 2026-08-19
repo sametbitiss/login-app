@@ -9,8 +9,9 @@ const { validateUserCreate, validateUserUpdate } = require('../validations/userV
 // Protect all admin routes with JWT verification & Admin RBAC
 router.use(verifyToken, authorizeRoles('Admin'));
 
-// Redirect root /admin directly to User List
-router.get('/', (req, res) => res.redirect('/admin/users'));
+// Dashboard & Management Summary
+router.get('/', adminController.renderDashboard);
+router.get('/dashboard', adminController.renderDashboard);
 
 // User Management Routes
 router.get('/users', adminController.listUsers);
