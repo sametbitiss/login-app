@@ -6,85 +6,197 @@
   <title>Sistem Yönetim Özeti — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/sidebar.js" defer></script>
   <style>
     .exec-kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      margin-bottom: 28px;
+      gap: 18px;
+      margin-bottom: 24px;
     }
+
     .exec-kpi-card {
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 22px;
+      border-radius: 16px;
+      padding: 20px;
       box-shadow: var(--shadow-sm);
       display: flex;
       align-items: center;
       gap: 16px;
       position: relative;
       overflow: hidden;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
     }
+
     .exec-kpi-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
       box-shadow: var(--shadow-md);
-      border-color: rgba(99, 102, 241, 0.4);
+      border-color: rgba(99, 102, 241, 0.35);
     }
+
     .exec-kpi-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, #6366f1, #8b5cf6);
     }
-    .exec-kpi-icon {
-      width: 48px; height: 48px;
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.4rem;
-      background: rgba(99, 102, 241, 0.12);
-      color: #818cf8;
-      border: 1px solid rgba(99, 102, 241, 0.25);
-    }
-    .exec-kpi-val { font-size: 1.6rem; font-weight: 900; color: var(--text-primary); line-height: 1; }
-    .exec-kpi-lbl { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-top: 4px; }
 
-    .ops-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      margin-bottom: 30px;
+    .exec-kpi-card--indigo::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+    .exec-kpi-card--emerald::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .exec-kpi-card--purple::before { background: linear-gradient(90deg, #a855f7, #c084fc); }
+    .exec-kpi-card--amber::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+    .exec-kpi-icon {
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
     }
-    .op-card {
+
+    .exec-kpi-icon--indigo { background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.2); }
+    .exec-kpi-icon--emerald { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .exec-kpi-icon--purple { background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.2); }
+    .exec-kpi-icon--amber { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+
+    .exec-kpi-val { font-size: 1.6rem; font-weight: 900; color: var(--text-primary); line-height: 1; letter-spacing: -0.5px; }
+    .exec-kpi-lbl { font-size: 0.775rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
+
+    .dash-charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .dash-chart-box {
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 24px;
       box-shadow: var(--shadow-sm);
+    }
+
+    .dash-chart-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ops-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .op-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      box-shadow: var(--shadow-sm);
       text-decoration: none;
-      display: block;
-      transition: all 0.25 ease;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
       position: relative;
     }
+
     .op-card:hover {
       transform: translateY(-3px);
       border-color: #6366f1;
-      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
     }
+
     .op-card-icon {
-      width: 42px; height: 42px;
-      border-radius: 12px;
+      width: 38px; height: 38px;
+      border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem;
-      background: rgba(99, 102, 241, 0.15);
-      margin-bottom: 14px;
+      font-size: 1.2rem;
+      background: rgba(99, 102, 241, 0.12);
+      color: #818cf8;
     }
-    .op-card-title { font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
-    .op-card-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; }
+
+    .op-card-title { font-size: 0.9rem; font-weight: 800; color: var(--text-primary); }
+    .op-card-desc { font-size: 0.775rem; color: var(--text-muted); line-height: 1.35; }
+
+    .fancy-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .fancy-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 6px;
+    }
+
+    .fancy-table th {
+      font-size: 0.725rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 8px 14px;
+      text-align: left;
+      border: none;
+    }
+
+    .fancy-table tbody tr {
+      background: var(--bg-elevated);
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .fancy-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .fancy-table td {
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      border: none;
+      vertical-align: middle;
+    }
+
+    .action-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+
+    .badge-CREATE { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+    .badge-UPDATE { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.25); }
+    .badge-DELETE { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.25); }
+    .badge-LOGIN { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.25); }
+    .badge-OTHER { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25); }
+
+    @media (max-width: 1200px) {
+      .exec-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .ops-grid { grid-template-columns: repeat(3, 1fr); }
+      .dash-charts-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .exec-kpi-grid { grid-template-columns: 1fr; }
+      .ops-grid { grid-template-columns: 1fr; }
+    }
   </style>
-  <script src="/sidebar.js" defer></script>
 </head>
 <body class="module-body">
+
   <!-- Module Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
@@ -116,6 +228,7 @@
       </div>
     </div>
 
+    <!-- Sidebar User -->
     <div class="module-sidebar-user">
       <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
       <div class="msu-meta">
@@ -127,6 +240,7 @@
 
   <!-- Main Area -->
   <div class="module-main">
+    <!-- Top Navbar -->
     <header class="module-topbar">
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
@@ -134,7 +248,8 @@
         <a href="/stock" class="mt-link">Stok & Depo</a>
         <a href="/sales" class="mt-link">Satış Yönetimi</a>
         <a href="/purchase" class="mt-link">Satın Alma</a>
-        <a href="/production" class="mt-link">Üretim Planlama</a><a href="/quality" class="mt-link">Kalite Kontrol</a>
+        <a href="/production" class="mt-link">Üretim Planlama</a>
+        <a href="/quality" class="mt-link">Kalite Kontrol</a>
       </div>
       <div class="mt-right">
         <span class="mt-time" id="liveTime"></span>
@@ -144,98 +259,269 @@
       </div>
     </header>
 
+    <!-- Main Content -->
     <main class="module-content">
 
-      <div class="page-header">
+      <!-- Hero Header -->
+      <div class="page-header" style="margin-bottom: 24px;">
         <div>
-          <h1>Kurumsal Sistem Yönetim Özeti</h1>
-          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Canlı sistem durumu, aktif kullanıcı metrikleri, yetkilendirme mimarisi ve güvenlik parametreleri.</p>
+          <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary);">Sistem Yönetimi & Güvenlik Özeti</h1>
+          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 4px;">
+            Kurumsal ERP kullanıcı erişim yetkileri, rol matrisleri, sistem parametreleri ve güvenlik denetim kayıtları.
+          </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <% if (isMaintenance) { %>
+            <span style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); padding: 6px 12px; border-radius: 20px; font-size: 0.775rem; font-weight: 700;">
+              ⚠️ BAKIM MODU AKTİF
+            </span>
+          <% } else { %>
+            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 12px; border-radius: 20px; font-size: 0.775rem; font-weight: 700;">
+              🟢 SİSTEM ÇALIŞIYOR (NORMAL)
+            </span>
+          <% } %>
+          <a href="/admin/users/add" class="btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; color: #fff; padding: 8px 16px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            ➕ Yeni Kullanıcı
+          </a>
         </div>
       </div>
 
       <!-- Executive KPI Cards -->
       <div class="exec-kpi-grid">
-        <div class="exec-kpi-card">
-          <div class="exec-kpi-icon">👥</div>
+        <div class="exec-kpi-card exec-kpi-card--indigo">
+          <div class="exec-kpi-icon exec-kpi-icon--indigo">👥</div>
           <div>
             <div class="exec-kpi-val"><%= userCount %></div>
-            <div class="exec-kpi-lbl">Toplam Kayıtlı Kullanıcı</div>
+            <div class="exec-kpi-lbl">Toplam Kullanıcı</div>
           </div>
         </div>
-        <div class="exec-kpi-card">
-          <div class="exec-kpi-icon" style="background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.3);">✅</div>
+
+        <div class="exec-kpi-card exec-kpi-card--emerald">
+          <div class="exec-kpi-icon exec-kpi-icon--emerald">🟢</div>
           <div>
-            <div class="exec-kpi-val" style="color: #34d399;"><%= activeUsersCount %></div>
-            <div class="exec-kpi-lbl">Aktif Personel Hesabı</div>
+            <div class="exec-kpi-val"><%= activeUsersCount %></div>
+            <div class="exec-kpi-lbl">Aktif Personel</div>
           </div>
         </div>
-        <div class="exec-kpi-card">
-          <div class="exec-kpi-icon" style="background: rgba(14,165,233,0.15); color: #38bdf8; border-color: rgba(14,165,233,0.3);">🛡️</div>
+
+        <div class="exec-kpi-card exec-kpi-card--purple">
+          <div class="exec-kpi-icon exec-kpi-icon--purple">🔐</div>
           <div>
-            <div class="exec-kpi-val" style="font-size: 1.1rem; color: #38bdf8; font-family: 'JetBrains Mono', monospace;">JWT + RBAC</div>
-            <div class="exec-kpi-lbl">Rol Tabanlı Yetki Mimarisi</div>
+            <div class="exec-kpi-val"><%= Object.keys(roleCounts).length %></div>
+            <div class="exec-kpi-lbl">Rol & Yetki Grubu</div>
           </div>
         </div>
-        <div class="exec-kpi-card">
-          <div class="exec-kpi-icon" style="background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3);">⚙️</div>
+
+        <div class="exec-kpi-card exec-kpi-card--amber">
+          <div class="exec-kpi-icon exec-kpi-icon--amber">📜</div>
           <div>
-            <div class="exec-kpi-val" style="color: #fbbf24;"><%= settings ? settings.length : 0 %></div>
-            <div class="exec-kpi-lbl">Sistem Parametresi</div>
+            <div class="exec-kpi-val"><%= logs.length %></div>
+            <div class="exec-kpi-lbl">Denetim İzi (Audit Log)</div>
           </div>
         </div>
       </div>
 
-      <!-- Operations Grid -->
-      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">⚡ Sistem Yönetim İşlemleri ve Erişim Hızlı Linkleri</h3>
+      <!-- Quick Operations Grid -->
       <div class="ops-grid">
         <a href="/admin/users" class="op-card">
           <div class="op-card-icon">👥</div>
-          <div class="op-card-title">Kullanıcı Hesapları Yönetimi</div>
-          <div class="op-card-desc">Sistem kullanıcılarını listeleyin, hesap durumlarını dondurun veya şifrelerini sıfırlayın.</div>
+          <div class="op-card-title">Kullanıcı Hesapları</div>
+          <div class="op-card-desc">Personel listesi, unvan, departman ve aktiflik durumları</div>
         </a>
 
         <a href="/admin/users/add" class="op-card">
-          <div class="op-card-icon" style="background: rgba(16,185,129,0.15); color: #34d399;">➕</div>
-          <div class="op-card-title">Yeni Kullanıcı Hesabı Ekle</div>
-          <div class="op-card-desc">Departman, unvan ve sistem rolü belirleyerek yeni kurumsal personel hesabı açın.</div>
+          <div class="op-card-icon" style="background: rgba(16, 185, 129, 0.12); color: #34d399;">➕</div>
+          <div class="op-card-title">Yeni Kullanıcı Ekle</div>
+          <div class="op-card-desc">Sisteme yeni personel ekleyin ve başlangıç rolünü atayın</div>
         </a>
 
         <a href="/admin/roles" class="op-card">
-          <div class="op-card-icon" style="background: rgba(139,92,246,0.15); color: #a78bfa;">🔐</div>
-          <div class="op-card-title">Rol ve Yetki Matrisi</div>
-          <div class="op-card-desc">Hangi kullanıcı rolünün hangi ERP modüllerini ve ekranlarını görebileceğini yönetin.</div>
+          <div class="op-card-icon" style="background: rgba(168, 85, 247, 0.12); color: #c084fc;">🔐</div>
+          <div class="op-card-title">Rol & Yetki Matrisi</div>
+          <div class="op-card-desc">Modül bazlı okuma/yazma/silme RBAC erişim matrisi</div>
         </a>
 
         <a href="/admin/settings" class="op-card">
-          <div class="op-card-icon" style="background: rgba(245,158,11,0.15); color: #fbbf24;">⚙️</div>
-          <div class="op-card-title">Sistem Parametreleri</div>
-          <div class="op-card-desc">Oturum zaman aşımı, şifre kuralları, şirket unvanı ve çalışma ayarlarını düzenleyin.</div>
+          <div class="op-card-icon" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">⚙️</div>
+          <div class="op-card-title">Sistem Ayarları</div>
+          <div class="op-card-desc">Bakım modu, parola politikası ve genel parametreler</div>
         </a>
 
         <a href="/admin/logs" class="op-card">
-          <div class="op-card-icon" style="background: rgba(99,102,241,0.15); color: #818cf8;">📜</div>
-          <div class="op-card-title">İşlem Günlüğü & Loglar</div>
-          <div class="op-card-desc">Kullanıcıların ERP sisteminde gerçekleştirdiği ekleme, güncelleme ve silme logları.</div>
-        </a>
-
-        <a href="/stock" class="op-card">
-          <div class="op-card-icon" style="background: rgba(6,182,212,0.15); color: #22d3ee;">📦</div>
-          <div class="op-card-title">Stok & Depo Modülü</div>
-          <div class="op-card-desc">Envanter stok kartları, depolar arası sevk, sayım fişleri ve envanter analitiği.</div>
-        </a>
-
-        <a href="/production" class="op-card">
-          <div class="op-card-icon" style="background: rgba(236,72,153,0.15); color: #f472b6;">🏭</div>
-          <div class="op-card-title">Üretim Planlama Modülü</div>
-          <div class="op-card-desc">Fabrika iş emirleri, MRP malzeme ihtiyaç motoru, ürün reçeteleri (BOM) ve rotalama.</div>
+          <div class="op-card-icon" style="background: rgba(6, 182, 212, 0.12); color: #22d3ee;">📜</div>
+          <div class="op-card-title">İşlem Günlüğü</div>
+          <div class="op-card-desc">Tüm modüllerdeki ekleme, düzenleme ve silme logları</div>
         </a>
       </div>
+
+      <!-- Interactive Charts Row -->
+      <div class="dash-charts-grid">
+        <div class="dash-chart-box">
+          <div class="dash-chart-title">
+            <span>🏢 Departman Dağılımı</span>
+            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Personel Sayısı</span>
+          </div>
+          <div style="height: 240px; position: relative;">
+            <canvas id="deptChart"></canvas>
+          </div>
+        </div>
+
+        <div class="dash-chart-box">
+          <div class="dash-chart-title">
+            <span>🔐 Rol & Yetki Dağılımı</span>
+            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">RBAC Rolleri</span>
+          </div>
+          <div style="height: 240px; position: relative;">
+            <canvas id="roleChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Recent Audit Log Activity Table -->
+      <div class="fancy-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+          <div>
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">📜 Son Güvenlik & Denetim Kayıtları</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Sistem genelinde gerçekleştirilen son 15 güvenlik işlemi</p>
+          </div>
+          <a href="/admin/logs" style="font-size: 0.8rem; font-weight: 700; color: var(--indigo); text-decoration: none;">Tüm Logları İncele →</a>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="fancy-table">
+            <thead>
+              <tr>
+                <th>Tarih & Saat</th>
+                <th>İşlemi Yapan</th>
+                <th>İşlem Türü</th>
+                <th>İlgili Modül / Nesne</th>
+                <th>IP Adresi</th>
+                <th>Detay</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (logs && logs.length > 0) { %>
+                <% logs.forEach(log => { %>
+                  <tr>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.775rem; color: var(--text-secondary);">
+                      <%= new Date(log.createdAt).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </td>
+                    <td>
+                      <strong style="color: var(--text-primary); font-size: 0.85rem;"><%= log.user ? log.user.username : 'Sistem' %></strong>
+                    </td>
+                    <td>
+                      <% 
+                        let bClass = 'badge-OTHER';
+                        if (log.action === 'CREATE') bClass = 'badge-CREATE';
+                        else if (log.action === 'UPDATE') bClass = 'badge-UPDATE';
+                        else if (log.action === 'DELETE') bClass = 'badge-DELETE';
+                        else if (log.action === 'LOGIN') bClass = 'badge-LOGIN';
+                      %>
+                      <span class="action-badge <%= bClass %>"><%= log.action %></span>
+                    </td>
+                    <td style="font-weight: 600; color: #a5b4fc;"><%= log.entityName %></td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.775rem; color: var(--text-muted);"><%= log.ipAddress || '127.0.0.1' %></td>
+                    <td style="font-size: 0.8rem; color: var(--text-secondary); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <%= log.details ? (typeof log.details === 'object' ? JSON.stringify(log.details) : log.details) : '—' %>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } else { %>
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Henüz kaydedilmiş işlem logu bulunmuyor.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </main>
   </div>
 
   <script>
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const opts = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+      const dateOpts = { day: 'numeric', month: 'long', year: 'numeric' };
+      const timeEl = document.getElementById('liveTime');
+      if (timeEl) {
+        timeEl.textContent = now.toLocaleDateString('tr-TR', dateOpts) + '  •  ' + now.toLocaleTimeString('tr-TR', opts);
+      }
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Dynamic Charts
+    const deptData = <%- JSON.stringify(deptCounts) %>;
+    const roleData = <%- JSON.stringify(roleCounts) %>;
+
+    // Dept Chart
+    const deptCtx = document.getElementById('deptChart');
+    if (deptCtx) {
+      new Chart(deptCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(deptData),
+          datasets: [{
+            data: Object.values(deptData),
+            backgroundColor: ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#a855f7', '#f43f5e', '#64748b'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#8896b0', font: { family: 'Inter', size: 11 } } }
+          },
+          cutout: '68%'
+        }
+      });
+    }
+
+    // Role Chart
+    const roleCtx = document.getElementById('roleChart');
+    if (roleCtx) {
+      const roleLabels = {
+        'Admin': '🛡️ Admin',
+        'Stock_Manager': '📦 Stok Yöneticisi',
+        'Sales_Manager': '🛍️ Satış Yöneticisi',
+        'Purchase_Manager': '💳 Satın Alma Yrn.',
+        'Production_Manager': '🏭 Üretim Müdürü',
+        'Quality_Manager': '🔬 Kalite Kontrol',
+        'Employee': '👤 Personel'
+      };
+
+      const keys = Object.keys(roleData);
+      const labels = keys.map(k => roleLabels[k] || k);
+      const values = keys.map(k => roleData[k]);
+
+      new Chart(roleCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Kullanıcı Sayısı',
+            data: values,
+            backgroundColor: '#818cf8',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { ticks: { color: '#8896b0', font: { family: 'Inter', size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#8896b0', font: { family: 'Inter', size: 11 }, stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>

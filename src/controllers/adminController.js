@@ -103,15 +103,49 @@ class AdminController {
   renderDashboard = asyncHandler(async (req, res) => {
     const users = await userRepository.findAll();
     const settings = await userRepository.getAllSettings();
+    const logs = await logService.getRecentLogs(15);
+
     const userCount = users.length;
     const activeUsersCount = users.filter(u => (u.durum || u.status) === 'Active').length;
+    const inactiveUsersCount = users.filter(u => (u.durum || u.status) === 'Inactive').length;
+    const suspendedUsersCount = users.filter(u => (u.durum || u.status) === 'Suspended').length;
+
+    const roleCounts = {
+      Admin: 0,
+      Stock_Manager: 0,
+      Sales_Manager: 0,
+      Purchase_Manager: 0,
+      Production_Manager: 0,
+      Quality_Manager: 0,
+      Employee: 0
+    };
+
+    const deptCounts = {};
+
+    users.forEach(u => {
+      const r = u.rol || u.role || 'Employee';
+      if (roleCounts[r] !== undefined) roleCounts[r]++;
+      else roleCounts[r] = (roleCounts[r] || 0) + 1;
+
+      const d = u.departman || u.department || 'Genel';
+      deptCounts[d] = (deptCounts[d] || 0) + 1;
+    });
+
+    const maintenanceSetting = settings.find(s => s.anahtar === 'maintenance_mode');
+    const isMaintenance = maintenanceSetting && maintenanceSetting.deger === 'true';
 
     res.render('admin/dashboard', {
       user: req.user,
       users,
       userCount,
       activeUsersCount,
-      settings
+      inactiveUsersCount,
+      suspendedUsersCount,
+      roleCounts,
+      deptCounts,
+      settings,
+      logs,
+      isMaintenance
     });
   });
 
