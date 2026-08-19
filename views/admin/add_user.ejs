@@ -171,8 +171,8 @@
 
           <!-- Tab 3: Kurumsal & Rol Yetkisi -->
           <div class="tab-pane" id="tab-role">
-            <div class="tab-pane-title">🏢 Departman, Unvan & ERP Rol Yetkisi</div>
-            <div class="form-grid form-grid--3">
+            <div class="tab-pane-title">🏢 Departman & ERP Rol Yetkisi</div>
+            <div class="form-grid form-grid--2">
               <div class="input-group">
                 <label for="department">Departman <span class="req-star">*</span></label>
                 <select id="department" name="department" required>
@@ -185,22 +185,9 @@
               </div>
 
               <div class="input-group">
-                <label for="title">Unvan / Pozisyon <span class="req-star">*</span></label>
-                <select id="title" name="title" required>
-                  <option value="" disabled selected>-- Önce Departman Seçiniz --</option>
-                </select>
-                <span class="field-error-msg">Unvan seçilmesi zorunludur.</span>
-              </div>
-
-              <div class="input-group">
                 <label for="role">ERP Modül Rol Yetkisi <span class="req-star">*</span></label>
-                <select id="role" name="role" required>
-                  <option value="" disabled selected>-- Rol Yetkisi Seçiniz --</option>
-                  <% Object.keys(ALL_ROLES).forEach(rKey => { %>
-                    <option value="<%= rKey %>">
-                      <%= ALL_ROLES[rKey] %> (<%= rKey %>)
-                    </option>
-                  <% }); %>
+                <select id="role" name="role" required disabled>
+                  <option value="" disabled selected>-- Önce Departman Seçiniz --</option>
                 </select>
                 <span class="field-error-msg">Rol yetkisi seçilmesi zorunludur.</span>
               </div>
@@ -485,39 +472,43 @@
     updateTabBadges();
 
     // Dynamic Department ➔ Titles & Allowed ERP Roles dropdown filtering
-    const deptTitlesMap = <%- JSON.stringify(DEPARTMENT_TITLES) %>;
-    const deptRolesMap = <%- JSON.stringify(DEPARTMENT_ROLES) %>;
+    const customRolesList = <%- JSON.stringify(customRoles || []) %>;
     const deptSelect = document.getElementById('department');
-    const titleSelect = document.getElementById('title');
     const roleSelect = document.getElementById('role');
 
-    if (deptSelect) {
+    if (deptSelect && roleSelect) {
       deptSelect.addEventListener('change', function() {
         const selectedDept = this.value;
+        roleSelect.innerHTML = '';
 
-        // 1. Update Title Select Options
-        if (titleSelect) {
-          titleSelect.innerHTML = '<option value="" disabled selected>-- Unvan Seçiniz --</option>';
-          const titles = deptTitlesMap[selectedDept] || ['Uzman Personel', 'Yönetici', 'Sorumlu'];
-          titles.forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = t;
-            opt.textContent = t;
-            titleSelect.appendChild(opt);
-          });
+        if (!selectedDept) {
+          roleSelect.disabled = true;
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.disabled = true;
+          opt.selected = true;
+          opt.textContent = '-- Önce Departman Seçiniz --';
+          roleSelect.appendChild(opt);
+          return;
         }
 
-        // 2. Update Role Select Options (Strictly Correlated to Department!)
-        if (roleSelect) {
-          roleSelect.innerHTML = '<option value="" disabled selected>-- Rol Yetkisi Seçiniz --</option>';
-          const roles = deptRolesMap[selectedDept] || [{ key: 'Employee', label: '👤 Personel' }];
-          roles.forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = r.key;
-            opt.textContent = r.label;
-            roleSelect.appendChild(opt);
-          });
-        }
+        roleSelect.disabled = false;
+        const promptOpt = document.createElement('option');
+        promptOpt.value = '';
+        promptOpt.disabled = true;
+        promptOpt.selected = true;
+        promptOpt.textContent = '-- Rol Yetkisi Seçiniz --';
+        roleSelect.appendChild(promptOpt);
+
+        const matchingRoles = customRolesList.filter(r => (r.department === selectedDept || r.department === 'Genel / Tüm Modüller' || r.department === 'Genel'));
+        const rolesToRender = matchingRoles.length > 0 ? matchingRoles : customRolesList;
+
+        rolesToRender.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.key;
+          opt.textContent = `${r.label} (${r.key})`;
+          roleSelect.appendChild(opt);
+        });
       });
     }
   </script>

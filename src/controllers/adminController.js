@@ -150,8 +150,9 @@ class AdminController {
   });
 
   renderAddUser = asyncHandler(async (req, res) => {
+    const customRoles = await userRepository.getCustomRoles();
     const dynamicRoles = await getDynamicRolesMap();
-    res.render('admin/add_user', { user: req.user, error: null, ALL_ROLES: dynamicRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+    res.render('admin/add_user', { user: req.user, error: null, ALL_ROLES: dynamicRoles, customRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
   });
 
   addUser = asyncHandler(async (req, res) => {
@@ -159,17 +160,18 @@ class AdminController {
     const targetUsername = kullaniciAdi || username;
     const targetPassword = sifre || password;
     const targetEmail = eposta || email;
+    const customRoles = await userRepository.getCustomRoles();
     const dynamicRoles = await getDynamicRolesMap();
 
     const existingUser = await userRepository.findByUsername(targetUsername);
     if (existingUser) {
-      return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı sistemde zaten kayıtlı.', ALL_ROLES: dynamicRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+      return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı sistemde zaten kayıtlı.', ALL_ROLES: dynamicRoles, customRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
     }
 
     if (targetEmail) {
       const existingEmail = await userRepository.findByEmail(targetEmail);
       if (existingEmail) {
-        return res.render('admin/add_user', { user: req.user, error: 'Bu e-posta adresi sistemde zaten kayıtlı.', ALL_ROLES: dynamicRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+        return res.render('admin/add_user', { user: req.user, error: 'Bu e-posta adresi sistemde zaten kayıtlı.', ALL_ROLES: dynamicRoles, customRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
       }
     }
 
@@ -182,7 +184,7 @@ class AdminController {
       ad: ad || firstName,
       soyad: soyad || lastName,
       telefon: telefon ? telefon.trim() : (phone ? phone.trim() : null),
-      departman: departman ? departman.trim() : (department ? department.trim() : 'Genel'),
+      departman: departman ? departman.trim() : (department ? department.trim() : 'Genel / Tüm Modüller'),
       unvan: unvan ? unvan.trim() : (title ? title.trim() : 'Personel'),
       rol: rol || role || 'Employee',
       durum: 'Active'
@@ -194,6 +196,7 @@ class AdminController {
   userDetail = asyncHandler(async (req, res) => {
     const id = req.params.id;
     const targetUser = await userRepository.findById(id);
+    const customRoles = await userRepository.getCustomRoles();
     const dynamicRoles = await getDynamicRolesMap();
 
     if (!targetUser) {
@@ -204,6 +207,7 @@ class AdminController {
       user: req.user,
       targetUser,
       ALL_ROLES: dynamicRoles,
+      customRoles,
       DEPARTMENTS,
       DEPARTMENT_TITLES,
       DEPARTMENT_ROLES,
