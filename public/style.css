@@ -1111,17 +1111,55 @@ a { text-decoration: none; color: inherit; }
   gap: 6px;
 }
 
+/* Hide second duplicate navbar globally */
+.module-subnav,
+.subnav {
+  display: none !important;
+}
+
 .mss-group-title {
-  font-size: 0.625rem;
+  font-size: 0.675rem;
   font-weight: 700;
   color: var(--text-secondary);
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 8px 12px 4px 12px;
-  margin-top: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-xs);
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+}
+
+.mss-group-title:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.mss-group-title::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.mss-group-title.expanded::after,
+.mss-group-title.active::after {
+  transform: rotate(-135deg);
+  border-color: var(--indigo);
 }
 
 .mss-link {
@@ -1145,12 +1183,16 @@ a { text-decoration: none; color: inherit; }
 }
 
 .mss-sub {
-  display: flex;
+  display: none; /* Collapsed by default */
   flex-direction: column;
   gap: 2px;
   padding-left: 12px;
   margin-top: 4px;
   margin-bottom: 12px;
+}
+
+.mss-sub.open {
+  display: flex !important; /* Expanded when open or active */
 }
 
 .mss-sub-link {
