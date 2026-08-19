@@ -305,12 +305,12 @@ class AdminController {
 
   renderSettings = asyncHandler(async (req, res) => {
     const settings = await userRepository.getAllSettings();
-    res.render('admin/settings', { user: req.user, settings });
+    res.render('admin/settings', { user: req.user, settings, successMessage: req.query.success || null });
   });
 
   updateSettings = asyncHandler(async (req, res) => {
     await userRepository.updateSettings(req.body, req.user, req.ip);
-    res.redirect('/admin/settings');
+    res.redirect('/admin/settings?success=Sistem parametreleri başarıyla güncellendi.');
   });
 
   renderRoles = asyncHandler(async (req, res) => {

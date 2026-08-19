@@ -95,15 +95,15 @@
         <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 16px;">
           <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">🟢</div>
           <div>
-            <div style="font-size: 1.4rem; font-weight: 800; color: #34d399;"><%= logs.filter(l => l.action === 'CREATE').length %></div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">Veri Ekleme (CREATE) İşlemleri</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #34d399;"><%= logs.filter(l => (l.islem || l.action) === 'CREATE').length %></div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Veri Ekleme (CREATE)</div>
           </div>
         </div>
 
         <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 16px;">
           <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(14, 165, 233, 0.15); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">✏️</div>
           <div>
-            <div style="font-size: 1.4rem; font-weight: 800; color: #38bdf8;"><%= logs.filter(l => l.action === 'UPDATE').length %></div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #38bdf8;"><%= logs.filter(l => (l.islem || l.action) === 'UPDATE').length %></div>
             <div style="font-size: 0.8rem; color: var(--text-muted);">Veri Güncelleme (UPDATE)</div>
           </div>
         </div>
@@ -111,7 +111,7 @@
         <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 16px;">
           <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(244, 63, 94, 0.15); color: #fb7185; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">🗑️</div>
           <div>
-            <div style="font-size: 1.4rem; font-weight: 800; color: #fb7185;"><%= logs.filter(l => l.action === 'DELETE').length %></div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #fb7185;"><%= logs.filter(l => (l.islem || l.action) === 'DELETE').length %></div>
             <div style="font-size: 0.8rem; color: var(--text-muted);">Silme (DELETE) İşlemleri</div>
           </div>
         </div>
@@ -120,11 +120,11 @@
       <!-- Filter Bar -->
       <form action="/admin/logs" method="GET" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 200px;">
-          <input type="text" name="search" value="<%= searchQuery %>" placeholder="Kullanıcı adı, modül veya işlem detayı ara..." style="width: 100%; padding: 8px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 0.85rem;">
+          <input type="text" name="search" value="<%= searchQuery %>" placeholder="Kullanıcı adı, modül veya işlem detayı ara..." style="width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 0.88rem;">
         </div>
 
-        <div style="width: 160px;">
-          <select name="action" style="width: 100%; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 0.85rem;">
+        <div style="width: 180px;">
+          <select name="action" style="width: 100%; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 0.88rem;">
             <option value="">Tüm İşlem Tipleri</option>
             <option value="CREATE" <%= queryAction === 'CREATE' ? 'selected' : '' %>>CREATE (Ekleme)</option>
             <option value="UPDATE" <%= queryAction === 'UPDATE' ? 'selected' : '' %>>UPDATE (Güncelleme)</option>
@@ -133,9 +133,9 @@
           </select>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-sm" style="padding: 8px 16px;">🔍 Filtrele</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="padding: 10px 18px; font-weight: 600;">🔍 Filtrele</button>
         <% if (searchQuery || queryAction) { %>
-          <a href="/admin/logs" class="btn btn-secondary btn-sm" style="padding: 8px 16px;">Sıfırla</a>
+          <a href="/admin/logs" class="btn btn-secondary btn-sm" style="padding: 10px 18px;">Sıfırla</a>
         <% } %>
       </form>
 
@@ -146,32 +146,53 @@
             📜 Kriterlere uygun sistem işlem logu bulunamadı.
           </div>
         <% } else { %>
-          <% logs.forEach(log => { %>
+          <% logs.forEach(log => { 
+            const uName = log.kullaniciAdi || log.username || (log.kullanici ? log.kullanici.kullaniciAdi : 'System');
+            const uObj = log.kullanici || log.user;
+            const action = log.islem || log.action || 'READ';
+            const entity = log.varlik || log.entity || 'General';
+            const entityId = log.varlikId || log.entityId || '';
+            const details = log.detaylar || log.details || `${action} işlemi gerçekleştirildi (${entity})`;
+            const ip = log.ipAdresi || log.ipAddress || '';
+
+            let fullName = uName;
+            if (uObj && uObj.ad) {
+              fullName = `${uObj.ad} ${uObj.soyad || ''}`.trim();
+            } else if (uObj && uObj.firstName) {
+              fullName = `${uObj.firstName} ${uObj.lastName || ''}`.trim();
+            }
+          %>
             <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: transform 0.15s ease, border-color 0.15s ease;" onmouseover="this.style.borderColor='var(--indigo)'" onmouseout="this.style.borderColor='var(--border)'">
               
               <!-- Left: User Avatar & Details -->
               <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-                <div style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
-                  <%= log.username ? log.username.charAt(0).toUpperCase() : 'S' %>
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);">
+                  <%= uName.charAt(0).toUpperCase() %>
                 </div>
 
                 <div style="flex: 1;">
                   <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <strong style="color: var(--text-main); font-size: 0.92rem;">
-                      <%= log.user && log.user.firstName ? (log.user.firstName + ' ' + log.user.lastName) : log.username %>
+                    <strong style="color: var(--text-main); font-size: 0.95rem;">
+                      <%= fullName %>
                     </strong>
-                    <span style="font-size: 0.775rem; color: var(--indigo); font-family: 'JetBrains Mono', monospace;">@<%= log.username || 'System' %></span>
+                    <span style="font-size: 0.78rem; color: var(--indigo); font-family: 'JetBrains Mono', monospace; background: rgba(99, 102, 241, 0.1); padding: 2px 8px; border-radius: 6px;">@<%= uName %></span>
                     
-                    <% if (log.user && log.user.department) { %>
+                    <% if (uObj && (uObj.departman || uObj.department)) { %>
                       <span style="background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.2); padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 0.73rem;">
-                        🏢 <%= log.user.department %>
+                        🏢 <%= uObj.departman || uObj.department %>
+                      </span>
+                    <% } %>
+
+                    <% if (ip) { %>
+                      <span style="font-size: 0.72rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
+                        📍 IP: <%= ip %>
                       </span>
                     <% } %>
                   </div>
 
                   <!-- Human Readable Event Description -->
-                  <div style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.4;">
-                    <%= log.details || (log.action + ' işlemi gerçekleştirildi (' + log.entity + ')') %>
+                  <div style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 6px; line-height: 1.45; font-weight: 500;">
+                    <%= details %>
                   </div>
                 </div>
               </div>
@@ -182,35 +203,64 @@
                   <% 
                     let actionLabel = '👁️ Görüntülendi';
                     let actionCss = 'background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3);';
-                    if (log.action === 'CREATE') { actionLabel = '✨ Yeni Kayıt Eklendi'; actionCss = 'background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);'; }
-                    else if (log.action === 'UPDATE') { actionLabel = '✏️ Bilgi Güncellendi'; actionCss = 'background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);'; }
-                    else if (log.action === 'DELETE') { actionLabel = '🗑️ Kayıt Sildi'; actionCss = 'background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3);'; }
+                    if (action === 'CREATE') { actionLabel = '✨ Yeni Kayıt Eklendi'; actionCss = 'background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);'; }
+                    else if (action === 'UPDATE') { actionLabel = '✏️ Bilgi Güncellendi'; actionCss = 'background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);'; }
+                    else if (action === 'DELETE') { actionLabel = '🗑️ Kayıt Silindi'; actionCss = 'background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3);'; }
 
                     const entityMap = {
-                      'User': '👥 Kullanıcı',
+                      'User': '👥 Kullanıcı Hesabı',
+                      'Kullanici': '👥 Kullanıcı Hesabı',
                       'StockItem': '📦 Stok Kartı',
+                      'StokKarti': '📦 Stok Kartı',
                       'StockLot': '🏷️ Lot Partisi',
+                      'StokPartisi': '🏷️ Lot Partisi',
                       'StockMovement': '🔄 Stok Hareketi',
+                      'StokHareketi': '🔄 Stok Hareketi',
+                      'StockCounting': '📋 Stok Sayımı',
+                      'StokSayimi': '📋 Stok Sayımı',
                       'Warehouse': '🏭 Depo / Ambar',
+                      'Depo': '🏭 Depo / Ambar',
                       'SaleOrder': '🛍️ Satış Siparişi',
-                      'Customer': '👥 Müşteri',
-                      'PurchaseOrder': '💳 Satın Alma',
-                      'Supplier': '🏢 Tedarikçi',
+                      'SatisSiparisi': '🛍️ Satış Siparişi',
+                      'SaleQuote': '📄 Satış Teklifi',
+                      'SatisTeklifi': '📄 Satış Teklifi',
+                      'Customer': '👤 Müşteri Cari',
+                      'MusteriHesabi': '👤 Müşteri Cari',
+                      'PurchaseOrder': '💳 Satın Alma Siparişi',
+                      'SatinAlmaSiparisi': '💳 Satın Alma Siparişi',
+                      'PurchaseRfq': '📑 Teklif Talebi (RFQ)',
+                      'SatinAlmaTeklifTalebi': '📑 Teklif Talebi (RFQ)',
+                      'Supplier': '🏢 Tedarikçi Kartı',
+                      'Tedarikci': '🏢 Tedarikçi Kartı',
                       'GoodsReceipt': '📥 Mal Kabul',
+                      'MalKabul': '📥 Mal Kabul',
                       'ProductionOrder': '🏭 İş Emri',
-                      'QualityInspection': '🔬 Kalite Kontrol',
+                      'UretimEmri': '🏭 İş Emri',
+                      'BOMItem': '🧪 Ürün Reçetesi (BOM)',
+                      'UrunRecetesi': '🧪 Ürün Reçetesi (BOM)',
+                      'RoutingOperation': '⚙️ Rotalama Operasyonu',
+                      'RotaOperasyon': '⚙️ Rotalama Operasyonu',
+                      'QualityInspection': '🔬 Kalite Muayenesi',
+                      'KaliteMuayene': '🔬 Kalite Muayenesi',
                       'QualityNonConformance': '⚠️ Uygunsuzluk (NCR)',
+                      'KaliteUygunsuzluk': '⚠️ Uygunsuzluk (NCR)',
                       'QualityCapa': '🛡️ Aksiyon (CAPA)',
-                      'SystemSetting': '⚙️ Sistem Ayarı'
+                      'KaliteDof': '🛡️ Aksiyon (CAPA)',
+                      'QualityEquipment': '📐 Ölçüm Ekipmanı',
+                      'KaliteEkipmani': '📐 Ölçüm Ekipmanı',
+                      'QualityDocument': '📄 Kalite Dokümanı',
+                      'KaliteDokumani': '📄 Kalite Dokümanı',
+                      'SystemSetting': '⚙️ Sistem Ayarı',
+                      'SistemAyari': '⚙️ Sistem Ayarı'
                     };
-                    const entityLabel = entityMap[log.entity] || log.entity;
+                    const entityLabel = entityMap[entity] || entity;
                   %>
                   <span style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; <%= actionCss %>">
                     <%= actionLabel %>
                   </span>
                   
                   <span style="background: rgba(255,255,255,0.06); color: var(--text-secondary); padding: 3px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
-                    <%= entityLabel %>
+                    <%= entityLabel %> <%= entityId ? `#${entityId}` : '' %>
                   </span>
                 </div>
 
