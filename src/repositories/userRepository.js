@@ -7,6 +7,11 @@ class UserRepository {
     return await Kullanici.findOne({ where: { kullaniciAdi } });
   }
 
+  async findByEmail(eposta) {
+    if (!eposta) return null;
+    return await Kullanici.findOne({ where: { eposta: eposta.trim() } });
+  }
+
   async findAll() {
     return await Kullanici.findAll({
       attributes: ['id', 'kullaniciAdi', 'eposta', 'ad', 'soyad', 'telefon', 'departman', 'unvan', 'rol', 'durum', 'createdAt', 'updatedAt'],

@@ -10,11 +10,14 @@ const validRoles = [
 
 const validStatuses = ['Active', 'Inactive', 'Suspended'];
 
-// Strict Validation Helper Functions
 const isValidEmail = (email) => {
   if (!email || typeof email !== 'string') return false;
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email.trim());
+  const trimmed = email.trim();
+  if (trimmed.length < 5 || trimmed.length > 100) return false;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+  if (!emailRegex.test(trimmed)) return false;
+  if (trimmed.includes('..') || trimmed.includes('@.') || trimmed.includes('.@') || trimmed.endsWith('.')) return false;
+  return true;
 };
 
 const isValidPhone = (phone) => {

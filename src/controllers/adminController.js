@@ -162,10 +162,18 @@ class AdminController {
     const { username, password, email, firstName, lastName, phone, department, title, role, kullaniciAdi, sifre, eposta, ad, soyad, telefon, departman, unvan, rol } = req.body;
     const targetUsername = kullaniciAdi || username;
     const targetPassword = sifre || password;
+    const targetEmail = eposta || email;
 
     const existingUser = await userRepository.findByUsername(targetUsername);
     if (existingUser) {
-      return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı zaten alınmış.', ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+      return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı sistemde zaten kayıtlı.', ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+    }
+
+    if (targetEmail) {
+      const existingEmail = await userRepository.findByEmail(targetEmail);
+      if (existingEmail) {
+        return res.render('admin/add_user', { user: req.user, error: 'Bu e-posta adresi sistemde zaten kayıtlı.', ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(targetPassword, 10);
@@ -173,7 +181,7 @@ class AdminController {
     await userRepository.create({
       kullaniciAdi: targetUsername,
       sifre: hashedPassword,
-      eposta: eposta || email,
+      eposta: targetEmail ? targetEmail.trim() : null,
       ad: ad || firstName,
       soyad: soyad || lastName,
       telefon: telefon ? telefon.trim() : (phone ? phone.trim() : null),
@@ -337,4 +345,9 @@ class AdminController {
   });
 }
 
-module.exports = new AdminController();
+const adminControllerInstance = new AdminController();
+adminControllerInstance.DEPARTMENTS = DEPARTMENTS;
+adminControllerInstance.DEPARTMENT_TITLES = DEPARTMENT_TITLES;
+adminControllerInstance.DEPARTMENT_ROLES = DEPARTMENT_ROLES;
+
+module.exports = adminControllerInstance;

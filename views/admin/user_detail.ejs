@@ -297,9 +297,25 @@
 
     const emailInput = document.getElementById('email');
     if (emailInput) {
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      const isValidEmailClient = (val) => {
+        if (!val) return false;
+        const trimmed = val.trim();
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+        if (!emailRegex.test(trimmed)) return false;
+        if (trimmed.includes('..') || trimmed.includes('@.') || trimmed.includes('.@') || trimmed.endsWith('.')) return false;
+        return true;
+      };
+
       emailInput.addEventListener('input', function() {
-        if (this.value && !emailRegex.test(this.value.trim())) {
+        if (this.value && !isValidEmailClient(this.value)) {
+          this.classList.add('is-invalid');
+        } else {
+          this.classList.remove('is-invalid');
+        }
+      });
+
+      emailInput.addEventListener('blur', function() {
+        if (!isValidEmailClient(this.value)) {
           this.classList.add('is-invalid');
         } else {
           this.classList.remove('is-invalid');
