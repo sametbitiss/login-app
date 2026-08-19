@@ -241,13 +241,14 @@
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Tab Navigation
+    // Tab Navigation & Validation System
     const form = document.getElementById('userUpdateForm');
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
     const btnPrev = document.getElementById('btnPrevTab');
     const btnNext = document.getElementById('btnNextTab');
     const clientErrorBanner = document.getElementById('clientErrorBanner');
+    const clientErrorMessage = document.getElementById('clientErrorMessage');
 
     let currentTabIndex = 0;
 
@@ -263,18 +264,84 @@
         pane.classList.toggle('active', i === index);
       });
 
-      btnPrev.style.display = index === 0 ? 'none' : 'inline-flex';
-      btnNext.style.display = index === tabBtns.length - 1 ? 'none' : 'inline-flex';
+      if (btnPrev) btnPrev.style.display = index === 0 ? 'none' : 'inline-flex';
+      if (btnNext) btnNext.style.display = index === tabBtns.length - 1 ? 'none' : 'inline-flex';
     }
 
     tabBtns.forEach((btn, idx) => {
-      btn.addEventListener('click', () => switchTab(idx));
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab(idx);
+      });
     });
 
-    btnPrev.addEventListener('click', () => switchTab(currentTabIndex - 1));
-    btnNext.addEventListener('click', () => switchTab(currentTabIndex + 1));
+    if (btnPrev) {
+      btnPrev.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab(currentTabIndex - 1);
+      });
+    }
 
-    // Strict Real-time Filtering & Validation Listeners
+    function validateTab(paneIndex) {
+      const pane = tabPanes[paneIndex];
+      if (!pane) return true;
+
+      const requiredInputs = pane.querySelectorAll('[required]');
+      let isValid = true;
+
+      requiredInputs.forEach(input => {
+        const val = input.value ? input.value.trim() : '';
+        if (!val) {
+          isValid = false;
+          input.classList.add('is-invalid');
+        } else {
+          input.classList.remove('is-invalid');
+        }
+      });
+
+      return isValid;
+    }
+
+    function updateTabBadges() {
+      tabPanes.forEach((pane, i) => {
+        const requiredInputs = pane.querySelectorAll('[required]');
+        if (requiredInputs.length === 0) return;
+
+        let paneValid = true;
+        requiredInputs.forEach(input => {
+          if (!input.value || !input.value.trim()) paneValid = false;
+        });
+
+        const badge = tabBtns[i] ? tabBtns[i].querySelector('.tab-badge') : null;
+        if (badge) {
+          if (paneValid) {
+            badge.classList.remove('tab-badge--err');
+            badge.classList.add('tab-badge--ok');
+            badge.textContent = '✓';
+          } else {
+            badge.classList.remove('tab-badge--ok');
+            badge.classList.add('tab-badge--err');
+            badge.textContent = '!';
+          }
+        }
+      });
+    }
+
+    if (btnNext) {
+      btnNext.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isCurrentValid = validateTab(currentTabIndex);
+        if (!isCurrentValid) {
+          if (clientErrorMessage) clientErrorMessage.textContent = 'Lütfen bu sekmedeki zorunlu (*) alanları eksiksiz ve geçerli doldurunuz.';
+          if (clientErrorBanner) clientErrorBanner.style.display = 'flex';
+          return;
+        }
+        if (clientErrorBanner) clientErrorBanner.style.display = 'none';
+        switchTab(currentTabIndex + 1);
+      });
+    }
+
+    // Strict Real-time Formatting & Validation Listeners
     const phoneInput = document.getElementById('phone');
     if (phoneInput) {
       phoneInput.addEventListener('input', function() {
@@ -288,17 +355,18 @@
       });
     }
 
+    const isValidEmailClient = (val) => {
+      if (!val) return false;
+      const trimmed = val.trim();
+      if (trimmed.length < 5 || trimmed.length > 100) return false;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+      if (!emailRegex.test(trimmed)) return false;
+      if (trimmed.includes('..') || trimmed.includes('@.') || trimmed.includes('.@') || trimmed.endsWith('.')) return false;
+      return true;
+    };
+
     const emailInput = document.getElementById('email');
     if (emailInput) {
-      const isValidEmailClient = (val) => {
-        if (!val) return false;
-        const trimmed = val.trim();
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
-        if (!emailRegex.test(trimmed)) return false;
-        if (trimmed.includes('..') || trimmed.includes('@.') || trimmed.includes('.@') || trimmed.endsWith('.')) return false;
-        return true;
-      };
-
       emailInput.addEventListener('input', function() {
         if (this.value && !isValidEmailClient(this.value)) {
           this.classList.add('is-invalid');
@@ -338,6 +406,13 @@
         } else {
           this.classList.remove('is-invalid');
         }
+      });
+    }
+
+    if (form) {
+      form.querySelectorAll('input, select, textarea').forEach(input => {
+        input.addEventListener('input', () => updateTabBadges());
+        input.addEventListener('change', () => updateTabBadges());
       });
     }
 
@@ -395,8 +470,11 @@
 
       deptSelect.addEventListener('change', function() {
         populateRoles(this.value, '');
+        updateTabBadges();
       });
     }
+
+    updateTabBadges();
 
     if (form) {
       form.addEventListener('submit', (e) => {
@@ -458,8 +536,7 @@
           e.preventDefault(); // BLOCK SUBMISSION!
           switchTab(firstInvalidPaneIndex);
           if (clientErrorBanner) {
-            const msgEl = document.getElementById('clientErrorMessage');
-            if (msgEl) msgEl.textContent = `Güncelleme Yapılamadı! Lütfen formdaki hataları ve eksikleri düzeltiniz: ${missingFieldLabels.join(', ')}`;
+            if (clientErrorMessage) clientErrorMessage.textContent = `Güncelleme Yapılamadı! Lütfen formdaki hataları ve eksikleri düzeltiniz: ${missingFieldLabels.join(', ')}`;
             clientErrorBanner.style.display = 'flex';
           }
 
@@ -470,6 +547,7 @@
           if (clientErrorBanner) clientErrorBanner.style.display = 'none';
         }
       });
+    }
   </script>
 </body>
 </html>
