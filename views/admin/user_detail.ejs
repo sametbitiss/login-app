@@ -381,6 +381,80 @@
       });
     }
 
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+        let firstInvalidPaneIndex = -1;
+        let firstInvalidInput = null;
+        let missingFieldLabels = [];
+
+        // 1. Check Required Fields
+        tabPanes.forEach((pane, paneIndex) => {
+          const requiredInputs = pane.querySelectorAll('[required]');
+          requiredInputs.forEach(input => {
+            const val = input.value ? input.value.trim() : '';
+            if (!val) {
+              input.classList.add('is-invalid');
+              if (firstInvalidPaneIndex === -1) {
+                firstInvalidPaneIndex = paneIndex;
+                firstInvalidInput = input;
+              }
+              const label = input.closest('.input-group') ? input.closest('.input-group').querySelector('label') : null;
+              if (label) {
+                const labelClean = label.textContent.replace('*', '').trim();
+                if (!missingFieldLabels.includes(labelClean)) {
+                  missingFieldLabels.push(labelClean);
+                }
+              }
+            }
+          });
+        });
+
+        // 2. Strict Format Validation (Email & Phone)
+        if (emailInput && !isValidEmailClient(emailInput.value)) {
+          emailInput.classList.add('is-invalid');
+          if (firstInvalidPaneIndex === -1) {
+            firstInvalidPaneIndex = 0;
+            firstInvalidInput = emailInput;
+          }
+          if (!missingFieldLabels.includes('Geçerli E-Posta Adresi')) {
+            missingFieldLabels.push('Geçerli E-Posta Adresi (Örn: ahmet@enterprise-erp.com)');
+          }
+        }
+
+        if (phoneInput && phoneInput.value.trim() !== '') {
+          const digits = phoneInput.value.replace(/\D/g, '');
+          if (digits.length < 10 || /[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(phoneInput.value)) {
+            phoneInput.classList.add('is-invalid');
+            if (firstInvalidPaneIndex === -1) {
+              firstInvalidPaneIndex = 0;
+              firstInvalidInput = phoneInput;
+            }
+            if (!missingFieldLabels.includes('Geçerli Telefon Numarası')) {
+              missingFieldLabels.push('Geçerli Telefon Numarası (En az 10 rakam)');
+            }
+          }
+        }
+
+        if (firstInvalidPaneIndex !== -1) {
+          e.preventDefault(); // BLOCK SUBMISSION!
+          switchTab(firstInvalidPaneIndex);
+          if (clientErrorBanner) {
+            const msgEl = document.getElementById('clientErrorMessage');
+            if (msgEl) msgEl.textContent = `Güncelleme Yapılamadı! Lütfen formdaki hataları ve eksikleri düzeltiniz: ${missingFieldLabels.join(', ')}`;
+            clientErrorBanner.style.display = 'flex';
+          }
+
+          if (firstInvalidInput) {
+            setTimeout(() => firstInvalidInput.focus(), 150);
+          }
+        } else {
+          if (clientErrorBanner) clientErrorBanner.style.display = 'none';
+        }
+      });
+    }
+
     if (deptSelect) {
       populateTitles(deptSelect.value, "<%= targetUser.unvan || targetUser.title || '' %>");
       populateRoles(deptSelect.value, "<%= targetUser.rol || targetUser.role || '' %>");

@@ -336,17 +336,18 @@
       });
     }
 
+    const isValidEmailClient = (val) => {
+      if (!val) return false;
+      const trimmed = val.trim();
+      if (trimmed.length < 5 || trimmed.length > 100) return false;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+      if (!emailRegex.test(trimmed)) return false;
+      if (trimmed.includes('..') || trimmed.includes('@.') || trimmed.includes('.@') || trimmed.endsWith('.')) return false;
+      return true;
+    };
+
     const emailInput = document.getElementById('email');
     if (emailInput) {
-      const isValidEmailClient = (val) => {
-        if (!val) return false;
-        const trimmed = val.trim();
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
-        if (!emailRegex.test(trimmed)) return false;
-        if (trimmed.includes('..') || trimmed.includes('@.') || trimmed.includes('.@') || trimmed.endsWith('.')) return false;
-        return true;
-      };
-
       emailInput.addEventListener('input', function() {
         if (this.value && !isValidEmailClient(this.value)) {
           this.classList.add('is-invalid');
@@ -380,15 +381,9 @@
 
     form.querySelectorAll('input, select, textarea').forEach(input => {
       input.addEventListener('input', () => {
-        if (input.value && input.value.trim()) {
-          input.classList.remove('is-invalid');
-        }
         updateTabBadges();
       });
       input.addEventListener('change', () => {
-        if (input.value && input.value.trim()) {
-          input.classList.remove('is-invalid');
-        }
         updateTabBadges();
       });
     });
@@ -396,7 +391,7 @@
     btnNext.addEventListener('click', () => {
       const isCurrentValid = validateTab(currentTabIndex);
       if (!isCurrentValid) {
-        clientErrorMessage.textContent = 'Lütfen bu sekmedeki zorunlu (*) alanları doldurunuz.';
+        clientErrorMessage.textContent = 'Lütfen bu sekmedeki zorunlu (*) alanları eksiksiz ve geçerli doldurunuz.';
         clientErrorBanner.style.display = 'flex';
         return;
       }
@@ -411,6 +406,7 @@
       let firstInvalidInput = null;
       let missingFieldLabels = [];
 
+      // 1. Required Fields Check
       tabPanes.forEach((pane, paneIndex) => {
         const requiredInputs = pane.querySelectorAll('[required]');
         requiredInputs.forEach(input => {
@@ -432,12 +428,50 @@
         });
       });
 
+      // 2. Strict Format Validations (Email, Phone, Password)
+      if (emailInput && !isValidEmailClient(emailInput.value)) {
+        emailInput.classList.add('is-invalid');
+        if (firstInvalidPaneIndex === -1) {
+          firstInvalidPaneIndex = 0;
+          firstInvalidInput = emailInput;
+        }
+        if (!missingFieldLabels.includes('Geçerli E-Posta Adresi')) {
+          missingFieldLabels.push('Geçerli E-Posta Adresi (Örn: ahmet@enterprise-erp.com)');
+        }
+      }
+
+      if (phoneInput && phoneInput.value.trim() !== '') {
+        const digits = phoneInput.value.replace(/\D/g, '');
+        if (digits.length < 10 || /[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(phoneInput.value)) {
+          phoneInput.classList.add('is-invalid');
+          if (firstInvalidPaneIndex === -1) {
+            firstInvalidPaneIndex = 1;
+            firstInvalidInput = phoneInput;
+          }
+          if (!missingFieldLabels.includes('Geçerli Telefon Numarası')) {
+            missingFieldLabels.push('Geçerli Telefon Numarası (En az 10 rakam)');
+          }
+        }
+      }
+
+      const passwordInput = document.getElementById('password');
+      if (passwordInput && passwordInput.value.length < 6) {
+        passwordInput.classList.add('is-invalid');
+        if (firstInvalidPaneIndex === -1) {
+          firstInvalidPaneIndex = 0;
+          firstInvalidInput = passwordInput;
+        }
+        if (!missingFieldLabels.includes('Şifre (En az 6 karakter)')) {
+          missingFieldLabels.push('Şifre (En az 6 karakter)');
+        }
+      }
+
       updateTabBadges();
 
       if (firstInvalidPaneIndex !== -1) {
-        e.preventDefault(); // STOP form submission!
+        e.preventDefault(); // BLOCK SUBMISSION!
         switchTab(firstInvalidPaneIndex);
-        clientErrorMessage.textContent = `Kayıt Yapılamadı! Lütfen eksik olan zorunlu (*) alanları doldurunuz: ${missingFieldLabels.join(', ')}`;
+        clientErrorMessage.textContent = `Kayıt Yapılamadı! Lütfen formdaki hataları ve eksikleri düzeltiniz: ${missingFieldLabels.join(', ')}`;
         clientErrorBanner.style.display = 'flex';
 
         if (firstInvalidInput) {
