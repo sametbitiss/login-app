@@ -72,7 +72,7 @@
       <div class="page-header">
         <div>
           <h1>Kullanıcı Hesabı & Profil Düzenle</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Kullanıcı: <strong>@<%= targetUser.username %></strong> (ID: #<%= targetUser.id %>) — Kayıt Tarihi: <%= new Date(targetUser.createdAt).toLocaleDateString('tr-TR') %></p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Kullanıcı: <strong>@<%= targetUser.kullaniciAdi || targetUser.username %></strong> (ID: #<%= targetUser.id %>) — Kayıt Tarihi: <%= new Date(targetUser.createdAt).toLocaleDateString('tr-TR') %></p>
         </div>
         <a href="/admin/users" class="btn btn-secondary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -123,17 +123,17 @@
             <div class="form-grid form-grid--3">
               <div class="input-group">
                 <label for="username">Kullanıcı Adı (Değiştirilemez)</label>
-                <input type="text" id="username" value="<%= targetUser.username %>" disabled style="opacity: 0.7; cursor: not-allowed;">
+                <input type="text" id="username" value="<%= targetUser.kullaniciAdi || targetUser.username %>" disabled style="opacity: 0.7; cursor: not-allowed;">
               </div>
 
               <div class="input-group">
                 <label for="email">E-Posta Adresi <span class="req-star">*</span></label>
-                <input type="email" id="email" name="email" value="<%= targetUser.email || '' %>" required placeholder="ahmet@enterprise-erp.com">
+                <input type="email" id="email" name="email" value="<%= targetUser.eposta || targetUser.email || '' %>" required placeholder="ahmet@enterprise-erp.com">
               </div>
 
               <div class="input-group">
                 <label for="phone">Telefon Numarası</label>
-                <input type="text" id="phone" name="phone" value="<%= targetUser.phone || '' %>" placeholder="+90 (5xx) xxx xx xx">
+                <input type="text" id="phone" name="phone" value="<%= targetUser.telefon || targetUser.phone || '' %>" placeholder="+90 (5xx) xxx xx xx">
               </div>
             </div>
           </div>
@@ -144,12 +144,12 @@
             <div class="form-grid form-grid--2">
               <div class="input-group">
                 <label for="firstName">Ad</label>
-                <input type="text" id="firstName" name="firstName" value="<%= targetUser.firstName || '' %>" placeholder="Örn: Ahmet">
+                <input type="text" id="firstName" name="firstName" value="<%= targetUser.ad || targetUser.firstName || '' %>" placeholder="Örn: Ahmet">
               </div>
 
               <div class="input-group">
                 <label for="lastName">Soyad</label>
-                <input type="text" id="lastName" name="lastName" value="<%= targetUser.lastName || '' %>" placeholder="Örn: Yılmaz">
+                <input type="text" id="lastName" name="lastName" value="<%= targetUser.soyad || targetUser.lastName || '' %>" placeholder="Örn: Yılmaz">
               </div>
             </div>
           </div>
@@ -162,7 +162,7 @@
                 <label for="department">Departman <span class="req-star">*</span></label>
                 <select id="department" name="department" required>
                   <% DEPARTMENTS.forEach(dept => { %>
-                    <option value="<%= dept %>" <%= (targetUser.department || 'Genel') === dept ? 'selected' : '' %>>
+                    <option value="<%= dept %>" <%= (targetUser.departman || targetUser.department || 'Genel') === dept ? 'selected' : '' %>>
                       <%= dept %>
                     </option>
                   <% }); %>
@@ -172,7 +172,7 @@
               <div class="input-group">
                 <label for="title">Unvan / Pozisyon <span class="req-star">*</span></label>
                 <select id="title" name="title" required>
-                  <option value="<%= targetUser.title || '' %>" selected><%= targetUser.title || 'Unvan Seçiniz' %></option>
+                  <option value="<%= targetUser.unvan || targetUser.title || '' %>" selected><%= targetUser.unvan || targetUser.title || 'Unvan Seçiniz' %></option>
                 </select>
               </div>
 
@@ -180,7 +180,7 @@
                 <label for="role">ERP Modül Rol Yetkisi <span class="req-star">*</span></label>
                 <select id="role" name="role" required>
                   <% Object.keys(ALL_ROLES).forEach(rKey => { %>
-                    <option value="<%= rKey %>" <%= targetUser.role === rKey ? 'selected' : '' %>>
+                    <option value="<%= rKey %>" <%= (targetUser.rol || targetUser.role) === rKey ? 'selected' : '' %>>
                       <%= ALL_ROLES[rKey] %> (<%= rKey %>)
                     </option>
                   <% }); %>
@@ -192,9 +192,9 @@
               <div class="input-group">
                 <label for="status">Hesap Durumu <span class="req-star">*</span></label>
                 <select id="status" name="status" required>
-                  <option value="Active" <%= targetUser.status === 'Active' ? 'selected' : '' %>>● Aktif</option>
-                  <option value="Inactive" <%= targetUser.status === 'Inactive' ? 'selected' : '' %>>● Pasif</option>
-                  <option value="Suspended" <%= targetUser.status === 'Suspended' ? 'selected' : '' %>>● Donduruldu / Kısıtlı</option>
+                  <option value="Active" <%= (targetUser.durum || targetUser.status) === 'Active' ? 'selected' : '' %>>● Aktif</option>
+                  <option value="Inactive" <%= (targetUser.durum || targetUser.status) === 'Inactive' ? 'selected' : '' %>>● Pasif</option>
+                  <option value="Suspended" <%= (targetUser.durum || targetUser.status) === 'Suspended' ? 'selected' : '' %>>● Donduruldu / Kısıtlı</option>
                 </select>
               </div>
             </div>
