@@ -41,35 +41,35 @@ app.use(errorHandler);
 // Database Sync and Data Seeding
 (async () => {
   try {
-    await sequelize.query(`ALTER TABLE "StockItems" ADD COLUMN IF NOT EXISTS "procurementMethod" VARCHAR(50) DEFAULT 'Satın Alma';`);
-    await sequelize.query(`ALTER TABLE "Warehouses" ADD COLUMN IF NOT EXISTS "itemsJson" TEXT;`);
-    await sequelize.query(`ALTER TABLE "PurchaseOrders" ADD COLUMN IF NOT EXISTS "deliveryWarehouse" VARCHAR(255);`);
-    await sequelize.query(`ALTER TABLE "GoodsReceipts" ADD COLUMN IF NOT EXISTS "warehouseLocation" VARCHAR(255);`);
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "rfqDate" DATE;`);
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "deliveryPlace" VARCHAR(255);`);
-    await sequelize.query(`DO $$ BEGIN CREATE TYPE "public"."enum_StockItems_procurementMethod" AS ENUM('Satın Alma', 'Üretim', 'Purchase', 'Production'); EXCEPTION WHEN duplicate_object THEN null; END $$;`).catch(() => {});
-    await sequelize.query(`ALTER TABLE "StockItems" ALTER COLUMN "procurementMethod" DROP DEFAULT;`).catch(() => {});
-    await sequelize.query(`ALTER TABLE "StockItems" ALTER COLUMN "procurementMethod" TYPE "public"."enum_StockItems_procurementMethod" USING ("procurementMethod"::"public"."enum_StockItems_procurementMethod");`).catch(() => {});
-    await sequelize.query(`ALTER TABLE "StockItems" ALTER COLUMN "procurementMethod" SET DEFAULT 'Satın Alma'::"public"."enum_StockItems_procurementMethod";`).catch(() => {});
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "shippingStatus" VARCHAR(255);`);
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "vatStatus" VARCHAR(255);`);
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "documentRef" VARCHAR(255);`);
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "subtotal" NUMERIC(15,4) DEFAULT 0;`);
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "totalDiscount" NUMERIC(15,4) DEFAULT 0;`);
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "totalTax" NUMERIC(15,4) DEFAULT 0;`);
-    await sequelize.query(`ALTER TABLE "PurchaseRfqs" ADD COLUMN IF NOT EXISTS "itemsData" JSONB;`);
-    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "version" VARCHAR(50) DEFAULT 'Rev.01';`);
-    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "baseQuantity" NUMERIC(12,4) DEFAULT 1.0;`);
-    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "operationCode" VARCHAR(255);`);
-    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "level" INTEGER DEFAULT 1;`);
-    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "alternativeComponentItemId" INTEGER;`);
-    await sequelize.query(`ALTER TABLE "BOMItems" ADD COLUMN IF NOT EXISTS "alternativeNotes" TEXT;`);
+    await sequelize.query(`ALTER TABLE "StokKartlari" ADD COLUMN IF NOT EXISTS "tedarikYontemi" VARCHAR(50) DEFAULT 'Satın Alma';`);
+    await sequelize.query(`ALTER TABLE "Depolar" ADD COLUMN IF NOT EXISTS "kalemlerJson" TEXT;`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaSiparisleri" ADD COLUMN IF NOT EXISTS "teslimDeposu" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "MalKabulleri" ADD COLUMN IF NOT EXISTS "depoLokasyonu" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "teklifTalepTarihi" DATE;`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "teslimYeri" VARCHAR(255);`);
+    await sequelize.query(`DO $$ BEGIN CREATE TYPE "public"."enum_StokKartlari_tedarikYontemi" AS ENUM('Satın Alma', 'Üretim', 'Purchase', 'Production'); EXCEPTION WHEN duplicate_object THEN null; END $$;`).catch(() => {});
+    await sequelize.query(`ALTER TABLE "StokKartlari" ALTER COLUMN "tedarikYontemi" DROP DEFAULT;`).catch(() => {});
+    await sequelize.query(`ALTER TABLE "StokKartlari" ALTER COLUMN "tedarikYontemi" TYPE "public"."enum_StokKartlari_tedarikYontemi" USING ("tedarikYontemi"::"public"."enum_StokKartlari_tedarikYontemi");`).catch(() => {});
+    await sequelize.query(`ALTER TABLE "StokKartlari" ALTER COLUMN "tedarikYontemi" SET DEFAULT 'Satın Alma'::"public"."enum_StokKartlari_tedarikYontemi";`).catch(() => {});
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "sevkiyatDurumu" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "kdvDurumu" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "belgeReferansi" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "araToplam" NUMERIC(15,4) DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "toplamIskonto" NUMERIC(15,4) DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "toplamKdv" NUMERIC(15,4) DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "SatinAlmaTeklifTalepleri" ADD COLUMN IF NOT EXISTS "kalemlerVerisi" TEXT;`);
+    await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "versiyon" VARCHAR(50) DEFAULT 'Rev.01';`);
+    await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "bazMiktar" NUMERIC(12,4) DEFAULT 1.0;`);
+    await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "operasyonKodu" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "seviye" INTEGER DEFAULT 1;`);
+    await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "alternatifBilesenStokId" INTEGER;`);
+    await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "alternatifNotlar" TEXT;`);
   } catch (e) {
     console.log('Pre-sync alter table warning:', e.message);
   }
 
   try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     console.log('Database synced successfully with models.');
     await seedInitialData();
   } catch (err) {

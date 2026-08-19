@@ -18,30 +18,38 @@ class AuthController {
   });
 
   login = asyncHandler(async (req, res) => {
-    const { username, password } = req.body;
-    
-    const user = await authService.login(username, password);
+    try {
+      const { username, password } = req.body;
+      
+      const user = await authService.login(username, password);
 
-    const payload = {
-      id: user.id,
-      kullaniciAdi: user.kullaniciAdi || user.username,
-      username: user.kullaniciAdi || user.username,
-      eposta: user.eposta || user.email,
-      email: user.eposta || user.email,
-      rol: user.rol || user.role,
-      role: user.rol || user.role
-    };
+      const payload = {
+        id: user.id,
+        kullaniciAdi: user.kullaniciAdi || user.username,
+        username: user.kullaniciAdi || user.username,
+        eposta: user.eposta || user.email,
+        email: user.eposta || user.email,
+        ad: user.ad || user.firstName,
+        firstName: user.ad || user.firstName,
+        soyad: user.soyad || user.lastName,
+        lastName: user.soyad || user.lastName,
+        rol: user.rol || user.role,
+        role: user.rol || user.role
+      };
 
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: false
-    });
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: false
+      });
 
-    logger.security(`User Logged In Successfully: ${payload.username} (${payload.role})`, { ip: req.ip });
+      logger.security(`User Logged In Successfully: ${payload.username} (${payload.role})`, { ip: req.ip });
 
-    res.redirect('/');
+      return res.redirect('/');
+    } catch (err) {
+      return res.render('login', { error: err.message || 'Giriş yapılırken bir hata oluştu.' });
+    }
   });
 
   renderIndex = asyncHandler(async (req, res) => {
