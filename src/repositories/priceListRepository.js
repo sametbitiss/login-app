@@ -1,34 +1,45 @@
-const { CustomerPriceList, CustomerAccount, StockItem, User } = require('../../models');
+const { MusteriFiyatListesi, MusteriHesabi, StokKarti, Kullanici } = require('../../models');
 
 class PriceListRepository {
   async findAll() {
-    return await CustomerPriceList.findAll({
+    return await MusteriFiyatListesi.findAll({
       include: [
-        { model: CustomerAccount, as: 'customer', attributes: ['id', 'companyName', 'customerCode'] },
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'name', 'stockCode', 'unit', 'salePrice'] },
-        { model: User, as: 'creator', attributes: ['id', 'username'] }
+        { model: MusteriHesabi, as: 'musteri', attributes: ['id', 'firmaAdi', 'musteriKodu'] },
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'ad', 'stokKodu', 'birim', 'satisFiyati'] },
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi'] }
       ],
       order: [['createdAt', 'DESC']]
     });
   }
 
-  async findCustomerSpecialPrice(customerId, stockItemId) {
-    if (!customerId) return null;
-    return await CustomerPriceList.findOne({
+  async findCustomerSpecialPrice(musteriId, stokId) {
+    if (!musteriId) return null;
+    return await MusteriFiyatListesi.findOne({
       where: {
-        customerId,
-        stockItemId,
-        status: 'Active'
+        musteriId,
+        stokId,
+        durum: 'Active'
       },
       order: [['createdAt', 'DESC']]
     });
   }
 
   async create(data, currentUser) {
-    return await CustomerPriceList.create({
-      ...data,
-      createdBy: currentUser ? currentUser.id : null
-    });
+    const cleanData = {
+      listeAdi: data.listeAdi || data.listName,
+      musteriId: data.musteriId || data.customerId,
+      stokId: data.stokId || data.stockItemId,
+      ozelFiyat: data.ozelFiyat !== undefined ? data.ozelFiyat : data.specialPrice,
+      ozelIskontoOrani: data.ozelIskontoOrani !== undefined ? data.ozelIskontoOrani : data.customDiscountRate,
+      paraBirimi: data.paraBirimi || data.currency || 'TRY',
+      gecerlilikBaslangic: data.gecerlilikBaslangic || data.validFrom,
+      gecerlilikBitis: data.gecerlilikBitis || data.validUntil,
+      durum: data.durum || data.status || 'Active',
+      notlar: data.notlar || data.notes,
+      olusturanId: currentUser ? currentUser.id : null
+    };
+
+    return await MusteriFiyatListesi.create(cleanData);
   }
 }
 

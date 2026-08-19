@@ -5,7 +5,7 @@ const goodsReceiptRepository = require('../repositories/goodsReceiptRepository')
 const requisitionRepository = require('../repositories/requisitionRepository');
 const stockRepository = require('../repositories/stockRepository');
 const { ValidationError, NotFoundError } = require('../utils/appError');
-const { PurchaseOrder, PurchaseRfq, GoodsReceipt, Supplier, PurchaseRequisition, StockItem, sequelize } = require('../../models');
+const { SatinAlmaSiparisi, SatinAlmaTeklifTalebi, MalKabul, Tedarikci, SatinAlmaTalebi, StokKarti, sequelize } = require('../../models');
 const { Op, fn, col, literal } = require('sequelize');
 
 class PurchaseService {
@@ -21,20 +21,21 @@ class PurchaseService {
   }
 
   async createOrder(data, currentUser, ipAddress) {
-    const existing = await purchaseRepository.findByOrderNo(data.orderNo);
+    const existing = await purchaseRepository.findByOrderNo(data.siparisNo || data.orderNo);
     if (existing) {
       throw new ValidationError('Bu satın alma sipariş numarası zaten mevcuttur.');
     }
 
-    const stockItem = await stockRepository.findById(data.stockItemId);
+    const stokId = data.stokId || data.stockItemId;
+    const stockItem = await stockRepository.findById(stokId);
     if (!stockItem) {
       throw new ValidationError('Seçilen stok kartı / malzeme bulunamadı.');
     }
 
-    const quantity = parseFloat(data.quantity) || 0;
-    const unitPrice = parseFloat(data.unitPrice) || 0;
-    const discountRate = parseFloat(data.discountRate) || 0;
-    const taxRate = parseFloat(data.taxRate) || 20;
+    const quantity = parseFloat(data.miktar !== undefined ? data.miktar : data.quantity) || 0;
+    const unitPrice = parseFloat(data.birimFiyat !== undefined ? data.birimFiyat : data.unitPrice) || 0;
+    const discountRate = parseFloat(data.iskontoOrani !== undefined ? data.iskontoOrani : data.discountRate) || 0;
+    const taxRate = parseFloat(data.kdvOrani !== undefined ? data.kdvOrani : data.taxRate) || 20;
 
     if (quantity <= 0) throw new ValidationError('Sipariş miktarı sıfırdan büyük olmalıdır.');
     if (unitPrice < 0) throw new ValidationError('Birim alış fiyatı negatif olamaz.');
@@ -45,19 +46,18 @@ class PurchaseService {
     const taxAmount = amountAfterDiscount * (taxRate / 100);
     const totalAmount = amountAfterDiscount + taxAmount;
 
-    // Budget approval check: orders > 50,000 TRY need approval
-    let status = data.status || 'Ordered';
+    let status = data.durum || data.status || 'Ordered';
     if (totalAmount > 50000) {
       status = 'Pending_Approval';
     }
 
     const computedData = {
       ...data,
-      status,
-      subtotal: parseFloat(subtotal.toFixed(4)),
-      discountAmount: parseFloat(discountAmount.toFixed(4)),
-      taxAmount: parseFloat(taxAmount.toFixed(4)),
-      totalAmount: parseFloat(totalAmount.toFixed(4))
+      durum: status,
+      araToplam: parseFloat(subtotal.toFixed(4)),
+      iskontoTutari: parseFloat(discountAmount.toFixed(4)),
+      kdvTutari: parseFloat(taxAmount.toFixed(4)),
+      toplamTutar: parseFloat(totalAmount.toFixed(4))
     };
 
     return await purchaseRepository.create(computedData, currentUser, ipAddress);
@@ -101,7 +101,7 @@ class PurchaseService {
   }
 
   async createSupplier(data, currentUser, ipAddress) {
-    const existing = await supplierRepository.findByCode(data.supplierCode);
+    const existing = await supplierRepository.findByCode(data.tedarikciKodu || data.supplierCode);
     if (existing) {
       throw new ValidationError('Bu tedarikçi kodu zaten mevcuttur.');
     }
@@ -148,59 +148,21 @@ class PurchaseService {
     const rfq = await rfqRepository.findById(rfqId);
     if (!rfq) throw new NotFoundError('Teklif bulunamadı.');
 
-    const { PurchaseRfq } = require('../../models');
-    const { Op } = require('sequelize');
+    await SatinAlmaTeklifTalebi.update({ durum: 'Accepted', kazananMi: true }, { where: { id: rfqId } });
 
-    // 1. Mark accepted RFQ as Accepted and isWinner = true
-    await PurchaseRfq.update({ status: 'Accepted', isWinner: true }, { where: { id: rfqId } });
-
-    // 2. Lock/Reject all competing RFQs containing the same products
-    const acceptedItems = (rfq.itemsData && Array.isArray(rfq.itemsData)) ? rfq.itemsData : [];
-    const acceptedStockIds = acceptedItems.map(i => parseInt(i.stockItemId, 10)).filter(Boolean);
-    if (acceptedStockIds.length === 0 && rfq.stockItemId) {
-      acceptedStockIds.push(parseInt(rfq.stockItemId, 10));
-    }
-
-    if (acceptedStockIds.length > 0) {
-      try {
-        const allOtherRfqs = await PurchaseRfq.findAll({
-          where: {
-            id: { [Op.ne]: rfqId },
-            status: { [Op.in]: ['Received', 'Sent', 'Draft'] }
-          }
-        });
-
-        for (const otherRfq of allOtherRfqs) {
-          const otherItems = (otherRfq.itemsData && Array.isArray(otherRfq.itemsData)) ? otherRfq.itemsData : [];
-          const otherStockIds = otherItems.map(i => parseInt(i.stockItemId, 10)).filter(Boolean);
-          if (otherStockIds.length === 0 && otherRfq.stockItemId) {
-            otherStockIds.push(parseInt(otherRfq.stockItemId, 10));
-          }
-
-          const hasOverlap = otherStockIds.some(sid => acceptedStockIds.includes(sid));
-          if (hasOverlap) {
-            await PurchaseRfq.update({ status: 'Rejected' }, { where: { id: otherRfq.id } });
-          }
-        }
-      } catch (e) {
-        console.error('Error locking competing RFQs:', e);
-      }
-    }
-
-    // 3. Build order items & itemsJson
     let itemsList = [];
-    if (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData.length > 0) {
-      itemsList = rfq.itemsData;
-    } else if (rfq.stockItemId || rfq.stockItem) {
-      const sItem = rfq.stockItem || {};
-      const qty = parseFloat(rfq.requestedQuantity) || 1;
-      const uPrice = parseFloat(rfq.offeredUnitPrice) || 0;
+    if (rfq.kalemlerVerisi && Array.isArray(rfq.kalemlerVerisi) && rfq.kalemlerVerisi.length > 0) {
+      itemsList = rfq.kalemlerVerisi;
+    } else if (rfq.stokId || rfq.stokKarti) {
+      const sItem = rfq.stokKarti || {};
+      const qty = parseFloat(rfq.talepEdilenMiktar) || 1;
+      const uPrice = parseFloat(rfq.teklifEdilenBirimFiyat) || 0;
       const sub = qty * uPrice;
       itemsList = [{
-        stockItemId: rfq.stockItemId || sItem.id,
-        stockCode: sItem.stockCode || 'STK',
-        productName: sItem.name || 'Ürün',
-        unit: sItem.unit || 'Adet',
+        stokId: rfq.stokId || sItem.id,
+        stokKodu: sItem.stokKodu || 'STK',
+        ad: sItem.ad || 'Ürün',
+        birim: sItem.birim || 'Adet',
         requisitionNo: 'TAL-GENEL',
         quantity: qty,
         unitPrice: uPrice,
@@ -212,49 +174,47 @@ class PurchaseService {
 
     const itemsJson = JSON.stringify(itemsList);
 
-    // Calculate totals
-    const subtotal = parseFloat(rfq.subtotal) || parseFloat(rfq.offeredTotalPrice) || 0;
-    const totalDiscount = parseFloat(rfq.totalDiscount) || 0;
-    const totalTax = parseFloat(rfq.totalTax) || 0;
-    const grandTotal = parseFloat(rfq.offeredTotalPrice) || (subtotal - totalDiscount + totalTax);
+    const subtotal = parseFloat(rfq.araToplam) || parseFloat(rfq.teklifEdilenToplamFiyat) || 0;
+    const totalDiscount = parseFloat(rfq.toplamIskonto) || 0;
+    const totalTax = parseFloat(rfq.toplamKdv) || 0;
+    const grandTotal = parseFloat(rfq.teklifEdilenToplamFiyat) || (subtotal - totalDiscount + totalTax);
 
     const nextOrderNo = await this.getNextOrderNo();
-    const deliveryDays = parseInt(rfq.deliveryDays, 10) || 7;
+    const deliveryDays = parseInt(rfq.teslimSuresiGun, 10) || 7;
     const expDelivery = new Date(Date.now() + deliveryDays * 86400000).toISOString().split('T')[0];
 
-    const supplierTaxNo = rfq.supplier ? (rfq.supplier.taxNo || '') : '';
-    const supplierContactPerson = rfq.supplier ? (rfq.supplier.contactPerson || '') : '';
-    const supplierEmail = rfq.supplier ? (rfq.supplier.email || '') : '';
-    const supplierPhone = rfq.supplier ? (rfq.supplier.phone || '') : '';
+    const supplierTaxNo = rfq.tedarikci ? (rfq.tedarikci.vergiNo || '') : '';
+    const supplierContactPerson = rfq.tedarikci ? (rfq.tedarikci.ilgiliKisi || '') : '';
+    const supplierEmail = rfq.tedarikci ? (rfq.tedarikci.eposta || '') : '';
+    const supplierPhone = rfq.tedarikci ? (rfq.tedarikci.telefon || '') : '';
 
     const firstItem = itemsList[0] || {};
-    const firstStockId = firstItem.stockItemId || rfq.stockItemId || 1;
+    const firstStockId = firstItem.stokId || firstItem.stockItemId || rfq.stokId || 1;
 
     const newOrder = await this.createOrder({
-      orderNo: nextOrderNo,
-      supplierName: rfq.supplierName || (rfq.supplier ? rfq.supplier.companyName : 'Tedarikçi Firma'),
-      supplierId: rfq.supplierId,
-      supplierTaxNo,
-      supplierContactPerson,
-      supplierEmail,
-      supplierPhone,
-      rfqId: rfq.id,
-      orderDate: new Date().toISOString().split('T')[0],
-      expectedDeliveryDate: expDelivery,
-      paymentTerm: rfq.paymentTerm || 'Pesin',
-      status: 'Ordered',
-      priority: 'Normal',
-      stockItemId: parseInt(firstStockId, 10),
-      quantity: parseFloat(firstItem.quantity) || parseFloat(rfq.requestedQuantity) || 1,
-      unitPrice: parseFloat(firstItem.unitPrice) || parseFloat(rfq.offeredUnitPrice) || 0,
-      subtotal,
-      totalDiscount,
-      totalTax,
-      totalAmount: grandTotal,
-      currency: rfq.currency || 'TRY',
-      notes: rfq.notes || `[Sözleşmeli Teklif No: ${rfq.rfqNo}] Teklifi kabul edilerek otomatik oluşturulan satın alma siparişidir.`,
-      purchasingAgent: currentUser ? (currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : 'Sistem',
-      itemsJson
+      siparisNo: nextOrderNo,
+      tedarikciAdi: rfq.tedarikciAdi || (rfq.tedarikci ? rfq.tedarikci.firmaAdi : 'Tedarikçi Firma'),
+      tedarikciId: rfq.tedarikciId,
+      tedarikciVergiNo: supplierTaxNo,
+      tedarikciIlgiliKisi: supplierContactPerson,
+      tedarikciEposta: supplierEmail,
+      tedarikciTelefon: supplierPhone,
+      siparisTarihi: new Date().toISOString().split('T')[0],
+      beklenenTeslimTarihi: expDelivery,
+      odemeVadesi: rfq.odemeVadesi || 'Pesin',
+      durum: 'Ordered',
+      oncelik: 'Normal',
+      stokId: parseInt(firstStockId, 10),
+      miktar: parseFloat(firstItem.quantity || firstItem.miktar) || parseFloat(rfq.talepEdilenMiktar) || 1,
+      birimFiyat: parseFloat(firstItem.unitPrice || firstItem.birimFiyat) || parseFloat(rfq.teklifEdilenBirimFiyat) || 0,
+      araToplam: subtotal,
+      iskontoTutari: totalDiscount,
+      kdvTutari: totalTax,
+      toplamTutar: grandTotal,
+      paraBirimi: rfq.paraBirimi || 'TRY',
+      notlar: rfq.notlar || `[Sözleşmeli Teklif No: ${rfq.teklifTalepNo}] Teklifi kabul edilerek otomatik oluşturulan satın alma siparişidir.`,
+      satinAlmaci: currentUser ? (currentUser.ad ? `${currentUser.ad} ${currentUser.soyad}` : currentUser.kullaniciAdi) : 'Sistem',
+      kalemlerJson: itemsJson
     }, currentUser, ipAddress);
 
     return newOrder;
@@ -306,10 +266,10 @@ class PurchaseService {
 
   // ═══════════════════════ APPROVALS ═══════════════════════
   async getPendingApprovals() {
-    const pendingOrders = await PurchaseOrder.findAll({
-      where: { status: 'Pending_Approval' },
+    const pendingOrders = await SatinAlmaSiparisi.findAll({
+      where: { durum: 'Pending_Approval' },
       include: [
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit'] }
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim'] }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -322,15 +282,15 @@ class PurchaseService {
     if (!order) throw new NotFoundError('Sipariş bulunamadı.');
 
     if (action === 'approve') {
-      await purchaseRepository.update(id, { status: 'Ordered' }, currentUser, ipAddress);
+      await purchaseRepository.update(id, { durum: 'Ordered' }, currentUser, ipAddress);
     } else if (action === 'reject') {
-      await purchaseRepository.update(id, { status: 'Cancelled' }, currentUser, ipAddress);
+      await purchaseRepository.update(id, { durum: 'Cancelled' }, currentUser, ipAddress);
     }
     return order;
   }
 
   async approveRequisition(id, action, currentUser, ipAddress) {
-    const req = await PurchaseRequisition.findByPk(id);
+    const req = await SatinAlmaTalebi.findByPk(id);
     if (!req) throw new NotFoundError('Talep bulunamadı.');
 
     if (action === 'approve') {
@@ -348,52 +308,48 @@ class PurchaseService {
     const rfqStats = await rfqRepository.getStats();
     const grnStats = await goodsReceiptRepository.getStats();
 
-    // Supplier-based spend breakdown
-    const supplierSpend = await PurchaseOrder.findAll({
+    const supplierSpend = await SatinAlmaSiparisi.findAll({
       attributes: [
-        'supplierName',
+        'tedarikciAdi',
         [fn('COUNT', col('id')), 'orderCount'],
-        [fn('SUM', col('totalAmount')), 'totalSpend']
+        [fn('SUM', col('toplamTutar')), 'totalSpend']
       ],
-      where: { status: { [Op.ne]: 'Cancelled' } },
-      group: ['supplierName'],
-      order: [[fn('SUM', col('totalAmount')), 'DESC']],
+      where: { durum: { [Op.ne]: 'Cancelled' } },
+      group: ['tedarikciAdi'],
+      order: [[fn('SUM', col('toplamTutar')), 'DESC']],
       limit: 10,
       raw: true
     });
 
-    // Monthly spend trend (last 6 months)
-    const monthlySpend = await PurchaseOrder.findAll({
+    const monthlySpend = await SatinAlmaSiparisi.findAll({
       attributes: [
-        [fn('DATE_TRUNC', 'month', col('orderDate')), 'month'],
-        [fn('SUM', col('totalAmount')), 'total']
+        [fn('DATE_TRUNC', 'month', col('siparisTarihi')), 'month'],
+        [fn('SUM', col('toplamTutar')), 'total']
       ],
-      where: { status: { [Op.ne]: 'Cancelled' } },
-      group: [fn('DATE_TRUNC', 'month', col('orderDate'))],
-      order: [[fn('DATE_TRUNC', 'month', col('orderDate')), 'ASC']],
+      where: { durum: { [Op.ne]: 'Cancelled' } },
+      group: [fn('DATE_TRUNC', 'month', col('siparisTarihi'))],
+      order: [[fn('DATE_TRUNC', 'month', col('siparisTarihi')), 'ASC']],
       limit: 6,
       raw: true
     }).catch(() => []);
 
-    // Top purchased items
-    const topItems = await PurchaseOrder.findAll({
+    const topItems = await SatinAlmaSiparisi.findAll({
       attributes: [
-        'stockItemId',
-        [fn('SUM', col('PurchaseOrder.quantity')), 'totalQty'],
-        [fn('SUM', col('totalAmount')), 'totalSpend']
+        'stokId',
+        [fn('SUM', col('SatinAlmaSiparisi.miktar')), 'totalQty'],
+        [fn('SUM', col('toplamTutar')), 'totalSpend']
       ],
-      include: [{ model: StockItem, as: 'stockItem', attributes: ['name', 'stockCode'] }],
-      where: { status: { [Op.ne]: 'Cancelled' } },
-      group: ['stockItemId', 'stockItem.id', 'stockItem.name', 'stockItem.stockCode'],
-      order: [[fn('SUM', col('totalAmount')), 'DESC']],
+      include: [{ model: StokKarti, as: 'stokKarti', attributes: ['ad', 'stokKodu'] }],
+      where: { durum: { [Op.ne]: 'Cancelled' } },
+      group: ['stokId', 'stokKarti.id', 'stokKarti.ad', 'stokKarti.stokKodu'],
+      order: [[fn('SUM', col('toplamTutar')), 'DESC']],
       limit: 5,
       raw: true,
       nest: true
     }).catch(() => []);
 
-    // Recent orders
-    const recentOrders = await PurchaseOrder.findAll({
-      include: [{ model: StockItem, as: 'stockItem', attributes: ['name', 'stockCode'] }],
+    const recentOrders = await SatinAlmaSiparisi.findAll({
+      include: [{ model: StokKarti, as: 'stokKarti', attributes: ['ad', 'stokKodu'] }],
       order: [['createdAt', 'DESC']],
       limit: 5
     });

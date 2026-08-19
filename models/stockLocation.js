@@ -2,51 +2,51 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class StockLocation extends Model {
+  class StokLokasyonu extends Model {
     static associate(models) {
-      StockLocation.belongsTo(models.Warehouse, { foreignKey: 'warehouseId', as: 'warehouse' });
+      StokLokasyonu.belongsTo(models.Depo, { foreignKey: 'depoId', as: 'depo' });
     }
   }
 
-  StockLocation.init({
-    locationCode: {
+  StokLokasyonu.init({
+    lokasyonKodu: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    warehouseId: {
+    depoId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    aisle: {
+    koridor: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Koridor-A'
     },
-    shelf: {
+    raf: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Raf-01'
     },
-    bin: {
+    goz: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Göz-01'
     },
-    capacity: {
+    kapasite: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1000
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Active'
     }
   }, {
     sequelize,
-    modelName: 'StockLocation',
-    tableName: 'StockLocations'
+    modelName: 'StokLokasyonu',
+    tableName: 'StokLokasyonlari'
   });
 
-  return StockLocation;
+  return StokLokasyonu;
 };

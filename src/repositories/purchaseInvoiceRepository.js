@@ -1,4 +1,4 @@
-const { PurchaseInvoice, PurchaseOrder, Supplier, User } = require('../../models');
+const { SatinAlmaFaturasi, SatinAlmaSiparisi, Tedarikci, Kullanici } = require('../../models');
 const { Op } = require('sequelize');
 const logService = require('../services/logService');
 
@@ -8,49 +8,49 @@ class PurchaseInvoiceRepository {
     if (search && search.trim() !== '') {
       const s = `%${search.trim()}%`;
       where[Op.or] = [
-        { invoiceNo: { [Op.iLike || Op.like]: s } },
-        { supplierName: { [Op.iLike || Op.like]: s } },
-        { orderNo: { [Op.iLike || Op.like]: s } }
+        { faturaNo: { [Op.iLike || Op.like]: s } },
+        { tedarikciAdi: { [Op.iLike || Op.like]: s } },
+        { siparisNo: { [Op.iLike || Op.like]: s } }
       ];
     }
 
-    return await PurchaseInvoice.findAll({
+    return await SatinAlmaFaturasi.findAll({
       where,
       include: [
-        { model: PurchaseOrder, as: 'purchaseOrder' },
-        { model: Supplier, as: 'supplier' },
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }
+        { model: SatinAlmaSiparisi, as: 'satinAlmaSiparisi' },
+        { model: Tedarikci, as: 'tedarikci' },
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }
       ],
       order: [['createdAt', 'DESC']]
     });
   }
 
   async findById(id) {
-    return await PurchaseInvoice.findByPk(id, {
+    return await SatinAlmaFaturasi.findByPk(id, {
       include: [
-        { model: PurchaseOrder, as: 'purchaseOrder' },
-        { model: Supplier, as: 'supplier' },
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }
+        { model: SatinAlmaSiparisi, as: 'satinAlmaSiparisi' },
+        { model: Tedarikci, as: 'tedarikci' },
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }
       ]
     });
   }
 
-  async findByOrderId(purchaseOrderId) {
-    return await PurchaseInvoice.findOne({
-      where: { purchaseOrderId }
+  async findByOrderId(satinAlmaSiparisId) {
+    return await SatinAlmaFaturasi.findOne({
+      where: { satinAlmaSiparisId }
     });
   }
 
-  async findByInvoiceNo(invoiceNo) {
-    if (!invoiceNo) return null;
-    return await PurchaseInvoice.findOne({
-      where: { invoiceNo }
+  async findByInvoiceNo(faturaNo) {
+    if (!faturaNo) return null;
+    return await SatinAlmaFaturasi.findOne({
+      where: { faturaNo }
     });
   }
 
   async getNextInvoiceNo() {
-    const invoices = await PurchaseInvoice.findAll({
-      attributes: ['invoiceNo'],
+    const invoices = await SatinAlmaFaturasi.findAll({
+      attributes: ['faturaNo'],
       raw: true
     });
 
@@ -59,8 +59,8 @@ class PurchaseInvoiceRepository {
     const prefix = `SAT-FAT-${year}-`;
 
     for (const inv of invoices) {
-      if (inv.invoiceNo && inv.invoiceNo.startsWith(prefix)) {
-        const parts = inv.invoiceNo.split('-');
+      if (inv.faturaNo && inv.faturaNo.startsWith(prefix)) {
+        const parts = inv.faturaNo.split('-');
         const numPart = parseInt(parts[parts.length - 1], 10);
         if (!isNaN(numPart) && numPart > maxNum) {
           maxNum = numPart;
@@ -71,7 +71,7 @@ class PurchaseInvoiceRepository {
     let nextNum = maxNum + 1;
     let candidate = `${prefix}${nextNum.toString().padStart(4, '0')}`;
 
-    while (await PurchaseInvoice.findOne({ where: { invoiceNo: candidate } })) {
+    while (await SatinAlmaFaturasi.findOne({ where: { faturaNo: candidate } })) {
       nextNum++;
       candidate = `${prefix}${nextNum.toString().padStart(4, '0')}`;
     }
@@ -80,19 +80,48 @@ class PurchaseInvoiceRepository {
   }
 
   async create(data, currentUser = null, ipAddress = null) {
-    const invoice = await PurchaseInvoice.create({
-      ...data,
-      createdBy: currentUser ? currentUser.id : null
-    });
+    const cleanData = {
+      faturaNo: data.faturaNo || data.invoiceNo,
+      satinAlmaSiparisId: data.satinAlmaSiparisId || data.purchaseOrderId,
+      tedarikciId: data.tedarikciId || data.supplierId,
+      tedarikciAdi: data.tedarikciAdi || data.supplierName,
+      tedarikciVergiDairesi: data.tedarikciVergiDairesi || data.supplierTaxOffice,
+      tedarikciVergiNo: data.tedarikciVergiNo || data.supplierTaxNo,
+      faturaAdresi: data.faturaAdresi || data.billingAddress,
+      tedarikciTelefon: data.tedarikciTelefon || data.supplierPhone,
+      tedarikciEposta: data.tedarikciEposta || data.supplierEmail,
+      faturaTarihi: data.faturaTarihi || data.invoiceDate,
+      faturaSaati: data.faturaSaati || data.invoiceTime || '10:30:00',
+      faturaTuru: data.faturaTuru || data.invoiceType || 'SATIN_ALMA',
+      siparisNo: data.siparisNo || data.orderNo,
+      siparisTarihi: data.siparisTarihi || data.orderDate,
+      irsaliyeNo: data.irsaliyeNo || data.dispatchNo,
+      irsaliyeTarihi: data.irsaliyeTarihi || data.dispatchDate,
+      bankaAdi: data.bankaAdi || data.bankName,
+      ibanNo: data.ibanNo || data.ibanNo,
+      araToplam: data.araToplam !== undefined ? data.araToplam : data.subtotal,
+      iskontoTutari: data.iskontoTutari !== undefined ? data.iskontoTutari : data.discountAmount,
+      kdvTutari: data.kdvTutari !== undefined ? data.kdvTutari : data.taxAmount,
+      toplamTutar: data.toplamTutar !== undefined ? data.toplamTutar : data.totalAmount,
+      paraBirimi: data.paraBirimi || data.currency || 'TRY',
+      odemeVadesi: data.odemeVadesi || data.paymentTerm,
+      odemeDurumu: data.odemeDurumu || data.paymentStatus || 'Unpaid',
+      durum: data.durum || data.status || 'Issued',
+      kalemlerJson: data.kalemlerJson || data.itemsJson,
+      notlar: data.notlar || data.notes,
+      olusturanId: currentUser ? currentUser.id : null
+    };
+
+    const invoice = await SatinAlmaFaturasi.create(cleanData);
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'PurchaseInvoice',
-      entityId: invoice.id,
-      details: { invoiceNo: invoice.invoiceNo, totalAmount: invoice.totalAmount, supplierName: invoice.supplierName },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'SatinAlmaFaturasi',
+      varlikId: invoice.id,
+      detaylar: { faturaNo: invoice.faturaNo, toplamTutar: invoice.toplamTutar, tedarikciAdi: invoice.tedarikciAdi },
+      ipAdresi: ipAddress
     });
 
     return invoice;

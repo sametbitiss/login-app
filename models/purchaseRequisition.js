@@ -2,65 +2,65 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class PurchaseRequisition extends Model {
+  class SatinAlmaTalebi extends Model {
     static associate(models) {
-      PurchaseRequisition.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      PurchaseRequisition.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
+      SatinAlmaTalebi.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      SatinAlmaTalebi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
     }
   }
 
-  PurchaseRequisition.init({
-    requisitionNo: {
+  SatinAlmaTalebi.init({
+    talepNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    sourceModule: {
+    kaynakModul: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'Stock' // Stock or Production
+      defaultValue: 'Stock'
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    requestedQuantity: {
+    talepEdilenMiktar: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 1.0
     },
-    unit: {
+    birim: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Adet'
     },
-    urgency: {
+    aciliyet: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'Normal' // Low, Normal, High, Urgent
+      defaultValue: 'Normal'
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'Pending' // Pending, Approved, Ordered, Rejected
+      defaultValue: 'Pending'
     },
-    requesterName: {
+    talepEdenAdi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'PurchaseRequisition',
-    tableName: 'PurchaseRequisitions'
+    modelName: 'SatinAlmaTalebi',
+    tableName: 'SatinAlmaTalepleri'
   });
 
-  return PurchaseRequisition;
+  return SatinAlmaTalebi;
 };

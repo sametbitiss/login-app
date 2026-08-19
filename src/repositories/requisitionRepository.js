@@ -1,4 +1,4 @@
-const { PurchaseRequisition, StockItem, User } = require('../../models');
+const { SatinAlmaTalebi, StokKarti, Kullanici } = require('../../models');
 const logService = require('../services/logService');
 const { Op } = require('sequelize');
 
@@ -6,14 +6,14 @@ class RequisitionRepository {
   async generateRequisitionNo() {
     const year = new Date().getFullYear();
     const prefix = `TALEP-${year}-`;
-    const reqs = await PurchaseRequisition.findAll({
-      where: { requisitionNo: { [Op.like]: `${prefix}%` } },
-      attributes: ['requisitionNo']
+    const reqs = await SatinAlmaTalebi.findAll({
+      where: { talepNo: { [Op.like]: `${prefix}%` } },
+      attributes: ['talepNo']
     });
 
     let maxSeq = 0;
     reqs.forEach(r => {
-      const numStr = r.requisitionNo.replace(prefix, '');
+      const numStr = r.talepNo.replace(prefix, '');
       const num = parseInt(numStr, 10);
       if (!isNaN(num) && num > maxSeq) {
         maxSeq = num;
@@ -23,7 +23,7 @@ class RequisitionRepository {
     let nextSeq = maxSeq + 1;
     let candidate = `${prefix}${String(nextSeq).padStart(4, '0')}`;
 
-    while (await PurchaseRequisition.findOne({ where: { requisitionNo: candidate } })) {
+    while (await SatinAlmaTalebi.findOne({ where: { talepNo: candidate } })) {
       nextSeq++;
       candidate = `${prefix}${String(nextSeq).padStart(4, '0')}`;
     }
@@ -33,14 +33,14 @@ class RequisitionRepository {
 
   async findAll(filters = {}) {
     const where = {};
-    if (filters.sourceModule) where.sourceModule = filters.sourceModule;
-    if (filters.status) where.status = filters.status;
+    if (filters.sourceModule) where.kaynakModul = filters.sourceModule;
+    if (filters.status) where.durum = filters.status;
 
-    return await PurchaseRequisition.findAll({
+    return await SatinAlmaTalebi.findAll({
       where,
       include: [
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit', 'purchasePrice', 'currency', 'supplier'] },
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim', 'alisFiyati', 'paraBirimi', 'tedarikci'] },
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -50,15 +50,24 @@ class RequisitionRepository {
     let newReq = null;
     let attempts = 0;
 
+    const cleanData = {
+      talepNo: reqData.talepNo || reqData.requisitionNo,
+      kaynakModul: reqData.kaynakModul || reqData.sourceModule || 'Stock',
+      stokId: reqData.stokId || reqData.stockItemId,
+      talepEdilenMiktar: reqData.talepEdilenMiktar !== undefined ? reqData.talepEdilenMiktar : (reqData.requestedQuantity || 1.0),
+      birim: reqData.birim || reqData.unit || 'Adet',
+      aciliyet: reqData.aciliyet || reqData.urgency || 'Normal',
+      durum: reqData.durum || reqData.status || 'Pending',
+      talepEdenAdi: reqData.talepEdenAdi || reqData.requesterName || (currentUser ? (currentUser.ad ? `${currentUser.ad} ${currentUser.soyad}` : currentUser.kullaniciAdi) : 'Sistem'),
+      notlar: reqData.notlar || reqData.notes,
+      olusturanId: currentUser ? currentUser.id : null
+    };
+
     while (!newReq && attempts < 10) {
       attempts++;
-      reqData.requisitionNo = await this.generateRequisitionNo();
+      cleanData.talepNo = await this.generateRequisitionNo();
       try {
-        newReq = await PurchaseRequisition.create({
-          ...reqData,
-          createdBy: currentUser ? currentUser.id : null,
-          requesterName: reqData.requesterName || (currentUser ? (currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : 'Sistem')
-        });
+        newReq = await SatinAlmaTalebi.create(cleanData);
       } catch (err) {
         if (err.name === 'SequelizeUniqueConstraintError' && attempts < 10) {
           continue;
@@ -68,13 +77,13 @@ class RequisitionRepository {
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE_REQUISITION',
-      entity: 'PurchaseRequisition',
-      entityId: newReq.id,
-      details: { requisitionNo: newReq.requisitionNo, sourceModule: newReq.sourceModule, stockItemId: newReq.stockItemId, requestedQty: newReq.requestedQuantity },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE_REQUISITION',
+      varlik: 'SatinAlmaTalebi',
+      varlikId: newReq.id,
+      detaylar: { talepNo: newReq.talepNo, kaynakModul: newReq.kaynakModul, stokId: newReq.stokId, talepEdilenMiktar: newReq.talepEdilenMiktar },
+      ipAdresi: ipAddress
     });
 
     return newReq;
@@ -84,21 +93,21 @@ class RequisitionRepository {
     return await this.generateRequisitionNo();
   }
 
-  async updateStatus(id, status, currentUser = null, ipAddress = null) {
-    const req = await PurchaseRequisition.findByPk(id);
+  async updateStatus(id, durum, currentUser = null, ipAddress = null) {
+    const req = await SatinAlmaTalebi.findByPk(id);
     if (!req) return null;
 
-    req.status = status;
+    req.durum = durum;
     await req.save();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE_REQUISITION_STATUS',
-      entity: 'PurchaseRequisition',
-      entityId: req.id,
-      details: { newStatus: status },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE_REQUISITION_STATUS',
+      varlik: 'SatinAlmaTalebi',
+      varlikId: req.id,
+      detaylar: { newStatus: durum },
+      ipAdresi: ipAddress
     });
 
     return req;

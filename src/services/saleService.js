@@ -14,26 +14,26 @@ class SaleService {
   }
 
   async createOrder(data, currentUser, ipAddress) {
-    // 1. Check duplicate order number
-    const existing = await saleRepository.findByOrderNo(data.orderNo);
+    const siparisNo = data.siparisNo || data.orderNo;
+    const existing = await saleRepository.findByOrderNo(siparisNo);
     if (existing) {
       throw new ValidationError('Bu sipariş numarası zaten mevcuttur.');
     }
 
-    // 2. Check stock item existence if valid stockItemId is provided and not multi-item payload
-    const stockItemId = parseInt(data.stockItemId, 10);
-    if (!isNaN(stockItemId) && stockItemId > 0) {
-      const stockItem = await stockRepository.findById(stockItemId);
-      if (!stockItem && (!data.itemsJson || data.itemsJson === '[]')) {
+    const stokId = parseInt(data.stokId || data.stockItemId, 10);
+    if (!isNaN(stokId) && stokId > 0) {
+      const stockItem = await stockRepository.findById(stokId);
+      const itemsJson = data.kalemlerJson || data.itemsJson;
+      if (!stockItem && (!itemsJson || itemsJson === '[]')) {
         throw new ValidationError('Seçilen stok kartı sistemde bulunamadı.');
       }
     }
 
-    // 3. Mathematical Calculations (Multi-item vs Single-item)
     let itemsList = [];
-    if (data.itemsJson) {
+    const rawItemsJson = data.kalemlerJson || data.itemsJson;
+    if (rawItemsJson) {
       try {
-        itemsList = typeof data.itemsJson === 'string' ? JSON.parse(data.itemsJson) : data.itemsJson;
+        itemsList = typeof rawItemsJson === 'string' ? JSON.parse(rawItemsJson) : rawItemsJson;
       } catch (e) {
         itemsList = [];
       }
@@ -46,10 +46,10 @@ class SaleService {
 
     if (Array.isArray(itemsList) && itemsList.length > 0) {
       itemsList.forEach(it => {
-        const q = parseFloat(it.quantity) || 1;
-        const p = parseFloat(it.unitPrice) || 0;
-        const d = parseFloat(it.discountRate) || 0;
-        const t = parseFloat(it.taxRate) || 20;
+        const q = parseFloat(it.miktar || it.quantity) || 1;
+        const p = parseFloat(it.birimFiyat || it.unitPrice) || 0;
+        const d = parseFloat(it.iskontoOrani || it.discountRate) || 0;
+        const t = parseFloat(it.kdvOrani || it.taxRate) || 20;
 
         const lineSub = q * p;
         const lineDisc = lineSub * (d / 100);
@@ -63,10 +63,10 @@ class SaleService {
         totalAmount += lineTot;
       });
     } else {
-      const quantity = parseFloat(data.quantity) || 0;
-      const unitPrice = parseFloat(data.unitPrice) || 0;
-      const discountRate = parseFloat(data.discountRate) || 0;
-      const taxRate = parseFloat(data.taxRate) || 20;
+      const quantity = parseFloat(data.miktar !== undefined ? data.miktar : data.quantity) || 0;
+      const unitPrice = parseFloat(data.birimFiyat !== undefined ? data.birimFiyat : data.unitPrice) || 0;
+      const discountRate = parseFloat(data.iskontoOrani !== undefined ? data.iskontoOrani : data.discountRate) || 0;
+      const taxRate = parseFloat(data.kdvOrani !== undefined ? data.kdvOrani : data.taxRate) || 20;
 
       if (quantity <= 0) throw new ValidationError('Sipariş miktarı sıfırdan büyük olmalıdır.');
       if (unitPrice < 0) throw new ValidationError('Birim fiyat negatif olamaz.');
@@ -78,18 +78,29 @@ class SaleService {
       totalAmount = amountAfterDiscount + taxAmount;
     }
 
-    // Override with pre-passed grand totals if provided
-    if (data.subtotal !== undefined && parseFloat(data.subtotal) > 0) subtotal = parseFloat(data.subtotal);
-    if (data.discountAmount !== undefined && parseFloat(data.discountAmount) >= 0) discountAmount = parseFloat(data.discountAmount);
-    if (data.taxAmount !== undefined && parseFloat(data.taxAmount) >= 0) taxAmount = parseFloat(data.taxAmount);
-    if (data.totalAmount !== undefined && parseFloat(data.totalAmount) > 0) totalAmount = parseFloat(data.totalAmount);
+    if (data.araToplam !== undefined || data.subtotal !== undefined) {
+      const v = parseFloat(data.araToplam !== undefined ? data.araToplam : data.subtotal);
+      if (v > 0) subtotal = v;
+    }
+    if (data.iskontoTutari !== undefined || data.discountAmount !== undefined) {
+      const v = parseFloat(data.iskontoTutari !== undefined ? data.iskontoTutari : data.discountAmount);
+      if (v >= 0) discountAmount = v;
+    }
+    if (data.kdvTutari !== undefined || data.taxAmount !== undefined) {
+      const v = parseFloat(data.kdvTutari !== undefined ? data.kdvTutari : data.taxAmount);
+      if (v >= 0) taxAmount = v;
+    }
+    if (data.toplamTutar !== undefined || data.totalAmount !== undefined) {
+      const v = parseFloat(data.toplamTutar !== undefined ? data.toplamTutar : data.totalAmount);
+      if (v > 0) totalAmount = v;
+    }
 
     const computedData = {
       ...data,
-      subtotal: parseFloat(subtotal.toFixed(4)),
-      discountAmount: parseFloat(discountAmount.toFixed(4)),
-      taxAmount: parseFloat(taxAmount.toFixed(4)),
-      totalAmount: parseFloat(totalAmount.toFixed(4))
+      araToplam: parseFloat(subtotal.toFixed(4)),
+      iskontoTutari: parseFloat(discountAmount.toFixed(4)),
+      kdvTutari: parseFloat(taxAmount.toFixed(4)),
+      toplamTutar: parseFloat(totalAmount.toFixed(4))
     };
 
     return await saleRepository.create(computedData, currentUser, ipAddress);

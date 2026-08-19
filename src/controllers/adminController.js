@@ -104,7 +104,7 @@ class AdminController {
     const users = await userRepository.findAll();
     const settings = await userRepository.getAllSettings();
     const userCount = users.length;
-    const activeUsersCount = users.filter(u => u.status === 'Active').length;
+    const activeUsersCount = users.filter(u => (u.durum || u.status) === 'Active').length;
 
     res.render('admin/dashboard', {
       user: req.user,
@@ -125,26 +125,28 @@ class AdminController {
   });
 
   addUser = asyncHandler(async (req, res) => {
-    const { username, password, email, firstName, lastName, phone, department, title, role } = req.body;
+    const { username, password, email, firstName, lastName, phone, department, title, role, kullaniciAdi, sifre, eposta, ad, soyad, telefon, departman, unvan, rol } = req.body;
+    const targetUsername = kullaniciAdi || username;
+    const targetPassword = sifre || password;
 
-    const existingUser = await userRepository.findByUsername(username);
+    const existingUser = await userRepository.findByUsername(targetUsername);
     if (existingUser) {
       return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı zaten alınmış.', ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(targetPassword, 10);
 
     await userRepository.create({
-      username,
-      password: hashedPassword,
-      email,
-      firstName,
-      lastName,
-      phone: phone ? phone.trim() : null,
-      department: department ? department.trim() : 'Genel',
-      title: title ? title.trim() : 'Personel',
-      role: role || 'Employee',
-      status: 'Active'
+      kullaniciAdi: targetUsername,
+      sifre: hashedPassword,
+      eposta: eposta || email,
+      ad: ad || firstName,
+      soyad: soyad || lastName,
+      telefon: telefon ? telefon.trim() : (phone ? phone.trim() : null),
+      departman: departman ? departman.trim() : (department ? department.trim() : 'Genel'),
+      unvan: unvan ? unvan.trim() : (title ? title.trim() : 'Personel'),
+      rol: rol || role || 'Employee',
+      durum: 'Active'
     }, req.user, req.ip);
 
     res.redirect('/admin/users');
@@ -181,20 +183,19 @@ class AdminController {
     });
   });
 
-  // Full User Details Update (FirstName, LastName, Email, Phone, Department, Title, Role, Status)
   updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, email, phone, department, title, role, status } = req.body;
+    const { firstName, lastName, email, phone, department, title, role, status, ad, soyad, eposta, telefon, departman, unvan, rol, durum } = req.body;
 
     const updateData = {
-      firstName: firstName ? firstName.trim() : '',
-      lastName: lastName ? lastName.trim() : '',
-      email: email ? email.trim() : null,
-      phone: phone ? phone.trim() : null,
-      department: department ? department.trim() : 'Genel',
-      title: title ? title.trim() : 'Personel',
-      role: role || 'Employee',
-      status: status || 'Active'
+      ad: ad ? ad.trim() : (firstName ? firstName.trim() : ''),
+      soyad: soyad ? soyad.trim() : (lastName ? lastName.trim() : ''),
+      eposta: eposta ? eposta.trim() : (email ? email.trim() : null),
+      telefon: telefon ? telefon.trim() : (phone ? phone.trim() : null),
+      departman: departman ? departman.trim() : (department ? department.trim() : 'Genel'),
+      unvan: unvan ? unvan.trim() : (title ? title.trim() : 'Personel'),
+      rol: rol || role || 'Employee',
+      durum: durum || status || 'Active'
     };
 
     const updatedUser = await userRepository.updateUser(id, updateData, req.user, req.ip);
@@ -207,9 +208,9 @@ class AdminController {
 
   updateUserRole = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { role } = req.body;
+    const { role, rol } = req.body;
 
-    const updatedUser = await userRepository.updateRole(id, role, req.user, req.ip);
+    const updatedUser = await userRepository.updateRole(id, rol || role, req.user, req.ip);
     if (!updatedUser) {
       throw new NotFoundError('Güncellenecek kullanıcı bulunamadı.');
     }
@@ -219,13 +220,14 @@ class AdminController {
 
   toggleUserStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body; // Active, Inactive, Suspended
+    const { status, durum } = req.body;
+    const targetStatus = durum || status;
 
-    if (!['Active', 'Inactive', 'Suspended'].includes(status)) {
+    if (!['Active', 'Inactive', 'Suspended'].includes(targetStatus)) {
       throw new ValidationError('Geçersiz kullanıcı durumu.');
     }
 
-    const updated = await userRepository.toggleStatus(id, status, req.user, req.ip);
+    const updated = await userRepository.toggleStatus(id, targetStatus, req.user, req.ip);
     if (!updated) throw new NotFoundError('Kullanıcı bulunamadı.');
 
     res.redirect('/admin/users');
@@ -233,13 +235,14 @@ class AdminController {
 
   resetUserPassword = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { newPassword } = req.body;
+    const { newPassword, yeniSifre } = req.body;
+    const pass = yeniSifre || newPassword;
 
-    if (!newPassword || newPassword.length < 6) {
+    if (!pass || pass.length < 6) {
       throw new ValidationError('Yeni şifre en az 6 karakter olmalıdır.');
     }
 
-    const updated = await userRepository.resetPassword(id, newPassword, req.user, req.ip);
+    const updated = await userRepository.resetPassword(id, pass, req.user, req.ip);
     if (!updated) throw new NotFoundError('Kullanıcı bulunamadı.');
 
     res.redirect(`/admin/users/${id}?success=Parola başarıyla güncellendi.`);
@@ -248,7 +251,6 @@ class AdminController {
   deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
     
-    // Prevent self deletion
     if (Number(id) === req.user.id) {
       throw new ValidationError('Kendi kullanıcı hesabınızı silemezsiniz.');
     }
@@ -257,7 +259,6 @@ class AdminController {
     res.redirect('/admin/users');
   });
 
-  // --- SYSTEM SETTINGS & PERMISSIONS ---
   renderSettings = asyncHandler(async (req, res) => {
     const settings = await userRepository.getAllSettings();
     res.render('admin/settings', { user: req.user, settings });

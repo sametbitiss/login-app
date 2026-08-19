@@ -2,66 +2,66 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class RoutingOperation extends Model {
+  class RotaOperasyon extends Model {
     static associate(models) {
-      RoutingOperation.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
+      RotaOperasyon.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
     }
   }
 
-  RoutingOperation.init({
-    routingCode: {
+  RotaOperasyon.init({
+    rotaKodu: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    operationSeq: {
+    operasyonSira: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 10
     },
-    operationCode: {
+    operasyonKodu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    operationName: {
+    operasyonAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    workCenter: {
+    isMerkezi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    setupTimeMinutes: {
+    hazirlikSuresiDakika: {
       type: DataTypes.DECIMAL(8, 2),
       allowNull: false,
       defaultValue: 15.0
     },
-    runTimeMinutesPerUnit: {
+    calismaSuresiDakikaBirim: {
       type: DataTypes.DECIMAL(8, 2),
       allowNull: false,
       defaultValue: 5.0
     },
-    operatorCount: {
+    operatorSayisi: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1
     },
-    instructions: {
+    talimatlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    usedComponents: {
+    kullanilanBilesenler: {
       type: DataTypes.TEXT,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'RoutingOperation',
-    tableName: 'RoutingOperations'
+    modelName: 'RotaOperasyon',
+    tableName: 'RotaOperasyonlari'
   });
 
-  return RoutingOperation;
+  return RotaOperasyon;
 };

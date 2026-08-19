@@ -2,83 +2,83 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class QualityInspection extends Model {
+  class KaliteMuayene extends Model {
     static associate(models) {
-      QualityInspection.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      QualityInspection.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
-      QualityInspection.belongsTo(models.ProductionOrder, { foreignKey: 'productionOrderId', as: 'productionOrder' });
+      KaliteMuayene.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      KaliteMuayene.belongsTo(models.Tedarikci, { foreignKey: 'tedarikciId', as: 'tedarikci' });
+      KaliteMuayene.belongsTo(models.UretimEmri, { foreignKey: 'uretimEmriId', as: 'uretimEmri' });
     }
   }
 
-  QualityInspection.init({
-    inspectionNo: {
+  KaliteMuayene.init({
+    muayeneNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    type: {
+    tur: {
       type: DataTypes.ENUM('Incoming', 'InProcess', 'Final'),
       allowNull: false,
       defaultValue: 'Incoming'
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    lotNumber: {
+    partiNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    supplierId: {
+    tedarikciId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    productionOrderId: {
+    uretimEmriId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    sampleSize: {
+    numuneMiktari: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1
     },
-    passedQuantity: {
+    kabulMiktari: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0
     },
-    rejectedQuantity: {
+    redMiktari: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0
     },
-    decision: {
+    karar: {
       type: DataTypes.ENUM('Accepted', 'Conditional_Accept', 'Rejected'),
       allowNull: false,
       defaultValue: 'Accepted'
     },
-    inspectorName: {
+    denetciAdi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    defectCategory: {
+    hataKategorisi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    inspectedAt: {
+    muayeneTarihi: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW
     }
   }, {
     sequelize,
-    modelName: 'QualityInspection',
-    tableName: 'QualityInspections'
+    modelName: 'KaliteMuayene',
+    tableName: 'KaliteMuayeneleri'
   });
 
-  return QualityInspection;
+  return KaliteMuayene;
 };

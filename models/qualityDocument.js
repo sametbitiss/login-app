@@ -2,58 +2,58 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class QualityDocument extends Model {
+  class KaliteDokumani extends Model {
     static associate(models) {
       // associations if any
     }
   }
 
-  QualityDocument.init({
-    docCode: {
+  KaliteDokumani.init({
+    dokumanKodu: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    title: {
+    baslik: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    category: {
+    kategori: {
       type: DataTypes.ENUM('Procedure', 'Instruction', 'Form', 'Quality_Manual'),
       allowNull: false,
       defaultValue: 'Procedure'
     },
-    revisionNo: {
+    revizyonNo: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Rev.01'
     },
-    effectiveDate: {
+    gecerlilikTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    owner: {
+    sorumlu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Active', 'Draft', 'Obsolete'),
       allowNull: false,
       defaultValue: 'Active'
     },
-    fileUrl: {
+    dosyaYolu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    description: {
+    aciklama: {
       type: DataTypes.TEXT,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'QualityDocument',
-    tableName: 'QualityDocuments'
+    modelName: 'KaliteDokumani',
+    tableName: 'KaliteDokumanlari'
   });
 
-  return QualityDocument;
+  return KaliteDokumani;
 };

@@ -2,60 +2,60 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class CustomerLedger extends Model {
+  class MusteriCariHareket extends Model {
     static associate(models) {
-      CustomerLedger.belongsTo(models.CustomerAccount, { foreignKey: 'customerId', as: 'customer' });
-      CustomerLedger.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
+      MusteriCariHareket.belongsTo(models.MusteriHesabi, { foreignKey: 'musteriId', as: 'musteri' });
+      MusteriCariHareket.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
     }
   }
 
-  CustomerLedger.init({
-    customerId: {
+  MusteriCariHareket.init({
+    musteriId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    transactionDate: {
+    islemTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
-    transactionType: {
+    islemTuru: {
       type: DataTypes.ENUM('Opening_Balance', 'Sale_Invoice', 'Payment', 'Credit_Note', 'Debit_Note'),
       allowNull: false
     },
-    documentNo: {
+    belgeNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    description: {
+    aciklama: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    debitAmount: {
+    borcTutari: {
       type: DataTypes.DECIMAL(12, 2),
-      defaultValue: 0.00 // Borç (Müşterinin ödemesi gereken tutar - Fatura vb.)
+      defaultValue: 0.00
     },
-    creditAmount: {
+    alacakTutari: {
       type: DataTypes.DECIMAL(12, 2),
-      defaultValue: 0.00 // Alacak (Müşterinin yaptığı ödeme / İade vb.)
+      defaultValue: 0.00
     },
-    balance: {
+    bakiye: {
       type: DataTypes.DECIMAL(12, 2),
-      defaultValue: 0.00 // Anlık Güncel Bakiye
+      defaultValue: 0.00
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.STRING,
       defaultValue: 'TRY'
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'CustomerLedger',
-    tableName: 'CustomerLedgers'
+    modelName: 'MusteriCariHareket',
+    tableName: 'MusteriCariHareketleri'
   });
 
-  return CustomerLedger;
+  return MusteriCariHareket;
 };

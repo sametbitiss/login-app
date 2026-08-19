@@ -1,47 +1,47 @@
-'use strict'; 
+'use strict';
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class AuditLog extends Model {
+  class DenetimKaydi extends Model {
     static associate(models) {
-      AuditLog.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      DenetimKaydi.belongsTo(models.Kullanici, { foreignKey: 'kullaniciId', as: 'kullanici' });
     }
   }
 
-  AuditLog.init({
-    userId: {
+  DenetimKaydi.init({
+    kullaniciId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    username: {
+    kullaniciAdi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    action: {
+    islem: {
       type: DataTypes.ENUM('CREATE', 'READ', 'UPDATE', 'DELETE'),
       allowNull: false
     },
-    entity: {
+    varlik: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    entityId: {
+    varlikId: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    details: {
+    detaylar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    ipAddress: {
+    ipAdresi: {
       type: DataTypes.STRING,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'AuditLog',
-    tableName: 'AuditLogs'
+    modelName: 'DenetimKaydi',
+    tableName: 'DenetimKayitlari'
   });
 
-  return AuditLog;
+  return DenetimKaydi;
 };

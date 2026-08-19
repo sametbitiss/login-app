@@ -2,44 +2,44 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class ExchangeRate extends Model {
+  class DovizKuru extends Model {
     static associate(models) {
-      ExchangeRate.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
+      DovizKuru.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
     }
   }
 
-  ExchangeRate.init({
-    currencyCode: {
+  DovizKuru.init({
+    dovizKodu: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    rateToTRY: {
+    tryKuru: {
       type: DataTypes.DECIMAL(10, 4),
       allowNull: false,
       defaultValue: 1.0000
     },
-    effectiveDate: {
+    gecerlilikTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
-    source: {
+    kaynak: {
       type: DataTypes.STRING,
       defaultValue: 'TCMB'
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'ExchangeRate',
-    tableName: 'ExchangeRates'
+    modelName: 'DovizKuru',
+    tableName: 'DovizKurlari'
   });
 
-  return ExchangeRate;
+  return DovizKuru;
 };

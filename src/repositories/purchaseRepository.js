@@ -1,4 +1,4 @@
-const { PurchaseOrder, User, StockItem, sequelize } = require('../../models');
+const { SatinAlmaSiparisi, Kullanici, StokKarti, StokHareketi, sequelize } = require('../../models');
 const logService = require('../services/logService');
 const { Op } = require('sequelize');
 
@@ -7,125 +7,151 @@ class PurchaseRepository {
     const where = {};
 
     if (filters.status) {
-      where.status = filters.status;
+      where.durum = filters.status;
     }
 
     if (filters.paymentTerm) {
-      where.paymentTerm = filters.paymentTerm;
+      where.odemeVadesi = filters.paymentTerm;
     }
 
     if (filters.search) {
       where[Op.or] = [
-        { orderNo: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { supplierName: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { supplierTaxNo: { [Op.iLike || Op.like]: `%${filters.search}%` } }
+        { siparisNo: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { tedarikciAdi: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { tedarikciVergiNo: { [Op.iLike || Op.like]: `%${filters.search}%` } }
       ];
     }
 
-    return await PurchaseOrder.findAll({
+    return await SatinAlmaSiparisi.findAll({
       where,
       order: [['createdAt', 'DESC']],
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit', 'currentStock'] }
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim', 'mevcutStok'] }
       ]
     });
   }
 
   async findById(id) {
-    return await PurchaseOrder.findByPk(id, {
+    return await SatinAlmaSiparisi.findByPk(id, {
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
-        { model: StockItem, as: 'stockItem' }
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
+        { model: StokKarti, as: 'stokKarti' }
       ]
     });
   }
 
-  async findByOrderNo(orderNo) {
-    return await PurchaseOrder.findOne({ where: { orderNo } });
+  async findByOrderNo(siparisNo) {
+    return await SatinAlmaSiparisi.findOne({ where: { siparisNo } });
   }
 
   async create(data, currentUser = null, ipAddress = null) {
-    const order = await PurchaseOrder.create({
-      ...data,
-      createdBy: currentUser ? currentUser.id : null
-    });
+    const cleanData = {
+      siparisNo: data.siparisNo || data.orderNo,
+      tedarikciAdi: data.tedarikciAdi || data.supplierName,
+      tedarikciVergiNo: data.tedarikciVergiNo || data.supplierTaxNo,
+      tedarikciIlgiliKisi: data.tedarikciIlgiliKisi || data.supplierContactPerson,
+      tedarikciEposta: data.tedarikciEposta || data.supplierEmail,
+      tedarikciTelefon: data.tedarikciTelefon || data.supplierPhone,
+      siparisTarihi: data.siparisTarihi || data.orderDate || new Date().toISOString().split('T')[0],
+      beklenenTeslimTarihi: data.beklenenTeslimTarihi || data.expectedDeliveryDate,
+      odemeVadesi: data.odemeVadesi || data.paymentTerm || 'Pesin',
+      durum: data.durum || data.status || 'Pending_Approval',
+      oncelik: data.oncelik || data.priority || 'Normal',
+      stokId: data.stokId || data.stockItemId,
+      miktar: data.miktar !== undefined ? data.miktar : data.quantity,
+      birimFiyat: data.birimFiyat !== undefined ? data.birimFiyat : data.unitPrice,
+      iskontoOrani: data.iskontoOrani !== undefined ? data.iskontoOrani : data.discountRate,
+      kdvOrani: data.kdvOrani !== undefined ? data.kdvOrani : data.taxRate,
+      araToplam: data.araToplam !== undefined ? data.araToplam : data.subtotal,
+      iskontoTutari: data.iskontoTutari !== undefined ? data.iskontoTutari : data.discountAmount,
+      kdvTutari: data.kdvTutari !== undefined ? data.kdvTutari : data.taxAmount,
+      toplamTutar: data.toplamTutar !== undefined ? data.toplamTutar : data.totalAmount,
+      paraBirimi: data.paraBirimi || data.currency || 'TRY',
+      teslimDeposu: data.teslimDeposu || data.deliveryWarehouse,
+      satinAlmaci: data.satinAlmaci || data.purchasingAgent,
+      tedarikciId: data.tedarikciId || data.supplierId,
+      notlar: data.notlar || data.notes,
+      kalemlerJson: data.kalemlerJson || data.itemsJson,
+      olusturanId: currentUser ? currentUser.id : null
+    };
+
+    const order = await SatinAlmaSiparisi.create(cleanData);
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'PurchaseOrder',
-      entityId: order.id,
-      details: { orderNo: order.orderNo, supplierName: order.supplierName, totalAmount: order.totalAmount, currency: order.currency },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'SatinAlmaSiparisi',
+      varlikId: order.id,
+      detaylar: { siparisNo: order.siparisNo, tedarikciAdi: order.tedarikciAdi, toplamTutar: order.toplamTutar, paraBirimi: order.paraBirimi },
+      ipAdresi: ipAddress
     });
 
     return order;
   }
 
   async update(id, data, currentUser = null, ipAddress = null) {
-    const order = await PurchaseOrder.findByPk(id);
+    const order = await SatinAlmaSiparisi.findByPk(id);
     if (!order) return null;
 
-    const oldData = { status: order.status, totalAmount: order.totalAmount };
+    const oldData = { durum: order.durum, toplamTutar: order.toplamTutar };
     await order.update(data);
 
-    // Automatic Stock Increase & Movement Ledger on Received Status
-    if (data.status === 'Received' && oldData.status !== 'Received') {
-      const item = await StockItem.findByPk(order.stockItemId);
+    const newStatus = data.durum || data.status;
+    if (newStatus === 'Received' && oldData.durum !== 'Received') {
+      const item = await StokKarti.findByPk(order.stokId);
       if (item) {
-        item.currentStock = parseFloat(item.currentStock) + parseFloat(order.quantity);
+        item.mevcutStok = parseFloat(item.mevcutStok) + parseFloat(order.miktar);
         await item.save();
 
-        const { StockMovement } = require('../../models');
         const moveNo = `SH-${Date.now().toString().slice(-6)}`;
-        await StockMovement.create({
-          movementNo: moveNo,
-          stockItemId: item.id,
-          targetWarehouseId: 1,
-          movementType: 'Inbound',
-          quantity: order.quantity,
-          unitPrice: order.unitPrice,
-          referenceNo: order.orderNo,
-          notes: `[Mal Kabul] ${order.orderNo} satın alma siparişi depoya alındı ve stok güncellendi.`,
-          performedBy: currentUser ? currentUser.id : null
+        await StokHareketi.create({
+          hareketNo: moveNo,
+          stokId: item.id,
+          varisDepoId: 1,
+          hareketTuru: 'Inbound',
+          miktar: order.miktar,
+          birimFiyat: order.birimFiyat,
+          referansNo: order.siparisNo,
+          notlar: `[Mal Kabul] ${order.siparisNo} satın alma siparişi depoya alındı ve stok güncellendi.`,
+          yapanKullaniciId: currentUser ? currentUser.id : null
         });
       }
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'PurchaseOrder',
-      entityId: order.id,
-      details: { oldData, newData: data },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'SatinAlmaSiparisi',
+      varlikId: order.id,
+      detaylar: { oldData, newData: data },
+      ipAdresi: ipAddress
     });
 
     return order;
   }
 
-  async updateStatus(id, status, currentUser = null, ipAddress = null) {
-    return await this.update(id, { status }, currentUser, ipAddress);
+  async updateStatus(id, durum, currentUser = null, ipAddress = null) {
+    return await this.update(id, { durum }, currentUser, ipAddress);
   }
 
   async delete(id, currentUser = null, ipAddress = null) {
-    const order = await PurchaseOrder.findByPk(id);
+    const order = await SatinAlmaSiparisi.findByPk(id);
     if (!order) return false;
 
-    const deletedCode = order.orderNo;
+    const deletedCode = order.siparisNo;
     await order.destroy();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'DELETE',
-      entity: 'PurchaseOrder',
-      entityId: id,
-      details: { orderNo: deletedCode },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'DELETE',
+      varlik: 'SatinAlmaSiparisi',
+      varlikId: id,
+      detaylar: { siparisNo: deletedCode },
+      ipAdresi: ipAddress
     });
 
     return true;
@@ -134,24 +160,24 @@ class PurchaseRepository {
   async getNextOrderNo() {
     const year = new Date().getFullYear();
     const prefix = `SATIN-${year}-`;
-    const lastOrder = await PurchaseOrder.findOne({
-      where: { orderNo: { [Op.like]: `${prefix}%` } },
+    const lastOrder = await SatinAlmaSiparisi.findOne({
+      where: { siparisNo: { [Op.like]: `${prefix}%` } },
       order: [['id', 'DESC']]
     });
 
     if (!lastOrder) return `${prefix}0001`;
 
-    const parts = lastOrder.orderNo.split('-');
+    const parts = lastOrder.siparisNo.split('-');
     const lastNum = parseInt(parts[parts.length - 1], 10) || 0;
     return `${prefix}${String(lastNum + 1).padStart(4, '0')}`;
   }
 
   async getStats() {
-    const totalOrders = await PurchaseOrder.count();
-    const pendingOrders = await PurchaseOrder.count({ where: { status: 'Pending_Approval' } });
-    const receivedOrders = await PurchaseOrder.count({ where: { status: 'Received' } });
+    const totalOrders = await SatinAlmaSiparisi.count();
+    const pendingOrders = await SatinAlmaSiparisi.count({ where: { durum: 'Pending_Approval' } });
+    const receivedOrders = await SatinAlmaSiparisi.count({ where: { durum: 'Received' } });
 
-    const totalSpendResult = await PurchaseOrder.sum('totalAmount', { where: { status: { [Op.ne]: 'Cancelled' } } });
+    const totalSpendResult = await SatinAlmaSiparisi.sum('toplamTutar', { where: { durum: { [Op.ne]: 'Cancelled' } } });
     const totalSpend = totalSpendResult || 0;
 
     return { totalOrders, pendingOrders, receivedOrders, totalSpend };

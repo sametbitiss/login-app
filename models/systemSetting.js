@@ -2,31 +2,31 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class SystemSetting extends Model {}
+  class SistemAyari extends Model {}
 
-  SystemSetting.init({
-    key: {
+  SistemAyari.init({
+    anahtar: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    value: {
+    deger: {
       type: DataTypes.TEXT,
       allowNull: false
     },
-    description: {
+    aciklama: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    category: {
+    kategori: {
       type: DataTypes.STRING,
       defaultValue: 'General'
     }
   }, {
     sequelize,
-    modelName: 'SystemSetting',
-    tableName: 'SystemSettings'
+    modelName: 'SistemAyari',
+    tableName: 'SistemAyarlari'
   });
 
-  return SystemSetting;
+  return SistemAyari;
 };

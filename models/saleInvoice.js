@@ -2,74 +2,74 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class SaleInvoice extends Model {
+  class SatisFaturasi extends Model {
     static associate(models) {
-      SaleInvoice.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      SaleInvoice.belongsTo(models.SaleOrder, { foreignKey: 'saleOrderId', as: 'saleOrder' });
-      SaleInvoice.belongsTo(models.SaleDispatchNote, { foreignKey: 'dispatchNoteId', as: 'dispatchNote' });
-      SaleInvoice.belongsTo(models.CustomerAccount, { foreignKey: 'customerId', as: 'customer' });
+      SatisFaturasi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      SatisFaturasi.belongsTo(models.SatisSiparisi, { foreignKey: 'satisSiparisId', as: 'satisSiparisi' });
+      SatisFaturasi.belongsTo(models.SatisIrsaliyesi, { foreignKey: 'irsaliyeId', as: 'satisIrsaliyesi' });
+      SatisFaturasi.belongsTo(models.MusteriHesabi, { foreignKey: 'musteriId', as: 'musteri' });
     }
   }
 
-  SaleInvoice.init({
-    invoiceNo: {
+  SatisFaturasi.init({
+    faturaNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    saleOrderId: {
+    satisSiparisId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    dispatchNoteId: {
+    irsaliyeId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    customerId: {
+    musteriId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    customerName: {
+    musteriAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    customerTaxOffice: {
+    musteriVergiDairesi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    billingAddress: {
+    faturaAdresi: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    shippingAddress: {
+    teslimatAdresi: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    customerPhone: {
+    musteriTelefon: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    customerEmail: {
+    musteriEposta: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    invoiceDate: {
+    faturaTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    invoiceTime: {
+    faturaSaati: {
       type: DataTypes.STRING,
       defaultValue: '10:30:00'
     },
-    dueDate: {
+    vadeTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    invoiceType: {
+    faturaTuru: {
       type: DataTypes.STRING,
       defaultValue: 'SATIS'
     },
-    invoiceScenario: {
+    faturaSenaryosu: {
       type: DataTypes.STRING,
       defaultValue: 'EARSIVFATURA'
     },
@@ -77,55 +77,55 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
-    orderNo: {
+    siparisNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    orderDate: {
+    siparisTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    dispatchNo: {
+    irsaliyeNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    dispatchDate: {
+    irsaliyeTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    subtotal: {
+    araToplam: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    discountAmount: {
+    iskontoTutari: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    taxAmount: {
+    kdvTutari: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    totalAmount: {
+    toplamTutar: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.STRING,
       defaultValue: 'TRY'
     },
-    exchangeRate: {
+    dovizKuru: {
       type: DataTypes.DECIMAL(10, 4),
       defaultValue: 1.0000
     },
-    paymentType: {
+    odemeTuru: {
       type: DataTypes.STRING,
       defaultValue: 'Vadeli'
     },
-    paymentTermDays: {
+    vadeGunu: {
       type: DataTypes.INTEGER,
       defaultValue: 30
     },
-    bankName: {
+    bankaAdi: {
       type: DataTypes.STRING,
       defaultValue: 'Ziraat Bankası A.Ş. - Maslak Şubesi'
     },
@@ -133,31 +133,31 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: 'TR56 0001 0002 0003 0004 0005 06'
     },
-    paymentStatus: {
+    odemeDurumu: {
       type: DataTypes.STRING,
       defaultValue: 'Unpaid'
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       defaultValue: 'Issued'
     },
-    itemsJson: {
+    kalemlerJson: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'SaleInvoice',
-    tableName: 'SaleInvoices'
+    modelName: 'SatisFaturasi',
+    tableName: 'SatisFaturalari'
   });
 
-  return SaleInvoice;
+  return SatisFaturasi;
 };

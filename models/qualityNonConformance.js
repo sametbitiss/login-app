@@ -2,73 +2,73 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class QualityNonConformance extends Model {
+  class KaliteUygunsuzluk extends Model {
     static associate(models) {
-      QualityNonConformance.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      QualityNonConformance.hasMany(models.QualityCapa, { foreignKey: 'ncrId', as: 'capas' });
+      KaliteUygunsuzluk.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      KaliteUygunsuzluk.hasMany(models.KaliteDof, { foreignKey: 'uygunsuzlukId', as: 'doflar' });
     }
   }
 
-  QualityNonConformance.init({
-    ncrNo: {
+  KaliteUygunsuzluk.init({
+    uygunsuzlukNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    title: {
+    baslik: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    type: {
+    tur: {
       type: DataTypes.ENUM('Material', 'Process', 'Customer_Return', 'Supplier_Defect'),
       allowNull: false,
       defaultValue: 'Material'
     },
-    severity: {
+    ciddiyet: {
       type: DataTypes.ENUM('Critical', 'Major', 'Minor'),
       allowNull: false,
       defaultValue: 'Major'
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Open', 'Under_Investigation', 'Action_Required', 'Closed'),
       allowNull: false,
       defaultValue: 'Open'
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    lotNumber: {
+    partiNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    quantityAffected: {
+    etkilenenMiktar: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1
     },
-    detectedBy: {
+    tespitEden: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    assignedTo: {
+    atananKisi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    description: {
+    aciklama: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    disposition: {
+    kararVeIslem: {
       type: DataTypes.ENUM('Scrap', 'Rework', 'ReturnToSupplier', 'UseAsIs'),
       allowNull: false,
       defaultValue: 'Rework'
     }
   }, {
     sequelize,
-    modelName: 'QualityNonConformance',
-    tableName: 'QualityNonConformances'
+    modelName: 'KaliteUygunsuzluk',
+    tableName: 'KaliteUygunsuzluklari'
   });
 
-  return QualityNonConformance;
+  return KaliteUygunsuzluk;
 };

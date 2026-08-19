@@ -1,31 +1,36 @@
-const { ExchangeRate, User } = require('../../models');
+const { DovizKuru, Kullanici } = require('../../models');
 
 class ExchangeRateRepository {
   async findAll() {
-    return await ExchangeRate.findAll({
-      include: [{ model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }],
-      order: [['effectiveDate', 'DESC'], ['currencyCode', 'ASC']]
+    return await DovizKuru.findAll({
+      include: [{ model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }],
+      order: [['gecerlilikTarihi', 'DESC'], ['dovizKodu', 'ASC']]
     });
   }
 
   async getLatestRates() {
-    const rates = await ExchangeRate.findAll({
-      order: [['effectiveDate', 'DESC']]
+    const rates = await DovizKuru.findAll({
+      order: [['gecerlilikTarihi', 'DESC']]
     });
     const latestMap = { TRY: 1.0 };
     rates.forEach(r => {
-      if (!latestMap[r.currencyCode]) {
-        latestMap[r.currencyCode] = parseFloat(r.rateToTRY);
+      if (!latestMap[r.dovizKodu]) {
+        latestMap[r.dovizKodu] = parseFloat(r.tryKuru);
       }
     });
     return latestMap;
   }
 
   async create(data, currentUser) {
-    return await ExchangeRate.create({
-      ...data,
-      createdBy: currentUser ? currentUser.id : null
-    });
+    const cleanData = {
+      dovizKodu: data.dovizKodu || data.currencyCode,
+      tryKuru: data.tryKuru !== undefined ? data.tryKuru : data.rateToTRY,
+      gecerlilikTarihi: data.gecerlilikTarihi || data.effectiveDate || new Date().toISOString().split('T')[0],
+      kaynak: data.kaynak || data.source || 'TCMB',
+      notlar: data.notlar || data.notes,
+      olusturanId: currentUser ? currentUser.id : null
+    };
+    return await DovizKuru.create(cleanData);
   }
 }
 

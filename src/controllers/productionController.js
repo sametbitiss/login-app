@@ -35,53 +35,52 @@ class ProductionController {
     });
   });
 
-  // 1. REQUISITIONS & WORK ORDERS LIST (Talepler: Üretim ve Reçete Oluşturma Talepleri)
+  // 1. REQUISITIONS & WORK ORDERS LIST
   listRequisitions = asyncHandler(async (req, res) => {
     const { search, status, priority, tab } = req.query;
-    const { StockItem, BOMItem, ProductionOrder } = require('../../models');
+    const { StokKarti, UrunRecetesi, UretimEmri } = require('../../models');
     const { Op } = require('sequelize');
 
-    // Auto-sync: Ensure active Mamul/Yarı_Mamul stock items with procurementMethod='Üretim' without a BOM have a BOM Requisition
     try {
-      const finishedStockItems = await StockItem.findAll({
+      const finishedStockItems = await StokKarti.findAll({
         where: {
-          status: 'Active',
-          category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
-          procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+          durum: 'Active',
+          kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
+          tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
         }
       });
 
-      const existingBOMs = await BOMItem.findAll({ attributes: ['finishedStockItemId'], group: ['finishedStockItemId'] });
-      const productsWithBOM = new Set(existingBOMs.map(b => b.finishedStockItemId));
+      const existingBOMs = await UrunRecetesi.findAll({ attributes: ['mamulStokId'], group: ['mamulStokId'] });
+      const productsWithBOM = new Set(existingBOMs.map(b => b.mamulStokId));
 
-      const existingBOMReqs = await ProductionOrder.findAll({
+      const existingBOMReqs = await UretimEmri.findAll({
         where: {
           [Op.or]: [
-            { workOrderNo: { [Op.like]: 'REQ-BOM-%' } },
-            { productionTitle: { [Op.like]: '%Reçete Oluşturma%' } }
+            { isEmriNo: { [Op.like]: 'REQ-BOM-%' } },
+            { uretimBasligi: { [Op.like]: '%Reçete Oluşturma%' } }
           ]
         },
-        attributes: ['stockItemId']
+        attributes: ['stokId']
       });
-      const productsWithReq = new Set(existingBOMReqs.map(r => r.stockItemId));
+      const productsWithReq = new Set(existingBOMReqs.map(r => r.stokId));
 
       const today = new Date().toISOString().split('T')[0];
       for (const item of finishedStockItems) {
         if (!productsWithBOM.has(item.id) && !productsWithReq.has(item.id)) {
           const reqNo = `REQ-BOM-${Date.now().toString().slice(-6)}-${item.id}`;
-          await ProductionOrder.create({
-            workOrderNo: reqNo,
-            productionTitle: `📜 Reçete Oluşturma Talebi — ${item.name}`,
-            stockItemId: item.id,
-            plannedQuantity: 1,
-            unit: item.unit || 'Adet',
-            status: 'Planned',
-            priority: 'High',
-            workCenter: 'İstasyon-1 (Kesim & Büküm)',
-            plannedStartDate: today,
-            plannedEndDate: today,
-            notes: `Stok & Depo Modülündeki [${item.stockCode}] ${item.name} (${item.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul'}) ürünü için otomatik reçete oluşturma talebi açıldı.`,
-            createdBy: req.user ? req.user.id : null
+          await UretimEmri.create({
+            isEmriNo: reqNo,
+            uretimBasligi: `📜 Reçete Oluşturma Talebi — ${item.ad}`,
+            stokId: item.id,
+            planlananMiktar: 1,
+            birim: item.birim || 'Adet',
+            durum: 'Planned',
+            oncelik: 'High',
+            isMerkezi: 'İstasyon-1 (Kesim & Büküm)',
+            planlananBaslangicTarihi: today,
+            planlananBitisTarihi: today,
+            notlar: `Stok & Depo Modülündeki [${item.stokKodu}] ${item.ad} (${item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul'}) ürünü için otomatik reçete oluşturma talebi açıldı.`,
+            olusturanId: req.user ? req.user.id : null
           });
         }
       }
@@ -92,14 +91,13 @@ class ProductionController {
     const allOrders = await productionRepository.findAll({ search, status, priority });
     const stats = await productionRepository.getStats();
 
-    // Split requisitions into Production Requisitions and BOM Requisitions
     const productionRequisitions = allOrders.filter(o => {
-      const isBOMReq = (o.workOrderNo && o.workOrderNo.startsWith('REQ-BOM')) || (o.productionTitle && o.productionTitle.includes('Reçete Oluşturma'));
+      const isBOMReq = (o.isEmriNo && o.isEmriNo.startsWith('REQ-BOM')) || (o.uretimBasligi && o.uretimBasligi.includes('Reçete Oluşturma'));
       return !isBOMReq;
     });
 
     const bomRequisitions = allOrders.filter(o => {
-      return (o.workOrderNo && o.workOrderNo.startsWith('REQ-BOM')) || (o.productionTitle && o.productionTitle.includes('Reçete Oluşturma'));
+      return (o.isEmriNo && o.isEmriNo.startsWith('REQ-BOM')) || (o.uretimBasligi && o.uretimBasligi.includes('Reçete Oluşturma'));
     });
 
     res.render('production/requisitions', {
@@ -139,16 +137,16 @@ class ProductionController {
 
   renderAddOrder = asyncHandler(async (req, res) => {
     const { stockItemId, plannedQty, requisitionId, requisitionNo } = req.query;
-    const { StockItem, ProductionOrder } = require('../../models');
+    const { StokKarti, UretimEmri } = require('../../models');
     const { Op } = require('sequelize');
 
-    const stockItems = await StockItem.findAll({
+    const stockItems = await StokKarti.findAll({
       where: {
-        status: 'Active',
-        category: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
-        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+        durum: 'Active',
+        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
+        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
       },
-      order: [['name', 'ASC']]
+      order: [['ad', 'ASC']]
     });
 
     let targetProduct = null;
@@ -157,10 +155,10 @@ class ProductionController {
     let isLockedProduct = false;
 
     if (requisitionId) {
-      sourceRequisition = await ProductionOrder.findByPk(requisitionId);
+      sourceRequisition = await UretimEmri.findByPk(requisitionId);
     }
 
-    const effectiveStockItemId = stockItemId || (sourceRequisition ? sourceRequisition.stockItemId : null);
+    const effectiveStockItemId = stockItemId || (sourceRequisition ? sourceRequisition.stokId : null);
     if (requisitionId || stockItemId) {
       isLockedProduct = true;
     }
@@ -169,10 +167,10 @@ class ProductionController {
     let effectiveQty = 100;
 
     if (effectiveStockItemId) {
-      targetProduct = await StockItem.findByPk(effectiveStockItemId);
+      targetProduct = await StokKarti.findByPk(effectiveStockItemId);
       if (targetProduct) {
-        minStockLimit = parseFloat(targetProduct.minStock || 0);
-        const reqQty = sourceRequisition ? parseFloat(sourceRequisition.plannedQuantity || 0) : 0;
+        minStockLimit = parseFloat(targetProduct.asgariStok || 0);
+        const reqQty = sourceRequisition ? parseFloat(sourceRequisition.planlananMiktar || 0) : 0;
         const qtyFloor = Math.max(minStockLimit, reqQty, 1);
 
         if (plannedQty) {
@@ -187,7 +185,7 @@ class ProductionController {
       }
     }
 
-    const effectiveOrderSource = requisitionNo || (sourceRequisition ? sourceRequisition.workOrderNo : `SOP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+    const effectiveOrderSource = requisitionNo || (sourceRequisition ? sourceRequisition.isEmriNo : `SOP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
     const nextWorkOrderNo = await productionRepository.generateWorkOrderNo();
 
     res.render('production/add', {
@@ -227,9 +225,8 @@ class ProductionController {
       notes
     } = req.body;
 
-    const { ProductionOrder, StockItem } = require('../../models');
+    const { UretimEmri, StokKarti } = require('../../models');
 
-    // Batch work orders creation from multi-level plan
     if (ordersJson) {
       let ordersArray = [];
       try {
@@ -242,31 +239,31 @@ class ProductionController {
         const item = ordersArray[i];
         const woNo = await productionRepository.generateWorkOrderNo();
 
-        // Enforce minimum floor limit on server side
-        const itemProduct = await StockItem.findByPk(item.stockItemId);
-        const itemMinStock = itemProduct ? parseFloat(itemProduct.minStock || 0) : 0;
-        const validQty = Math.max(parseFloat(item.plannedQuantity) || 1, itemMinStock, 1);
+        const sId = item.stokId || item.stockItemId;
+        const itemProduct = await StokKarti.findByPk(sId);
+        const itemMinStock = itemProduct ? parseFloat(itemProduct.asgariStok || 0) : 0;
+        const pQty = parseFloat(item.planlananMiktar || item.plannedQuantity) || 1;
+        const validQty = Math.max(pQty, itemMinStock, 1);
 
         await productionRepository.create({
-          workOrderNo: woNo,
-          productionTitle: item.productionTitle || `[Seviye ${item.level}] İmalat İş Emri — ${item.productName}`,
-          stockItemId: item.stockItemId,
-          plannedQuantity: validQty,
-          unit: item.unit || 'Adet',
-          status: item.status || 'Planned',
-          priority: item.priority || 'Normal',
-          workCenter: item.workCenter || WORK_CENTERS[0],
-          plannedStartDate: item.plannedStartDate,
-          plannedEndDate: item.plannedEndDate,
-          notes: item.notes || `Sipariş Kaynağı: ${item.orderSource || 'Manuel'}`
+          isEmriNo: woNo,
+          uretimBasligi: item.uretimBasligi || item.productionTitle || `[Seviye ${item.level}] İmalat İş Emri — ${item.productName}`,
+          stokId: sId,
+          planlananMiktar: validQty,
+          birim: item.birim || 'Adet',
+          durum: item.durum || item.status || 'Planned',
+          oncelik: item.oncelik || item.priority || 'Normal',
+          isMerkezi: item.isMerkezi || item.workCenter || WORK_CENTERS[0],
+          planlananBaslangicTarihi: item.planlananBaslangicTarihi || item.plannedStartDate,
+          planlananBitisTarihi: item.planlananBitisTarihi || item.plannedEndDate,
+          notlar: item.notlar || item.notes || `Sipariş Kaynağı: ${item.orderSource || 'Manuel'}`
         }, req.user, req.ip);
       }
 
-      // If created from a requisition, update the requisition status to Completed
       if (requisitionId) {
-        const reqOrder = await ProductionOrder.findByPk(requisitionId);
+        const reqOrder = await UretimEmri.findByPk(requisitionId);
         if (reqOrder) {
-          reqOrder.status = 'Completed';
+          reqOrder.durum = 'Completed';
           await reqOrder.save();
         }
       }
@@ -274,27 +271,26 @@ class ProductionController {
       return res.redirect('/production/orders');
     }
 
-    // Single work order creation fallback
     await productionRepository.create({
-      productionTitle,
-      stockItemId,
-      plannedQuantity: parseFloat(plannedQuantity) || 1,
-      unit: unit || 'Adet',
-      status: status || 'Planned',
-      priority: priority || 'Normal',
-      workCenter: workCenter || WORK_CENTERS[0],
-      plannedStartDate,
-      plannedEndDate,
-      estimatedHours: parseFloat(estimatedHours) || 0,
-      productionManager,
-      bomNotes,
-      notes
+      uretimBasligi: productionTitle,
+      stokId: stockItemId,
+      planlananMiktar: parseFloat(plannedQuantity) || 1,
+      birim: unit || 'Adet',
+      durum: status || 'Planned',
+      oncelik: priority || 'Normal',
+      isMerkezi: workCenter || WORK_CENTERS[0],
+      planlananBaslangicTarihi: plannedStartDate,
+      planlananBitisTarihi: plannedEndDate,
+      tahminiSaat: parseFloat(estimatedHours) || 0,
+      uretimYonetici: productionManager,
+      receteNotlari: bomNotes,
+      notlar: notes
     }, req.user, req.ip);
 
     if (requisitionId) {
-      const reqOrder = await ProductionOrder.findByPk(requisitionId);
+      const reqOrder = await UretimEmri.findByPk(requisitionId);
       if (reqOrder) {
-        reqOrder.status = 'Completed';
+        reqOrder.durum = 'Completed';
         await reqOrder.save();
       }
     }
@@ -304,9 +300,9 @@ class ProductionController {
 
   updateOrderStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, durum } = req.body;
 
-    const updated = await productionRepository.updateStatus(id, status, req.user, req.ip);
+    const updated = await productionRepository.updateStatus(id, durum || status, req.user, req.ip);
     if (!updated) {
       throw new NotFoundError('Üretim iş emri bulunamadı.');
     }
@@ -336,32 +332,32 @@ class ProductionController {
 
   // 3. BOM (BILL OF MATERIALS)
   listBOM = asyncHandler(async (req, res) => {
-    const { StockItem } = require('../../models');
+    const { StokKarti } = require('../../models');
     const { Op } = require('sequelize');
 
     const productBOMList = await productionRepository.findAllBOMGroupedByProduct();
 
-    const finishedStockItems = await StockItem.findAll({
+    const finishedStockItems = await StokKarti.findAll({
       where: {
-        status: 'Active',
-        category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
-        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+        durum: 'Active',
+        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
+        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
       },
-      order: [['name', 'ASC']]
+      order: [['ad', 'ASC']]
     });
 
-    const componentStockItems = await StockItem.findAll({
+    const componentStockItems = await StokKarti.findAll({
       where: { 
-        status: 'Active',
+        durum: 'Active',
         [Op.or]: [
-          { category: { [Op.in]: ['Hammadde', 'Ticari_Mal'] } },
+          { kategori: { [Op.in]: ['Hammadde', 'Ticari_Mal'] } },
           {
-            category: { [Op.in]: ['Yarı_Mamul', 'Yari_Mamul'] },
-            procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+            kategori: { [Op.in]: ['Yarı_Mamul', 'Yari_Mamul'] },
+            tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
           }
         ]
       },
-      order: [['name', 'ASC']]
+      order: [['ad', 'ASC']]
     });
 
     const totalProducts = productBOMList.length;
@@ -381,24 +377,24 @@ class ProductionController {
   });
 
   renderBOMForm = asyncHandler(async (req, res) => {
-    const { StockItem, BOMItem } = require('../../models');
+    const { StokKarti, UrunRecetesi } = require('../../models');
     const { Op } = require('sequelize');
 
     const finishedStockItemId = req.params.finishedStockItemId || req.query.productId || null;
 
-    const existingBOMs = await BOMItem.findAll({
-      attributes: ['finishedStockItemId'],
-      group: ['finishedStockItemId']
+    const existingBOMs = await UrunRecetesi.findAll({
+      attributes: ['mamulStokId'],
+      group: ['mamulStokId']
     });
-    const productsWithBOMSet = new Set(existingBOMs.map(b => b.finishedStockItemId));
+    const productsWithBOMSet = new Set(existingBOMs.map(b => b.mamulStokId));
 
-    const finishedStockItems = await StockItem.findAll({
+    const finishedStockItems = await StokKarti.findAll({
       where: {
-        status: 'Active',
-        category: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
-        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+        durum: 'Active',
+        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
+        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
       },
-      order: [['name', 'ASC']]
+      order: [['ad', 'ASC']]
     });
 
     const processedFinishedItems = finishedStockItems.map(item => {
@@ -407,32 +403,32 @@ class ProductionController {
       return itemPlain;
     });
 
-    const componentStockItems = await StockItem.findAll({
+    const componentStockItems = await StokKarti.findAll({
       where: { 
-        status: 'Active',
+        durum: 'Active',
         [Op.or]: [
-          { category: { [Op.in]: ['Hammadde', 'Ticari_Mal'] } },
+          { kategori: { [Op.in]: ['Hammadde', 'Ticari_Mal'] } },
           {
-            category: { [Op.in]: ['Yarı_Mamul', 'Yari_Mamul'] },
-            procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+            kategori: { [Op.in]: ['Yarı_Mamul', 'Yari_Mamul'] },
+            tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
           }
         ]
       },
-      order: [['name', 'ASC']]
+      order: [['ad', 'ASC']]
     });
 
     let targetProduct = null;
     let existingBOMItems = [];
 
     if (finishedStockItemId) {
-      targetProduct = await StockItem.findByPk(finishedStockItemId);
-      existingBOMItems = await BOMItem.findAll({
-        where: { finishedStockItemId },
+      targetProduct = await StokKarti.findByPk(finishedStockItemId);
+      existingBOMItems = await UrunRecetesi.findAll({
+        where: { mamulStokId: finishedStockItemId },
         include: [
-          { model: StockItem, as: 'componentItem' },
-          { model: StockItem, as: 'alternativeComponentItem' }
+          { model: StokKarti, as: 'bilesenUrun' },
+          { model: StokKarti, as: 'alternatifBilesenUrun' }
         ],
-        order: [['level', 'ASC'], ['id', 'ASC']]
+        order: [['seviye', 'ASC'], ['id', 'ASC']]
       });
     }
 
@@ -464,7 +460,8 @@ class ProductionController {
       notes
     } = req.body;
 
-    if (!finishedStockItemId) {
+    const targetMamulId = finishedStockItemId || req.body.mamulStokId;
+    if (!targetMamulId) {
       throw new ValidationError('Lütfen reçetesi yazılacak ürünü seçiniz.');
     }
 
@@ -478,33 +475,33 @@ class ProductionController {
       }
     } else if (Array.isArray(componentStockItemId)) {
       components = componentStockItemId.map((compItemId, idx) => ({
-        componentStockItemId: compItemId,
-        quantityRequired: Array.isArray(quantityRequired) ? quantityRequired[idx] : quantityRequired,
-        unit: Array.isArray(unit) ? unit[idx] : unit,
-        scrapPercentage: Array.isArray(scrapPercentage) ? scrapPercentage[idx] : scrapPercentage,
-        operationCode: Array.isArray(operationCode) ? operationCode[idx] : operationCode,
-        alternativeComponentItemId: Array.isArray(alternativeComponentItemId) ? alternativeComponentItemId[idx] : alternativeComponentItemId,
-        alternativeNotes: Array.isArray(alternativeNotes) ? alternativeNotes[idx] : alternativeNotes,
-        notes: Array.isArray(notes) ? notes[idx] : notes
+        bilesenStokId: compItemId,
+        gerekliMiktar: Array.isArray(quantityRequired) ? quantityRequired[idx] : quantityRequired,
+        birim: Array.isArray(unit) ? unit[idx] : unit,
+        fireOrani: Array.isArray(scrapPercentage) ? scrapPercentage[idx] : scrapPercentage,
+        operasyonKodu: Array.isArray(operationCode) ? operationCode[idx] : operationCode,
+        alternatifBilesenStokId: Array.isArray(alternativeComponentItemId) ? alternativeComponentItemId[idx] : alternativeComponentItemId,
+        alternatifNotlar: Array.isArray(alternativeNotes) ? alternativeNotes[idx] : alternativeNotes,
+        notlar: Array.isArray(notes) ? notes[idx] : notes
       }));
     } else if (componentStockItemId) {
       components = [{
-        componentStockItemId,
-        quantityRequired,
-        unit,
-        scrapPercentage,
-        operationCode,
-        alternativeComponentItemId,
-        alternativeNotes,
-        notes
+        bilesenStokId: componentStockItemId,
+        gerekliMiktar: quantityRequired,
+        birim: unit,
+        fireOrani: scrapPercentage,
+        operasyonKodu: operationCode,
+        alternatifBilesenStokId: alternativeComponentItemId,
+        alternatifNotlar: alternativeNotes,
+        notlar: notes
       }];
     }
 
     await productionRepository.saveProductBOM(
-      finishedStockItemId,
+      targetMamulId,
       {
-        version: version || 'Rev.01',
-        baseQuantity: parseFloat(baseQuantity) || 1.0,
+        version: version || req.body.versiyon || 'Rev.01',
+        baseQuantity: parseFloat(baseQuantity || req.body.bazMiktar) || 1.0,
         components
       },
       req.user,
@@ -515,7 +512,7 @@ class ProductionController {
   });
 
   deleteBOM = asyncHandler(async (req, res) => {
-    const { finishedStockItemId } = req.params;
+    const finishedStockItemId = req.params.finishedStockItemId || req.params.mamulStokId;
     if (!finishedStockItemId) {
       throw new ValidationError('Ürün kimliği gereklidir.');
     }
@@ -543,34 +540,32 @@ class ProductionController {
   });
 
   renderRoutingForm = asyncHandler(async (req, res) => {
-    const { StockItem, BOMItem, RoutingOperation } = require('../../models');
+    const { StokKarti, UrunRecetesi, RotaOperasyon } = require('../../models');
     const { Op } = require('sequelize');
 
-    const stockItemId = req.params.stockItemId || req.query.productId || null;
+    const stockItemId = req.params.stockItemId || req.query.productId || req.params.stokId || null;
 
-    // 1. Get all products with a BOM (candidate products for routing)
-    const existingBOMs = await BOMItem.findAll({
-      attributes: ['finishedStockItemId'],
-      group: ['finishedStockItemId']
+    const existingBOMs = await UrunRecetesi.findAll({
+      attributes: ['mamulStokId'],
+      group: ['mamulStokId']
     });
-    const finishedItemIds = existingBOMs.map(b => b.finishedStockItemId);
+    const finishedItemIds = existingBOMs.map(b => b.mamulStokId);
 
-    const bomProducts = await StockItem.findAll({
+    const bomProducts = await StokKarti.findAll({
       where: {
         id: { [Op.in]: finishedItemIds },
-        status: 'Active',
-        category: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
-        procurementMethod: { [Op.in]: ['Üretim', 'Production'] }
+        durum: 'Active',
+        kategori: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
+        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
       },
-      order: [['name', 'ASC']]
+      order: [['ad', 'ASC']]
     });
 
-    // 2. Identify products that already have a routing
-    const existingRoutings = await RoutingOperation.findAll({
-      attributes: ['stockItemId'],
-      group: ['stockItemId']
+    const existingRoutings = await RotaOperasyon.findAll({
+      attributes: ['stokId'],
+      group: ['stokId']
     });
-    const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stockItemId));
+    const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stokId));
 
     const processedBOMProducts = bomProducts.map(p => {
       const plain = p.get({ plain: true });
@@ -578,25 +573,24 @@ class ProductionController {
       return plain;
     });
 
-    // 3. Fetch all BOM items for candidate products to build client-side BOM reference map
-    const allBOMItems = await BOMItem.findAll({
-      where: { finishedStockItemId: { [Op.in]: finishedItemIds } },
-      include: [{ model: StockItem, as: 'componentItem' }],
-      order: [['level', 'ASC'], ['id', 'ASC']]
+    const allBOMItems = await UrunRecetesi.findAll({
+      where: { mamulStokId: { [Op.in]: finishedItemIds } },
+      include: [{ model: StokKarti, as: 'bilesenUrun' }],
+      order: [['seviye', 'ASC'], ['id', 'ASC']]
     });
 
     const bomComponentsMap = {};
     allBOMItems.forEach(b => {
-      if (!bomComponentsMap[b.finishedStockItemId]) {
-        bomComponentsMap[b.finishedStockItemId] = [];
+      if (!bomComponentsMap[b.mamulStokId]) {
+        bomComponentsMap[b.mamulStokId] = [];
       }
-      bomComponentsMap[b.finishedStockItemId].push({
-        code: b.componentItem ? b.componentItem.stockCode : '',
-        name: b.componentItem ? b.componentItem.name : '',
-        category: b.componentItem ? b.componentItem.category : '',
-        qty: b.quantityRequired,
-        unit: b.unit,
-        level: b.level
+      bomComponentsMap[b.mamulStokId].push({
+        code: b.bilesenUrun ? b.bilesenUrun.stokKodu : '',
+        name: b.bilesenUrun ? b.bilesenUrun.ad : '',
+        category: b.bilesenUrun ? b.bilesenUrun.kategori : '',
+        qty: b.gerekliMiktar,
+        unit: b.birim,
+        level: b.seviye
       });
     });
 
@@ -605,11 +599,11 @@ class ProductionController {
     let targetBOMComponents = [];
 
     if (stockItemId) {
-      targetProduct = await StockItem.findByPk(stockItemId);
+      targetProduct = await StokKarti.findByPk(stockItemId);
       if (targetProduct) {
-        existingOperations = await RoutingOperation.findAll({
-          where: { stockItemId },
-          order: [['operationSeq', 'ASC'], ['id', 'ASC']]
+        existingOperations = await RotaOperasyon.findAll({
+          where: { stokId: stockItemId },
+          order: [['operasyonSira', 'ASC'], ['id', 'ASC']]
         });
         targetBOMComponents = bomComponentsMap[stockItemId] || [];
       }
@@ -629,7 +623,8 @@ class ProductionController {
   });
 
   saveRouting = asyncHandler(async (req, res) => {
-    const { stockItemId, operationsJson } = req.body;
+    const stockItemId = req.body.stockItemId || req.body.stokId;
+    const { operationsJson } = req.body;
 
     if (!stockItemId) {
       throw new ValidationError('Lütfen rotası oluşturulacak ürünü seçiniz.');
@@ -649,7 +644,7 @@ class ProductionController {
   });
 
   deleteRouting = asyncHandler(async (req, res) => {
-    const { stockItemId } = req.params;
+    const stockItemId = req.params.stockItemId || req.params.stokId;
     if (!stockItemId) {
       throw new ValidationError('Ürün kimliği gereklidir.');
     }
@@ -684,12 +679,12 @@ class ProductionController {
 
   updateMES = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { completedQuantity, scrapQuantity } = req.body;
+    const { completedQuantity, scrapQuantity, tamamlananMiktar, fireMiktari } = req.body;
 
     await productionService.recordProductionOutput(
       id,
-      parseFloat(completedQuantity) || 0,
-      parseFloat(scrapQuantity) || 0,
+      parseFloat(tamamlananMiktar !== undefined ? tamamlananMiktar : completedQuantity) || 0,
+      parseFloat(fireMiktari !== undefined ? fireMiktari : scrapQuantity) || 0,
       req.user
     );
 

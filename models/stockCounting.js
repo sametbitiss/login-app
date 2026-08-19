@@ -2,44 +2,44 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class StockCounting extends Model {
+  class StokSayimi extends Model {
     static associate(models) {
-      StockCounting.belongsTo(models.Warehouse, { foreignKey: 'warehouseId', as: 'warehouse' });
-      StockCounting.belongsTo(models.User, { foreignKey: 'performedBy', as: 'user' });
+      StokSayimi.belongsTo(models.Depo, { foreignKey: 'depoId', as: 'depo' });
+      StokSayimi.belongsTo(models.Kullanici, { foreignKey: 'yapanKullaniciId', as: 'kullanici' });
     }
   }
 
-  StockCounting.init({
-    countNo: {
+  StokSayimi.init({
+    sayimNo: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    warehouseId: {
+    depoId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    countDate: {
+    sayimTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'Completed' // Draft, In_Progress, Completed, Adjusted
+      defaultValue: 'Completed'
     },
-    notes: {
+    notlar: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    performedBy: {
+    yapanKullaniciId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'StockCounting',
-    tableName: 'StockCountings'
+    modelName: 'StokSayimi',
+    tableName: 'StokSayimlari'
   });
 
-  return StockCounting;
+  return StokSayimi;
 };

@@ -2,64 +2,64 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class CustomerPriceList extends Model {
+  class MusteriFiyatListesi extends Model {
     static associate(models) {
-      CustomerPriceList.belongsTo(models.CustomerAccount, { foreignKey: 'customerId', as: 'customer' });
-      CustomerPriceList.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      CustomerPriceList.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
+      MusteriFiyatListesi.belongsTo(models.MusteriHesabi, { foreignKey: 'musteriId', as: 'musteri' });
+      MusteriFiyatListesi.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      MusteriFiyatListesi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
     }
   }
 
-  CustomerPriceList.init({
-    listName: {
+  MusteriFiyatListesi.init({
+    listeAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    customerId: {
+    musteriId: {
       type: DataTypes.INTEGER,
-      allowNull: true // Null means global special price list
+      allowNull: true
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    specialPrice: {
+    ozelFiyat: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false
     },
-    customDiscountRate: {
+    ozelIskontoOrani: {
       type: DataTypes.DECIMAL(5, 2),
       defaultValue: 0.00
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.STRING,
       defaultValue: 'TRY'
     },
-    validFrom: {
+    gecerlilikBaslangic: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    validUntil: {
+    gecerlilikBitis: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       defaultValue: 'Active'
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'CustomerPriceList',
-    tableName: 'CustomerPriceLists'
+    modelName: 'MusteriFiyatListesi',
+    tableName: 'MusteriFiyatListeleri'
   });
 
-  return CustomerPriceList;
+  return MusteriFiyatListesi;
 };

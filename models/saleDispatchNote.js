@@ -2,109 +2,109 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class SaleDispatchNote extends Model {
+  class SatisIrsaliyesi extends Model {
     static associate(models) {
-      SaleDispatchNote.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      SaleDispatchNote.belongsTo(models.SaleOrder, { foreignKey: 'saleOrderId', as: 'saleOrder' });
-      SaleDispatchNote.belongsTo(models.CustomerAccount, { foreignKey: 'customerId', as: 'customer' });
+      SatisIrsaliyesi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      SatisIrsaliyesi.belongsTo(models.SatisSiparisi, { foreignKey: 'satisSiparisId', as: 'satisSiparisi' });
+      SatisIrsaliyesi.belongsTo(models.MusteriHesabi, { foreignKey: 'musteriId', as: 'musteri' });
     }
   }
 
-  SaleDispatchNote.init({
-    dispatchNo: {
+  SatisIrsaliyesi.init({
+    irsaliyeNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    dispatchType: {
+    irsaliyeTuru: {
       type: DataTypes.STRING,
       defaultValue: 'Satış İrsaliyesi'
     },
-    saleOrderId: {
+    satisSiparisId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    customerId: {
+    musteriId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    customerName: {
+    musteriAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    dispatchDate: {
+    irsaliyeTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    shipmentDate: {
+    sevkiyatTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    exitWarehouse: {
+    cikisDeposu: {
       type: DataTypes.STRING,
       defaultValue: 'Merkez Lojistik Deposu'
     },
-    carrierCompany: {
+    tasiyiciFirma: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    vehiclePlate: {
+    aracPlakasi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    driverName: {
+    surucuAdi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    trackingNo: {
+    takipNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    shippingAddress: {
+    teslimatAdresi: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    deliveryCity: {
+    teslimatSehri: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    deliveryDistrict: {
+    teslimatIlcesi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    recipientPerson: {
+    aliciKisi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    deliveryType: {
+    teslimatTuru: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    projectNo: {
+    projeNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       defaultValue: 'Dispatched'
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    itemsJson: {
+    kalemlerJson: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'SaleDispatchNote',
-    tableName: 'SaleDispatchNotes'
+    modelName: 'SatisIrsaliyesi',
+    tableName: 'SatisIrsaliyeleri'
   });
 
-  return SaleDispatchNote;
+  return SatisIrsaliyesi;
 };

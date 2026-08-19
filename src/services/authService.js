@@ -8,7 +8,7 @@ class AuthService {
       throw new Error('Kullanıcı bulunamadı');
     }
     
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.sifre || user.password);
     if (!isMatch) {
       throw new Error('Hatalı şifre');
     }

@@ -2,109 +2,109 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class ProductionOrder extends Model {
+  class UretimEmri extends Model {
     static associate(models) {
-      ProductionOrder.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      ProductionOrder.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
+      UretimEmri.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      UretimEmri.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
     }
   }
 
-  ProductionOrder.init({
-    workOrderNo: {
+  UretimEmri.init({
+    isEmriNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    productionTitle: {
+    uretimBasligi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    plannedQuantity: {
+    planlananMiktar: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 1
     },
-    completedQuantity: {
+    tamamlananMiktar: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 0
     },
-    scrapQuantity: {
+    fireMiktari: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 0
     },
-    unit: {
+    birim: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Adet'
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Planned', 'Approved', 'In_Production', 'Quality_Check', 'Completed', 'Cancelled'),
       allowNull: false,
       defaultValue: 'Planned'
     },
-    priority: {
+    oncelik: {
       type: DataTypes.ENUM('Low', 'Normal', 'High', 'Urgent'),
       allowNull: false,
       defaultValue: 'Normal'
     },
-    workCenter: {
+    isMerkezi: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'İstasyon-1 (Genel Montaj)'
     },
-    plannedStartDate: {
+    planlananBaslangicTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    plannedEndDate: {
+    planlananBitisTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    actualStartDate: {
+    gerceklesenBaslangicTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    actualEndDate: {
+    gerceklesenBitisTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    estimatedHours: {
+    tahminiSaat: {
       type: DataTypes.DECIMAL(8, 2),
       allowNull: true,
       defaultValue: 0
     },
-    actualHours: {
+    gerceklesenSaat: {
       type: DataTypes.DECIMAL(8, 2),
       allowNull: true,
       defaultValue: 0
     },
-    bomNotes: {
+    receteNotlari: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    productionManager: {
+    uretimYonetici: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'ProductionOrder',
-    tableName: 'ProductionOrders'
+    modelName: 'UretimEmri',
+    tableName: 'UretimEmirleri'
   });
 
-  return ProductionOrder;
+  return UretimEmri;
 };

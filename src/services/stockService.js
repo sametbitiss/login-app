@@ -1,5 +1,6 @@
 const stockRepository = require('../repositories/stockRepository');
 const { ValidationError, NotFoundError } = require('../utils/appError');
+const { StokKarti } = require('../../models');
 
 class StockService {
   async getAllItems(filters = {}) {
@@ -13,16 +14,15 @@ class StockService {
   }
 
   async createItem(data, currentUser, ipAddress) {
-    // Check duplicate stock code
-    const existing = await stockRepository.findByStockCode(data.stockCode);
+    const stokKodu = data.stokKodu || data.stockCode;
+    const existing = await stockRepository.findByStockCode(stokKodu);
     if (existing) {
       throw new ValidationError('Bu stok kodu zaten kullanılmaktadır.');
     }
 
-    // Check duplicate barcode if provided
-    if (data.barcode) {
-      const { StockItem } = require('../../models');
-      const barcodeExists = await StockItem.findOne({ where: { barcode: data.barcode } });
+    const barkod = data.barkod || data.barcode;
+    if (barkod) {
+      const barcodeExists = await StokKarti.findOne({ where: { barkod } });
       if (barcodeExists) {
         throw new ValidationError('Bu barkod numarası zaten kayıtlıdır.');
       }

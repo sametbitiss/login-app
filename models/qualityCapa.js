@@ -2,65 +2,65 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class QualityCapa extends Model {
+  class KaliteDof extends Model {
     static associate(models) {
-      QualityCapa.belongsTo(models.QualityNonConformance, { foreignKey: 'ncrId', as: 'ncr' });
+      KaliteDof.belongsTo(models.KaliteUygunsuzluk, { foreignKey: 'uygunsuzlukId', as: 'uygunsuzluk' });
     }
   }
 
-  QualityCapa.init({
-    capaNo: {
+  KaliteDof.init({
+    dofNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    ncrId: {
+    uygunsuzlukId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    title: {
+    baslik: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    rootCauseMethod: {
+    kokNedenYontemi: {
       type: DataTypes.ENUM('5_Why', 'Ishikawa', 'Pareto', '8D'),
       allowNull: false,
       defaultValue: '5_Why'
     },
-    rootCauseDescription: {
+    kokNedenAciklamasi: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    correctiveAction: {
+    duzelticiFaaliyet: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    preventiveAction: {
+    onleyiciFaaliyet: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    targetDate: {
+    hedefTarih: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Draft', 'In_Progress', 'Verification_Pending', 'Completed'),
       allowNull: false,
       defaultValue: 'In_Progress'
     },
-    assignedTo: {
+    atananKisi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    verifiedBy: {
+    onaylayanKisi: {
       type: DataTypes.STRING,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'QualityCapa',
-    tableName: 'QualityCapas'
+    modelName: 'KaliteDof',
+    tableName: 'KaliteDoflari'
   });
 
-  return QualityCapa;
+  return KaliteDof;
 };

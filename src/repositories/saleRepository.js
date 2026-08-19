@@ -1,4 +1,4 @@
-const { SaleOrder, User, StockItem, sequelize } = require('../../models');
+const { SatisSiparisi, Kullanici, StokKarti, StokHareketi, sequelize } = require('../../models');
 const logService = require('../services/logService');
 const { Op } = require('sequelize');
 
@@ -7,27 +7,27 @@ class SaleRepository {
     const where = {};
 
     if (filters.status) {
-      where.status = filters.status;
+      where.durum = filters.status;
     }
 
     if (filters.paymentTerm) {
-      where.paymentTerm = filters.paymentTerm;
+      where.odemeVadesi = filters.paymentTerm;
     }
 
     if (filters.search) {
       where[Op.or] = [
-        { orderNo: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { customerName: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { customerTaxNo: { [Op.iLike || Op.like]: `%${filters.search}%` } }
+        { siparisNo: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { musteriAdi: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { musteriVergiNo: { [Op.iLike || Op.like]: `%${filters.search}%` } }
       ];
     }
 
-    return await SaleOrder.findAll({
+    return await SatisSiparisi.findAll({
       where,
       order: [['createdAt', 'DESC']],
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit', 'currentStock'] }
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim', 'mevcutStok'] }
       ]
     });
   }
@@ -35,17 +35,17 @@ class SaleRepository {
   async findById(id) {
     const validId = parseInt(id, 10);
     if (!validId || Number.isNaN(validId) || validId <= 0) return null;
-    return await SaleOrder.findByPk(validId, {
+    return await SatisSiparisi.findByPk(validId, {
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
-        { model: StockItem, as: 'stockItem' }
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
+        { model: StokKarti, as: 'stokKarti' }
       ]
     });
   }
 
-  async findByOrderNo(orderNo) {
-    if (!orderNo) return null;
-    return await SaleOrder.findOne({ where: { orderNo } });
+  async findByOrderNo(siparisNo) {
+    if (!siparisNo) return null;
+    return await SatisSiparisi.findOne({ where: { siparisNo } });
   }
 
   async create(data, currentUser = null, ipAddress = null) {
@@ -60,180 +60,197 @@ class SaleRepository {
       return Number.isNaN(n) ? defaultVal : n;
     };
 
-    let customerId = safeInt(data.customerId);
-    let stockItemId = safeInt(data.stockItemId);
+    let musteriId = safeInt(data.musteriId || data.customerId);
+    let stokId = safeInt(data.stokId || data.stockItemId);
 
-    if (!stockItemId || stockItemId <= 0) {
-      const defaultStock = await StockItem.findOne({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
-      stockItemId = defaultStock ? defaultStock.id : 1;
+    if (!stokId || stokId <= 0) {
+      const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+      stokId = defaultStock ? defaultStock.id : 1;
     }
 
-    const quantity = safeFloat(data.quantity, 1);
-    const unitPrice = safeFloat(data.unitPrice, 0);
-    const discountRate = safeFloat(data.discountRate, 0);
-    const taxRate = safeFloat(data.taxRate, 20);
-    const subtotal = safeFloat(data.subtotal, 0);
-    const discountAmount = safeFloat(data.discountAmount, 0);
-    const taxAmount = safeFloat(data.taxAmount, 0);
-    const totalAmount = safeFloat(data.totalAmount, 0);
+    const miktar = safeFloat(data.miktar !== undefined ? data.miktar : data.quantity, 1);
+    const birimFiyat = safeFloat(data.birimFiyat !== undefined ? data.birimFiyat : data.unitPrice, 0);
+    const iskontoOrani = safeFloat(data.iskontoOrani !== undefined ? data.iskontoOrani : data.discountRate, 0);
+    const kdvOrani = safeFloat(data.kdvOrani !== undefined ? data.kdvOrani : data.taxRate, 20);
+    const araToplam = safeFloat(data.araToplam !== undefined ? data.araToplam : data.subtotal, 0);
+    const iskontoTutari = safeFloat(data.iskontoTutari !== undefined ? data.iskontoTutari : data.discountAmount, 0);
+    const kdvTutari = safeFloat(data.kdvTutari !== undefined ? data.kdvTutari : data.taxAmount, 0);
+    const toplamTutar = safeFloat(data.toplamTutar !== undefined ? data.toplamTutar : data.totalAmount, 0);
 
-    const order = await SaleOrder.create({
-      ...data,
-      customerId,
-      stockItemId,
-      quantity,
-      unitPrice,
-      discountRate,
-      taxRate,
-      subtotal,
-      discountAmount,
-      taxAmount,
-      totalAmount,
-      createdBy: currentUser ? currentUser.id : null
-    });
+    const cleanData = {
+      siparisNo: data.siparisNo || data.orderNo,
+      musteriId,
+      musteriAdi: data.musteriAdi || data.customerName,
+      musteriVergiNo: data.musteriVergiNo || data.customerTaxNo,
+      musteriEposta: data.musteriEposta || data.customerEmail,
+      musteriTelefon: data.musteriTelefon || data.customerPhone,
+      siparisTarihi: data.siparisTarihi || data.orderDate || new Date().toISOString().split('T')[0],
+      teslimTarihi: data.teslimTarihi || data.deliveryDate,
+      odemeVadesi: data.odemeVadesi || data.paymentTerm || 'Pesin',
+      durum: data.durum || data.status || 'Pending_Approval',
+      karsilanmaDurumu: data.karsilanmaDurumu || data.fulfillmentStatus || 'Open',
+      onayGerekli: data.onayGerekli !== undefined ? data.onayGerekli : (data.approvalNeeded || false),
+      onayNedeni: data.onayNedeni || data.approvalReason,
+      yoneticiNotlari: data.yoneticiNotlari || data.managerNotes,
+      oncelik: data.oncelik || data.priority || 'Normal',
+      stokId,
+      kalemlerJson: data.kalemlerJson || data.itemsJson,
+      miktar,
+      birimFiyat,
+      iskontoOrani,
+      kdvOrani,
+      araToplam,
+      iskontoTutari,
+      kdvTutari,
+      toplamTutar,
+      paraBirimi: data.paraBirimi || data.currency || 'TRY',
+      teslimatAdresi: data.teslimatAdresi || data.shippingAddress,
+      faturaAdresi: data.faturaAdresi || data.billingAddress,
+      satisTemsilcisi: data.satisTemsilcisi || data.salesRep,
+      notlar: data.notlar || data.notes,
+      olusturanId: currentUser ? currentUser.id : null
+    };
 
-    // Reserve Stock for Order Items
+    const order = await SatisSiparisi.create(cleanData);
+
     let itemsToReserve = [];
-    if (order.itemsJson) {
-      try { itemsToReserve = JSON.parse(order.itemsJson); } catch (e) { itemsToReserve = []; }
+    if (order.kalemlerJson) {
+      try { itemsToReserve = JSON.parse(order.kalemlerJson); } catch (e) { itemsToReserve = []; }
     }
     if (!Array.isArray(itemsToReserve) || itemsToReserve.length === 0) {
-      itemsToReserve = [{ stockItemId: order.stockItemId, quantity: order.quantity }];
+      itemsToReserve = [{ stokId: order.stokId, miktar: order.miktar }];
     }
     for (const it of itemsToReserve) {
-      const sId = parseInt(it.stockItemId, 10);
-      const qty = parseFloat(it.quantity || 0);
+      const sId = parseInt(it.stokId || it.stockItemId, 10);
+      const qty = parseFloat(it.miktar || it.quantity || 0);
       if (sId && sId > 0 && qty > 0) {
-        const item = await StockItem.findByPk(sId);
+        const item = await StokKarti.findByPk(sId);
         if (item) {
-          item.reservedStock = parseFloat(item.reservedStock || 0) + qty;
+          item.rezerveStok = parseFloat(item.rezerveStok || 0) + qty;
           await item.save();
         }
       }
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'SaleOrder',
-      entityId: order.id,
-      details: { orderNo: order.orderNo, customerName: order.customerName, totalAmount: order.totalAmount, currency: order.currency },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'SatisSiparisi',
+      varlikId: order.id,
+      detaylar: { siparisNo: order.siparisNo, musteriAdi: order.musteriAdi, toplamTutar: order.toplamTutar, paraBirimi: order.paraBirimi },
+      ipAdresi: ipAddress
     });
 
     return order;
   }
 
   async update(id, data, currentUser = null, ipAddress = null) {
-    const order = await SaleOrder.findByPk(id);
+    const order = await SatisSiparisi.findByPk(id);
     if (!order) return null;
 
-    const oldData = { status: order.status, totalAmount: order.totalAmount };
+    const oldData = { durum: order.durum, toplamTutar: order.toplamTutar };
     await order.update(data);
 
-    // Release Reserved Stock on Cancellation or Rejection
-    if ((data.status === 'Cancelled' || data.status === 'Rejected') && oldData.status !== 'Cancelled' && oldData.status !== 'Rejected' && oldData.status !== 'Completed') {
+    const newStatus = data.durum || data.status;
+    if ((newStatus === 'Cancelled' || newStatus === 'Rejected') && oldData.durum !== 'Cancelled' && oldData.durum !== 'Rejected' && oldData.durum !== 'Completed') {
       let itemsToRelease = [];
-      if (order.itemsJson) {
-        try { itemsToRelease = JSON.parse(order.itemsJson); } catch (e) { itemsToRelease = []; }
+      if (order.kalemlerJson) {
+        try { itemsToRelease = JSON.parse(order.kalemlerJson); } catch (e) { itemsToRelease = []; }
       }
       if (!Array.isArray(itemsToRelease) || itemsToRelease.length === 0) {
-        itemsToRelease = [{ stockItemId: order.stockItemId, quantity: order.quantity }];
+        itemsToRelease = [{ stokId: order.stokId, miktar: order.miktar }];
       }
       for (const it of itemsToRelease) {
-        const sId = parseInt(it.stockItemId, 10);
-        const qty = parseFloat(it.quantity || 0);
+        const sId = parseInt(it.stokId || it.stockItemId, 10);
+        const qty = parseFloat(it.miktar || it.quantity || 0);
         if (sId && sId > 0 && qty > 0) {
-          const item = await StockItem.findByPk(sId);
+          const item = await StokKarti.findByPk(sId);
           if (item) {
-            const newReserved = parseFloat(item.reservedStock || 0) - qty;
-            item.reservedStock = newReserved < 0 ? 0 : newReserved;
+            const newReserved = parseFloat(item.rezerveStok || 0) - qty;
+            item.rezerveStok = newReserved < 0 ? 0 : newReserved;
             await item.save();
           }
         }
       }
     }
 
-    // Automatic Stock Decrease & Movement Ledger on Completed (Dispatch) Status
-    if (data.status === 'Completed' && oldData.status !== 'Completed') {
-      const item = await StockItem.findByPk(order.stockItemId);
+    if (newStatus === 'Completed' && oldData.durum !== 'Completed') {
+      const item = await StokKarti.findByPk(order.stokId);
       if (item) {
-        const newStock = parseFloat(item.currentStock) - parseFloat(order.quantity);
-        item.currentStock = newStock < 0 ? 0 : newStock;
+        const newStock = parseFloat(item.mevcutStok) - parseFloat(order.miktar);
+        item.mevcutStok = newStock < 0 ? 0 : newStock;
         await item.save();
 
-        const { StockMovement } = require('../../models');
         const moveNo = `SH-${Date.now().toString().slice(-6)}`;
-        await StockMovement.create({
-          movementNo: moveNo,
-          stockItemId: item.id,
-          sourceWarehouseId: 1,
-          movementType: 'Outbound',
-          quantity: order.quantity,
-          unitPrice: order.unitPrice,
-          referenceNo: order.orderNo,
-          notes: `[Depodan Sevk] ${order.orderNo} satış siparişi sevk edildi ve stok düşüldü.`,
-          performedBy: currentUser ? currentUser.id : null
+        await StokHareketi.create({
+          hareketNo: moveNo,
+          stokId: item.id,
+          cikisDepoId: 1,
+          hareketTuru: 'Outbound',
+          miktar: order.miktar,
+          birimFiyat: order.birimFiyat,
+          referansNo: order.siparisNo,
+          notlar: `[Depodan Sevk] ${order.siparisNo} satış siparişi sevk edildi ve stok düşüldü.`,
+          yapanKullaniciId: currentUser ? currentUser.id : null
         });
       }
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'SaleOrder',
-      entityId: order.id,
-      details: { oldData, newData: data },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'SatisSiparisi',
+      varlikId: order.id,
+      detaylar: { oldData, newData: data },
+      ipAdresi: ipAddress
     });
 
     return order;
   }
 
-  async updateStatus(id, status, currentUser = null, ipAddress = null) {
-    return await this.update(id, { status }, currentUser, ipAddress);
+  async updateStatus(id, durum, currentUser = null, ipAddress = null) {
+    return await this.update(id, { durum }, currentUser, ipAddress);
   }
 
   async delete(id, currentUser = null, ipAddress = null) {
-    const order = await SaleOrder.findByPk(id);
+    const order = await SatisSiparisi.findByPk(id);
     if (!order) return false;
 
-    // Release Reserved Stock on Delete if order was active
-    if (order.status !== 'Cancelled' && order.status !== 'Rejected' && order.status !== 'Completed') {
+    if (order.durum !== 'Cancelled' && order.durum !== 'Rejected' && order.durum !== 'Completed') {
       let itemsToRelease = [];
-      if (order.itemsJson) {
-        try { itemsToRelease = JSON.parse(order.itemsJson); } catch (e) { itemsToRelease = []; }
+      if (order.kalemlerJson) {
+        try { itemsToRelease = JSON.parse(order.kalemlerJson); } catch (e) { itemsToRelease = []; }
       }
       if (!Array.isArray(itemsToRelease) || itemsToRelease.length === 0) {
-        itemsToRelease = [{ stockItemId: order.stockItemId, quantity: order.quantity }];
+        itemsToRelease = [{ stokId: order.stokId, miktar: order.miktar }];
       }
       for (const it of itemsToRelease) {
-        const sId = parseInt(it.stockItemId, 10);
-        const qty = parseFloat(it.quantity || 0);
+        const sId = parseInt(it.stokId || it.stockItemId, 10);
+        const qty = parseFloat(it.miktar || it.quantity || 0);
         if (sId && sId > 0 && qty > 0) {
-          const item = await StockItem.findByPk(sId);
+          const item = await StokKarti.findByPk(sId);
           if (item) {
-            const newReserved = parseFloat(item.reservedStock || 0) - qty;
-            item.reservedStock = newReserved < 0 ? 0 : newReserved;
+            const newReserved = parseFloat(item.rezerveStok || 0) - qty;
+            item.rezerveStok = newReserved < 0 ? 0 : newReserved;
             await item.save();
           }
         }
       }
     }
 
-    const deletedCode = order.orderNo;
+    const deletedCode = order.siparisNo;
     await order.destroy();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'DELETE',
-      entity: 'SaleOrder',
-      entityId: id,
-      details: { orderNo: deletedCode },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'DELETE',
+      varlik: 'SatisSiparisi',
+      varlikId: id,
+      detaylar: { siparisNo: deletedCode },
+      ipAdresi: ipAddress
     });
 
     return true;
@@ -242,24 +259,24 @@ class SaleRepository {
   async getNextOrderNo() {
     const year = new Date().getFullYear();
     const prefix = `SAT-${year}-`;
-    const lastOrder = await SaleOrder.findOne({
-      where: { orderNo: { [Op.like]: `${prefix}%` } },
+    const lastOrder = await SatisSiparisi.findOne({
+      where: { siparisNo: { [Op.like]: `${prefix}%` } },
       order: [['id', 'DESC']]
     });
 
     if (!lastOrder) return `${prefix}0001`;
 
-    const parts = lastOrder.orderNo.split('-');
+    const parts = lastOrder.siparisNo.split('-');
     const lastNum = parseInt(parts[parts.length - 1], 10) || 0;
     return `${prefix}${String(lastNum + 1).padStart(4, '0')}`;
   }
 
   async getStats() {
-    const totalOrders = await SaleOrder.count();
-    const pendingOrders = await SaleOrder.count({ where: { status: 'Pending_Approval' } });
-    const completedOrders = await SaleOrder.count({ where: { status: 'Completed' } });
+    const totalOrders = await SatisSiparisi.count();
+    const pendingOrders = await SatisSiparisi.count({ where: { durum: 'Pending_Approval' } });
+    const completedOrders = await SatisSiparisi.count({ where: { durum: 'Completed' } });
 
-    const totalRevenueResult = await SaleOrder.sum('totalAmount', { where: { status: { [Op.ne]: 'Cancelled' } } });
+    const totalRevenueResult = await SatisSiparisi.sum('toplamTutar', { where: { durum: { [Op.ne]: 'Cancelled' } } });
     const totalRevenue = totalRevenueResult || 0;
 
     return { totalOrders, pendingOrders, completedOrders, totalRevenue };

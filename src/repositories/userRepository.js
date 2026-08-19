@@ -1,147 +1,147 @@
-const { User, SystemSetting } = require('../../models');
+const { Kullanici, SistemAyari } = require('../../models');
 const logService = require('../services/logService');
 const bcrypt = require('bcrypt');
 
 class UserRepository {
-  async findByUsername(username) {
-    return await User.findOne({ where: { username } });
+  async findByUsername(kullaniciAdi) {
+    return await Kullanici.findOne({ where: { kullaniciAdi } });
   }
 
   async findAll() {
-    return await User.findAll({
-      attributes: ['id', 'username', 'email', 'firstName', 'lastName', 'phone', 'department', 'title', 'role', 'status', 'createdAt', 'updatedAt'],
+    return await Kullanici.findAll({
+      attributes: ['id', 'kullaniciAdi', 'eposta', 'ad', 'soyad', 'telefon', 'departman', 'unvan', 'rol', 'durum', 'createdAt', 'updatedAt'],
       order: [['id', 'ASC']]
     });
   }
 
   async findById(id) {
-    return await User.findByPk(id);
+    return await Kullanici.findByPk(id);
   }
 
   async create(userData, currentUser = null, ipAddress = null) {
-    const newUser = await User.create(userData);
+    const newUser = await Kullanici.create(userData);
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : newUser.id,
-      username: currentUser ? currentUser.username : newUser.username,
-      action: 'CREATE',
-      entity: 'User',
-      entityId: newUser.id,
-      details: { username: newUser.username, email: newUser.email, role: newUser.role, department: newUser.department, status: newUser.status },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : newUser.id,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : newUser.kullaniciAdi,
+      islem: 'CREATE',
+      varlik: 'Kullanici',
+      varlikId: newUser.id,
+      detaylar: { kullaniciAdi: newUser.kullaniciAdi, eposta: newUser.eposta, rol: newUser.rol, departman: newUser.departman, durum: newUser.durum },
+      ipAdresi: ipAddress
     });
 
     return newUser;
   }
 
   async updateUser(id, updateData, currentUser = null, ipAddress = null) {
-    const user = await User.findByPk(id);
+    const user = await Kullanici.findByPk(id);
     if (!user) return null;
 
     const oldData = {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      department: user.department,
-      title: user.title,
-      role: user.role,
-      status: user.status
+      ad: user.ad,
+      soyad: user.soyad,
+      eposta: user.eposta,
+      telefon: user.telefon,
+      departman: user.departman,
+      unvan: user.unvan,
+      rol: user.rol,
+      durum: user.durum
     };
 
     await user.update(updateData);
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'User',
-      entityId: user.id,
-      details: { oldData, newData: updateData },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'Kullanici',
+      varlikId: user.id,
+      detaylar: { oldData, newData: updateData },
+      ipAdresi: ipAddress
     });
 
     return user;
   }
 
   async updateRole(id, newRole, currentUser = null, ipAddress = null) {
-    const user = await User.findByPk(id);
+    const user = await Kullanici.findByPk(id);
     if (!user) return null;
 
-    const oldRole = user.role;
-    user.role = newRole;
+    const oldRole = user.rol;
+    user.rol = newRole;
     await user.save();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'User',
-      entityId: user.id,
-      details: { field: 'role', oldRole, newRole },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'Kullanici',
+      varlikId: user.id,
+      detaylar: { field: 'rol', oldRole, newRole },
+      ipAdresi: ipAddress
     });
 
     return user;
   }
 
   async toggleStatus(id, newStatus, currentUser = null, ipAddress = null) {
-    const user = await User.findByPk(id);
+    const user = await Kullanici.findByPk(id);
     if (!user) return null;
 
-    const oldStatus = user.status;
-    user.status = newStatus;
+    const oldStatus = user.durum;
+    user.durum = newStatus;
     await user.save();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'User',
-      entityId: user.id,
-      details: { field: 'status', oldStatus, newStatus },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'Kullanici',
+      varlikId: user.id,
+      detaylar: { field: 'durum', oldStatus, newStatus },
+      ipAdresi: ipAddress
     });
 
     return user;
   }
 
   async resetPassword(id, rawPassword, currentUser = null, ipAddress = null) {
-    const user = await User.findByPk(id);
+    const user = await Kullanici.findByPk(id);
     if (!user) return null;
 
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
-    user.password = hashedPassword;
+    user.sifre = hashedPassword;
     await user.save();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'User',
-      entityId: user.id,
-      details: { action: 'Password Reset' },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'Kullanici',
+      varlikId: user.id,
+      detaylar: { action: 'Password Reset' },
+      ipAdresi: ipAddress
     });
 
     return user;
   }
 
   async deleteUser(id, currentUser = null, ipAddress = null) {
-    const user = await User.findByPk(id);
+    const user = await Kullanici.findByPk(id);
     if (!user) return false;
 
-    const deletedUsername = user.username;
+    const deletedUsername = user.kullaniciAdi;
     await user.destroy();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'DELETE',
-      entity: 'User',
-      entityId: id,
-      details: { username: deletedUsername },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'DELETE',
+      varlik: 'Kullanici',
+      varlikId: id,
+      detaylar: { kullaniciAdi: deletedUsername },
+      ipAdresi: ipAddress
     });
 
     return true;
@@ -149,63 +149,63 @@ class UserRepository {
 
   // --- SYSTEM SETTINGS ---
   async getAllSettings() {
-    return await SystemSetting.findAll({ order: [['category', 'ASC'], ['key', 'ASC']] });
+    return await SistemAyari.findAll({ order: [['kategori', 'ASC'], ['anahtar', 'ASC']] });
   }
 
   async updateSettings(settingsData, currentUser = null, ipAddress = null) {
     for (const [key, value] of Object.entries(settingsData)) {
-      const setting = await SystemSetting.findOne({ where: { key } });
+      const setting = await SistemAyari.findOne({ where: { anahtar: key } });
       if (setting) {
-        setting.value = String(value);
+        setting.deger = String(value);
         await setting.save();
       }
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'SystemSetting',
-      entityId: 'All',
-      details: settingsData,
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'SistemAyari',
+      varlikId: 'All',
+      detaylar: settingsData,
+      ipAdresi: ipAddress
     });
   }
 
   async getPermissionMatrix() {
     const { DEFAULT_ROLE_MATRIX } = require('../config/permissionMatrix');
-    const setting = await SystemSetting.findOne({ where: { key: 'role_permission_matrix' } });
-    if (setting && setting.value) {
+    const setting = await SistemAyari.findOne({ where: { anahtar: 'role_permission_matrix' } });
+    if (setting && setting.deger) {
       try {
-        return JSON.parse(setting.value);
+        return JSON.parse(setting.deger);
       } catch (e) {}
     }
     return DEFAULT_ROLE_MATRIX;
   }
 
   async savePermissionMatrix(matrix, currentUser = null, ipAddress = null) {
-    let setting = await SystemSetting.findOne({ where: { key: 'role_permission_matrix' } });
+    let setting = await SistemAyari.findOne({ where: { anahtar: 'role_permission_matrix' } });
     const val = JSON.stringify(matrix);
     if (setting) {
-      setting.value = val;
+      setting.deger = val;
       await setting.save();
     } else {
-      await SystemSetting.create({
-        key: 'role_permission_matrix',
-        value: val,
-        description: 'Rol ve yetki matrisi tanımı',
-        category: 'Security'
+      await SistemAyari.create({
+        anahtar: 'role_permission_matrix',
+        deger: val,
+        aciklama: 'Rol ve yetki matrisi tanımı',
+        kategori: 'Security'
       });
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'SystemSetting',
-      entityId: 'role_permission_matrix',
-      details: { action: 'Updated Role Permission Matrix' },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'SistemAyari',
+      varlikId: 'role_permission_matrix',
+      detaylar: { action: 'Updated Role Permission Matrix' },
+      ipAdresi: ipAddress
     });
   }
 }

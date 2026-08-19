@@ -2,158 +2,158 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class SaleOrder extends Model {
+  class SatisSiparisi extends Model {
     static associate(models) {
-      SaleOrder.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      SaleOrder.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      SaleOrder.belongsTo(models.CustomerAccount, { foreignKey: 'customerId', as: 'customer' });
+      SatisSiparisi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      SatisSiparisi.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      SatisSiparisi.belongsTo(models.MusteriHesabi, { foreignKey: 'musteriId', as: 'musteri' });
     }
   }
 
-  SaleOrder.init({
-    orderNo: {
+  SatisSiparisi.init({
+    siparisNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    customerId: {
+    musteriId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    customerName: {
+    musteriAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    customerTaxNo: {
+    musteriVergiNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    customerEmail: {
+    musteriEposta: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    customerPhone: {
+    musteriTelefon: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    orderDate: {
+    siparisTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
-    deliveryDate: {
+    teslimTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    paymentTerm: {
+    odemeVadesi: {
       type: DataTypes.ENUM('Pesin', 'Vadeli_30', 'Vadeli_60', 'Vadeli_90', 'Kredi_Karti'),
       allowNull: false,
       defaultValue: 'Pesin'
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Pending_Approval', 'Approved', 'Preparing', 'Shipped', 'Completed', 'Cancelled', 'Rejected'),
       allowNull: false,
       defaultValue: 'Pending_Approval'
     },
-    fulfillmentStatus: {
+    karsilanmaDurumu: {
       type: DataTypes.STRING,
       defaultValue: 'Open'
     },
-    approvalNeeded: {
+    onayGerekli: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    approvalReason: {
+    onayNedeni: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    managerNotes: {
+    yoneticiNotlari: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    priority: {
+    oncelik: {
       type: DataTypes.ENUM('Low', 'Normal', 'High', 'Urgent'),
       allowNull: false,
       defaultValue: 'Normal'
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    itemsJson: {
+    kalemlerJson: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    quantity: {
+    miktar: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 1
     },
-    unitPrice: {
+    birimFiyat: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    discountRate: {
+    iskontoOrani: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 0
     },
-    taxRate: {
+    kdvOrani: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 20
     },
-    subtotal: {
+    araToplam: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    discountAmount: {
+    iskontoTutari: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    taxAmount: {
+    kdvTutari: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    totalAmount: {
+    toplamTutar: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.ENUM('TRY', 'USD', 'EUR'),
       allowNull: false,
       defaultValue: 'TRY'
     },
-    shippingAddress: {
+    teslimatAdresi: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    billingAddress: {
+    faturaAdresi: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    salesRep: {
+    satisTemsilcisi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'SaleOrder',
-    tableName: 'SaleOrders'
+    modelName: 'SatisSiparisi',
+    tableName: 'SatisSiparisleri'
   });
 
-  return SaleOrder;
+  return SatisSiparisi;
 };

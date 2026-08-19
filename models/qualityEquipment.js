@@ -2,66 +2,66 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class QualityEquipment extends Model {
+  class KaliteEkipmani extends Model {
     static associate(models) {
       // associations if any
     }
   }
 
-  QualityEquipment.init({
-    equipmentCode: {
+  KaliteEkipmani.init({
+    ekipmanKodu: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    name: {
+    ad: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    category: {
+    kategori: {
       type: DataTypes.ENUM('Dimension', 'Weight', 'Temperature', 'Electrical', 'Pressure'),
       allowNull: false,
       defaultValue: 'Dimension'
     },
-    brandModel: {
+    markaModel: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    serialNo: {
+    seriNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    calibrationPeriodMonths: {
+    kalibrasyonPeriyoduAy: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 12
     },
-    lastCalibrationDate: {
+    sonKalibrasyonTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    nextCalibrationDate: {
+    gelecekKalibrasyonTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Valid', 'Due_Soon', 'Expired', 'In_Maintenance'),
       allowNull: false,
       defaultValue: 'Valid'
     },
-    calibrationLab: {
+    kalibrasyonLaboratuvari: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'QualityEquipment',
-    tableName: 'QualityEquipments'
+    modelName: 'KaliteEkipmani',
+    tableName: 'KaliteEkipmanlari'
   });
 
-  return QualityEquipment;
+  return KaliteEkipmani;
 };

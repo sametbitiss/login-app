@@ -1,37 +1,42 @@
-const { CustomerLedger, CustomerAccount, User } = require('../../models');
+const { MusteriCariHareket, MusteriHesabi, Kullanici } = require('../../models');
 
 class CustomerLedgerRepository {
-  async findByCustomerId(customerId) {
-    return await CustomerLedger.findAll({
-      where: { customerId },
-      include: [{ model: User, as: 'creator', attributes: ['username'] }],
-      order: [['transactionDate', 'ASC'], ['id', 'ASC']]
+  async findByCustomerId(musteriId) {
+    return await MusteriCariHareket.findAll({
+      where: { musteriId },
+      include: [{ model: Kullanici, as: 'olusturan', attributes: ['kullaniciAdi'] }],
+      order: [['islemTarihi', 'ASC'], ['id', 'ASC']]
     });
   }
 
   async addEntry(data, currentUser) {
-    // 1. Calculate new balance for customer
-    const lastEntry = await CustomerLedger.findOne({
-      where: { customerId: data.customerId },
+    const targetCustomerId = data.musteriId || data.customerId;
+    const lastEntry = await MusteriCariHareket.findOne({
+      where: { musteriId: targetCustomerId },
       order: [['id', 'DESC']]
     });
 
-    const previousBalance = lastEntry ? parseFloat(lastEntry.balance) : 0.00;
-    const debit = parseFloat(data.debitAmount) || 0.00;
-    const credit = parseFloat(data.creditAmount) || 0.00;
+    const previousBalance = lastEntry ? parseFloat(lastEntry.bakiye) : 0.00;
+    const debit = parseFloat(data.borcTutari !== undefined ? data.borcTutari : data.debitAmount) || 0.00;
+    const credit = parseFloat(data.alacakTutari !== undefined ? data.alacakTutari : data.creditAmount) || 0.00;
     const newBalance = previousBalance + debit - credit;
 
-    const entry = await CustomerLedger.create({
-      ...data,
-      transactionType: data.transactionType || (debit > 0 ? 'Sale_Invoice' : 'Payment'),
-      balance: newBalance,
-      createdBy: currentUser ? currentUser.id : null
+    const entry = await MusteriCariHareket.create({
+      musteriId: targetCustomerId,
+      islemTarihi: data.islemTarihi || data.transactionDate || new Date().toISOString().split('T')[0],
+      islemTuru: data.islemTuru || data.transactionType || (debit > 0 ? 'Sale_Invoice' : 'Payment'),
+      belgeNo: data.belgeNo || data.documentNo,
+      aciklama: data.aciklama || data.description,
+      borcTutari: debit,
+      alacakTutari: credit,
+      bakiye: newBalance,
+      paraBirimi: data.paraBirimi || data.currency || 'TRY',
+      olusturanId: currentUser ? currentUser.id : null
     });
 
-    // 2. Update current balance in CustomerAccount
-    const customer = await CustomerAccount.findByPk(data.customerId);
+    const customer = await MusteriHesabi.findByPk(targetCustomerId);
     if (customer) {
-      await customer.update({ currentBalance: newBalance });
+      await customer.update({ guncelBakiye: newBalance });
     }
 
     return entry;

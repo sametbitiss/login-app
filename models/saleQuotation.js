@@ -2,111 +2,111 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class SaleQuotation extends Model {
+  class SatisTeklifi extends Model {
     static associate(models) {
-      SaleQuotation.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      SaleQuotation.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      SaleQuotation.belongsTo(models.CustomerAccount, { foreignKey: 'customerId', as: 'customer' });
+      SatisTeklifi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      SatisTeklifi.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      SatisTeklifi.belongsTo(models.MusteriHesabi, { foreignKey: 'musteriId', as: 'musteri' });
     }
   }
 
-  SaleQuotation.init({
-    quotationNo: {
+  SatisTeklifi.init({
+    teklifNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    customerId: {
+    musteriId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    customerName: {
+    musteriAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    quotationDate: {
+    teklifTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    validUntil: {
+    gecerlilikBitis: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    itemsJson: {
+    kalemlerJson: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    quantity: {
+    miktar: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 1.0
     },
-    unitPrice: {
+    birimFiyat: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 0.00
     },
-    discountRate: {
+    iskontoOrani: {
       type: DataTypes.DECIMAL(5, 2),
       defaultValue: 0.00
     },
-    taxRate: {
+    kdvOrani: {
       type: DataTypes.DECIMAL(5, 2),
       defaultValue: 20.00
     },
-    subtotal: {
+    araToplam: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    discountAmount: {
+    iskontoTutari: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    taxAmount: {
+    kdvTutari: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    totalAmount: {
+    toplamTutar: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.STRING,
       defaultValue: 'TRY'
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       defaultValue: 'Draft'
     },
-    approvalNeeded: {
+    onayGerekli: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    approvalReason: {
+    onayNedeni: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    managerNotes: {
+    yoneticiNotlari: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'SaleQuotation',
-    tableName: 'SaleQuotations'
+    modelName: 'SatisTeklifi',
+    tableName: 'SatisTeklifleri'
   });
 
-  return SaleQuotation;
+  return SatisTeklifi;
 };

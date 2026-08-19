@@ -2,47 +2,47 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class StockItem extends Model {
+  class StokKarti extends Model {
     static associate(models) {
-      StockItem.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
+      StokKarti.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
     }
   }
 
-  StockItem.init({
-    stockCode: {
+  StokKarti.init({
+    stokKodu: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    barcode: {
+    barkod: {
       type: DataTypes.STRING,
       allowNull: true,
       unique: true
     },
-    name: {
+    ad: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    description: {
+    aciklama: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    category: {
+    kategori: {
       type: DataTypes.ENUM('Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Ticari_Mal', 'Diger'),
       allowNull: false,
       defaultValue: 'Ticari_Mal'
     },
-    procurementMethod: {
+    tedarikYontemi: {
       type: DataTypes.ENUM('Satın Alma', 'Üretim', 'Purchase', 'Production'),
       allowNull: false,
       defaultValue: 'Satın Alma'
     },
-    unit: {
+    birim: {
       type: DataTypes.ENUM('Adet', 'Kg', 'Lt', 'Mt', 'M2', 'M3', 'Paket', 'Koli', 'Ton', 'Set'),
       allowNull: false,
       defaultValue: 'Adet'
     },
-    brand: {
+    marka: {
       type: DataTypes.STRING,
       allowNull: true
     },
@@ -50,83 +50,83 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
-    currentStock: {
+    mevcutStok: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    reservedStock: {
+    rezerveStok: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    minStock: {
+    minStok: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
       defaultValue: 0
     },
-    maxStock: {
+    maxStok: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true
     },
-    purchasePrice: {
+    alisFiyati: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
       defaultValue: 0
     },
-    salePrice: {
+    satisFiyati: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
       defaultValue: 0
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.ENUM('TRY', 'USD', 'EUR'),
       allowNull: false,
       defaultValue: 'TRY'
     },
-    taxRate: {
+    kdvOrani: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 20.00
     },
-    warehouseLocation: {
+    depoLokasyonu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    supplier: {
+    tedarikci: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    shelfLife: {
+    rafOmru: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    weight: {
+    agirlik: {
       type: DataTypes.DECIMAL(12, 4),
       allowNull: true
     },
-    dimensions: {
+    boyutlar: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Active', 'Passive', 'Discontinued'),
       allowNull: false,
       defaultValue: 'Active'
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'StockItem',
-    tableName: 'StockItems'
+    modelName: 'StokKarti',
+    tableName: 'StokKartlari'
   });
 
-  return StockItem;
+  return StokKarti;
 };

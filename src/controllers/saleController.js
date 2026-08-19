@@ -8,7 +8,7 @@ const priceListRepository = require('../repositories/priceListRepository');
 const exchangeRateRepository = require('../repositories/exchangeRateRepository');
 const customerLedgerRepository = require('../repositories/customerLedgerRepository');
 const asyncHandler = require('../utils/asyncHandler');
-const { StockItem, SaleOrder, SaleQuotation, CustomerAccount, SaleInvoice, SaleDispatchNote, CustomerPriceList, ExchangeRate, CustomerLedger, User } = require('../../models');
+const { StokKarti, SatisSiparisi, SatisTeklifi, MusteriHesabi, SatisFaturasi, SatisIrsaliyesi, MusteriFiyatListesi, DovizKuru, MusteriCariHareket, Kullanici } = require('../../models');
 const { Op, fn, col } = require('sequelize');
 
 class SaleController {
@@ -30,13 +30,13 @@ class SaleController {
 
   renderAddOrder = asyncHandler(async (req, res) => {
     const nextOrderNo = await saleService.getNextOrderNo();
-    const stockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
-      order: [['name', 'ASC']]
+    const stockItems = await StokKarti.findAll({
+      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      order: [['ad', 'ASC']]
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
     const exchangeRates = await exchangeRateRepository.getLatestRates();
-    const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
+    const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
 
     res.render('sales/add', {
       user: req.user,
@@ -64,20 +64,21 @@ class SaleController {
       };
 
       let items = [];
-      if (req.body.itemsJson) {
+      const itemsJson = req.body.itemsJson || req.body.kalemlerJson;
+      if (itemsJson) {
         try {
-          items = typeof req.body.itemsJson === 'string' ? JSON.parse(req.body.itemsJson) : req.body.itemsJson;
+          items = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
         } catch (e) {
           items = [];
         }
       }
 
       if (!Array.isArray(items) || items.length === 0) {
-        const stockItemId = safeInt(req.body.stockItemId);
-        const quantity = safeFloat(req.body.quantity, 1);
-        const unitPrice = safeFloat(req.body.unitPrice, 0);
-        const discountRate = safeFloat(req.body.discountRate, 0);
-        const taxRate = safeFloat(req.body.taxRate, 20);
+        const stockItemId = safeInt(req.body.stokId || req.body.stockItemId);
+        const quantity = safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1);
+        const unitPrice = safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0);
+        const discountRate = safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0);
+        const taxRate = safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20);
 
         const subtotal = quantity * unitPrice;
         const discountAmount = subtotal * (discountRate / 100);
@@ -86,15 +87,15 @@ class SaleController {
         const totalAmount = afterDiscount + taxAmount;
 
         items = [{
-          stockItemId,
-          quantity,
-          unitPrice,
-          discountRate,
-          taxRate,
-          subtotal,
-          discountAmount,
-          taxAmount,
-          totalAmount
+          stokId: stockItemId,
+          miktar: quantity,
+          birimFiyat: unitPrice,
+          iskontoOrani: discountRate,
+          kdvOrani: taxRate,
+          araToplam: subtotal,
+          iskontoTutari: discountAmount,
+          kdvTutari: taxAmount,
+          toplamTutar: totalAmount
         }];
       }
 
@@ -106,10 +107,10 @@ class SaleController {
       const processedItems = [];
 
       for (const item of items) {
-        const qty = safeFloat(item.quantity, 1);
-        const price = safeFloat(item.unitPrice, 0);
-        const disc = safeFloat(item.discountRate, 0);
-        const tax = safeFloat(item.taxRate, 20);
+        const qty = safeFloat(item.miktar !== undefined ? item.miktar : item.quantity, 1);
+        const price = safeFloat(item.birimFiyat !== undefined ? item.birimFiyat : item.unitPrice, 0);
+        const disc = safeFloat(item.iskontoOrani !== undefined ? item.iskontoOrani : item.discountRate, 0);
+        const tax = safeFloat(item.kdvOrani !== undefined ? item.kdvOrani : item.taxRate, 20);
 
         const sub = qty * price;
         const discAmt = sub * (disc / 100);
@@ -124,52 +125,52 @@ class SaleController {
 
         if (disc > maxDiscountRate) maxDiscountRate = disc;
 
-        const itemId = safeInt(item.stockItemId);
-        let itemName = item.name || 'Ürün Kalemi';
-        let stockCode = item.stockCode || '';
+        const itemId = safeInt(item.stokId || item.stockItemId);
+        let itemName = item.ad || item.name || 'Ürün Kalemi';
+        let stockCode = item.stokKodu || item.stockCode || '';
         if (itemId && itemId > 0) {
-          const st = await StockItem.findByPk(itemId);
+          const st = await StokKarti.findByPk(itemId);
           if (st) {
-            itemName = st.name;
-            stockCode = st.stockCode;
+            itemName = st.ad;
+            stockCode = st.stokKodu;
           }
         }
 
         processedItems.push({
-          stockItemId: itemId && itemId > 0 ? itemId : null,
-          stockCode,
-          name: itemName,
-          quantity: qty,
-          unitPrice: price,
-          discountRate: disc,
-          taxRate: tax,
-          subtotal: sub,
-          discountAmount: discAmt,
-          taxAmount: taxAmt,
-          totalAmount: tot
+          stokId: itemId && itemId > 0 ? itemId : null,
+          stokKodu: stockCode,
+          ad: itemName,
+          miktar: qty,
+          birimFiyat: price,
+          iskontoOrani: disc,
+          kdvOrani: tax,
+          araToplam: sub,
+          iskontoTutari: discAmt,
+          kdvTutari: taxAmt,
+          toplamTutar: tot
         });
       }
 
       const primaryItem = processedItems[0] || {};
-      let primaryStockItemId = safeInt(primaryItem.stockItemId);
+      let primaryStockItemId = safeInt(primaryItem.stokId);
       if (!primaryStockItemId || primaryStockItemId <= 0) {
-        const defaultStock = await StockItem.findOne({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
         primaryStockItemId = defaultStock ? defaultStock.id : 1;
       }
-      const customerId = safeInt(req.body.customerId);
+      const customerId = safeInt(req.body.musteriId || req.body.customerId);
 
-      // Customer score & risk validation
       if (customerId) {
         const cust = await customerRepository.findById(customerId);
         if (cust) {
-          const score = cust.customerScore !== undefined ? cust.customerScore : 85;
-          const isBlocked = score < 50 || cust.riskLevel === 'High' || cust.riskLevel === 'Blocked' || cust.riskLevel === 'Critical';
+          const score = cust.musteriSkoru !== undefined ? cust.musteriSkoru : 85;
+          const riskLvl = cust.riskSeviyesi || cust.riskLevel;
+          const isBlocked = score < 50 || riskLvl === 'High' || riskLvl === 'Blocked' || riskLvl === 'Critical';
           if (isBlocked) {
             const nextOrderNo = await saleService.getNextOrderNo();
-            const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
-            const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
+            const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
             return res.render('sales/add', {
               user: req.user,
               nextOrderNo,
@@ -178,21 +179,20 @@ class SaleController {
               exchangeRates,
               priceLists,
               formData: req.body,
-              error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilere yeni sipariş oluşturulamaz!`
+              error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${riskLvl}). Yüksek riskli müşterilere yeni sipariş oluşturulamaz!`
             });
           }
 
-          // Credit limit risk validation (creditLimit - currentBalance)
-          const creditLimit = parseFloat(cust.creditLimit) || 0;
-          const currentBalance = parseFloat(cust.currentBalance) || 0;
+          const creditLimit = parseFloat(cust.krediLimiti || cust.creditLimit) || 0;
+          const currentBalance = parseFloat(cust.guncelBakiye || cust.currentBalance) || 0;
           const availableCredit = creditLimit - currentBalance;
 
           if (creditLimit > 0 && grandTotalAmount > availableCredit) {
             const nextOrderNo = await saleService.getNextOrderNo();
-            const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
-            const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
+            const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
             return res.render('sales/add', {
               user: req.user,
               nextOrderNo,
@@ -207,18 +207,17 @@ class SaleController {
         }
       }
 
-      const customerName = (req.body.customerName && req.body.customerName.trim() !== '') ? req.body.customerName.trim() : 'Genel Müşteri';
-      let rawCurrency = req.body.currency || 'TRY';
+      const customerName = (req.body.musteriAdi || req.body.customerName || '').trim() || 'Genel Müşteri';
+      let rawCurrency = req.body.paraBirimi || req.body.currency || 'TRY';
       let currency = 'TRY';
       if (rawCurrency.includes('USD')) currency = 'USD';
       else if (rawCurrency.includes('EUR')) currency = 'EUR';
 
-      // Check item discounts (>20%) and total amount (>100k TL)
       const highDiscountReasons = [];
       for (const item of processedItems) {
-        if (item.discountRate > 20) {
-          const discountVal = parseFloat(item.discountRate).toLocaleString('tr-TR');
-          highDiscountReasons.push(`${item.name || 'Ürün'} (%${discountVal} iskonto)`);
+        if (item.iskontoOrani > 20) {
+          const discountVal = parseFloat(item.iskontoOrani).toLocaleString('tr-TR');
+          highDiscountReasons.push(`${item.ad || 'Ürün'} (%${discountVal} iskonto)`);
         }
       }
 
@@ -238,7 +237,7 @@ class SaleController {
 
       const status = approvalNeeded ? 'Pending_Approval' : 'Approved';
       const nextOrderNo = await saleService.getNextOrderNo();
-      let rawPaymentTerm = req.body.paymentTerm || 'Pesin';
+      let rawPaymentTerm = req.body.odemeVadesi || req.body.paymentTerm || 'Pesin';
       let paymentTerm = 'Pesin';
       if (rawPaymentTerm.includes('30') || rawPaymentTerm === 'Vadeli_30') paymentTerm = 'Vadeli_30';
       else if (rawPaymentTerm.includes('60') || rawPaymentTerm === 'Vadeli_60') paymentTerm = 'Vadeli_60';
@@ -247,44 +246,44 @@ class SaleController {
       else paymentTerm = 'Pesin';
 
       await saleService.createOrder({
-        orderNo: nextOrderNo,
-        customerId,
-        customerName,
-        customerTaxNo: req.body.customerTaxNo ? req.body.customerTaxNo.trim() : null,
-        customerPhone: req.body.customerPhone ? req.body.customerPhone.trim() : null,
-        orderDate: new Date().toISOString().split('T')[0],
-        deliveryDate: req.body.deliveryDate || null,
-        paymentTerm,
-        status,
-        approvalNeeded,
-        approvalReason,
-        priority: req.body.priority || 'Normal',
-        stockItemId: primaryStockItemId,
-        quantity: safeFloat(primaryItem.quantity, 1),
-        unitPrice: safeFloat(primaryItem.unitPrice, 0),
-        discountRate: maxDiscountRate,
-        taxRate: safeFloat(primaryItem.taxRate, 20),
-        subtotal: grandSubtotal,
-        discountAmount: grandDiscountAmount,
-        taxAmount: grandTaxAmount,
-        totalAmount: grandTotalAmount,
-        currency,
-        itemsJson: JSON.stringify(processedItems),
-        shippingAddress: req.body.shippingAddress || null,
-        billingAddress: req.body.billingAddress || null,
-        salesRep: req.body.salesRep || (req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username),
-        notes: req.body.notes || null
+        siparisNo: nextOrderNo,
+        musteriId: customerId,
+        musteriAdi: customerName,
+        musteriVergiNo: req.body.musteriVergiNo || req.body.customerTaxNo ? (req.body.musteriVergiNo || req.body.customerTaxNo).trim() : null,
+        musteriTelefon: req.body.musteriTelefon || req.body.customerPhone ? (req.body.musteriTelefon || req.body.customerPhone).trim() : null,
+        siparisTarihi: new Date().toISOString().split('T')[0],
+        teslimTarihi: req.body.teslimTarihi || req.body.deliveryDate || null,
+        odemeVadesi: paymentTerm,
+        durum: status,
+        onayGerekli: approvalNeeded,
+        onayNedeni: approvalReason,
+        oncelik: req.body.oncelik || req.body.priority || 'Normal',
+        stokId: primaryStockItemId,
+        miktar: safeFloat(primaryItem.miktar, 1),
+        birimFiyat: safeFloat(primaryItem.birimFiyat, 0),
+        iskontoOrani: maxDiscountRate,
+        kdvOrani: safeFloat(primaryItem.kdvOrani, 20),
+        araToplam: grandSubtotal,
+        iskontoTutari: grandDiscountAmount,
+        kdvTutari: grandTaxAmount,
+        toplamTutar: grandTotalAmount,
+        paraBirimi: currency,
+        kalemlerJson: JSON.stringify(processedItems),
+        teslimatAdresi: req.body.teslimatAdresi || req.body.shippingAddress || null,
+        faturaAdresi: req.body.faturaAdresi || req.body.billingAddress || null,
+        satisTemsilcisi: req.body.satisTemsilcisi || req.body.salesRep || (req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi),
+        notlar: req.body.notlar || req.body.notes || null
       }, req.user, req.ip);
 
       res.redirect('/sales/orders');
     } catch (err) {
       const nextOrderNo = await saleService.getNextOrderNo();
-      const stockItems = await StockItem.findAll({
-        where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }
+      const stockItems = await StokKarti.findAll({
+        where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }
       });
       const customers = await customerRepository.findAll({ status: 'Active' });
       const exchangeRates = await exchangeRateRepository.getLatestRates();
-      const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
+      const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
 
       res.render('sales/add', {
         user: req.user,
@@ -302,9 +301,9 @@ class SaleController {
   renderEditOrder = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const order = await saleService.getOrderById(id);
-    const stockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
-      order: [['name', 'ASC']]
+    const stockItems = await StokKarti.findAll({
+      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      order: [['ad', 'ASC']]
     });
 
     res.render('sales/edit', {
@@ -329,10 +328,10 @@ class SaleController {
         return Number.isNaN(n) ? defaultVal : n;
       };
 
-      const quantity = safeFloat(req.body.quantity, 1);
-      const unitPrice = safeFloat(req.body.unitPrice, 0);
-      const discountRate = safeFloat(req.body.discountRate, 0);
-      const taxRate = safeFloat(req.body.taxRate, 20);
+      const quantity = safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1);
+      const unitPrice = safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0);
+      const discountRate = safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0);
+      const taxRate = safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20);
 
       const subtotal = quantity * unitPrice;
       const discountAmount = subtotal * (discountRate / 100);
@@ -340,41 +339,41 @@ class SaleController {
       const taxAmount = afterDiscount * (taxRate / 100);
       const totalAmount = afterDiscount + taxAmount;
 
-      let stockItemId = safeInt(req.body.stockItemId);
+      let stockItemId = safeInt(req.body.stokId || req.body.stockItemId);
       if (!stockItemId || stockItemId <= 0) {
-        const defaultStock = await StockItem.findOne({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
         stockItemId = defaultStock ? defaultStock.id : 1;
       }
 
       await saleService.updateOrder(id, {
-        customerName: req.body.customerName ? req.body.customerName.trim() : '',
-        customerTaxNo: req.body.customerTaxNo || null,
-        customerEmail: req.body.customerEmail || null,
-        customerPhone: req.body.customerPhone || null,
-        orderDate: req.body.orderDate,
-        paymentTerm: req.body.paymentTerm,
-        status: req.body.status,
-        priority: req.body.priority,
-        stockItemId,
-        quantity,
-        unitPrice,
-        discountRate,
-        taxRate,
-        subtotal,
-        discountAmount,
-        taxAmount,
-        totalAmount,
-        currency: req.body.currency || 'TRY',
-        shippingAddress: req.body.shippingAddress || null,
-        billingAddress: req.body.billingAddress || null,
-        notes: req.body.notes || null
+        musteriAdi: req.body.musteriAdi ? req.body.musteriAdi.trim() : (req.body.customerName ? req.body.customerName.trim() : ''),
+        musteriVergiNo: req.body.musteriVergiNo || req.body.customerTaxNo || null,
+        musteriEposta: req.body.musteriEposta || req.body.customerEmail || null,
+        musteriTelefon: req.body.musteriTelefon || req.body.customerPhone || null,
+        siparisTarihi: req.body.siparisTarihi || req.body.orderDate,
+        odemeVadesi: req.body.odemeVadesi || req.body.paymentTerm,
+        durum: req.body.durum || req.body.status,
+        oncelik: req.body.oncelik || req.body.priority,
+        stokId: stockItemId,
+        miktar: quantity,
+        birimFiyat: unitPrice,
+        iskontoOrani: discountRate,
+        kdvOrani: taxRate,
+        araToplam: subtotal,
+        iskontoTutari: discountAmount,
+        kdvTutari: taxAmount,
+        toplamTutar: totalAmount,
+        paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY',
+        teslimatAdresi: req.body.teslimatAdresi || req.body.shippingAddress || null,
+        faturaAdresi: req.body.faturaAdresi || req.body.billingAddress || null,
+        notlar: req.body.notlar || req.body.notes || null
       }, req.user, req.ip);
 
       res.redirect('/sales/orders');
     } catch (err) {
       const order = await saleService.getOrderById(id);
-      const stockItems = await StockItem.findAll({
-        where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }
+      const stockItems = await StokKarti.findAll({
+        where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }
       });
 
       res.render('sales/edit', {
@@ -389,8 +388,8 @@ class SaleController {
   viewOrder = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const order = await saleService.getOrderById(id);
-    const dispatches = await SaleDispatchNote.findAll({ where: { saleOrderId: id } });
-    const invoices = await SaleInvoice.findAll({ where: { saleOrderId: id } });
+    const dispatches = await SatisIrsaliyesi.findAll({ where: { satisSiparisId: id } });
+    const invoices = await SatisFaturasi.findAll({ where: { satisSiparisId: id } });
 
     res.render('sales/order_view', {
       user: req.user,
@@ -414,13 +413,13 @@ class SaleController {
 
   renderAddQuotation = asyncHandler(async (req, res) => {
     const nextQuotationNo = await quotationRepository.getNextQuotationNo();
-    const stockItems = await StockItem.findAll({
-      where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
-      order: [['name', 'ASC']]
+    const stockItems = await StokKarti.findAll({
+      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      order: [['ad', 'ASC']]
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
     const exchangeRates = await exchangeRateRepository.getLatestRates();
-    const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
+    const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
 
     res.render('sales/quotes_add', {
       user: req.user,
@@ -447,21 +446,21 @@ class SaleController {
       };
 
       let items = [];
-      if (req.body.itemsJson) {
+      const itemsJson = req.body.itemsJson || req.body.kalemlerJson;
+      if (itemsJson) {
         try {
-          items = typeof req.body.itemsJson === 'string' ? JSON.parse(req.body.itemsJson) : req.body.itemsJson;
+          items = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
         } catch (e) {
           items = [];
         }
       }
 
-      // Fallback if items is empty but single item form fields exist
       if (!Array.isArray(items) || items.length === 0) {
-        const stockItemId = safeInt(req.body.stockItemId);
-        const quantity = safeFloat(req.body.quantity, 1);
-        const unitPrice = safeFloat(req.body.unitPrice, 0);
-        const discountRate = safeFloat(req.body.discountRate, 0);
-        const taxRate = safeFloat(req.body.taxRate, 20);
+        const stockItemId = safeInt(req.body.stokId || req.body.stockItemId);
+        const quantity = safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1);
+        const unitPrice = safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0);
+        const discountRate = safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0);
+        const taxRate = safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20);
 
         const subtotal = quantity * unitPrice;
         const discountAmount = subtotal * (discountRate / 100);
@@ -470,19 +469,18 @@ class SaleController {
         const totalAmount = afterDiscount + taxAmount;
 
         items = [{
-          stockItemId,
-          quantity,
-          unitPrice,
-          discountRate,
-          taxRate,
-          subtotal,
-          discountAmount,
-          taxAmount,
-          totalAmount
+          stokId: stockItemId,
+          miktar: quantity,
+          birimFiyat: unitPrice,
+          iskontoOrani: discountRate,
+          kdvOrani: taxRate,
+          araToplam: subtotal,
+          iskontoTutari: discountAmount,
+          kdvTutari: taxAmount,
+          toplamTutar: totalAmount
         }];
       }
 
-      // Calculate grand totals across all items
       let grandSubtotal = 0;
       let grandDiscountAmount = 0;
       let grandTaxAmount = 0;
@@ -491,11 +489,11 @@ class SaleController {
 
       const processedItems = [];
       for (const item of items) {
-        const itemId = safeInt(item.stockItemId);
-        const q = safeFloat(item.quantity, 1);
-        const p = safeFloat(item.unitPrice, 0);
-        const d = safeFloat(item.discountRate, 0);
-        const t = safeFloat(item.taxRate, 20);
+        const itemId = safeInt(item.stokId || item.stockItemId);
+        const q = safeFloat(item.miktar !== undefined ? item.miktar : item.quantity, 1);
+        const p = safeFloat(item.birimFiyat !== undefined ? item.birimFiyat : item.unitPrice, 0);
+        const d = safeFloat(item.iskontoOrani !== undefined ? item.iskontoOrani : item.discountRate, 0);
+        const t = safeFloat(item.kdvOrani !== undefined ? item.kdvOrani : item.taxRate, 20);
 
         const sub = q * p;
         const disc = sub * (d / 100);
@@ -509,51 +507,51 @@ class SaleController {
         grandTotalAmount += tot;
         if (d > maxDiscountRate) maxDiscountRate = d;
 
-        let itemName = item.name || '';
-        let stockCode = item.stockCode || '';
+        let itemName = item.ad || item.name || '';
+        let stockCode = item.stokKodu || item.stockCode || '';
         if (itemId) {
-          const st = await StockItem.findByPk(itemId);
+          const st = await StokKarti.findByPk(itemId);
           if (st) {
-            itemName = st.name;
-            stockCode = st.stockCode;
+            itemName = st.ad;
+            stockCode = st.stokKodu;
           }
         }
 
         processedItems.push({
-          stockItemId: itemId,
-          stockCode,
-          name: itemName,
-          quantity: q,
-          unitPrice: p,
-          discountRate: d,
-          taxRate: t,
-          subtotal: sub,
-          discountAmount: disc,
-          taxAmount: tax,
-          totalAmount: tot
+          stokId: itemId,
+          stokKodu: stockCode,
+          ad: itemName,
+          miktar: q,
+          birimFiyat: p,
+          iskontoOrani: d,
+          kdvOrani: t,
+          araToplam: sub,
+          iskontoTutari: disc,
+          kdvTutari: tax,
+          toplamTutar: tot
         });
       }
 
       const primaryItem = processedItems[0] || {};
-      let primaryStockItemId = safeInt(primaryItem.stockItemId);
+      let primaryStockItemId = safeInt(primaryItem.stokId);
       if (!primaryStockItemId || primaryStockItemId <= 0) {
-        const defaultStock = await StockItem.findOne({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
         primaryStockItemId = defaultStock ? defaultStock.id : 1;
       }
-      const customerId = safeInt(req.body.customerId);
+      const customerId = safeInt(req.body.musteriId || req.body.customerId);
 
-      // Customer score & risk validation
       if (customerId) {
         const cust = await customerRepository.findById(customerId);
         if (cust) {
-          const score = cust.customerScore !== undefined ? cust.customerScore : 85;
-          const isBlocked = score < 50 || cust.riskLevel === 'High' || cust.riskLevel === 'Blocked' || cust.riskLevel === 'Critical';
+          const score = cust.musteriSkoru !== undefined ? cust.musteriSkoru : 85;
+          const riskLvl = cust.riskSeviyesi || cust.riskLevel;
+          const isBlocked = score < 50 || riskLvl === 'High' || riskLvl === 'Blocked' || riskLvl === 'Critical';
           if (isBlocked) {
             const nextQuotationNo = await quotationRepository.getNextQuotationNo();
-            const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
-            const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
+            const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
             return res.render('sales/quotes_add', {
               user: req.user,
               nextQuotationNo,
@@ -562,21 +560,20 @@ class SaleController {
               exchangeRates,
               priceLists,
               formData: req.body,
-              error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilere yeni teklif hazırlanamaz!`
+              error: `⚠️ Seçilen müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${riskLvl}). Yüksek riskli müşterilere yeni teklif hazırlanamaz!`
             });
           }
 
-          // Credit limit risk validation (creditLimit - currentBalance)
-          const creditLimit = parseFloat(cust.creditLimit) || 0;
-          const currentBalance = parseFloat(cust.currentBalance) || 0;
+          const creditLimit = parseFloat(cust.krediLimiti || cust.creditLimit) || 0;
+          const currentBalance = parseFloat(cust.guncelBakiye || cust.currentBalance) || 0;
           const availableCredit = creditLimit - currentBalance;
 
           if (creditLimit > 0 && grandTotalAmount > availableCredit) {
             const nextQuotationNo = await quotationRepository.getNextQuotationNo();
-            const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
-            const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
+            const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
             return res.render('sales/quotes_add', {
               user: req.user,
               nextQuotationNo,
@@ -591,27 +588,23 @@ class SaleController {
         }
       }
 
-      // Ensure validUntil is never empty
       const future = new Date();
       future.setDate(future.getDate() + 15);
       const defaultValidUntil = future.toISOString().split('T')[0];
-      const validUntil = (req.body.validUntil && req.body.validUntil.trim() !== '') ? req.body.validUntil.trim() : defaultValidUntil;
+      const validUntil = (req.body.gecerlilikBitis || req.body.validUntil || '').trim() || defaultValidUntil;
 
-      // Customer name fallback
-      const customerName = (req.body.customerName && req.body.customerName.trim() !== '') ? req.body.customerName.trim() : 'Genel Müşteri';
+      const customerName = (req.body.musteriAdi || req.body.customerName || '').trim() || 'Genel Müşteri';
 
-      // Currency code normalization
-      let rawCurrency = req.body.currency || 'TRY';
+      let rawCurrency = req.body.paraBirimi || req.body.currency || 'TRY';
       let currency = 'TRY';
       if (rawCurrency.includes('USD')) currency = 'USD';
       else if (rawCurrency.includes('EUR')) currency = 'EUR';
 
-      // Check individual item discounts (>20%) and total amount (>100k)
       const highDiscountReasons = [];
       for (const item of processedItems) {
-        if (item.discountRate > 20) {
-          const discountVal = parseFloat(item.discountRate).toLocaleString('tr-TR');
-          highDiscountReasons.push(`${item.name || 'Ürün'} (%${discountVal} iskonto)`);
+        if (item.iskontoOrani > 20) {
+          const discountVal = parseFloat(item.iskontoOrani).toLocaleString('tr-TR');
+          highDiscountReasons.push(`${item.ad || 'Ürün'} (%${discountVal} iskonto)`);
         }
       }
 
@@ -630,35 +623,35 @@ class SaleController {
       }
 
       await quotationRepository.create({
-        quotationNo: req.body.quotationNo,
-        customerId: customerId,
-        customerName: customerName,
-        quotationDate: req.body.quotationDate || new Date().toISOString().split('T')[0],
-        validUntil: validUntil,
-        stockItemId: primaryStockItemId,
-        quantity: safeFloat(primaryItem.quantity, 1),
-        unitPrice: safeFloat(primaryItem.unitPrice, 0),
-        discountRate: maxDiscountRate,
-        taxRate: safeFloat(primaryItem.taxRate, 20),
-        subtotal: grandSubtotal,
-        discountAmount: grandDiscountAmount,
-        taxAmount: grandTaxAmount,
-        totalAmount: grandTotalAmount,
-        currency: currency,
-        approvalNeeded: approvalNeeded,
-        approvalReason: approvalReason,
-        status: approvalNeeded ? 'Pending_Approval' : 'Approved',
-        notes: req.body.notes || null,
-        itemsJson: JSON.stringify(processedItems)
+        teklifNo: req.body.teklifNo || req.body.quotationNo,
+        musteriId: customerId,
+        musteriAdi: customerName,
+        teklifTarihi: req.body.teklifTarihi || req.body.quotationDate || new Date().toISOString().split('T')[0],
+        gecerlilikBitis: validUntil,
+        stokId: primaryStockItemId,
+        miktar: safeFloat(primaryItem.miktar, 1),
+        birimFiyat: safeFloat(primaryItem.birimFiyat, 0),
+        iskontoOrani: maxDiscountRate,
+        kdvOrani: safeFloat(primaryItem.kdvOrani, 20),
+        araToplam: grandSubtotal,
+        iskontoTutari: grandDiscountAmount,
+        kdvTutari: grandTaxAmount,
+        toplamTutar: grandTotalAmount,
+        paraBirimi: currency,
+        onayGerekli: approvalNeeded,
+        onayNedeni: approvalReason,
+        durum: approvalNeeded ? 'Pending_Approval' : 'Approved',
+        notlar: req.body.notlar || req.body.notes || null,
+        kalemlerJson: JSON.stringify(processedItems)
       }, req.user, req.ip);
 
       res.redirect('/sales/quotes');
     } catch (err) {
       const nextQuotationNo = await quotationRepository.getNextQuotationNo();
-      const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+      const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
       const customers = await customerRepository.findAll({ status: 'Active' });
       const exchangeRates = await exchangeRateRepository.getLatestRates();
-      const priceLists = await CustomerPriceList.findAll({ where: { status: 'Active' } });
+      const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
 
       res.render('sales/quotes_add', {
         user: req.user,
@@ -680,9 +673,10 @@ class SaleController {
     }
 
     let parsedItems = [];
-    if (quote.itemsJson) {
+    const itemsJson = quote.kalemlerJson || quote.itemsJson;
+    if (itemsJson) {
       try {
-        parsedItems = JSON.parse(quote.itemsJson);
+        parsedItems = JSON.parse(itemsJson);
       } catch (e) {
         parsedItems = [];
       }
@@ -690,17 +684,17 @@ class SaleController {
 
     if (!parsedItems || parsedItems.length === 0) {
       parsedItems = [{
-        stockItemId: quote.stockItemId,
-        stockCode: quote.stockItem ? quote.stockItem.stockCode : '-',
-        name: quote.stockItem ? quote.stockItem.name : 'Ürün Kalemi',
-        quantity: quote.quantity,
-        unitPrice: quote.unitPrice,
-        discountRate: quote.discountRate,
-        taxRate: quote.taxRate,
-        subtotal: quote.subtotal,
-        discountAmount: quote.discountAmount,
-        taxAmount: quote.taxAmount,
-        totalAmount: quote.totalAmount
+        stokId: quote.stokId,
+        stokKodu: quote.stokKarti ? quote.stokKarti.stokKodu : '-',
+        ad: quote.stokKarti ? quote.stokKarti.ad : 'Ürün Kalemi',
+        miktar: quote.miktar,
+        birimFiyat: quote.birimFiyat,
+        iskontoOrani: quote.iskontoOrani,
+        kdvOrani: quote.kdvOrani,
+        araToplam: quote.araToplam,
+        iskontoTutari: quote.iskontoTutari,
+        kdvTutari: quote.kdvTutari,
+        toplamTutar: quote.toplamTutar
       }];
     }
 
@@ -719,30 +713,30 @@ class SaleController {
       return res.redirect('/sales/quotes');
     }
 
-    if (quote.status !== 'Approved') {
+    if (quote.durum !== 'Approved') {
       return res.render('error', {
         message: 'Bu teklif yönetsel onay beklemektedir veya onaylanmamıştır. Yönetsel Onaylar ekranından onay verilmeden siparişe dönüştürülemez.',
         error: { status: 403 }
       });
     }
 
-    // Customer score & risk check on conversion
-    if (quote.customerId) {
-      const cust = await customerRepository.findById(quote.customerId);
+    if (quote.musteriId) {
+      const cust = await customerRepository.findById(quote.musteriId);
       if (cust) {
-        const score = cust.customerScore !== undefined ? cust.customerScore : 85;
-        const isBlocked = score < 50 || cust.riskLevel === 'High' || cust.riskLevel === 'Blocked' || cust.riskLevel === 'Critical';
+        const score = cust.musteriSkoru !== undefined ? cust.musteriSkoru : 85;
+        const riskLvl = cust.riskSeviyesi || cust.riskLevel;
+        const isBlocked = score < 50 || riskLvl === 'High' || riskLvl === 'Blocked' || riskLvl === 'Critical';
         if (isBlocked) {
           return res.render('error', {
-            message: `⚠️ Müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${cust.riskLevel}). Yüksek riskli müşterilerin teklifi siparişe dönüştürülemez!`,
+            message: `⚠️ Müşterinin skoru yetersizdir (Puan: ${score}/100, Risk: ${riskLvl}). Yüksek riskli müşterilerin teklifi siparişe dönüştürülemez!`,
             error: { status: 403 }
           });
         }
 
-        const creditLimit = parseFloat(cust.creditLimit) || 0;
-        const currentBalance = parseFloat(cust.currentBalance) || 0;
+        const creditLimit = parseFloat(cust.krediLimiti || cust.creditLimit) || 0;
+        const currentBalance = parseFloat(cust.guncelBakiye || cust.currentBalance) || 0;
         const availableCredit = creditLimit - currentBalance;
-        const quoteTotal = parseFloat(quote.totalAmount) || 0;
+        const quoteTotal = parseFloat(quote.toplamTutar) || 0;
 
         if (creditLimit > 0 && quoteTotal > availableCredit) {
           return res.render('error', {
@@ -755,26 +749,26 @@ class SaleController {
 
     const nextOrderNo = await saleService.getNextOrderNo();
     await saleService.createOrder({
-      orderNo: nextOrderNo,
-      customerId: quote.customerId,
-      customerName: quote.customerName,
-      orderDate: new Date().toISOString().split('T')[0],
-      paymentTerm: 'Vadeli_30',
-      status: 'Preparing',
-      priority: 'Normal',
-      stockItemId: quote.stockItemId,
-      quantity: quote.quantity,
-      unitPrice: quote.unitPrice,
-      discountRate: quote.discountRate,
-      taxRate: quote.taxRate,
-      subtotal: quote.subtotal,
-      discountAmount: quote.discountAmount,
-      taxAmount: quote.taxAmount,
-      totalAmount: quote.totalAmount,
-      currency: quote.currency,
-      itemsJson: quote.itemsJson,
-      salesRep: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
-      notes: `[Teklif No: ${quote.quotationNo}] Teklif onaylanarak siparişe dönüştürüldü.`
+      siparisNo: nextOrderNo,
+      musteriId: quote.musteriId,
+      musteriAdi: quote.musteriAdi,
+      siparisTarihi: new Date().toISOString().split('T')[0],
+      odemeVadesi: 'Vadeli_30',
+      durum: 'Preparing',
+      oncelik: 'Normal',
+      stokId: quote.stokId,
+      miktar: quote.miktar,
+      birimFiyat: quote.birimFiyat,
+      iskontoOrani: quote.iskontoOrani,
+      kdvOrani: quote.kdvOrani,
+      araToplam: quote.araToplam,
+      iskontoTutari: quote.iskontoTutari,
+      kdvTutari: quote.kdvTutari,
+      toplamTutar: quote.toplamTutar,
+      paraBirimi: quote.paraBirimi,
+      kalemlerJson: quote.kalemlerJson,
+      satisTemsilcisi: req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi,
+      notlar: `[Teklif No: ${quote.teklifNo}] Teklif onaylanarak siparişe dönüştürüldü.`
     }, req.user, req.ip);
 
     await quotationRepository.updateStatus(id, 'Converted', 'Siparişe dönüştürüldü', req.user, req.ip);
@@ -785,22 +779,21 @@ class SaleController {
   listPriceLists = asyncHandler(async (req, res) => {
     const rawPriceLists = await priceListRepository.findAll();
     const customers = await customerRepository.findAll({ status: 'Active' });
-    const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+    const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
 
-    // Group price lists by customerId
     const groupsMap = new Map();
 
     rawPriceLists.forEach(item => {
-      const custId = item.customerId || 0;
+      const custId = item.musteriId || 0;
       if (!groupsMap.has(custId)) {
         groupsMap.set(custId, {
-          customerId: item.customerId,
-          customerName: item.customer ? item.customer.companyName : 'Tüm Müşteriler (Genel İskonto)',
-          customerCode: item.customer ? item.customer.customerCode : 'GENEL-000',
-          customer: item.customer,
-          listName: item.listName || 'Özel Fiyat Listesi',
-          validFrom: item.validFrom,
-          validUntil: item.validUntil,
+          customerId: item.musteriId,
+          customerName: item.musteri ? item.musteri.firmaAdi : 'Tüm Müşteriler (Genel İskonto)',
+          customerCode: item.musteri ? item.musteri.musteriKodu : 'GENEL-000',
+          customer: item.musteri,
+          listName: item.listeAdi || 'Özel Fiyat Listesi',
+          validFrom: item.gecerlilikBaslangic,
+          validUntil: item.gecerlilikBitis,
           items: []
         });
       }
@@ -822,11 +815,11 @@ class SaleController {
 
   addPriceList = asyncHandler(async (req, res) => {
     try {
-      const listName = req.body.listName || 'Müşteri Özel Fiyat Listesi';
-      const customerId = req.body.customerId ? parseInt(req.body.customerId, 10) : null;
-      const validFrom = req.body.validFrom || null;
-      const validUntil = req.body.validUntil || null;
-      const notes = req.body.notes || null;
+      const listName = req.body.listeAdi || req.body.listName || 'Müşteri Özel Fiyat Listesi';
+      const customerId = req.body.musteriId || req.body.customerId ? parseInt(req.body.musteriId || req.body.customerId, 10) : null;
+      const validFrom = req.body.gecerlilikBaslangic || req.body.validFrom || null;
+      const validUntil = req.body.gecerlilikBitis || req.body.validUntil || null;
+      const notes = req.body.notlar || req.body.notes || null;
 
       const todayStr = new Date().toISOString().split('T')[0];
       if (validFrom && validFrom < todayStr) {
@@ -835,17 +828,19 @@ class SaleController {
 
       let itemsToProcess = [];
 
-      if (req.body.itemsJson) {
-        try { itemsToProcess = JSON.parse(req.body.itemsJson); } catch (e) { itemsToProcess = []; }
+      const rawItemsJson = req.body.itemsJson || req.body.kalemlerJson;
+      if (rawItemsJson) {
+        try { itemsToProcess = JSON.parse(rawItemsJson); } catch (e) { itemsToProcess = []; }
       }
 
       if (!Array.isArray(itemsToProcess) || itemsToProcess.length === 0) {
-        if (req.body.stockItemId) {
+        const sId = parseInt(req.body.stokId || req.body.stockItemId, 10);
+        if (sId) {
           itemsToProcess = [{
-            stockItemId: parseInt(req.body.stockItemId, 10),
-            specialPrice: parseFloat(req.body.specialPrice) || 0,
-            customDiscountRate: parseFloat(req.body.customDiscountRate) || 0,
-            currency: req.body.currency || 'TRY'
+            stokId: sId,
+            ozelFiyat: parseFloat(req.body.ozelFiyat || req.body.specialPrice) || 0,
+            ozelIskontoOrani: parseFloat(req.body.ozelIskontoOrani || req.body.customDiscountRate) || 0,
+            paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY'
           }];
         }
       }
@@ -855,52 +850,52 @@ class SaleController {
       }
 
       for (const it of itemsToProcess) {
-        const stockItemId = parseInt(it.stockItemId, 10);
+        const stockItemId = parseInt(it.stokId || it.stockItemId, 10);
         if (!stockItemId) continue;
 
-        const stockItem = await StockItem.findByPk(stockItemId);
+        const stockItem = await StokKarti.findByPk(stockItemId);
         if (!stockItem) continue;
 
-        const specPrice = parseFloat(it.specialPrice) || 0;
-        const stdPrice = parseFloat(stockItem.salePrice) || 0;
+        const specPrice = parseFloat(it.ozelFiyat !== undefined ? it.ozelFiyat : it.specialPrice) || 0;
+        const stdPrice = parseFloat(stockItem.satisFiyati) || 0;
 
         if (specPrice > stdPrice) {
-          throw new Error(`⚠️ [${stockItem.stockCode}] ${stockItem.name} ürünü için girilen özel fiyat (${specPrice.toLocaleString('tr-TR')} TL), ürünün standart liste satış fiyatından (${stdPrice.toLocaleString('tr-TR')} TL) daha yüksek olamaz!`);
+          throw new Error(`⚠️ [${stockItem.stokKodu}] ${stockItem.ad} ürünü için girilen özel fiyat (${specPrice.toLocaleString('tr-TR')} TL), ürünün standart liste satış fiyatından (${stdPrice.toLocaleString('tr-TR')} TL) daha yüksek olamaz!`);
         }
 
-        const discRate = parseFloat(it.customDiscountRate) || 0;
-        const curr = it.currency || 'TRY';
+        const discRate = parseFloat(it.ozelIskontoOrani !== undefined ? it.ozelIskontoOrani : it.customDiscountRate) || 0;
+        const curr = it.paraBirimi || it.currency || 'TRY';
 
-        const existing = await CustomerPriceList.findOne({
+        const existing = await MusteriFiyatListesi.findOne({
           where: {
-            customerId: customerId,
-            stockItemId: stockItemId
+            musteriId: customerId,
+            stokId: stockItemId
           }
         });
 
         if (existing) {
           await existing.update({
-            listName,
-            specialPrice: specPrice,
-            customDiscountRate: discRate,
-            currency: curr,
-            validFrom,
-            validUntil,
-            notes,
-            status: 'Active'
+            listeAdi: listName,
+            ozelFiyat: specPrice,
+            ozelIskontoOrani: discRate,
+            paraBirimi: curr,
+            gecerlilikBaslangic: validFrom,
+            gecerlilikBitis: validUntil,
+            notlar: notes,
+            durum: 'Active'
           });
         } else {
           await priceListRepository.create({
-            listName,
-            customerId,
-            stockItemId,
-            specialPrice: specPrice,
-            customDiscountRate: discRate,
-            currency: curr,
-            validFrom,
-            validUntil,
-            notes,
-            status: 'Active'
+            listeAdi: listName,
+            musteriId: customerId,
+            stokId: stockItemId,
+            ozelFiyat: specPrice,
+            ozelIskontoOrani: discRate,
+            paraBirimi: curr,
+            gecerlilikBaslangic: validFrom,
+            gecerlilikBitis: validUntil,
+            notlar: notes,
+            durum: 'Active'
           }, req.user);
         }
       }
@@ -909,20 +904,20 @@ class SaleController {
     } catch (err) {
       const rawPriceLists = await priceListRepository.findAll();
       const customers = await customerRepository.findAll({ status: 'Active' });
-      const stockItems = await StockItem.findAll({ where: { status: 'Active', category: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['name', 'ASC']] });
+      const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
 
       const groupsMap = new Map();
       rawPriceLists.forEach(item => {
-        const custId = item.customerId || 0;
+        const custId = item.musteriId || 0;
         if (!groupsMap.has(custId)) {
           groupsMap.set(custId, {
-            customerId: item.customerId,
-            customerName: item.customer ? item.customer.companyName : 'Tüm Müşteriler (Genel İskonto)',
-            customerCode: item.customer ? item.customer.customerCode : 'GENEL-000',
-            customer: item.customer,
-            listName: item.listName || 'Özel Fiyat Listesi',
-            validFrom: item.validFrom,
-            validUntil: item.validUntil,
+            customerId: item.musteriId,
+            customerName: item.musteri ? item.musteri.firmaAdi : 'Tüm Müşteriler (Genel İskonto)',
+            customerCode: item.musteri ? item.musteri.musteriKodu : 'GENEL-000',
+            customer: item.musteri,
+            listName: item.listeAdi || 'Özel Fiyat Listesi',
+            validFrom: item.gecerlilikBaslangic,
+            validUntil: item.gecerlilikBitis,
             items: []
           });
         }
@@ -945,17 +940,15 @@ class SaleController {
     const { customerId } = req.params;
     const targetCustId = customerId === '0' || customerId === 'null' ? null : parseInt(customerId, 10);
 
-    await CustomerPriceList.destroy({ where: { customerId: targetCustId } });
+    await MusteriFiyatListesi.destroy({ where: { musteriId: targetCustId } });
     res.redirect('/sales/price-lists?success=' + encodeURIComponent('✅ Seçilen müşteriye ait özel fiyat tanımları silindi.'));
   });
 
   deletePriceListItem = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    await CustomerPriceList.destroy({ where: { id: parseInt(id, 10) } });
+    await MusteriFiyatListesi.destroy({ where: { id: parseInt(id, 10) } });
     res.redirect('/sales/price-lists?success=' + encodeURIComponent('✅ Özel fiyat ürünü silindi.'));
   });
-
-
 
   // 3. CARİ VE MÜŞTERİ KARTLARI
   listCustomers = asyncHandler(async (req, res) => {
@@ -981,20 +974,20 @@ class SaleController {
   addCustomer = asyncHandler(async (req, res) => {
     try {
       await customerRepository.create({
-        customerCode: req.body.customerCode,
-        companyName: req.body.companyName,
-        taxOffice: req.body.taxOffice || null,
-        taxNo: req.body.taxNo || null,
-        contactPerson: req.body.contactPerson || null,
-        email: req.body.email || null,
-        phone: req.body.phone || null,
-        address: req.body.address || null,
-        city: req.body.city || null,
-        creditLimit: parseFloat(req.body.creditLimit) || 100000.00,
-        paymentTermDays: parseInt(req.body.paymentTermDays, 10) || 30,
-        riskLevel: req.body.riskLevel || 'Low',
-        status: 'Active',
-        notes: req.body.notes || null
+        musteriKodu: req.body.musteriKodu || req.body.customerCode,
+        firmaAdi: req.body.firmaAdi || req.body.companyName,
+        vergiDairesi: req.body.vergiDairesi || req.body.taxOffice || null,
+        vergiNo: req.body.vergiNo || req.body.taxNo || null,
+        ilgiliKisi: req.body.ilgiliKisi || req.body.contactPerson || null,
+        eposta: req.body.eposta || req.body.email || null,
+        telefon: req.body.telefon || req.body.phone || null,
+        adres: req.body.adres || req.body.address || null,
+        sehir: req.body.sehir || req.body.city || null,
+        krediLimiti: parseFloat(req.body.krediLimiti || req.body.creditLimit) || 100000.00,
+        vadeGunu: parseInt(req.body.vadeGunu || req.body.paymentTermDays, 10) || 30,
+        riskSeviyesi: req.body.riskSeviyesi || req.body.riskLevel || 'Low',
+        durum: 'Active',
+        notlar: req.body.notlar || req.body.notes || null
       }, req.user, req.ip);
 
       res.redirect('/sales/customers');
@@ -1014,9 +1007,9 @@ class SaleController {
     if (!customer) return res.redirect('/sales/customers');
 
     const ledgerEntries = await customerLedgerRepository.findByCustomerId(id);
-    const orders = await SaleOrder.findAll({ where: { customerId: id }, order: [['createdAt', 'DESC']] });
-    const quotes = await SaleQuotation.findAll({ where: { customerId: id }, order: [['createdAt', 'DESC']] });
-    const invoices = await SaleInvoice.findAll({ where: { customerId: id }, order: [['createdAt', 'DESC']] });
+    const orders = await SatisSiparisi.findAll({ where: { musteriId: id }, order: [['createdAt', 'DESC']] });
+    const quotes = await SatisTeklifi.findAll({ where: { musteriId: id }, order: [['createdAt', 'DESC']] });
+    const invoices = await SatisFaturasi.findAll({ where: { musteriId: id }, order: [['createdAt', 'DESC']] });
 
     res.render('sales/customer_view', {
       user: req.user,
@@ -1032,17 +1025,17 @@ class SaleController {
   addCustomerLedgerEntry = asyncHandler(async (req, res) => {
     const { id } = req.params;
     try {
-      const type = req.body.type;
-      const amount = parseFloat(req.body.amount) || 0;
+      const type = req.body.islemTuru || req.body.type;
+      const amount = parseFloat(req.body.tutar || req.body.amount) || 0;
 
       await customerLedgerRepository.addEntry({
-        customerId: parseInt(id, 10),
-        transactionDate: req.body.transactionDate || new Date().toISOString().split('T')[0],
-        documentNo: req.body.documentNo || `ISL-${Date.now().toString().slice(-6)}`,
-        description: req.body.description || 'Tahsilat / Manuel Cari İşlem',
-        debitAmount: type === 'Debit' ? amount : 0,
-        creditAmount: type === 'Credit' ? amount : 0,
-        currency: req.body.currency || 'TRY'
+        musteriId: parseInt(id, 10),
+        islemTarihi: req.body.islemTarihi || req.body.transactionDate || new Date().toISOString().split('T')[0],
+        belgeNo: req.body.belgeNo || req.body.documentNo || `ISL-${Date.now().toString().slice(-6)}`,
+        aciklama: req.body.aciklama || req.body.description || 'Tahsilat / Manuel Cari İşlem',
+        borcTutari: type === 'Debit' || type === 'Borc' ? amount : 0,
+        alacakTutari: type === 'Credit' || type === 'Alacak' ? amount : 0,
+        paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY'
       }, req.user);
 
       res.redirect(`/sales/customers/${id}`);
@@ -1052,9 +1045,9 @@ class SaleController {
   });
 
   async getOpenOrdersWithDispatchedMap() {
-    const openOrders = await SaleOrder.findAll({
-      where: { status: { [Op.ne]: 'Completed' } },
-      include: [{ model: StockItem, as: 'stockItem' }],
+    const openOrders = await SatisSiparisi.findAll({
+      where: { durum: { [Op.ne]: 'Completed' } },
+      include: [{ model: StokKarti, as: 'stokKarti' }],
       order: [['createdAt', 'DESC']]
     });
 
@@ -1062,19 +1055,20 @@ class SaleController {
     for (const order of openOrders) {
       const orderPlain = order.get({ plain: true });
 
-      const existingDispatches = await SaleDispatchNote.findAll({
-        where: { saleOrderId: order.id }
+      const existingDispatches = await SatisIrsaliyesi.findAll({
+        where: { satisSiparisId: order.id }
       });
 
       const dispatchedQtyMap = {};
       for (const d of existingDispatches) {
-        if (d.itemsJson) {
+        const rawJson = d.kalemlerJson || d.itemsJson;
+        if (rawJson) {
           try {
-            const dItems = typeof d.itemsJson === 'string' ? JSON.parse(d.itemsJson) : d.itemsJson;
+            const dItems = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson;
             if (Array.isArray(dItems)) {
               dItems.forEach(it => {
-                const sId = String(it.stockItemId || order.stockItemId || '');
-                const q = parseFloat(it.dispatchQuantity || it.quantity || 0);
+                const sId = String(it.stokId || it.stockItemId || order.stokId || '');
+                const q = parseFloat(it.sevkMiktari || it.dispatchQuantity || it.miktar || it.quantity || 0);
                 dispatchedQtyMap[sId] = (dispatchedQtyMap[sId] || 0) + q;
               });
             }
@@ -1107,13 +1101,14 @@ class SaleController {
 
   addDispatch = asyncHandler(async (req, res) => {
     const {
-      saleOrderId, dispatchType, shipmentDate, exitWarehouse, deliveryCity,
-      deliveryDistrict, recipientPerson, deliveryType, projectNo, carrierCompany,
-      vehiclePlate, driverName, notes, itemsJson
+      saleOrderId, satisSiparisId, dispatchType, irsaliyeTuru, shipmentDate, sevkTarihi, exitWarehouse, cikisDeposu, deliveryCity, teslimSehri,
+      deliveryDistrict, teslimIlcesi, recipientPerson, aliciKisi, deliveryType, teslimTuru, projectNo, projeNo, carrierCompany, tasiyiciFirma,
+      vehiclePlate, aracPlakasi, driverName, surucuAdi, notes, notlar, itemsJson, kalemlerJson
     } = req.body;
 
-    const order = await SaleOrder.findByPk(saleOrderId, {
-      include: [{ model: StockItem, as: 'stockItem' }]
+    const targetOrderId = satisSiparisId || saleOrderId;
+    const order = await SatisSiparisi.findByPk(targetOrderId, {
+      include: [{ model: StokKarti, as: 'stokKarti' }]
     });
 
     if (!order) {
@@ -1131,7 +1126,7 @@ class SaleController {
       });
     }
 
-    if (order.status === 'Completed') {
+    if (order.durum === 'Completed') {
       const dispatches = await dispatchRepository.findAll();
       const openOrders = await this.getOpenOrdersWithDispatchedMap();
       const nextDispatchNo = await dispatchRepository.getNextDispatchNo();
@@ -1146,52 +1141,53 @@ class SaleController {
       });
     }
 
-    // Parse itemsJson
     let parsedItems = [];
-    if (itemsJson) {
+    const rawItemsJson = kalemlerJson || itemsJson;
+    if (rawItemsJson) {
       try {
-        parsedItems = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
+        parsedItems = typeof rawItemsJson === 'string' ? JSON.parse(rawItemsJson) : rawItemsJson;
       } catch (e) {
         parsedItems = [];
       }
     }
 
     if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
-      if (order.itemsJson) {
-        try { parsedItems = JSON.parse(order.itemsJson); } catch (e) { parsedItems = []; }
+      const orderItemsJson = order.kalemlerJson || order.itemsJson;
+      if (orderItemsJson) {
+        try { parsedItems = JSON.parse(orderItemsJson); } catch (e) { parsedItems = []; }
       }
       if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
         parsedItems = [{
-          stockItemId: order.stockItemId,
-          stockCode: order.stockItem ? order.stockItem.stockCode : '',
-          name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
-          orderedQuantity: order.quantity,
-          dispatchQuantity: order.quantity,
-          unitPrice: order.unitPrice
+          stokId: order.stokId,
+          stokKodu: order.stokKarti ? order.stokKarti.stokKodu : '',
+          ad: order.stokKarti ? order.stokKarti.ad : 'Ürün Kalemi',
+          siparisMiktari: order.miktar,
+          sevkMiktari: order.miktar,
+          birimFiyat: order.birimFiyat
         }];
       } else {
         parsedItems = parsedItems.map(it => ({
           ...it,
-          orderedQuantity: parseFloat(it.quantity) || 1,
-          dispatchQuantity: parseFloat(it.quantity) || 1
+          siparisMiktari: parseFloat(it.miktar || it.quantity) || 1,
+          sevkMiktari: parseFloat(it.miktar || it.quantity) || 1
         }));
       }
     }
 
-    // Compute cumulative dispatched quantities so far for each item in this order
-    const existingDispatches = await SaleDispatchNote.findAll({
-      where: { saleOrderId: order.id }
+    const existingDispatches = await SatisIrsaliyesi.findAll({
+      where: { satisSiparisId: order.id }
     });
 
     const dispatchedQtyMap = {};
     for (const d of existingDispatches) {
-      if (d.itemsJson) {
+      const dJson = d.kalemlerJson || d.itemsJson;
+      if (dJson) {
         try {
-          const dItems = typeof d.itemsJson === 'string' ? JSON.parse(d.itemsJson) : d.itemsJson;
+          const dItems = typeof dJson === 'string' ? JSON.parse(dJson) : dJson;
           if (Array.isArray(dItems)) {
             dItems.forEach(it => {
-              const sId = String(it.stockItemId || order.stockItemId || '');
-              const q = parseFloat(it.dispatchQuantity || it.quantity || 0);
+              const sId = String(it.stokId || it.stockItemId || order.stokId || '');
+              const q = parseFloat(it.sevkMiktari || it.dispatchQuantity || it.miktar || it.quantity || 0);
               dispatchedQtyMap[sId] = (dispatchedQtyMap[sId] || 0) + q;
             });
           }
@@ -1202,11 +1198,11 @@ class SaleController {
     let totalDispatchedQty = 0;
 
     for (const item of parsedItems) {
-      const sIdKey = String(item.stockItemId || order.stockItemId || '');
-      const orderedQty = parseFloat(item.orderedQuantity || item.quantity) || 0;
+      const sIdKey = String(item.stokId || item.stockItemId || order.stokId || '');
+      const orderedQty = parseFloat(item.siparisMiktari || item.orderedQuantity || item.miktar || item.quantity) || 0;
       const alreadyDispatched = dispatchedQtyMap[sIdKey] || 0;
       const remainingQty = Math.max(0, orderedQty - alreadyDispatched);
-      const dispatchQty = parseFloat(item.dispatchQuantity);
+      const dispatchQty = parseFloat(item.sevkMiktari !== undefined ? item.sevkMiktari : item.dispatchQuantity);
 
       if (isNaN(dispatchQty) || dispatchQty < 0) {
         const dispatches = await dispatchRepository.findAll();
@@ -1219,7 +1215,7 @@ class SaleController {
           openOrders,
           nextDispatchNo,
           nextTrackingNo,
-          error: `⚠️ HATA: "${item.name || 'Ürün'}" için sevk miktarı negatif olamaz!`
+          error: `⚠️ HATA: "${item.ad || item.name || 'Ürün'}" için sevk miktarı negatif olamaz!`
         });
       }
 
@@ -1234,7 +1230,7 @@ class SaleController {
           openOrders,
           nextDispatchNo,
           nextTrackingNo,
-          error: `⚠️ HATA: "${item.name || 'Ürün'}" için sevk edilecek miktar (${dispatchQty} Adet), kalan sevk edilebilir miktarı (${remainingQty} Adet) geçemez!`
+          error: `⚠️ HATA: "${item.ad || item.name || 'Ürün'}" için sevk edilecek miktar (${dispatchQty} Adet), kalan sevk edilebilir miktarı (${remainingQty} Adet) geçemez!`
         });
       }
 
@@ -1260,27 +1256,27 @@ class SaleController {
     const nextTrackingNo = await dispatchRepository.getNextTrackingNo();
 
     await dispatchRepository.create({
-      dispatchNo: nextDispatchNo,
-      dispatchType: dispatchType || 'Satış İrsaliyesi',
-      saleOrderId: order.id,
-      customerId: order.customerId,
-      customerName: order.customerName,
-      dispatchDate: new Date().toISOString().split('T')[0],
-      shipmentDate: shipmentDate || new Date().toISOString().split('T')[0],
-      exitWarehouse: exitWarehouse || 'Merkez Lojistik Deposu',
-      carrierCompany: carrierCompany || null,
-      vehiclePlate: vehiclePlate || null,
-      driverName: driverName || null,
-      trackingNo: nextTrackingNo,
-      shippingAddress: order.shippingAddress || null,
-      deliveryCity: deliveryCity || null,
-      deliveryDistrict: deliveryDistrict || null,
-      recipientPerson: recipientPerson || null,
-      deliveryType: deliveryType || null,
-      projectNo: projectNo || null,
-      status: 'Dispatched',
-      notes: notes || null,
-      itemsJson: JSON.stringify(parsedItems)
+      irsaliyeNo: nextDispatchNo,
+      irsaliyeTuru: irsaliyeTuru || dispatchType || 'Satış İrsaliyesi',
+      satisSiparisId: order.id,
+      musteriId: order.musteriId,
+      musteriAdi: order.musteriAdi,
+      irsaliyeTarihi: new Date().toISOString().split('T')[0],
+      sevkTarihi: sevkTarihi || shipmentDate || new Date().toISOString().split('T')[0],
+      cikisDeposu: cikisDeposu || exitWarehouse || 'Merkez Lojistik Deposu',
+      tasiyiciFirma: tasiyiciFirma || carrierCompany || null,
+      aracPlakasi: aracPlakasi || vehiclePlate || null,
+      surucuAdi: surucuAdi || driverName || null,
+      takipNo: nextTrackingNo,
+      teslimatAdresi: order.teslimatAdresi || null,
+      teslimSehri: teslimSehri || deliveryCity || null,
+      teslimIlcesi: teslimIlcesi || deliveryDistrict || null,
+      aliciKisi: aliciKisi || recipientPerson || null,
+      teslimTuru: teslimTuru || deliveryType || null,
+      projeNo: projeNo || projectNo || null,
+      durum: 'Dispatched',
+      notlar: notlar || notes || null,
+      kalemlerJson: JSON.stringify(parsedItems)
     }, req.user, req.ip);
 
     res.redirect('/sales/dispatches');
@@ -1299,20 +1295,18 @@ class SaleController {
   listInvoices = asyncHandler(async (req, res) => {
     const invoices = await invoiceRepository.findAll();
 
-    // Find all saleOrderIds that already have an invoice
-    const existingInvoices = await SaleInvoice.findAll({
-      attributes: ['saleOrderId'],
-      where: { saleOrderId: { [Op.ne]: null } }
+    const existingInvoices = await SatisFaturasi.findAll({
+      attributes: ['satisSiparisId'],
+      where: { satisSiparisId: { [Op.ne]: null } }
     });
-    const invoicedOrderIds = existingInvoices.map(inv => inv.saleOrderId).filter(id => !!id);
+    const invoicedOrderIds = existingInvoices.map(inv => inv.satisSiparisId).filter(id => !!id);
 
-    // Only load Completed orders that DO NOT have an invoice yet
-    const completedOrders = await SaleOrder.findAll({
+    const completedOrders = await SatisSiparisi.findAll({
       where: {
-        status: 'Completed',
+        durum: 'Completed',
         id: { [Op.notIn]: invoicedOrderIds.length > 0 ? invoicedOrderIds : [0] }
       },
-      include: [{ model: StockItem, as: 'stockItem' }],
+      include: [{ model: StokKarti, as: 'stokKarti' }],
       order: [['createdAt', 'DESC']]
     });
 
@@ -1327,10 +1321,10 @@ class SaleController {
 
   createInvoiceFromOrder = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const order = await SaleOrder.findByPk(id, {
+    const order = await SatisSiparisi.findByPk(id, {
       include: [
-        { model: StockItem, as: 'stockItem' },
-        { model: CustomerAccount, as: 'customer' }
+        { model: StokKarti, as: 'stokKarti' },
+        { model: MusteriHesabi, as: 'musteri' }
       ]
     });
 
@@ -1338,109 +1332,105 @@ class SaleController {
       return res.redirect('/sales/invoices?error=' + encodeURIComponent('⚠️ Sipariş kaydı bulunamadı.'));
     }
 
-    if (order.status !== 'Completed') {
+    if (order.durum !== 'Completed') {
       return res.redirect('/sales/invoices?error=' + encodeURIComponent('⚠️ Yalnızca teslimatı tamamlanmış (Tamamlandı durumundaki) siparişler için satış faturası kesilebilir.'));
     }
 
-    // Double-check if an invoice already exists for this order
-    const existingInvoice = await SaleInvoice.findOne({ where: { saleOrderId: order.id } });
+    const existingInvoice = await SatisFaturasi.findOne({ where: { satisSiparisId: order.id } });
     if (existingInvoice) {
-      return res.redirect('/sales/invoices?error=' + encodeURIComponent(`⚠️ Bu sipariş (${order.orderNo}) için daha önce ${existingInvoice.invoiceNo} numaralı satış faturası kesilmiştir! Tekrar fatura oluşturulamaz.`));
+      return res.redirect('/sales/invoices?error=' + encodeURIComponent(`⚠️ Bu sipariş (${order.siparisNo}) için daha önce ${existingInvoice.faturaNo} numaralı satış faturası kesilmiştir! Tekrar fatura oluşturulamaz.`));
     }
 
-    // Find dispatch note if available
-    const dispatchNote = await SaleDispatchNote.findOne({ where: { saleOrderId: order.id } });
+    const dispatchNote = await SatisIrsaliyesi.findOne({ where: { satisSiparisId: order.id } });
 
     const nextInvoiceNo = await invoiceRepository.getNextInvoiceNo();
 
-    // Read from body if form/modal was submitted, else set rich defaults
-    const invoiceScenario = req.body.invoiceScenario || 'EARSIVFATURA';
-    const invoiceType = req.body.invoiceType || 'SATIS';
-    const paymentType = req.body.paymentType || order.paymentTerm || 'Vadeli';
-    const paymentTermDays = parseInt(req.body.paymentTermDays, 10) || 30;
+    const invoiceScenario = req.body.faturaSenaryosu || req.body.invoiceScenario || 'EARSIVFATURA';
+    const invoiceType = req.body.faturaTuru || req.body.invoiceType || 'SATIS';
+    const paymentType = req.body.odemeTuru || req.body.paymentType || order.odemeVadesi || 'Vadeli';
+    const paymentTermDays = parseInt(req.body.vadeGunu || req.body.paymentTermDays, 10) || 30;
 
-    const invoiceDate = req.body.invoiceDate || new Date().toISOString().split('T')[0];
+    const invoiceDate = req.body.faturaTarihi || req.body.invoiceDate || new Date().toISOString().split('T')[0];
     const now = new Date();
-    const invoiceTime = req.body.invoiceTime || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    const invoiceTime = req.body.faturaSaati || req.body.invoiceTime || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
 
     const dueDateObj = new Date(invoiceDate);
     dueDateObj.setDate(dueDateObj.getDate() + paymentTermDays);
-    const dueDate = req.body.dueDate || dueDateObj.toISOString().split('T')[0];
+    const dueDate = req.body.vadeTarihi || req.body.dueDate || dueDateObj.toISOString().split('T')[0];
 
-    const bankName = req.body.bankName || 'Ziraat Bankası A.Ş. - Maslak Ticari Şubesi';
+    const bankName = req.body.bankaAdi || req.body.bankName || 'Ziraat Bankası A.Ş. - Maslak Ticari Şubesi';
     const ibanNo = req.body.ibanNo || 'TR56 0001 0002 0003 0004 0005 06';
     const ettnNo = req.body.ettnNo || require('crypto').randomUUID();
 
-    // Prepare itemsJson if not present on order
-    let itemsJsonStr = order.itemsJson;
+    let itemsJsonStr = order.kalemlerJson || order.itemsJson;
     if (!itemsJsonStr) {
       itemsJsonStr = JSON.stringify([{
-        stockItemId: order.stockItemId,
-        stockCode: order.stockItem ? order.stockItem.stockCode : 'STK-001',
-        name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
-        quantity: parseFloat(order.quantity) || 1,
-        unit: order.stockItem ? order.stockItem.unit : 'Adet',
-        unitPrice: parseFloat(order.unitPrice) || 0,
-        discountRate: parseFloat(order.discountRate) || 0,
-        discountAmount: parseFloat(order.discountAmount) || 0,
-        taxRate: parseFloat(order.taxRate) || 20,
-        taxAmount: parseFloat(order.taxAmount) || 0,
-        totalAmount: parseFloat(order.totalAmount) || 0
+        stokId: order.stokId,
+        stokKodu: order.stokKarti ? order.stokKarti.stokKodu : 'STK-001',
+        ad: order.stokKarti ? order.stokKarti.ad : 'Ürün Kalemi',
+        miktar: parseFloat(order.miktar) || 1,
+        birim: order.stokKarti ? order.stokKarti.birim : 'Adet',
+        birimFiyat: parseFloat(order.birimFiyat) || 0,
+        iskontoOrani: parseFloat(order.iskontoOrani) || 0,
+        iskontoTutari: parseFloat(order.iskontoTutari) || 0,
+        kdvOrani: parseFloat(order.kdvOrani) || 20,
+        kdvTutari: parseFloat(order.kdvTutari) || 0,
+        toplamTutar: parseFloat(order.toplamTutar) || 0
       }]);
     }
 
     const invoice = await invoiceRepository.create({
-      invoiceNo: nextInvoiceNo,
-      saleOrderId: order.id,
-      dispatchNoteId: dispatchNote ? dispatchNote.id : null,
-      customerId: order.customerId,
-      customerName: order.customerName,
-      customerTaxNo: order.customerTaxNo || (order.customer ? order.customer.taxNo : '1234567890'),
-      customerTaxOffice: order.customer ? order.customer.taxOffice : 'Maslak V.D.',
-      billingAddress: order.billingAddress || (order.customer ? order.customer.address : 'Maslak Mah. Büyükdere Cad. No:100 Şişli / İstanbul'),
-      shippingAddress: order.shippingAddress || (order.customer ? order.customer.address : 'Maslak Mah. Büyükdere Cad. No:100 Şişli / İstanbul'),
-      customerPhone: order.customerPhone || (order.customer ? order.customer.phone : '+90 212 555 0100'),
-      customerEmail: order.customerEmail || (order.customer ? order.customer.email : 'bilgi@musteri.com'),
-      invoiceDate: invoiceDate,
-      invoiceTime: invoiceTime,
-      dueDate: dueDate,
-      invoiceType: invoiceType,
-      invoiceScenario: invoiceScenario,
+      faturaNo: nextInvoiceNo,
+      satisSiparisId: order.id,
+      satisIrsaliyeId: dispatchNote ? dispatchNote.id : null,
+      musteriId: order.musteriId,
+      musteriAdi: order.musteriAdi,
+      musteriVergiNo: order.musteriVergiNo || (order.musteri ? order.musteri.vergiNo : '1234567890'),
+      musteriVergiDairesi: order.musteri ? order.musteri.vergiDairesi : 'Maslak V.D.',
+      faturaAdresi: order.faturaAdresi || (order.musteri ? order.musteri.adres : 'Maslak Mah. Büyükdere Cad. No:100 Şişli / İstanbul'),
+      teslimatAdresi: order.teslimatAdresi || (order.musteri ? order.musteri.adres : 'Maslak Mah. Büyükdere Cad. No:100 Şişli / İstanbul'),
+      musteriTelefon: order.musteriTelefon || (order.musteri ? order.musteri.telefon : '+90 212 555 0100'),
+      musteriEposta: order.musteriEposta || (order.musteri ? order.musteri.eposta : 'bilgi@musteri.com'),
+      faturaTarihi: invoiceDate,
+      faturaSaati: invoiceTime,
+      vadeTarihi: dueDate,
+      faturaTuru: invoiceType,
+      faturaSenaryosu: invoiceScenario,
       ettnNo: ettnNo,
-      orderNo: order.orderNo,
-      orderDate: order.orderDate,
-      dispatchNo: dispatchNote ? dispatchNote.dispatchNo : null,
-      dispatchDate: dispatchNote ? dispatchNote.dispatchDate : null,
-      subtotal: order.subtotal,
-      discountAmount: order.discountAmount,
-      taxAmount: order.taxAmount,
-      totalAmount: order.totalAmount,
-      currency: order.currency || 'TRY',
-      exchangeRate: parseFloat(req.body.exchangeRate) || 1.0000,
-      paymentType: paymentType,
-      paymentTermDays: paymentTermDays,
-      bankName: bankName,
+      siparisNo: order.siparisNo,
+      siparisTarihi: order.siparisTarihi,
+      irsaliyeNo: dispatchNote ? dispatchNote.irsaliyeNo : null,
+      irsaliyeTarihi: dispatchNote ? dispatchNote.irsaliyeTarihi : null,
+      araToplam: order.araToplam,
+      iskontoTutari: order.iskontoTutari,
+      kdvTutari: order.kdvTutari,
+      toplamTutar: order.toplamTutar,
+      paraBirimi: order.paraBirimi || 'TRY',
+      dovizKuru: parseFloat(req.body.dovizKuru || req.body.exchangeRate) || 1.0000,
+      odemeTuru: paymentType,
+      vadeGunu: paymentTermDays,
+      bankaAdi: bankName,
       ibanNo: ibanNo,
-      paymentStatus: 'Unpaid',
-      status: 'Issued',
-      itemsJson: itemsJsonStr,
-      notes: req.body.notes || `[Sipariş No: ${order.orderNo}] numaralı tamamlanan satış siparişi faturaya dönüştürüldü.`
+      odemeDurumu: 'Unpaid',
+      durum: 'Issued',
+      kalemlerJson: itemsJsonStr,
+      notlar: req.body.notlar || req.body.notes || `[Sipariş No: ${order.siparisNo}] numaralı tamamlanan satış siparişi faturaya dönüştürüldü.`
     }, req.user, req.ip);
 
-    if (order.customerId) {
+    if (order.musteriId) {
       await customerLedgerRepository.addEntry({
-        customerId: order.customerId,
-        transactionDate: invoice.invoiceDate,
-        transactionType: 'Sale_Invoice',
-        documentNo: invoice.invoiceNo,
-        description: `[Satış Faturası] ${invoice.invoiceNo} no'lu fatura kaydı`,
-        debitAmount: invoice.totalAmount,
-        creditAmount: 0,
-        currency: invoice.currency
+        musteriId: order.musteriId,
+        islemTarihi: invoice.faturaTarihi,
+        islemTuru: 'Sale_Invoice',
+        belgeNo: invoice.faturaNo,
+        aciklama: `[Satış Faturası] ${invoice.faturaNo} no'lu fatura kaydı`,
+        borcTutari: invoice.toplamTutar,
+        alacakTutari: 0,
+        paraBirimi: invoice.paraBirimi
       }, req.user);
     }
 
-    res.redirect('/sales/invoices?success=' + encodeURIComponent(`✅ ${invoice.invoiceNo} numaralı satış faturası başarıyla oluşturuldu ve cari borç bakiyesine işlendi.`));
+    res.redirect('/sales/invoices?success=' + encodeURIComponent(`✅ ${invoice.faturaNo} numaralı satış faturası başarıyla oluşturuldu ve cari borç bakiyesine işlendi.`));
   });
 
   viewInvoice = asyncHandler(async (req, res) => {
@@ -1454,13 +1444,13 @@ class SaleController {
 
   // 6. ONAY MEKANİZMALARI
   listApprovals = asyncHandler(async (req, res) => {
-    const pendingQuotes = await SaleQuotation.findAll({
-      where: { status: 'Pending_Approval' },
-      include: [{ model: StockItem, as: 'stockItem' }]
+    const pendingQuotes = await SatisTeklifi.findAll({
+      where: { durum: 'Pending_Approval' },
+      include: [{ model: StokKarti, as: 'stokKarti' }]
     });
-    const pendingOrders = await SaleOrder.findAll({
-      where: { status: 'Pending_Approval' },
-      include: [{ model: StockItem, as: 'stockItem' }]
+    const pendingOrders = await SatisSiparisi.findAll({
+      where: { durum: 'Pending_Approval' },
+      include: [{ model: StokKarti, as: 'stokKarti' }]
     });
 
     res.render('sales/approvals', {
@@ -1472,14 +1462,15 @@ class SaleController {
 
   approveOrderOrQuote = asyncHandler(async (req, res) => {
     const { type, id } = req.params;
-    const { action, managerNotes } = req.body;
+    const { action, managerNotes, yoneticiNotlari } = req.body;
+    const noteVal = yoneticiNotlari || managerNotes;
 
     if (type === 'quote') {
       const status = action === 'approve' ? 'Approved' : 'Rejected';
-      await quotationRepository.updateStatus(id, status, managerNotes, req.user, req.ip);
+      await quotationRepository.updateStatus(id, status, noteVal, req.user, req.ip);
     } else if (type === 'order') {
       const status = action === 'approve' ? 'Approved' : 'Rejected';
-      await saleService.updateOrder(id, { status, managerNotes }, req.user, req.ip);
+      await saleService.updateOrder(id, { durum: status, yoneticiNotlari: noteVal }, req.user, req.ip);
     }
 
     res.redirect('/sales/approvals');
@@ -1489,10 +1480,10 @@ class SaleController {
   showAnalytics = asyncHandler(async (req, res) => {
     let totalOrders = 0, completedOrders = 0, pendingOrders = 0, totalRevenue = 0;
     try {
-      totalOrders = (await SaleOrder.count()) || 0;
-      completedOrders = (await SaleOrder.count({ where: { status: 'Completed' } })) || 0;
-      pendingOrders = (await SaleOrder.count({ where: { status: 'Pending_Approval' } })) || 0;
-      const revenueResult = await SaleOrder.sum('totalAmount', { where: { status: { [Op.ne]: 'Cancelled' } } });
+      totalOrders = (await SatisSiparisi.count()) || 0;
+      completedOrders = (await SatisSiparisi.count({ where: { durum: 'Completed' } })) || 0;
+      pendingOrders = (await SatisSiparisi.count({ where: { durum: 'Pending_Approval' } })) || 0;
+      const revenueResult = await SatisSiparisi.sum('toplamTutar', { where: { durum: { [Op.ne]: 'Cancelled' } } });
       totalRevenue = parseFloat(revenueResult || 0);
     } catch (e) {
       console.error('Analytics count error:', e);
@@ -1500,14 +1491,14 @@ class SaleController {
 
     let salesRepData = [];
     try {
-      salesRepData = await SaleOrder.findAll({
+      salesRepData = await SatisSiparisi.findAll({
         attributes: [
-          'salesRep',
-          [fn('SUM', col('totalAmount')), 'totalRevenue'],
+          'satisTemsilcisi',
+          [fn('SUM', col('toplamTutar')), 'totalRevenue'],
           [fn('COUNT', col('id')), 'orderCount']
         ],
-        where: { status: { [Op.ne]: 'Cancelled' } },
-        group: ['salesRep'],
+        where: { durum: { [Op.ne]: 'Cancelled' } },
+        group: ['satisTemsilcisi'],
         raw: true
       });
     } catch (e) {
@@ -1516,9 +1507,9 @@ class SaleController {
 
     let ordersWithItems = [];
     try {
-      ordersWithItems = await SaleOrder.findAll({
-        where: { status: { [Op.ne]: 'Cancelled' } },
-        include: [{ model: StockItem, as: 'stockItem' }]
+      ordersWithItems = await SatisSiparisi.findAll({
+        where: { durum: { [Op.ne]: 'Cancelled' } },
+        include: [{ model: StokKarti, as: 'stokKarti' }]
       });
     } catch (e) {
       console.error('Analytics ordersWithItems error:', e);
@@ -1528,17 +1519,17 @@ class SaleController {
     const productStatsMap = {};
 
     ordersWithItems.forEach(o => {
-      const purchasePrice = o.stockItem ? parseFloat(o.stockItem.purchasePrice || 0) : 0;
-      const qty = parseFloat(o.quantity || 0);
+      const purchasePrice = o.stokKarti ? parseFloat(o.stokKarti.alisFiyati || 0) : 0;
+      const qty = parseFloat(o.miktar || 0);
       const orderCost = qty * purchasePrice;
       totalCost += orderCost;
 
-      const itemName = o.stockItem ? o.stockItem.name : 'Diğer Ürün';
+      const itemName = o.stokKarti ? o.stokKarti.ad : 'Diğer Ürün';
       if (!productStatsMap[itemName]) {
         productStatsMap[itemName] = { quantity: 0, revenue: 0 };
       }
       productStatsMap[itemName].quantity += qty;
-      productStatsMap[itemName].revenue += parseFloat(o.totalAmount || 0);
+      productStatsMap[itemName].revenue += parseFloat(o.toplamTutar || 0);
     });
 
     const grossProfit = totalRevenue - totalCost;
@@ -1551,8 +1542,8 @@ class SaleController {
 
     let recentOrders = [];
     try {
-      recentOrders = await SaleOrder.findAll({
-        include: [{ model: StockItem, as: 'stockItem' }],
+      recentOrders = await SatisSiparisi.findAll({
+        include: [{ model: StokKarti, as: 'stokKarti' }],
         limit: 10,
         order: [['createdAt', 'DESC']]
       });
@@ -1577,7 +1568,8 @@ class SaleController {
 
   // 8. DYNAMIC API LOOKUPS
   apiGetCustomerPrice = asyncHandler(async (req, res) => {
-    const { customerId, stockItemId } = req.query;
+    const customerId = req.query.customerId || req.query.musteriId;
+    const stockItemId = req.query.stockItemId || req.query.stokId;
     let specialPrice = null;
     let customDiscountRate = 0;
     let currency = 'TRY';
@@ -1585,27 +1577,27 @@ class SaleController {
     if (customerId && stockItemId) {
       const pList = await priceListRepository.findCustomerSpecialPrice(customerId, stockItemId);
       if (pList) {
-        specialPrice = pList.specialPrice;
-        customDiscountRate = pList.customDiscountRate;
-        currency = pList.currency;
+        specialPrice = pList.ozelFiyat !== undefined ? pList.ozelFiyat : pList.specialPrice;
+        customDiscountRate = pList.ozelIskontoOrani !== undefined ? pList.ozelIskontoOrani : pList.customDiscountRate;
+        currency = pList.paraBirimi || pList.currency || 'TRY';
       }
     }
 
-    const stockItem = stockItemId ? await StockItem.findByPk(stockItemId) : null;
+    const stockItem = stockItemId ? await StokKarti.findByPk(stockItemId) : null;
 
     res.json({
       success: true,
       hasSpecialPrice: specialPrice !== null,
-      specialPrice: specialPrice !== null ? parseFloat(specialPrice) : (stockItem ? parseFloat(stockItem.salePrice) : 0),
-      standardPrice: stockItem ? parseFloat(stockItem.salePrice) : 0,
+      specialPrice: specialPrice !== null ? parseFloat(specialPrice) : (stockItem ? parseFloat(stockItem.satisFiyati) : 0),
+      standardPrice: stockItem ? parseFloat(stockItem.satisFiyati) : 0,
       customDiscountRate: parseFloat(customDiscountRate),
       currency: currency || 'TRY'
     });
   });
 
   apiGetStockInfo = asyncHandler(async (req, res) => {
-    const { stockItemId } = req.params;
-    const item = await StockItem.findByPk(stockItemId);
+    const stockItemId = req.params.stockItemId || req.params.stokId;
+    const item = await StokKarti.findByPk(stockItemId);
 
     if (!item) {
       return res.status(404).json({ success: false, message: 'Stok kartı bulunamadı.' });
@@ -1614,14 +1606,21 @@ class SaleController {
     res.json({
       success: true,
       id: item.id,
-      stockCode: item.stockCode,
-      name: item.name,
-      unit: item.unit,
-      currentStock: parseFloat(item.currentStock),
-      minStockLevel: parseFloat(item.minStockLevel || 0),
-      salePrice: parseFloat(item.salePrice),
-      vatRate: parseFloat(item.vatRate || 20),
-      isLowStock: parseFloat(item.currentStock) <= parseFloat(item.minStockLevel || 0)
+      stokKodu: item.stokKodu,
+      stockCode: item.stokKodu,
+      ad: item.ad,
+      name: item.ad,
+      birim: item.birim,
+      unit: item.birim,
+      mevcutStok: parseFloat(item.mevcutStok),
+      currentStock: parseFloat(item.mevcutStok),
+      asgariStok: parseFloat(item.asgariStok || 0),
+      minStockLevel: parseFloat(item.asgariStok || 0),
+      satisFiyati: parseFloat(item.satisFiyati),
+      salePrice: parseFloat(item.satisFiyati),
+      kdvOrani: parseFloat(item.kdvOrani || 20),
+      vatRate: parseFloat(item.kdvOrani || 20),
+      isLowStock: parseFloat(item.mevcutStok) <= parseFloat(item.asgariStok || 0)
     });
   });
 }

@@ -1,11 +1,12 @@
 const {
-  StockItem,
-  Warehouse,
-  StockLocation,
-  StockLot,
-  StockMovement,
-  StockCounting,
-  User,
+  StokKarti,
+  Depo,
+  StokLokasyonu,
+  StokPartisi,
+  StokHareketi,
+  StokSayimi,
+  Kullanici,
+  UretimEmri,
   sequelize
 } = require('../../models');
 const logService = require('../services/logService');
@@ -19,50 +20,50 @@ class StockRepository {
     const validStatuses = ['Active', 'Passive', 'Discontinued'];
 
     if (filters.status && validStatuses.includes(filters.status)) {
-      where.status = filters.status;
+      where.durum = filters.status;
     }
 
     if (filters.category) {
       if (validCategories.includes(filters.category)) {
-        where.category = filters.category;
+        where.kategori = filters.category;
       } else {
         const alt = filters.category === 'Yarı_Mamul' ? 'Yari_Mamul' : filters.category === 'Yari_Mamul' ? 'Yarı_Mamul' : null;
         if (alt && validCategories.includes(alt)) {
-          where.category = alt;
+          where.kategori = alt;
         }
       }
     }
 
     if (filters.search) {
       where[Op.or] = [
-        { name: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { stockCode: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { barcode: { [Op.iLike || Op.like]: `%${filters.search}%` } }
+        { ad: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { stokKodu: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { barkod: { [Op.iLike || Op.like]: `%${filters.search}%` } }
       ];
     }
 
-    return await StockItem.findAll({
+    return await StokKarti.findAll({
       where,
       order: [['createdAt', 'DESC']],
-      include: [{ model: User, as: 'creator', attributes: ['id', 'username'] }]
+      include: [{ model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi'] }]
     });
   }
 
   async findById(id) {
     const validId = parseInt(id, 10);
     if (!validId || Number.isNaN(validId) || validId <= 0) return null;
-    return await StockItem.findByPk(validId, {
-      include: [{ model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }]
+    return await StokKarti.findByPk(validId, {
+      include: [{ model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }]
     });
   }
 
-  async findByStockCode(stockCode) {
-    return await StockItem.findOne({ where: { stockCode } });
+  async findByStockCode(stokKodu) {
+    return await StokKarti.findOne({ where: { stokKodu } });
   }
 
   async create(data, currentUser = null, ipAddress = null) {
-    const targetCategory = data.category || 'Ticari_Mal';
-    let targetProcurementMethod = data.procurementMethod;
+    const targetCategory = data.kategori || data.category || 'Ticari_Mal';
+    let targetProcurementMethod = data.tedarikYontemi || data.procurementMethod;
 
     if (['Hammadde', 'Ticari_Mal', 'Ticari Mal'].includes(targetCategory)) {
       targetProcurementMethod = 'Satın Alma';
@@ -73,54 +74,54 @@ class StockRepository {
     }
 
     const cleanData = {
-      ...data,
-      barcode: (data.barcode && data.barcode.trim()) ? data.barcode.trim() : null,
-      category: targetCategory,
-      procurementMethod: targetProcurementMethod,
-      unit: data.unit || 'Adet',
-      currency: data.currency || 'TRY',
-      currentStock: (data.currentStock !== undefined && data.currentStock !== '' && !isNaN(parseFloat(data.currentStock))) ? parseFloat(data.currentStock) : 0,
-      minStock: (data.minStock !== undefined && data.minStock !== '' && !isNaN(parseFloat(data.minStock))) ? parseFloat(data.minStock) : 0,
-      maxStock: (data.maxStock !== undefined && data.maxStock !== '' && !isNaN(parseFloat(data.maxStock))) ? parseFloat(data.maxStock) : null,
-      purchasePrice: (data.purchasePrice !== undefined && data.purchasePrice !== '' && !isNaN(parseFloat(data.purchasePrice))) ? parseFloat(data.purchasePrice) : 0,
-      salePrice: (data.salePrice !== undefined && data.salePrice !== '' && !isNaN(parseFloat(data.salePrice))) ? parseFloat(data.salePrice) : 0,
-      taxRate: (data.taxRate !== undefined && data.taxRate !== '' && !isNaN(parseFloat(data.taxRate))) ? parseFloat(data.taxRate) : 20,
-      shelfLife: (data.shelfLife !== undefined && data.shelfLife !== '' && !isNaN(parseInt(data.shelfLife, 10))) ? parseInt(data.shelfLife, 10) : null,
-      weight: (data.weight !== undefined && data.weight !== '' && !isNaN(parseFloat(data.weight))) ? parseFloat(data.weight) : null,
-      dimensions: (data.dimensions && data.dimensions.trim()) ? data.dimensions.trim() : null,
-      brand: (data.brand && data.brand.trim()) ? data.brand.trim() : null,
-      model: (data.model && data.model.trim()) ? data.model.trim() : null,
-      warehouseLocation: (data.warehouseLocation && data.warehouseLocation.trim()) ? data.warehouseLocation.trim() : null,
-      supplier: (data.supplier && data.supplier.trim()) ? data.supplier.trim() : null,
-      notes: (data.notes && data.notes.trim()) ? data.notes.trim() : null,
-      createdBy: currentUser ? currentUser.id : null
+      stokKodu: data.stokKodu || data.stockCode,
+      barkod: ((data.barkod || data.barcode) && (data.barkod || data.barcode).trim()) ? (data.barkod || data.barcode).trim() : null,
+      ad: data.ad || data.name,
+      aciklama: data.aciklama || data.description,
+      kategori: targetCategory,
+      tedarikYontemi: targetProcurementMethod,
+      birim: data.birim || data.unit || 'Adet',
+      paraBirimi: data.paraBirimi || data.currency || 'TRY',
+      mevcutStok: ((data.mevcutStok || data.currentStock) !== undefined && (data.mevcutStok || data.currentStock) !== '' && !isNaN(parseFloat(data.mevcutStok || data.currentStock))) ? parseFloat(data.mevcutStok || data.currentStock) : 0,
+      minStok: ((data.minStok || data.minStock) !== undefined && (data.minStok || data.minStock) !== '' && !isNaN(parseFloat(data.minStok || data.minStock))) ? parseFloat(data.minStok || data.minStock) : 0,
+      maxStok: ((data.maxStok || data.maxStock) !== undefined && (data.maxStok || data.maxStock) !== '' && !isNaN(parseFloat(data.maxStok || data.maxStock))) ? parseFloat(data.maxStok || data.maxStock) : null,
+      alisFiyati: ((data.alisFiyati || data.purchasePrice) !== undefined && (data.alisFiyati || data.purchasePrice) !== '' && !isNaN(parseFloat(data.alisFiyati || data.purchasePrice))) ? parseFloat(data.alisFiyati || data.purchasePrice) : 0,
+      satisFiyati: ((data.satisFiyati || data.salePrice) !== undefined && (data.satisFiyati || data.salePrice) !== '' && !isNaN(parseFloat(data.satisFiyati || data.salePrice))) ? parseFloat(data.satisFiyati || data.salePrice) : 0,
+      kdvOrani: ((data.kdvOrani || data.taxRate) !== undefined && (data.kdvOrani || data.taxRate) !== '' && !isNaN(parseFloat(data.kdvOrani || data.taxRate))) ? parseFloat(data.kdvOrani || data.taxRate) : 20,
+      rafOmru: ((data.rafOmru || data.shelfLife) !== undefined && (data.rafOmru || data.shelfLife) !== '' && !isNaN(parseInt(data.rafOmru || data.shelfLife, 10))) ? parseInt(data.rafOmru || data.shelfLife, 10) : null,
+      agirlik: ((data.agirlik || data.weight) !== undefined && (data.agirlik || data.weight) !== '' && !isNaN(parseFloat(data.agirlik || data.weight))) ? parseFloat(data.agirlik || data.weight) : null,
+      boyutlar: ((data.boyutlar || data.dimensions) && (data.boyutlar || data.dimensions).trim()) ? (data.boyutlar || data.dimensions).trim() : null,
+      marka: ((data.marka || data.brand) && (data.marka || data.brand).trim()) ? (data.marka || data.brand).trim() : null,
+      model: ((data.model) && data.model.trim()) ? data.model.trim() : null,
+      depoLokasyonu: ((data.depoLokasyonu || data.warehouseLocation) && (data.depoLokasyonu || data.warehouseLocation).trim()) ? (data.depoLokasyonu || data.warehouseLocation).trim() : null,
+      tedarikci: ((data.tedarikci || data.supplier) && (data.tedarikci || data.supplier).trim()) ? (data.tedarikci || data.supplier).trim() : null,
+      notlar: ((data.notlar || data.notes) && (data.notlar || data.notes).trim()) ? (data.notlar || data.notes).trim() : null,
+      olusturanId: currentUser ? currentUser.id : null
     };
 
-    const item = await StockItem.create(cleanData);
+    const item = await StokKarti.create(cleanData);
 
-    // Automatic BOM Requisition created ONLY IF category is Mamul/Yarı_Mamul AND procurementMethod is Üretim
-    const isProductionItem = ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.category) &&
-                             ['Üretim', 'Production'].includes(item.procurementMethod);
+    const isProductionItem = ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.kategori) &&
+                             ['Üretim', 'Production'].includes(item.tedarikYontemi);
 
     if (isProductionItem) {
       try {
-        const { ProductionOrder } = require('../../models');
         const reqNo = `REQ-BOM-${Date.now().toString().slice(-6)}`;
         const today = new Date().toISOString().split('T')[0];
 
-        await ProductionOrder.create({
-          workOrderNo: reqNo,
-          productionTitle: `📜 Reçete Oluşturma Talebi — ${item.name}`,
-          stockItemId: item.id,
-          plannedQuantity: 1,
-          unit: item.unit || 'Adet',
-          status: 'Planned',
-          priority: 'High',
-          workCenter: 'İstasyon-1 (Kesim & Büküm)',
-          plannedStartDate: today,
-          plannedEndDate: today,
-          notes: `Stok & Depo Modülünden yeni eklenen [${item.stockCode}] ${item.name} (${item.category === 'Mamul' ? 'Mamul' : 'Yarı Mamul'}) için otomatik reçete oluşturma talebi açıldı.`,
-          createdBy: currentUser ? currentUser.id : null
+        await UretimEmri.create({
+          isEmriNo: reqNo,
+          uretimBasligi: `📜 Reçete Oluşturma Talebi — ${item.ad}`,
+          stokId: item.id,
+          planlananMiktar: 1,
+          birim: item.birim || 'Adet',
+          durum: 'Planned',
+          oncelik: 'High',
+          isMerkezi: 'İstasyon-1 (Kesim & Büküm)',
+          planlananBaslangicTarihi: today,
+          planlananBitisTarihi: today,
+          notlar: `Stok & Depo Modülünden yeni eklenen [${item.stokKodu}] ${item.ad} (${item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul'}) için otomatik reçete oluşturma talebi açıldı.`,
+          olusturanId: currentUser ? currentUser.id : null
         });
       } catch (err) {
         console.error('Error creating automatic BOM Requisition:', err);
@@ -128,65 +129,88 @@ class StockRepository {
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'StockItem',
-      entityId: item.id,
-      details: { stockCode: item.stockCode, name: item.name, category: item.category, currentStock: item.currentStock },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'StokKarti',
+      varlikId: item.id,
+      detaylar: { stokKodu: item.stokKodu, ad: item.ad, kategori: item.kategori, mevcutStok: item.mevcutStok },
+      ipAdresi: ipAddress
     });
 
     return item;
   }
 
   async update(id, data, currentUser = null, ipAddress = null) {
-    const item = await StockItem.findByPk(id);
+    const item = await StokKarti.findByPk(id);
     if (!item) return null;
 
-    const oldData = { name: item.name, currentStock: item.currentStock, salePrice: item.salePrice };
-    await item.update(data);
+    const updateData = {};
+    if (data.stokKodu !== undefined || data.stockCode !== undefined) updateData.stokKodu = data.stokKodu || data.stockCode;
+    if (data.barkod !== undefined || data.barcode !== undefined) updateData.barkod = data.barkod || data.barcode;
+    if (data.ad !== undefined || data.name !== undefined) updateData.ad = data.ad || data.name;
+    if (data.aciklama !== undefined || data.description !== undefined) updateData.aciklama = data.aciklama || data.description;
+    if (data.kategori !== undefined || data.category !== undefined) updateData.kategori = data.kategori || data.category;
+    if (data.tedarikYontemi !== undefined || data.procurementMethod !== undefined) updateData.tedarikYontemi = data.tedarikYontemi || data.procurementMethod;
+    if (data.birim !== undefined || data.unit !== undefined) updateData.birim = data.birim || data.unit;
+    if (data.marka !== undefined || data.brand !== undefined) updateData.marka = data.marka || data.brand;
+    if (data.model !== undefined) updateData.model = data.model;
+    if (data.mevcutStok !== undefined || data.currentStock !== undefined) updateData.mevcutStok = data.mevcutStok !== undefined ? data.mevcutStok : data.currentStock;
+    if (data.rezerveStok !== undefined || data.reservedStock !== undefined) updateData.rezerveStok = data.rezerveStok !== undefined ? data.rezerveStok : data.reservedStock;
+    if (data.minStok !== undefined || data.minStock !== undefined) updateData.minStok = data.minStok !== undefined ? data.minStok : data.minStock;
+    if (data.maxStok !== undefined || data.maxStock !== undefined) updateData.maxStok = data.maxStok !== undefined ? data.maxStok : data.maxStock;
+    if (data.alisFiyati !== undefined || data.purchasePrice !== undefined) updateData.alisFiyati = data.alisFiyati !== undefined ? data.alisFiyati : data.purchasePrice;
+    if (data.satisFiyati !== undefined || data.salePrice !== undefined) updateData.satisFiyati = data.satisFiyati !== undefined ? data.satisFiyati : data.salePrice;
+    if (data.paraBirimi !== undefined || data.currency !== undefined) updateData.paraBirimi = data.paraBirimi || data.currency;
+    if (data.kdvOrani !== undefined || data.taxRate !== undefined) updateData.kdvOrani = data.kdvOrani !== undefined ? data.kdvOrani : data.taxRate;
+    if (data.depoLokasyonu !== undefined || data.warehouseLocation !== undefined) updateData.depoLokasyonu = data.depoLokasyonu || data.warehouseLocation;
+    if (data.tedarikci !== undefined || data.supplier !== undefined) updateData.tedarikci = data.tedarikci || data.supplier;
+    if (data.durum !== undefined || data.status !== undefined) updateData.durum = data.durum || data.status;
+    if (data.notlar !== undefined || data.notes !== undefined) updateData.notlar = data.notlar || data.notes;
+
+    const oldData = { ad: item.ad, mevcutStok: item.mevcutStok, satisFiyati: item.satisFiyati };
+    await item.update(updateData);
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'StockItem',
-      entityId: item.id,
-      details: { oldData, newData: data },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'StokKarti',
+      varlikId: item.id,
+      detaylar: { oldData, newData: updateData },
+      ipAdresi: ipAddress
     });
 
     return item;
   }
 
   async delete(id, currentUser = null, ipAddress = null) {
-    const item = await StockItem.findByPk(id);
+    const item = await StokKarti.findByPk(id);
     if (!item) return false;
 
-    const deletedCode = item.stockCode;
+    const deletedCode = item.stokKodu;
     await item.destroy();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'DELETE',
-      entity: 'StockItem',
-      entityId: id,
-      details: { stockCode: deletedCode },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'DELETE',
+      varlik: 'StokKarti',
+      varlikId: id,
+      detaylar: { stokKodu: deletedCode },
+      ipAdresi: ipAddress
     });
 
     return true;
   }
 
   async getNextStockCode() {
-    const items = await StockItem.findAll({ attributes: ['stockCode'] });
+    const items = await StokKarti.findAll({ attributes: ['stokKodu'] });
     let maxNum = 0;
 
     for (const item of items) {
-      if (item.stockCode) {
-        const matches = item.stockCode.match(/\d+/g);
+      if (item.stokKodu) {
+        const matches = item.stokKodu.match(/\d+/g);
         if (matches) {
           const num = parseInt(matches[matches.length - 1], 10);
           if (!isNaN(num) && num > maxNum) {
@@ -200,7 +224,7 @@ class StockRepository {
     let nextCode = `STK-${String(nextNum).padStart(4, '0')}`;
 
     let attempts = 0;
-    while (await StockItem.findOne({ where: { stockCode: nextCode } }) && attempts < 100) {
+    while (await StokKarti.findOne({ where: { stokKodu: nextCode } }) && attempts < 100) {
       nextNum++;
       nextCode = `STK-${String(nextNum).padStart(4, '0')}`;
       attempts++;
@@ -211,137 +235,169 @@ class StockRepository {
 
   // --- 2. MULTI-WAREHOUSE & LOCATION METHODS ---
   async findAllWarehouses() {
-    return await Warehouse.findAll({
-      include: [{ model: StockLocation, as: 'locations' }],
+    return await Depo.findAll({
+      include: [{ model: StokLokasyonu, as: 'lokasyonlar' }],
       order: [['id', 'ASC']]
     });
   }
 
   async createWarehouse(warehouseData, currentUser = null, ipAddress = null) {
-    const newWh = await Warehouse.create(warehouseData);
+    const cleanWh = {
+      depoKodu: warehouseData.depoKodu || warehouseData.warehouseCode,
+      ad: warehouseData.ad || warehouseData.name,
+      tur: warehouseData.tur || warehouseData.type || 'General',
+      sehir: warehouseData.sehir || warehouseData.city || 'İstanbul',
+      adres: warehouseData.adres || warehouseData.address,
+      sorumluAdi: warehouseData.sorumluAdi || warehouseData.managerName,
+      durum: warehouseData.durum || warehouseData.status || 'Active'
+    };
+
+    const newWh = await Depo.create(cleanWh);
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'Warehouse',
-      entityId: newWh.id,
-      details: warehouseData,
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'Depo',
+      varlikId: newWh.id,
+      detaylar: cleanWh,
+      ipAdresi: ipAddress
     });
     return newWh;
   }
 
   async createLocation(locationData, currentUser = null, ipAddress = null) {
-    const newLoc = await StockLocation.create(locationData);
+    const cleanLoc = {
+      lokasyonKodu: locationData.lokasyonKodu || locationData.locationCode,
+      depoId: locationData.depoId || locationData.warehouseId,
+      koridor: locationData.koridor || locationData.aisle || 'Koridor-A',
+      raf: locationData.raf || locationData.shelf || 'Raf-01',
+      goz: locationData.goz || locationData.bin || 'Göz-01',
+      kapasite: locationData.kapasite || locationData.capacity || 1000,
+      durum: locationData.durum || locationData.status || 'Active'
+    };
+
+    const newLoc = await StokLokasyonu.create(cleanLoc);
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'StockLocation',
-      entityId: newLoc.id,
-      details: locationData,
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'StokLokasyonu',
+      varlikId: newLoc.id,
+      detaylar: cleanLoc,
+      ipAdresi: ipAddress
     });
     return newLoc;
   }
 
   // --- 3. LOT / BATCH & SERIAL NUMBER METHODS ---
   async findAllLots() {
-    return await StockLot.findAll({
+    return await StokPartisi.findAll({
       include: [
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit'] },
-        { model: Warehouse, as: 'warehouse', attributes: ['id', 'warehouseCode', 'name'] }
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim'] },
+        { model: Depo, as: 'depo', attributes: ['id', 'depoKodu', 'ad'] }
       ],
       order: [['createdAt', 'DESC']]
     });
   }
 
   async createLot(lotData, currentUser = null, ipAddress = null) {
-    const newLot = await StockLot.create(lotData);
+    const cleanLot = {
+      partiNo: lotData.partiNo || lotData.lotNumber,
+      seriNo: lotData.seriNo || lotData.serialNumber,
+      stokId: lotData.stokId || lotData.stockItemId,
+      depoId: lotData.depoId || lotData.warehouseId,
+      miktar: lotData.miktar !== undefined ? lotData.miktar : lotData.quantity,
+      uretimTarihi: lotData.uretimTarihi || lotData.productionDate,
+      sonKullanmaTarihi: lotData.sonKullanmaTarihi || lotData.expirationDate,
+      kaliteDurumu: lotData.kaliteDurumu || lotData.qualityStatus || 'Approved',
+      notlar: lotData.notlar || lotData.notes
+    };
+
+    const newLot = await StokPartisi.create(cleanLot);
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'StockLot',
-      entityId: newLot.id,
-      details: lotData,
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'StokPartisi',
+      varlikId: newLot.id,
+      detaylar: cleanLot,
+      ipAdresi: ipAddress
     });
     return newLot;
   }
 
   // --- 4. MOVEMENTS & TRANSFERS METHODS ---
   async findAllMovements() {
-    return await StockMovement.findAll({
+    return await StokHareketi.findAll({
       include: [
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit'] },
-        { model: Warehouse, as: 'sourceWarehouse', attributes: ['id', 'name'] },
-        { model: Warehouse, as: 'targetWarehouse', attributes: ['id', 'name'] },
-        { model: User, as: 'user', attributes: ['id', 'username'] }
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim'] },
+        { model: Depo, as: 'cikisDepo', attributes: ['id', 'ad'] },
+        { model: Depo, as: 'varisDepo', attributes: ['id', 'ad'] },
+        { model: Kullanici, as: 'kullanici', attributes: ['id', 'kullaniciAdi'] }
       ],
       order: [['createdAt', 'DESC']]
     });
   }
 
   async createTransfer(transferData, currentUser = null, ipAddress = null) {
-    const movementNo = `SH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const hareketNo = `SH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const movement = await StockMovement.create({
-      movementNo,
-      stockItemId: transferData.stockItemId,
-      sourceWarehouseId: transferData.sourceWarehouseId,
-      targetWarehouseId: transferData.targetWarehouseId,
-      movementType: 'Transfer',
-      quantity: parseFloat(transferData.quantity),
-      referenceNo: transferData.referenceNo || 'Depolar Arası Transfer',
-      notes: transferData.notes,
-      performedBy: currentUser ? currentUser.id : null
+    const movement = await StokHareketi.create({
+      hareketNo,
+      stokId: transferData.stokId || transferData.stockItemId,
+      cikisDepoId: transferData.cikisDepoId || transferData.sourceWarehouseId,
+      varisDepoId: transferData.varisDepoId || transferData.targetWarehouseId,
+      hareketTuru: 'Transfer',
+      miktar: parseFloat(transferData.miktar || transferData.quantity),
+      referansNo: transferData.referansNo || transferData.referenceNo || 'Depolar Arası Transfer',
+      notlar: transferData.notlar || transferData.notes,
+      yapanKullaniciId: currentUser ? currentUser.id : null
     });
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE_TRANSFER',
-      entity: 'StockMovement',
-      entityId: movement.id,
-      details: transferData,
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE_TRANSFER',
+      varlik: 'StokHareketi',
+      varlikId: movement.id,
+      detaylar: transferData,
+      ipAdresi: ipAddress
     });
 
     return movement;
   }
 
-  // --- 7. ENVENTORY COUNTING METHODS ---
+  // --- 7. INVENTORY COUNTING METHODS ---
   async findAllCountings() {
-    return await StockCounting.findAll({
+    return await StokSayimi.findAll({
       include: [
-        { model: Warehouse, as: 'warehouse', attributes: ['id', 'name'] },
-        { model: User, as: 'user', attributes: ['id', 'username'] }
+        { model: Depo, as: 'depo', attributes: ['id', 'ad'] },
+        { model: Kullanici, as: 'kullanici', attributes: ['id', 'kullaniciAdi'] }
       ],
       order: [['createdAt', 'DESC']]
     });
   }
 
   async createCounting(countData, currentUser = null, ipAddress = null) {
-    const countNo = `SAYIM-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+    const sayimNo = `SAYIM-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
 
-    const newCount = await StockCounting.create({
-      countNo,
-      warehouseId: countData.warehouseId,
-      countDate: countData.countDate || new Date().toISOString().split('T')[0],
-      status: 'Completed',
-      notes: countData.notes,
-      performedBy: currentUser ? currentUser.id : null
+    const newCount = await StokSayimi.create({
+      sayimNo,
+      depoId: countData.depoId || countData.warehouseId,
+      sayimTarihi: countData.sayimTarihi || countData.countDate || new Date().toISOString().split('T')[0],
+      durum: 'Completed',
+      notlar: countData.notlar || countData.notes,
+      yapanKullaniciId: currentUser ? currentUser.id : null
     });
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE_COUNTING',
-      entity: 'StockCounting',
-      entityId: newCount.id,
-      details: countData,
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE_COUNTING',
+      varlik: 'StokSayimi',
+      varlikId: newCount.id,
+      detaylar: countData,
+      ipAdresi: ipAddress
     });
 
     return newCount;
@@ -349,23 +405,23 @@ class StockRepository {
 
   // --- 8. CRITICAL STOCK & MIN/MAX ALERTS ---
   async getLowStockAlerts() {
-    const items = await StockItem.findAll({
-      order: [['currentStock', 'ASC']]
+    const items = await StokKarti.findAll({
+      order: [['mevcutStok', 'ASC']]
     });
 
     return items.filter(item => {
-      const stock = parseFloat(item.currentStock) || 0;
-      const min = parseFloat(item.minStock) || 0;
+      const stock = parseFloat(item.mevcutStok) || 0;
+      const min = parseFloat(item.minStok) || 0;
       return stock <= min;
     });
   }
 
   async getStats() {
-    const total = await StockItem.count();
-    const active = await StockItem.count({ where: { status: 'Active' } });
+    const total = await StokKarti.count();
+    const active = await StokKarti.count({ where: { durum: 'Active' } });
     const lowStock = await this.getLowStockAlerts();
-    const warehouseCount = await Warehouse.count();
-    const lotCount = await StockLot.count();
+    const warehouseCount = await Depo.count();
+    const lotCount = await StokPartisi.count();
 
     return {
       total,

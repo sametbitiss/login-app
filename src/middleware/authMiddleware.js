@@ -27,9 +27,11 @@ module.exports = {
         return res.redirect('/login');
       }
 
-      // Check if user account is active
-      if (dbUser.status && dbUser.status !== 'Active') {
-        logger.security(`Inactive User Access Attempt: ${dbUser.username}`, { ip: req.ip });
+      const userStatus = dbUser.durum || dbUser.status;
+      const userName = dbUser.kullaniciAdi || dbUser.username;
+
+      if (userStatus && userStatus !== 'Active') {
+        logger.security(`Inactive User Access Attempt: ${userName}`, { ip: req.ip });
         res.clearCookie('token');
         if (req.xhr || req.path.startsWith('/api')) {
           throw new ForbiddenError('Hesabınız dondurulmuş veya pasife alınmıştır.');
@@ -37,19 +39,24 @@ module.exports = {
         return res.render('login', { error: 'Hesabınız pasife alınmıştır. Lütfen sistem yöneticisi ile iletişime geçiniz.' });
       }
 
-      // Check System Maintenance Mode
-      const { SystemSetting } = require('../../models');
-      const maintenanceSetting = await SystemSetting.findOne({ where: { key: 'maintenance_mode' } });
-      const isMaintenance = maintenanceSetting && maintenanceSetting.value === 'true';
+      const { SistemAyari } = require('../../models');
+      const maintenanceSetting = await SistemAyari.findOne({ where: { anahtar: 'maintenance_mode' } });
+      const isMaintenance = maintenanceSetting && maintenanceSetting.deger === 'true';
 
       const activeUser = {
         id: dbUser.id,
-        username: dbUser.username,
-        email: dbUser.email,
-        firstName: dbUser.firstName,
-        lastName: dbUser.lastName,
-        role: dbUser.role,
-        status: dbUser.status
+        kullaniciAdi: dbUser.kullaniciAdi || dbUser.username,
+        username: dbUser.kullaniciAdi || dbUser.username,
+        eposta: dbUser.eposta || dbUser.email,
+        email: dbUser.eposta || dbUser.email,
+        ad: dbUser.ad || dbUser.firstName,
+        firstName: dbUser.ad || dbUser.firstName,
+        soyad: dbUser.soyad || dbUser.lastName,
+        lastName: dbUser.soyad || dbUser.lastName,
+        rol: dbUser.rol || dbUser.role,
+        role: dbUser.rol || dbUser.role,
+        durum: dbUser.durum || dbUser.status,
+        status: dbUser.durum || dbUser.status
       };
 
       if (isMaintenance && activeUser.role !== 'Admin') {

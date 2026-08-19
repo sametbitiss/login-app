@@ -1,37 +1,69 @@
-const { AuditLog, User } = require('../../models');
+const { DenetimKaydi, Kullanici } = require('../../models');
 const logger = require('../utils/logger');
 const { Op } = require('sequelize');
 
 class LogService {
-  async logCrud({ userId, username, action, entity, entityId, details, ipAddress }) {
+  async logCrud(logData) {
+    const userId = logData.userId || logData.kullaniciId;
+    const username = logData.username || logData.kullaniciAdi;
+    const action = logData.action || logData.islem;
+    const entity = logData.entity || logData.varlik;
+    const entityId = logData.entityId || logData.varlikId;
+    const details = logData.details || logData.detaylar;
+    const ipAddress = logData.ipAddress || logData.ipAdresi;
+
     let detailsStr = '';
     const performer = username || (userId ? `Kullanıcı #${userId}` : 'Sistem Personeli');
     
     const entityNameMap = {
       'User': 'Kullanıcı Hesabı',
+      'Kullanici': 'Kullanıcı Hesabı',
       'StockItem': 'Stok Malzeme Kartı',
+      'StokKarti': 'Stok Malzeme Kartı',
       'StockLot': 'Lot / Parti İzi',
+      'StokPartisi': 'Lot / Parti İzi',
       'StockMovement': 'Stok Hareket Fişi',
+      'StokHareketi': 'Stok Hareket Fişi',
       'StockCounting': 'Stok Sayım Fişi',
+      'StokSayimi': 'Stok Sayım Fişi',
       'Warehouse': 'Depo / Ambar',
+      'Depo': 'Depo / Ambar',
       'SaleOrder': 'Satış Siparişi',
+      'SatisSiparisi': 'Satış Siparişi',
       'SaleQuote': 'Satış Teklifi',
+      'SatisTeklifi': 'Satış Teklifi',
       'Customer': 'Müşteri Cari Kartı',
+      'MusteriHesabi': 'Müşteri Cari Kartı',
       'Dispatch': 'İrsaliye / Sevkiyat',
+      'SatisIrsaliyesi': 'İrsaliye / Sevkiyat',
       'Invoice': 'Fatura',
+      'SatisFaturasi': 'Fatura',
       'PurchaseOrder': 'Satın Alma Siparişi',
+      'SatinAlmaSiparisi': 'Satın Alma Siparişi',
       'PurchaseRfq': 'Teklif Talebi (RFQ)',
+      'SatinAlmaTeklifTalebi': 'Teklif Talebi (RFQ)',
       'Supplier': 'Tedarikçi Kartı',
+      'Tedarikci': 'Tedarikçi Kartı',
       'GoodsReceipt': 'Mal Kabul Fişi',
+      'MalKabul': 'Mal Kabul Fişi',
       'ProductionOrder': 'Üretim İş Emri',
+      'UretimEmri': 'Üretim İş Emri',
       'BOMItem': 'Ürün Reçetesi (BOM)',
+      'UrunRecetesi': 'Ürün Reçetesi (BOM)',
       'RoutingOperation': 'Üretim Rotalama Operasyonu',
+      'RotaOperasyon': 'Üretim Rotalama Operasyonu',
       'QualityInspection': 'Kalite Kontrol Muayenesi',
+      'KaliteMuayene': 'Kalite Kontrol Muayenesi',
       'QualityNonConformance': 'Uygunsuzluk (NCR) Kaydı',
+      'KaliteUygunsuzluk': 'Uygunsuzluk (NCR) Kaydı',
       'QualityCapa': 'Düzeltici Aksiyon (CAPA)',
+      'KaliteDof': 'Düzeltici Aksiyon (CAPA)',
       'QualityEquipment': 'Ölçüm Cihazı / Ekipman',
+      'KaliteEkipmani': 'Ölçüm Cihazı / Ekipman',
       'QualityDocument': 'ISO Kalite Dokümanı',
-      'SystemSetting': 'Sistem Parametresi'
+      'KaliteDokumani': 'ISO Kalite Dokümanı',
+      'SystemSetting': 'Sistem Parametresi',
+      'SistemAyari': 'Sistem Parametresi'
     };
 
     const friendlyEntity = entityNameMap[entity] || entity;
@@ -44,8 +76,8 @@ class LogService {
     const verb = actionVerbMap[action] || 'işlem yaptı';
 
     if (typeof details === 'object' && details !== null) {
-      if (details.username) {
-        detailsStr = `${performer}, @${details.username} adında yeni ${friendlyEntity} ${verb}.`;
+      if (details.kullaniciAdi || details.username) {
+        detailsStr = `${performer}, @${details.kullaniciAdi || details.username} adında yeni ${friendlyEntity} ${verb}.`;
       } else {
         detailsStr = `${performer}, ${friendlyEntity} (ID: #${entityId || ''}) kayıt bilgilerini ${verb}.`;
       }
@@ -67,17 +99,17 @@ class LogService {
     });
 
     try {
-      await AuditLog.create({
-        userId: userId || null,
-        username: username || 'System',
-        action,
-        entity,
-        entityId: entityId ? String(entityId) : null,
-        details: detailsStr,
-        ipAddress: ipAddress || null
+      await DenetimKaydi.create({
+        kullaniciId: userId || null,
+        kullaniciAdi: username || 'System',
+        islem: action || 'CREATE',
+        varlik: entity || 'General',
+        varlikId: entityId ? String(entityId) : null,
+        detaylar: detailsStr,
+        ipAdresi: ipAddress || null
       });
     } catch (err) {
-      logger.error('Failed to insert AuditLog into Database', err);
+      logger.error('Failed to insert DenetimKaydi into Database', err);
     }
   }
 
@@ -85,26 +117,26 @@ class LogService {
     const where = {};
 
     if (filters.action && ['CREATE', 'READ', 'UPDATE', 'DELETE'].includes(filters.action)) {
-      where.action = filters.action;
+      where.islem = filters.action;
     }
 
     if (filters.entity) {
-      where.entity = { [Op.iLike || Op.like]: `%${filters.entity}%` };
+      where.varlik = { [Op.iLike || Op.like]: `%${filters.entity}%` };
     }
 
     if (filters.search) {
       where[Op.or] = [
-        { username: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { details: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { entity: { [Op.iLike || Op.like]: `%${filters.search}%` } }
+        { kullaniciAdi: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { detaylar: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { varlik: { [Op.iLike || Op.like]: `%${filters.search}%` } }
       ];
     }
 
-    return await AuditLog.findAll({
+    return await DenetimKaydi.findAll({
       where,
       order: [['createdAt', 'DESC']],
       limit,
-      include: [{ model: User, as: 'user', attributes: ['id', 'username', 'firstName', 'lastName', 'email', 'department', 'role'] }]
+      include: [{ model: Kullanici, as: 'kullanici', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad', 'eposta', 'departman', 'rol'] }]
     });
   }
 }

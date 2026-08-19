@@ -2,132 +2,132 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class PurchaseRfq extends Model {
+  class SatinAlmaTeklifTalebi extends Model {
     static associate(models) {
-      PurchaseRfq.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      PurchaseRfq.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      PurchaseRfq.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+      SatinAlmaTeklifTalebi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      SatinAlmaTeklifTalebi.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      SatinAlmaTeklifTalebi.belongsTo(models.Tedarikci, { foreignKey: 'tedarikciId', as: 'tedarikci' });
     }
   }
 
-  PurchaseRfq.init({
-    rfqNo: {
+  SatinAlmaTeklifTalebi.init({
+    teklifTalepNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    supplierId: {
+    tedarikciId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    supplierName: {
+    tedarikciAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    requestedQuantity: {
+    talepEdilenMiktar: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 1
     },
-    offeredUnitPrice: {
+    teklifEdilenBirimFiyat: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true
     },
-    offeredTotalPrice: {
+    teklifEdilenToplamFiyat: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.ENUM('TRY', 'USD', 'EUR'),
       allowNull: false,
       defaultValue: 'TRY'
     },
-    deliveryDays: {
+    teslimSuresiGun: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    paymentTerm: {
+    odemeVadesi: {
       type: DataTypes.ENUM('Pesin', 'Vadeli_30', 'Vadeli_60', 'Vadeli_90', 'Kredi_Karti'),
       allowNull: true
     },
-    validUntil: {
+    gecerlilikBitis: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    qualityNote: {
+    kaliteNotu: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Draft', 'Sent', 'Received', 'Accepted', 'Rejected', 'Expired'),
       allowNull: false,
       defaultValue: 'Draft'
     },
-    isWinner: {
+    kazananMi: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    rfqDate: {
+    teklifTalepTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    deliveryPlace: {
+    teslimYeri: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    shippingStatus: {
+    sevkiyatDurumu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    vatStatus: {
+    kdvDurumu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    documentRef: {
+    belgeReferansi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    subtotal: {
+    araToplam: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
       defaultValue: 0
     },
-    totalDiscount: {
+    toplamIskonto: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
       defaultValue: 0
     },
-    totalTax: {
+    toplamKdv: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
       defaultValue: 0
     },
-    itemsData: {
+    kalemlerVerisi: {
       type: DataTypes.JSON,
       allowNull: true
     },
-    requestedBy: {
+    talepEden: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'PurchaseRfq',
-    tableName: 'PurchaseRfqs'
+    modelName: 'SatinAlmaTeklifTalebi',
+    tableName: 'SatinAlmaTeklifTalepleri'
   });
 
-  return PurchaseRfq;
+  return SatinAlmaTeklifTalebi;
 };

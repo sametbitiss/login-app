@@ -2,109 +2,109 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class GoodsReceipt extends Model {
+  class MalKabul extends Model {
     static associate(models) {
-      GoodsReceipt.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      GoodsReceipt.belongsTo(models.PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'purchaseOrder' });
-      GoodsReceipt.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      GoodsReceipt.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+      MalKabul.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      MalKabul.belongsTo(models.SatinAlmaSiparisi, { foreignKey: 'satinAlmaSiparisId', as: 'satinAlmaSiparisi' });
+      MalKabul.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      MalKabul.belongsTo(models.Tedarikci, { foreignKey: 'tedarikciId', as: 'tedarikci' });
     }
   }
 
-  GoodsReceipt.init({
-    grnNo: {
+  MalKabul.init({
+    malKabulNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    purchaseOrderId: {
+    satinAlmaSiparisId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    supplierId: {
+    tedarikciId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    orderedQuantity: {
+    siparisMiktari: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
       defaultValue: 0
     },
-    receivedQuantity: {
+    teslimMiktari: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
       defaultValue: 0
     },
-    acceptedQuantity: {
+    kabulMiktari: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    rejectedQuantity: {
+    redMiktari: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    receiptDate: {
+    kabulTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
-    deliveryNoteNo: {
+    irsaliyeNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    deliveryNoteDate: {
+    irsaliyeTarihi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    deliveryNotePhoto: {
+    irsaliyeFotograf: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    itemsData: {
+    kalemlerVerisi: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    qualityStatus: {
+    kaliteDurumu: {
       type: DataTypes.ENUM('Pending_Inspection', 'Approved', 'Partial_Approved', 'Rejected'),
       allowNull: false,
       defaultValue: 'Pending_Inspection'
     },
-    inspectorName: {
+    denetciAdi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    qualityNotes: {
+    kaliteNotlari: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    warehouseLocation: {
+    depoLokasyonu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Pending', 'Completed', 'Partial', 'Returned'),
       allowNull: false,
       defaultValue: 'Pending'
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'GoodsReceipt',
-    tableName: 'GoodsReceipts'
+    modelName: 'MalKabul',
+    tableName: 'MalKabulleri'
   });
 
-  return GoodsReceipt;
+  return MalKabul;
 };

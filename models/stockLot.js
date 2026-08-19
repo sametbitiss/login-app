@@ -2,57 +2,57 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class StockLot extends Model {
+  class StokPartisi extends Model {
     static associate(models) {
-      StockLot.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      StockLot.belongsTo(models.Warehouse, { foreignKey: 'warehouseId', as: 'warehouse' });
+      StokPartisi.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      StokPartisi.belongsTo(models.Depo, { foreignKey: 'depoId', as: 'depo' });
     }
   }
 
-  StockLot.init({
-    lotNumber: {
+  StokPartisi.init({
+    partiNo: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    serialNumber: {
+    seriNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    warehouseId: {
+    depoId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    quantity: {
+    miktar: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 0
     },
-    productionDate: {
+    uretimTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    expirationDate: {
+    sonKullanmaTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    qualityStatus: {
+    kaliteDurumu: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'Approved' // Approved, Quarantine, Rejected
+      defaultValue: 'Approved'
     },
-    notes: {
+    notlar: {
       type: DataTypes.STRING,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'StockLot',
-    tableName: 'StockLots'
+    modelName: 'StokPartisi',
+    tableName: 'StokPartileri'
   });
 
-  return StockLot;
+  return StokPartisi;
 };

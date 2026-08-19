@@ -2,67 +2,67 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class StockMovement extends Model {
+  class StokHareketi extends Model {
     static associate(models) {
-      StockMovement.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      StockMovement.belongsTo(models.Warehouse, { foreignKey: 'sourceWarehouseId', as: 'sourceWarehouse' });
-      StockMovement.belongsTo(models.Warehouse, { foreignKey: 'targetWarehouseId', as: 'targetWarehouse' });
-      StockMovement.belongsTo(models.User, { foreignKey: 'performedBy', as: 'user' });
+      StokHareketi.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      StokHareketi.belongsTo(models.Depo, { foreignKey: 'cikisDepoId', as: 'cikisDepo' });
+      StokHareketi.belongsTo(models.Depo, { foreignKey: 'varisDepoId', as: 'varisDepo' });
+      StokHareketi.belongsTo(models.Kullanici, { foreignKey: 'yapanKullaniciId', as: 'kullanici' });
     }
   }
 
-  StockMovement.init({
-    movementNo: {
+  StokHareketi.init({
+    hareketNo: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    sourceWarehouseId: {
+    cikisDepoId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    targetWarehouseId: {
+    varisDepoId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    movementType: {
+    hareketTuru: {
       type: DataTypes.STRING,
-      allowNull: false // In, Out, Transfer, Adjustment, Scrap
+      allowNull: false
     },
-    quantity: {
+    miktar: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false
     },
-    unit: {
+    birim: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Adet'
     },
-    unitPrice: {
+    birimFiyat: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: true,
       defaultValue: 0
     },
-    referenceNo: {
+    referansNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    performedBy: {
+    yapanKullaniciId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'StockMovement',
-    tableName: 'StockMovements'
+    modelName: 'StokHareketi',
+    tableName: 'StokHareketleri'
   });
 
-  return StockMovement;
+  return StokHareketi;
 };

@@ -2,96 +2,96 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class CustomerAccount extends Model {
+  class MusteriHesabi extends Model {
     static associate(models) {
-      CustomerAccount.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      CustomerAccount.hasMany(models.SaleOrder, { foreignKey: 'customerId', as: 'orders' });
-      CustomerAccount.hasMany(models.SaleQuotation, { foreignKey: 'customerId', as: 'quotations' });
-      CustomerAccount.hasMany(models.CustomerPriceList, { foreignKey: 'customerId', as: 'priceLists' });
-      CustomerAccount.hasMany(models.CustomerLedger, { foreignKey: 'customerId', as: 'ledgerEntries' });
+      MusteriHesabi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      MusteriHesabi.hasMany(models.SatisSiparisi, { foreignKey: 'musteriId', as: 'siparisler' });
+      MusteriHesabi.hasMany(models.SatisTeklifi, { foreignKey: 'musteriId', as: 'teklifler' });
+      MusteriHesabi.hasMany(models.MusteriFiyatListesi, { foreignKey: 'musteriId', as: 'fiyatListeleri' });
+      MusteriHesabi.hasMany(models.MusteriCariHareket, { foreignKey: 'musteriId', as: 'cariHareketler' });
     }
   }
 
-  CustomerAccount.init({
-    customerCode: {
+  MusteriHesabi.init({
+    musteriKodu: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    companyName: {
+    firmaAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    taxOffice: {
+    vergiDairesi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    taxNo: {
+    vergiNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    contactPerson: {
+    ilgiliKisi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    email: {
+    eposta: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    phone: {
+    telefon: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    address: {
+    adres: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    city: {
+    sehir: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    country: {
+    ulke: {
       type: DataTypes.STRING,
       defaultValue: 'Türkiye'
     },
-    creditLimit: {
+    krediLimiti: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 100000.00
     },
-    currentBalance: {
+    guncelBakiye: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    paymentTermDays: {
+    vadeGunu: {
       type: DataTypes.INTEGER,
       defaultValue: 30
     },
-    riskLevel: {
+    riskSeviyesi: {
       type: DataTypes.STRING,
       defaultValue: 'Low'
     },
-    customerScore: {
+    musteriSkoru: {
       type: DataTypes.INTEGER,
       defaultValue: 85,
       allowNull: false
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       defaultValue: 'Active'
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'CustomerAccount',
-    tableName: 'CustomerAccounts'
+    modelName: 'MusteriHesabi',
+    tableName: 'MusteriHesaplari'
   });
 
-  return CustomerAccount;
+  return MusteriHesabi;
 };

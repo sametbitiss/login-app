@@ -2,78 +2,78 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class BOMItem extends Model {
+  class UrunRecetesi extends Model {
     static associate(models) {
-      BOMItem.belongsTo(models.StockItem, { foreignKey: 'finishedStockItemId', as: 'finishedProduct' });
-      BOMItem.belongsTo(models.StockItem, { foreignKey: 'componentStockItemId', as: 'componentItem' });
-      BOMItem.belongsTo(models.StockItem, { foreignKey: 'alternativeComponentItemId', as: 'alternativeComponentItem' });
+      UrunRecetesi.belongsTo(models.StokKarti, { foreignKey: 'mamulStokId', as: 'mamulUrun' });
+      UrunRecetesi.belongsTo(models.StokKarti, { foreignKey: 'bilesenStokId', as: 'bilesenUrun' });
+      UrunRecetesi.belongsTo(models.StokKarti, { foreignKey: 'alternatifBilesenStokId', as: 'alternatifBilesenUrun' });
     }
   }
 
-  BOMItem.init({
-    bomCode: {
+  UrunRecetesi.init({
+    receteKodu: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    finishedStockItemId: {
+    mamulStokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    componentStockItemId: {
+    bilesenStokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    version: {
+    versiyon: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Rev.01'
     },
-    baseQuantity: {
+    bazMiktar: {
       type: DataTypes.DECIMAL(12, 4),
       allowNull: false,
       defaultValue: 1.0
     },
-    quantityRequired: {
+    gerekliMiktar: {
       type: DataTypes.DECIMAL(12, 4),
       allowNull: false,
       defaultValue: 1.0
     },
-    unit: {
+    birim: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Adet'
     },
-    scrapPercentage: {
+    fireOrani: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 0.0
     },
-    level: {
+    seviye: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1
     },
-    operationCode: {
+    operasyonKodu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    alternativeComponentItemId: {
+    alternatifBilesenStokId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    alternativeNotes: {
+    alternatifNotlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'BOMItem',
-    tableName: 'BOMItems'
+    modelName: 'UrunRecetesi',
+    tableName: 'UrunReceteleri'
   });
 
-  return BOMItem;
+  return UrunRecetesi;
 };

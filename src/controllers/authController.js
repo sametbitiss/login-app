@@ -11,7 +11,6 @@ class AuthController {
         jwt.verify(req.cookies.token, JWT_SECRET);
         return res.redirect('/');
       } catch (err) {
-        // Token invalid, clear cookie
         res.clearCookie('token');
       }
     }
@@ -21,14 +20,16 @@ class AuthController {
   login = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
     
-    // Auth logic
     const user = await authService.login(username, password);
 
     const payload = {
       id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role
+      kullaniciAdi: user.kullaniciAdi || user.username,
+      username: user.kullaniciAdi || user.username,
+      eposta: user.eposta || user.email,
+      email: user.eposta || user.email,
+      rol: user.rol || user.role,
+      role: user.rol || user.role
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
@@ -38,7 +39,7 @@ class AuthController {
       secure: false
     });
 
-    logger.security(`User Logged In Successfully: ${user.username} (${user.role})`, { ip: req.ip });
+    logger.security(`User Logged In Successfully: ${payload.username} (${payload.role})`, { ip: req.ip });
 
     res.redirect('/');
   });
@@ -49,7 +50,7 @@ class AuthController {
 
   logout = asyncHandler(async (req, res) => {
     if (req.user) {
-      logger.security(`User Logged Out: ${req.user.username}`, { ip: req.ip });
+      logger.security(`User Logged Out: ${req.user.username || req.user.kullaniciAdi}`, { ip: req.ip });
     }
     res.clearCookie('token');
     res.redirect('/login');

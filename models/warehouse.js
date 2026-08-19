@@ -2,55 +2,55 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Warehouse extends Model {
+  class Depo extends Model {
     static associate(models) {
-      Warehouse.hasMany(models.StockLocation, { foreignKey: 'warehouseId', as: 'locations' });
-      Warehouse.hasMany(models.StockLot, { foreignKey: 'warehouseId', as: 'lots' });
+      Depo.hasMany(models.StokLokasyonu, { foreignKey: 'depoId', as: 'lokasyonlar' });
+      Depo.hasMany(models.StokPartisi, { foreignKey: 'depoId', as: 'partiler' });
     }
   }
 
-  Warehouse.init({
-    warehouseCode: {
+  Depo.init({
+    depoKodu: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    name: {
+    ad: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    type: {
+    tur: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'General' // Hammadde, Mamul, Yedek_Parca, Sevkiyat, General
+      defaultValue: 'General'
     },
-    city: {
+    sehir: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: 'İstanbul'
     },
-    address: {
+    adres: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    managerName: {
+    sorumluAdi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Active'
     },
-    itemsJson: {
+    kalemlerJson: {
       type: DataTypes.TEXT,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'Warehouse',
-    tableName: 'Warehouses'
+    modelName: 'Depo',
+    tableName: 'Depolar'
   });
 
-  return Warehouse;
+  return Depo;
 };

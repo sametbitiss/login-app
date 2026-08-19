@@ -8,7 +8,7 @@ const requisitionRepository = require('../repositories/requisitionRepository');
 const asyncHandler = require('../utils/asyncHandler');
 const { NotFoundError, ValidationError } = require('../utils/appError');
 const { ALL_ROLES } = require('../middleware/rbacMiddleware');
-const { GoodsReceipt, PurchaseOrder, StockItem, StockMovement, Supplier, Warehouse } = require('../../models');
+const { MalKabul, SatinAlmaSiparisi, StokKarti, StokHareketi, Tedarikci, Depo } = require('../../models');
 
 const CATEGORIES = [
   { value: 'Hammadde', label: 'Hammadde' },
@@ -89,34 +89,38 @@ class StockController {
   addItem = asyncHandler(async (req, res) => {
     try {
       const nextStockCode = await stockRepository.getNextStockCode();
-      let category = req.body.category || 'Ticari_Mal';
+      let category = req.body.category || req.body.kategori || 'Ticari_Mal';
       if (category === 'Yarı_Mamul') category = 'Yari_Mamul';
 
-      const barcode = req.body.barcode && req.body.barcode.trim() !== '' ? req.body.barcode.trim() : null;
-      const brand = req.body.brand && req.body.brand.trim() !== '' ? req.body.brand.trim() : null;
-      const model = req.body.model && req.body.model.trim() !== '' ? req.body.model.trim() : null;
-      const description = req.body.description && req.body.description.trim() !== '' ? req.body.description.trim() : null;
-      const warehouseLocation = req.body.warehouseLocation && req.body.warehouseLocation.trim() !== '' ? req.body.warehouseLocation.trim() : null;
-      const supplier = req.body.supplier && req.body.supplier.trim() !== '' ? req.body.supplier.trim() : null;
-      const notes = req.body.notes && req.body.notes.trim() !== '' ? req.body.notes.trim() : null;
+      const barkod = (req.body.barkod || req.body.barcode || '').trim() || null;
+      const marka = (req.body.marka || req.body.brand || '').trim() || null;
+      const model = (req.body.model || '').trim() || null;
+      const aciklama = (req.body.aciklama || req.body.description || '').trim() || null;
+      const depoLokasyonu = (req.body.depoLokasyonu || req.body.warehouseLocation || '').trim() || null;
+      const tedarikci = (req.body.tedarikci || req.body.supplier || '').trim() || null;
+      const notlar = (req.body.notlar || req.body.notes || '').trim() || null;
 
       await stockRepository.create({
-        ...req.body,
-        category,
-        barcode,
-        brand,
+        stokKodu: nextStockCode,
+        ad: req.body.ad || req.body.name,
+        kategori: category,
+        barkod,
+        marka,
         model,
-        description,
-        warehouseLocation,
-        supplier,
-        notes,
-        stockCode: nextStockCode,
-        currentStock: parseFloat(req.body.currentStock) || 0,
-        minStock: parseFloat(req.body.minStock) || 0,
-        maxStock: parseFloat(req.body.maxStock) || 0,
-        purchasePrice: parseFloat(req.body.purchasePrice) || 0,
-        salePrice: parseFloat(req.body.salePrice) || 0,
-        taxRate: parseFloat(req.body.taxRate) || 20
+        aciklama,
+        depoLokasyonu,
+        tedarikci,
+        notlar,
+        birim: req.body.birim || req.body.unit || 'Adet',
+        tedarikYontemi: req.body.tedarikYontemi || req.body.procurementMethod || 'Satın Alma',
+        durum: req.body.durum || req.body.status || 'Active',
+        mevcutStok: parseFloat(req.body.mevcutStok || req.body.currentStock) || 0,
+        asgariStok: parseFloat(req.body.asgariStok || req.body.minStock) || 0,
+        azamiStok: parseFloat(req.body.azamiStok || req.body.maxStock) || 0,
+        alisFiyati: parseFloat(req.body.alisFiyati || req.body.purchasePrice) || 0,
+        satisFiyati: parseFloat(req.body.satisFiyati || req.body.salePrice) || 0,
+        paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY',
+        kdvOrani: parseFloat(req.body.kdvOrani || req.body.taxRate) || 20
       }, req.user, req.ip);
 
       res.redirect('/stock');
@@ -128,8 +132,8 @@ class StockController {
       if (err.name === 'SequelizeUniqueConstraintError' || err.name === 'SequelizeValidationError') {
         if (err.errors && err.errors.length > 0) {
           friendlyError = err.errors.map(e => {
-            if (e.path === 'stockCode') return 'Bu stok kodu zaten başka bir malzemede kullanılıyor.';
-            if (e.path === 'barcode') return 'Bu barkod numarası zaten başka bir malzemede kullanılıyor.';
+            if (e.path === 'stokKodu' || e.path === 'stockCode') return 'Bu stok kodu zaten başka bir malzemede kullanılıyor.';
+            if (e.path === 'barkod' || e.path === 'barcode') return 'Bu barkod numarası zaten başka bir malzemede kullanılıyor.';
             return e.message;
           }).join(' | ');
         } else {
@@ -150,13 +154,13 @@ class StockController {
       });
     }
   });
-  // 1.1. STOCK ITEM DETAIL & EDIT
+
   getItemDetail = asyncHandler(async (req, res) => {
     const item = await stockRepository.findById(req.params.id);
     if (!item) throw new NotFoundError('Stok kalemi bulunamadı.');
 
     const warehouses = await stockRepository.findAllWarehouses();
-    const suppliers = await Supplier.findAll({ where: { status: 'Active' }, order: [['companyName', 'ASC']] });
+    const suppliers = await Tedarikci.findAll({ where: { durum: 'Active' }, order: [['firmaAdi', 'ASC']] });
 
     res.render('stock/item_detail', {
       user: req.user,
@@ -176,19 +180,19 @@ class StockController {
 
     try {
       await stockRepository.update(item.id, {
-        procurementMethod: req.body.procurementMethod || item.procurementMethod,
-        status: req.body.status || item.status,
-        minStock: req.body.minStock !== undefined && req.body.minStock !== '' ? parseFloat(req.body.minStock) : 0,
-        maxStock: req.body.maxStock !== undefined && req.body.maxStock !== '' ? parseFloat(req.body.maxStock) : null,
-        purchasePrice: req.body.purchasePrice !== undefined && req.body.purchasePrice !== '' ? parseFloat(req.body.purchasePrice) : 0,
-        salePrice: req.body.salePrice !== undefined && req.body.salePrice !== '' ? parseFloat(req.body.salePrice) : 0,
-        currency: req.body.currency || item.currency,
-        taxRate: req.body.taxRate !== undefined && req.body.taxRate !== '' ? parseFloat(req.body.taxRate) : item.taxRate,
-        warehouseLocation: req.body.warehouseLocation ? req.body.warehouseLocation.trim() : null,
-        supplier: req.body.supplier ? req.body.supplier.trim() : null,
-        brand: req.body.brand ? req.body.brand.trim() : null,
+        tedarikYontemi: req.body.tedarikYontemi || req.body.procurementMethod || item.tedarikYontemi,
+        durum: req.body.durum || req.body.status || item.durum,
+        asgariStok: (req.body.asgariStok !== undefined && req.body.asgariStok !== '') ? parseFloat(req.body.asgariStok) : (req.body.minStock !== undefined && req.body.minStock !== '' ? parseFloat(req.body.minStock) : 0),
+        azamiStok: (req.body.azamiStok !== undefined && req.body.azamiStok !== '') ? parseFloat(req.body.azamiStok) : (req.body.maxStock !== undefined && req.body.maxStock !== '' ? parseFloat(req.body.maxStock) : null),
+        alisFiyati: (req.body.alisFiyati !== undefined && req.body.alisFiyati !== '') ? parseFloat(req.body.alisFiyati) : (req.body.purchasePrice !== undefined && req.body.purchasePrice !== '' ? parseFloat(req.body.purchasePrice) : 0),
+        satisFiyati: (req.body.satisFiyati !== undefined && req.body.satisFiyati !== '') ? parseFloat(req.body.satisFiyati) : (req.body.salePrice !== undefined && req.body.salePrice !== '' ? parseFloat(req.body.salePrice) : 0),
+        paraBirimi: req.body.paraBirimi || req.body.currency || item.paraBirimi,
+        kdvOrani: (req.body.kdvOrani !== undefined && req.body.kdvOrani !== '') ? parseFloat(req.body.kdvOrani) : (req.body.taxRate !== undefined && req.body.taxRate !== '' ? parseFloat(req.body.taxRate) : item.kdvOrani),
+        depoLokasyonu: req.body.depoLokasyonu || req.body.warehouseLocation ? (req.body.depoLokasyonu || req.body.warehouseLocation).trim() : null,
+        tedarikci: req.body.tedarikci || req.body.supplier ? (req.body.tedarikci || req.body.supplier).trim() : null,
+        marka: req.body.marka || req.body.brand ? (req.body.marka || req.body.brand).trim() : null,
         model: req.body.model ? req.body.model.trim() : null,
-        notes: req.body.notes ? req.body.notes.trim() : null
+        notlar: req.body.notlar || req.body.notes ? (req.body.notlar || req.body.notes).trim() : null
       }, req.user, req.ip);
 
       res.redirect(`/stock/items/${item.id}/detail?success=updated`);
@@ -206,11 +210,11 @@ class StockController {
   // 2. MULTI-WAREHOUSE & LOCATIONS
   listWarehouses = asyncHandler(async (req, res) => {
     const warehouses = await stockRepository.findAllWarehouses();
-    const allReceipts = await GoodsReceipt.findAll({
+    const allReceipts = await MalKabul.findAll({
       include: [
-        { model: PurchaseOrder, as: 'purchaseOrder' },
-        { model: Supplier, as: 'supplier' },
-        { model: StockItem, as: 'stockItem' }
+        { model: SatinAlmaSiparisi, as: 'satinAlmaSiparisi' },
+        { model: Tedarikci, as: 'tedarikci' },
+        { model: StokKarti, as: 'stokKarti' }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -218,14 +222,14 @@ class StockController {
     const warehouseData = warehouses.map(wh => {
       const whPlain = wh.toJSON();
 
-      // Filter receipts for this warehouse (handling clean names and HTML entities)
       const receiptsForWh = allReceipts.filter(gr => {
-        if (!gr.warehouseLocation) {
-          return whPlain.id === 1 || whPlain.type === 'Hammadde' || whPlain.name.includes('Ana Hammadde');
+        const whLoc = gr.depoLokasyonu || gr.warehouseLocation;
+        if (!whLoc) {
+          return whPlain.id === 1 || whPlain.tur === 'Hammadde' || whPlain.ad.includes('Ana Hammadde');
         }
-        const locClean = gr.warehouseLocation.replace(/&amp;/g, '&').trim().toLowerCase();
-        const nameClean = whPlain.name.replace(/&amp;/g, '&').trim().toLowerCase();
-        const codeClean = whPlain.warehouseCode.replace(/&amp;/g, '&').trim().toLowerCase();
+        const locClean = whLoc.replace(/&amp;/g, '&').trim().toLowerCase();
+        const nameClean = whPlain.ad.replace(/&amp;/g, '&').trim().toLowerCase();
+        const codeClean = whPlain.depoKodu.replace(/&amp;/g, '&').trim().toLowerCase();
 
         return locClean === nameClean || locClean === codeClean || nameClean.includes(locClean) || locClean.includes(nameClean);
       });
@@ -235,31 +239,32 @@ class StockController {
 
       receiptsForWh.forEach(gr => {
         let items = [];
-        if (gr.itemsData) {
-          try { items = typeof gr.itemsData === 'string' ? JSON.parse(gr.itemsData) : gr.itemsData; } catch(e) { items = []; }
+        const kalData = gr.kalemlerVerisi || gr.itemsData;
+        if (kalData) {
+          try { items = typeof kalData === 'string' ? JSON.parse(kalData) : kalData; } catch(e) { items = []; }
         }
         if (!Array.isArray(items) || items.length === 0) {
           items = [{
-            productName: gr.stockItem ? gr.stockItem.name : 'Ürün Kalemi',
-            stockCode: gr.stockItem ? gr.stockItem.stockCode : '-',
-            currentReceivedQuantity: gr.acceptedQuantity || gr.receivedQuantity,
-            unit: gr.stockItem ? gr.stockItem.unit : 'Adet'
+            productName: gr.stokKarti ? gr.stokKarti.ad : 'Ürün Kalemi',
+            stockCode: gr.stokKarti ? gr.stokKarti.stokKodu : '-',
+            currentReceivedQuantity: gr.kabulEdilenMiktar || gr.teslimAlinanMiktar,
+            unit: gr.stokKarti ? gr.stokKarti.birim : 'Adet'
           }];
         }
 
         items.forEach(it => {
-          const qty = parseFloat(it.currentReceivedQuantity || it.receivedQuantity || it.acceptedQuantity || 0);
+          const qty = parseFloat(it.currentReceivedQuantity || it.teslimAlinanMiktar || it.kabulEdilenMiktar || it.receivedQuantity || 0);
           if (qty > 0) {
-            const pName = it.productName || it.name || (gr.stockItem ? gr.stockItem.name : 'Malzeme');
-            const sCode = it.stockCode || (gr.stockItem ? gr.stockItem.stockCode : '-');
-            const unit = it.unit || (gr.stockItem ? gr.stockItem.unit : 'Adet');
-            const receiptDate = gr.receiptDate ? new Date(gr.receiptDate).toLocaleDateString('tr-TR') : new Date(gr.createdAt).toLocaleDateString('tr-TR');
+            const pName = it.productName || it.ad || (gr.stokKarti ? gr.stokKarti.ad : 'Malzeme');
+            const sCode = it.stockCode || it.stokKodu || (gr.stokKarti ? gr.stokKarti.stokKodu : '-');
+            const unit = it.unit || it.birim || (gr.stokKarti ? gr.stokKarti.birim : 'Adet');
+            const receiptDate = gr.kabulTarihi ? new Date(gr.kabulTarihi).toLocaleDateString('tr-TR') : new Date(gr.createdAt).toLocaleDateString('tr-TR');
 
             receiptLogs.push({
-              grnNo: gr.grnNo,
-              orderNo: gr.purchaseOrder ? gr.purchaseOrder.orderNo : '—',
-              supplierName: gr.supplier ? gr.supplier.companyName : (gr.purchaseOrder ? gr.purchaseOrder.supplierName : '—'),
-              deliveryNoteNo: gr.deliveryNoteNo || '—',
+              grnNo: gr.kabulNo || gr.grnNo,
+              orderNo: gr.satinAlmaSiparisi ? gr.satinAlmaSiparisi.siparisNo : '—',
+              supplierName: gr.tedarikci ? gr.tedarikci.firmaAdi : (gr.satinAlmaSiparisi ? gr.satinAlmaSiparisi.tedarikciAdi : '—'),
+              deliveryNoteNo: gr.irsaliyeNo || '—',
               receiptDate: receiptDate,
               productName: pName,
               stockCode: sCode,
@@ -282,25 +287,25 @@ class StockController {
         });
       });
 
-      // Merge items stored directly in targetWarehouse.itemsJson if available
       let jsonItems = [];
-      if (whPlain.itemsJson) {
-        try { jsonItems = typeof whPlain.itemsJson === 'string' ? JSON.parse(whPlain.itemsJson) : whPlain.itemsJson; } catch(e) { jsonItems = []; }
+      const whKalemler = whPlain.kalemlerJson || whPlain.itemsJson;
+      if (whKalemler) {
+        try { jsonItems = typeof whKalemler === 'string' ? JSON.parse(whKalemler) : whKalemler; } catch(e) { jsonItems = []; }
       }
       if (Array.isArray(jsonItems)) {
         jsonItems.forEach(ji => {
-          const key = ji.stockCode || ji.name;
+          const key = ji.stokKodu || ji.stockCode || ji.ad || ji.name;
           if (key) {
             if (!productMap[key]) {
               productMap[key] = {
-                stockCode: ji.stockCode || '-',
-                name: ji.name || 'Malzeme',
-                totalQuantity: parseFloat(ji.quantity) || 0,
-                unit: ji.unit || 'Adet',
+                stockCode: ji.stokKodu || ji.stockCode || '-',
+                name: ji.ad || ji.name || 'Malzeme',
+                totalQuantity: parseFloat(ji.miktar || ji.quantity) || 0,
+                unit: ji.birim || ji.unit || 'Adet',
                 lastReceiptDate: ji.lastUpdated ? new Date(ji.lastUpdated).toLocaleDateString('tr-TR') : '—'
               };
             } else {
-              productMap[key].totalQuantity = Math.max(productMap[key].totalQuantity, parseFloat(ji.quantity) || 0);
+              productMap[key].totalQuantity = Math.max(productMap[key].totalQuantity, parseFloat(ji.miktar || ji.quantity) || 0);
             }
           }
         });
@@ -321,36 +326,42 @@ class StockController {
   });
 
   addWarehouse = asyncHandler(async (req, res) => {
-    const { name, type, city, address, managerName } = req.body;
-    if (!name) throw new ValidationError('Depo adı zorunludur.');
+    const { name, ad, type, tur, city, sehir, address, adres, managerName, sorumluAdi } = req.body;
+    const targetName = ad || name;
+    if (!targetName) throw new ValidationError('Depo adı zorunludur.');
 
     const warehouseCode = `DEP-${Math.floor(100 + Math.random() * 900)}`;
     await stockRepository.createWarehouse({
-      warehouseCode,
-      name,
-      type: type || 'General',
-      city: city || 'İstanbul',
-      address,
-      managerName
+      depoKodu: warehouseCode,
+      ad: targetName,
+      tur: tur || type || 'General',
+      sehir: sehir || city || 'İstanbul',
+      adres: adres || address,
+      sorumluAdi: sorumluAdi || managerName
     }, req.user, req.ip);
 
     res.redirect('/stock/warehouses');
   });
 
   addLocation = asyncHandler(async (req, res) => {
-    const { warehouseId, aisle, shelf, bin, capacity } = req.body;
-    if (!warehouseId || !aisle || !shelf || !bin) {
+    const { warehouseId, depoId, aisle, koridor, shelf, raf, bin, goz, capacity, kapasite } = req.body;
+    const targetDepoId = depoId || warehouseId;
+    const targetKoridor = koridor || aisle;
+    const targetRaf = raf || shelf;
+    const targetGoz = goz || bin;
+
+    if (!targetDepoId || !targetKoridor || !targetRaf || !targetGoz) {
       throw new ValidationError('Depo, Koridor, Raf ve Göz alanları zorunludur.');
     }
 
-    const locationCode = `LOC-${warehouseId}-${aisle}-${shelf}-${bin}`;
+    const locationCode = `LOC-${targetDepoId}-${targetKoridor}-${targetRaf}-${targetGoz}`;
     await stockRepository.createLocation({
-      locationCode,
-      warehouseId,
-      aisle,
-      shelf,
-      bin,
-      capacity: parseInt(capacity, 10) || 1000
+      lokasyonKodu: locationCode,
+      depoId: targetDepoId,
+      koridor: targetKoridor,
+      raf: targetRaf,
+      goz: targetGoz,
+      kapasite: parseInt(kapasite || capacity, 10) || 1000
     }, req.user, req.ip);
 
     res.redirect('/stock/warehouses');
@@ -373,22 +384,25 @@ class StockController {
   });
 
   addLot = asyncHandler(async (req, res) => {
-    const { stockItemId, warehouseId, lotNumber, serialNumber, quantity, productionDate, expirationDate, qualityStatus, notes } = req.body;
+    const { stockItemId, stokId, warehouseId, depoId, lotNumber, partiNo, serialNumber, seriNo, quantity, miktar, productionDate, uretimTarihi, expirationDate, sonKullanmaTarihi, qualityStatus, kaliteDurumu, notes, notlar } = req.body;
+    const targetStokId = stokId || stockItemId;
+    const targetDepoId = depoId || warehouseId;
+    const targetPartiNo = partiNo || lotNumber;
 
-    if (!stockItemId || !warehouseId || !lotNumber) {
+    if (!targetStokId || !targetDepoId || !targetPartiNo) {
       throw new ValidationError('Stok kalemi, depo ve lot numarası zorunludur.');
     }
 
     await stockRepository.createLot({
-      stockItemId,
-      warehouseId,
-      lotNumber,
-      serialNumber,
-      quantity: parseFloat(quantity) || 0,
-      productionDate,
-      expirationDate,
-      qualityStatus: qualityStatus || 'Approved',
-      notes
+      stokId: targetStokId,
+      depoId: targetDepoId,
+      partiNo: targetPartiNo,
+      seriNo: seriNo || serialNumber,
+      miktar: parseFloat(miktar || quantity) || 0,
+      uretimTarihi: uretimTarihi || productionDate,
+      sonKullanmaTarihi: sonKullanmaTarihi || expirationDate,
+      kaliteDurumu: kaliteDurumu || qualityStatus || 'Approved',
+      notlar: notlar || notes
     }, req.user, req.ip);
 
     res.redirect('/stock/lots');
@@ -411,18 +425,22 @@ class StockController {
   });
 
   addTransfer = asyncHandler(async (req, res) => {
-    const { stockItemId, sourceWarehouseId, targetWarehouseId, quantity, notes } = req.body;
+    const { stockItemId, stokId, sourceWarehouseId, cikisDepoId, targetWarehouseId, varisDepoId, quantity, miktar, notes, notlar } = req.body;
+    const targetStokId = stokId || stockItemId;
+    const targetCikisDepoId = cikisDepoId || sourceWarehouseId;
+    const targetVarisDepoId = varisDepoId || targetWarehouseId;
+    const targetMiktar = miktar || quantity;
 
-    if (!stockItemId || !sourceWarehouseId || !targetWarehouseId || !quantity) {
+    if (!targetStokId || !targetCikisDepoId || !targetVarisDepoId || !targetMiktar) {
       throw new ValidationError('Malzeme, çıkış deposu, hedef depo ve miktar alanları zorunludur.');
     }
 
     await stockRepository.createTransfer({
-      stockItemId,
-      sourceWarehouseId,
-      targetWarehouseId,
-      quantity,
-      notes
+      stokId: targetStokId,
+      cikisDepoId: targetCikisDepoId,
+      varisDepoId: targetVarisDepoId,
+      miktar: targetMiktar,
+      notlar: notlar || notes
     }, req.user, req.ip);
 
     res.redirect('/stock/transfers');
@@ -431,35 +449,33 @@ class StockController {
   // 5. GOODS RECEIPT (SATIN ALMA MAL KABUL)
   listGoodsReceipt = asyncHandler(async (req, res) => {
     const allOrders = await purchaseRepository.findAll();
-    // Mal kabul bekleyen, onaylanan veya kısmi teslim alınan tüm aktif satın alma siparişlerini getir (Teslimatı tamamlanan Received/Cancelled olanlar gizlenir)
-    const activeOrders = allOrders.filter(po => po.status !== 'Received' && po.status !== 'Cancelled');
+    const activeOrders = allOrders.filter(po => po.durum !== 'Received' && po.durum !== 'Cancelled');
 
     const ordersWithDetails = await Promise.all(activeOrders.map(async (po) => {
       const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
       const pastReceipts = await goodsReceiptRepository.getReceiptsByOrderId(po.id);
 
-      // Parse order line items
       let items = [];
-      if (po.itemsJson) {
-        try { items = typeof po.itemsJson === 'string' ? JSON.parse(po.itemsJson) : po.itemsJson; } catch (e) { items = []; }
+      const kalemJson = po.kalemlerJson || po.itemsJson;
+      if (kalemJson) {
+        try { items = typeof kalemJson === 'string' ? JSON.parse(kalemJson) : kalemJson; } catch (e) { items = []; }
       }
       if (!items || items.length === 0) {
         items = [{
-          stockItemId: po.stockItemId,
-          stockCode: po.stockItem ? po.stockItem.stockCode : 'STK-001',
-          productName: po.stockItem ? po.stockItem.name : (po.productName || 'Ürün Kalemi'),
-          quantity: po.quantity,
-          unit: po.stockItem ? po.stockItem.unit : 'Adet',
-          unitPrice: po.unitPrice
+          stokId: po.stokId,
+          stokKodu: po.stokKarti ? po.stokKarti.stokKodu : 'STK-001',
+          ad: po.stokKarti ? po.stokKarti.ad : 'Ürün Kalemi',
+          miktar: po.miktar,
+          birim: po.stokKarti ? po.stokKarti.birim : 'Adet',
+          birimFiyat: po.birimFiyat
         }];
       }
 
-      // Calculate total ordered, total received, remaining for each item
       let totalOrderedQty = 0;
       let totalReceivedQty = 0;
       const parsedItems = items.map(it => {
-        const sId = parseInt(it.stockItemId, 10);
-        const ordered = parseFloat(it.quantity) || 0;
+        const sId = parseInt(it.stokId || it.stockItemId, 10);
+        const ordered = parseFloat(it.miktar || it.quantity) || 0;
         const rec = receivedTotals[sId] || 0;
         const rem = Math.max(0, ordered - rec);
 
@@ -506,14 +522,14 @@ class StockController {
     const { orderId } = req.query;
     if (!orderId) throw new ValidationError('Sipariş ID belirtilmelidir.');
 
-    const po = await PurchaseOrder.findByPk(orderId, {
+    const po = await SatinAlmaSiparisi.findByPk(orderId, {
       include: [
-        { model: StockItem, as: 'stockItem' },
-        { model: Supplier, as: 'supplier' }
+        { model: StokKarti, as: 'stokKarti' },
+        { model: Tedarikci, as: 'tedarikci' }
       ]
     });
     if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
-    if (po.status === 'Pending_Approval') {
+    if (po.durum === 'Pending_Approval') {
       throw new ValidationError('Bu sipariş bütçe limitini aştığı için yönetsel onay beklemektedir (Pending_Approval). Onaylanmadan mal kabul işlemi yapılamaz.');
     }
 
@@ -521,31 +537,31 @@ class StockController {
     const nextGrnNo = await goodsReceiptRepository.getNextGrnNo();
     const warehouses = await stockRepository.findAllWarehouses();
 
-    // Parse order items
     let items = [];
-    if (po.itemsJson) {
-      try { items = typeof po.itemsJson === 'string' ? JSON.parse(po.itemsJson) : po.itemsJson; } catch (e) { items = []; }
+    const kalemJson = po.kalemlerJson || po.itemsJson;
+    if (kalemJson) {
+      try { items = typeof kalemJson === 'string' ? JSON.parse(kalemJson) : kalemJson; } catch (e) { items = []; }
     }
     if (!items || items.length === 0) {
       items = [{
-        stockItemId: po.stockItemId,
-        stockCode: po.stockItem ? po.stockItem.stockCode : 'STK-001',
-        productName: po.stockItem ? po.stockItem.name : (po.productName || 'Ürün Kalemi'),
-        quantity: po.quantity,
-        unit: po.stockItem ? po.stockItem.unit : 'Adet',
-        unitPrice: po.unitPrice
+        stokId: po.stokId,
+        stokKodu: po.stokKarti ? po.stokKarti.stokKodu : 'STK-001',
+        ad: po.stokKarti ? po.stokKarti.ad : 'Ürün Kalemi',
+        miktar: po.miktar,
+        birim: po.stokKarti ? po.stokKarti.birim : 'Adet',
+        birimFiyat: po.birimFiyat
       }];
     }
 
     const itemsForReceipt = items.map(it => {
-      const sId = parseInt(it.stockItemId, 10);
-      const ordered = parseFloat(it.quantity) || 0;
+      const sId = parseInt(it.stokId || it.stockItemId, 10);
+      const ordered = parseFloat(it.miktar || it.quantity) || 0;
       const prevRec = receivedTotals[sId] || 0;
       const remaining = Math.max(0, ordered - prevRec);
 
       return {
         ...it,
-        stockItemId: sId,
+        stokId: sId,
         orderedQuantity: ordered,
         previouslyReceivedQuantity: prevRec,
         remainingQuantity: remaining,
@@ -565,19 +581,19 @@ class StockController {
 
   processGoodsReceipt = asyncHandler(async (req, res) => {
     const {
-      purchaseOrderId,
-      warehouseLocation,
-      deliveryNoteNo,
-      deliveryNoteDate,
-      deliveryNotePhoto,
-      notes
+      purchaseOrderId, satinAlmaSiparisId,
+      warehouseLocation, depoLokasyonu,
+      deliveryNoteNo, irsaliyeNo,
+      deliveryNoteDate, irsaliyeTarihi,
+      notes, notlar
     } = req.body;
 
-    const po = await PurchaseOrder.findByPk(purchaseOrderId, {
-      include: [{ model: StockItem, as: 'stockItem' }]
+    const poId = satinAlmaSiparisId || purchaseOrderId;
+    const po = await SatinAlmaSiparisi.findByPk(poId, {
+      include: [{ model: StokKarti, as: 'stokKarti' }]
     });
     if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
-    if (po.status === 'Pending_Approval') {
+    if (po.durum === 'Pending_Approval') {
       throw new ValidationError('Bu sipariş bütçe limitini aştığı için yönetsel onay beklemektedir (Pending_Approval). Onaylanmadan mal kabul işlemi yapılamaz.');
     }
 
@@ -603,10 +619,10 @@ class StockController {
       }
 
       itemsDataArray.push({
-        stockItemId: sId,
-        stockCode: stockCodes[i] || '',
-        productName: productNames[i] || '',
-        unit: units[i] || 'Adet',
+        stokId: sId,
+        stokKodu: stockCodes[i] || '',
+        ad: productNames[i] || '',
+        birim: units[i] || 'Adet',
         orderedQuantity: ordered,
         previouslyReceivedQuantity: prevRec,
         currentReceivedQuantity: currRec,
@@ -620,104 +636,102 @@ class StockController {
 
     const grnNo = await goodsReceiptRepository.getNextGrnNo();
 
-    const rawWhName = (warehouseLocation || po.deliveryWarehouse || po.deliveryPlace || 'Ana Hammadde & Üretim Ambarı').replace(/&amp;/g, '&').trim();
+    const locVal = depoLokasyonu || warehouseLocation || po.teslimDeposu || 'Ana Hammadde & Üretim Ambarı';
+    const rawWhName = locVal.replace(/&amp;/g, '&').trim();
     const { Op } = require('sequelize');
-    const { Warehouse } = require('../../models');
 
-    let targetWarehouse = await Warehouse.findOne({
+    let targetWarehouse = await Depo.findOne({
       where: {
         [Op.or]: [
-          { name: { [Op.iLike || Op.like]: rawWhName } },
-          { name: { [Op.iLike || Op.like]: `%${rawWhName}%` } },
-          { warehouseCode: { [Op.iLike || Op.like]: `%${rawWhName}%` } }
+          { ad: { [Op.iLike || Op.like]: rawWhName } },
+          { ad: { [Op.iLike || Op.like]: `%${rawWhName}%` } },
+          { depoKodu: { [Op.iLike || Op.like]: `%${rawWhName}%` } }
         ]
       }
     });
 
     if (!targetWarehouse) {
-      targetWarehouse = await Warehouse.findOne({ where: { status: 'Active' }, order: [['id', 'ASC']] });
+      targetWarehouse = await Depo.findOne({ where: { durum: 'Active' }, order: [['id', 'ASC']] });
     }
 
-    const targetWhName = targetWarehouse ? targetWarehouse.name : rawWhName;
+    const targetWhName = targetWarehouse ? targetWarehouse.ad : rawWhName;
 
-    const grn = await GoodsReceipt.create({
-      grnNo,
-      purchaseOrderId: po.id,
-      supplierId: po.supplierId || null,
-      stockItemId: itemsDataArray[0] ? itemsDataArray[0].stockItemId : null,
-      orderedQuantity: itemsDataArray[0] ? itemsDataArray[0].orderedQuantity : po.quantity,
-      receivedQuantity: totalReceivedInThisBatch,
-      acceptedQuantity: totalReceivedInThisBatch,
-      rejectedQuantity: 0,
-      receiptDate: new Date().toISOString().split('T')[0],
-      deliveryNoteNo: deliveryNoteNo ? deliveryNoteNo.trim() : null,
-      deliveryNoteDate: deliveryNoteDate || null,
-      deliveryNotePhoto: deliveryNotePhoto || null,
-      itemsData: JSON.stringify(itemsDataArray),
-      warehouseLocation: targetWhName,
-      status: 'Completed',
-      qualityStatus: 'Approved',
-      notes: notes || null,
-      createdBy: req.user.id
+    const grn = await MalKabul.create({
+      kabulNo: grnNo,
+      satinAlmaSiparisId: po.id,
+      tedarikciId: po.tedarikciId || null,
+      stokId: itemsDataArray[0] ? itemsDataArray[0].stokId : null,
+      siparisMiktari: itemsDataArray[0] ? itemsDataArray[0].orderedQuantity : po.miktar,
+      teslimAlinanMiktar: totalReceivedInThisBatch,
+      kabulEdilenMiktar: totalReceivedInThisBatch,
+      reddedilenMiktar: 0,
+      kabulTarihi: new Date().toISOString().split('T')[0],
+      irsaliyeNo: (irsaliyeNo || deliveryNoteNo) ? (irsaliyeNo || deliveryNoteNo).trim() : null,
+      kalemlerVerisi: JSON.stringify(itemsDataArray),
+      depoLokasyonu: targetWhName,
+      durum: 'Completed',
+      kaliteDurumu: 'Approved',
+      notlar: (notlar || notes) || null,
+      kabulEdenId: req.user.id
     });
 
     for (const itemRec of itemsDataArray) {
-      if (itemRec.currentReceivedQuantity > 0 && itemRec.stockItemId) {
-        const stockItem = await StockItem.findByPk(itemRec.stockItemId);
+      if (itemRec.currentReceivedQuantity > 0 && itemRec.stokId) {
+        const stockItem = await StokKarti.findByPk(itemRec.stokId);
         if (stockItem) {
-          stockItem.currentStock = parseFloat(stockItem.currentStock) + itemRec.currentReceivedQuantity;
+          stockItem.mevcutStok = parseFloat(stockItem.mevcutStok) + itemRec.currentReceivedQuantity;
           await stockItem.save();
 
-          const moveNo = `GRN-${Date.now().toString().slice(-6)}-${itemRec.stockItemId}`;
-          await StockMovement.create({
-            movementNo: moveNo,
-            stockItemId: stockItem.id,
-            targetWarehouseId: targetWarehouse ? targetWarehouse.id : 1,
-            movementType: 'Inbound',
-            quantity: itemRec.currentReceivedQuantity,
-            unitPrice: po.unitPrice || 0,
-            referenceNo: grnNo,
-            notes: `[Mal Kabul Girişi] İrsaliye No: ${deliveryNoteNo || '—'} | Fiş: ${grnNo} | Hedef Depo: ${targetWhName}`,
-            performedBy: req.user.id
+          const moveNo = `GRN-${Date.now().toString().slice(-6)}-${itemRec.stokId}`;
+          await StokHareketi.create({
+            hareketNo: moveNo,
+            stokId: stockItem.id,
+            varisDepoId: targetWarehouse ? targetWarehouse.id : 1,
+            hareketTuru: 'Inbound',
+            miktar: itemRec.currentReceivedQuantity,
+            birimFiyat: po.birimFiyat || 0,
+            referansNo: grnNo,
+            notlar: `[Mal Kabul Girişi] İrsaliye No: ${irsaliyeNo || deliveryNoteNo || '—'} | Fiş: ${grnNo} | Hedef Depo: ${targetWhName}`,
+            yapanKullaniciId: req.user.id
           });
         }
       }
     }
 
-    // Update target Warehouse per-warehouse inventory balance
     try {
       if (targetWarehouse) {
         let whItems = [];
-        if (targetWarehouse.itemsJson) {
+        const whKalem = targetWarehouse.kalemlerJson || targetWarehouse.itemsJson;
+        if (whKalem) {
           try {
-            whItems = typeof targetWarehouse.itemsJson === 'string' ? JSON.parse(targetWarehouse.itemsJson) : targetWarehouse.itemsJson;
+            whItems = typeof whKalem === 'string' ? JSON.parse(whKalem) : whKalem;
           } catch (e) { whItems = []; }
         }
         if (!Array.isArray(whItems)) whItems = [];
 
         for (const itemRec of itemsDataArray) {
-          if (itemRec.currentReceivedQuantity > 0 && itemRec.stockItemId) {
-            const sId = parseInt(itemRec.stockItemId, 10);
-            const existingItem = whItems.find(it => parseInt(it.stockItemId, 10) === sId || (it.stockCode && it.stockCode === itemRec.stockCode));
+          if (itemRec.currentReceivedQuantity > 0 && itemRec.stokId) {
+            const sId = parseInt(itemRec.stokId, 10);
+            const existingItem = whItems.find(it => parseInt(it.stokId || it.stockItemId, 10) === sId || (it.stokKodu && it.stokKodu === itemRec.stokKodu));
             
             if (existingItem) {
-              existingItem.quantity = (parseFloat(existingItem.quantity) || 0) + itemRec.currentReceivedQuantity;
+              existingItem.miktar = (parseFloat(existingItem.miktar || existingItem.quantity) || 0) + itemRec.currentReceivedQuantity;
               existingItem.lastUpdated = new Date().toISOString();
             } else {
               whItems.push({
-                stockItemId: sId,
-                stockCode: itemRec.stockCode || '',
-                name: itemRec.productName || 'Malzeme',
-                category: itemRec.category || 'Hammadde',
-                quantity: itemRec.currentReceivedQuantity,
-                unit: itemRec.unit || 'Adet',
+                stokId: sId,
+                stokKodu: itemRec.stokKodu || '',
+                ad: itemRec.productName || 'Malzeme',
+                kategori: itemRec.category || 'Hammadde',
+                miktar: itemRec.currentReceivedQuantity,
+                birim: itemRec.birim || 'Adet',
                 lastUpdated: new Date().toISOString()
               });
             }
           }
         }
 
-        targetWarehouse.itemsJson = JSON.stringify(whItems);
+        targetWarehouse.kalemlerJson = JSON.stringify(whItems);
         await targetWarehouse.save();
       }
     } catch (whErr) {
@@ -726,17 +740,18 @@ class StockController {
 
     const receivedTotals = await goodsReceiptRepository.getReceivedTotalsForOrder(po.id);
     let orderItems = [];
-    if (po.itemsJson) {
-      try { orderItems = typeof po.itemsJson === 'string' ? JSON.parse(po.itemsJson) : po.itemsJson; } catch (e) { orderItems = []; }
+    const poKalem = po.kalemlerJson || po.itemsJson;
+    if (poKalem) {
+      try { orderItems = typeof poKalem === 'string' ? JSON.parse(poKalem) : poKalem; } catch (e) { orderItems = []; }
     }
     if (!orderItems || orderItems.length === 0) {
-      orderItems = [{ stockItemId: po.stockItemId, quantity: po.quantity }];
+      orderItems = [{ stokId: po.stokId, miktar: po.miktar }];
     }
 
     let isAllFullyReceived = true;
     for (const ordItem of orderItems) {
-      const sId = parseInt(ordItem.stockItemId, 10);
-      const ordQty = parseFloat(ordItem.quantity) || 0;
+      const sId = parseInt(ordItem.stokId || ordItem.stockItemId, 10);
+      const ordQty = parseFloat(ordItem.miktar || ordItem.quantity) || 0;
       const totalRec = receivedTotals[sId] || 0;
       if (totalRec < ordQty) {
         isAllFullyReceived = false;
@@ -745,9 +760,9 @@ class StockController {
     }
 
     if (isAllFullyReceived) {
-      await po.update({ status: 'Received' });
+      await po.update({ durum: 'Received' });
     } else {
-      await po.update({ status: 'Partial_Received' });
+      await po.update({ durum: 'Partial_Received' });
     }
 
     res.redirect(`/stock/goods-receipt?success=receipt_created&grnNo=${encodeURIComponent(grnNo)}`);
@@ -755,10 +770,10 @@ class StockController {
 
   viewGoodsReceiptHistory = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
-    const po = await PurchaseOrder.findByPk(orderId, {
+    const po = await SatinAlmaSiparisi.findByPk(orderId, {
       include: [
-        { model: StockItem, as: 'stockItem' },
-        { model: Supplier, as: 'supplier' }
+        { model: StokKarti, as: 'stokKarti' },
+        { model: Tedarikci, as: 'tedarikci' }
       ]
     });
     if (!po) throw new NotFoundError('Satın alma siparişi bulunamadı.');
@@ -767,8 +782,9 @@ class StockController {
 
     const formattedReceipts = pastReceipts.map(gr => {
       let items = [];
-      if (gr.itemsData) {
-        try { items = typeof gr.itemsData === 'string' ? JSON.parse(gr.itemsData) : gr.itemsData; } catch (e) { items = []; }
+      const grKalem = gr.kalemlerVerisi || gr.itemsData;
+      if (grKalem) {
+        try { items = typeof grKalem === 'string' ? JSON.parse(grKalem) : grKalem; } catch (e) { items = []; }
       }
       return {
         ...gr.toJSON(),
@@ -825,13 +841,14 @@ class StockController {
   });
 
   addCounting = asyncHandler(async (req, res) => {
-    const { warehouseId, countDate, notes } = req.body;
-    if (!warehouseId) throw new ValidationError('Depo seçimi zorunludur.');
+    const { warehouseId, depoId, countDate, sayimTarihi, notes, notlar } = req.body;
+    const targetDepoId = depoId || warehouseId;
+    if (!targetDepoId) throw new ValidationError('Depo seçimi zorunludur.');
 
     await stockRepository.createCounting({
-      warehouseId,
-      countDate,
-      notes
+      depoId: targetDepoId,
+      sayimTarihi: sayimTarihi || countDate,
+      notlar: notlar || notes
     }, req.user, req.ip);
 
     res.redirect('/stock/counting');
@@ -842,25 +859,23 @@ class StockController {
     const lowStockItems = await stockRepository.getLowStockAlerts();
     const requisitions = await requisitionRepository.findAll({ sourceModule: 'Stock' });
 
-    const { PurchaseRequisition, ProductionOrder } = require('../../models');
+    const { SatinAlmaTalebi, UretimEmri } = require('../../models');
     const { Op } = require('sequelize');
 
-    // Fetch active/pending purchase requisitions
-    const pendingPurchaseReqs = await PurchaseRequisition.findAll({
+    const pendingPurchaseReqs = await SatinAlmaTalebi.findAll({
       where: {
-        status: { [Op.in]: ['Pending', 'Approved'] }
+        durum: { [Op.in]: ['Pending', 'Approved'] }
       }
     });
 
-    // Fetch active/pending production orders
-    const pendingProductionOrders = await ProductionOrder.findAll({
+    const pendingProductionOrders = await UretimEmri.findAll({
       where: {
-        status: { [Op.in]: ['Planned', 'In_Production', 'Quality_Check'] }
+        durum: { [Op.in]: ['Planned', 'In_Production', 'Quality_Check'] }
       }
     });
 
-    const pendingPurchaseStockItemIds = new Set(pendingPurchaseReqs.map(r => parseInt(r.stockItemId, 10)));
-    const pendingProductionStockItemIds = new Set(pendingProductionOrders.map(o => parseInt(o.stockItemId, 10)));
+    const pendingPurchaseStockItemIds = new Set(pendingPurchaseReqs.map(r => parseInt(r.stokId, 10)));
+    const pendingProductionStockItemIds = new Set(pendingProductionOrders.map(o => parseInt(o.stokId, 10)));
 
     lowStockItems.forEach(item => {
       item.hasPendingPurchaseReq = pendingPurchaseStockItemIds.has(item.id);
@@ -887,22 +902,25 @@ class StockController {
   });
 
   createStockRequisition = asyncHandler(async (req, res) => {
-    const { stockItemId, requestedQuantity, urgency, notes, targetModule, redirectUrl } = req.body;
+    const { stockItemId, stokId, requestedQuantity, talepEdilenMiktar, urgency, aciliyet, notes, notlar, targetModule, redirectUrl } = req.body;
+    const targetStokId = stokId || stockItemId;
 
-    if (!stockItemId) {
+    if (!targetStokId) {
       throw new ValidationError('Malzeme seçimi zorunludur.');
     }
 
-    const item = await stockRepository.findById(stockItemId);
+    const item = await stockRepository.findById(targetStokId);
     if (!item) {
       throw new NotFoundError('Stok kalemi bulunamadı.');
     }
 
-    const missingAmount = parseFloat(item.minStock || 0) - parseFloat(item.currentStock || 0);
-    const qty = parseFloat(requestedQuantity) || (missingAmount > 0 ? missingAmount : 10);
+    const minStk = parseFloat(item.asgariStok || item.minStock || 0);
+    const currStk = parseFloat(item.mevcutStok || item.currentStock || 0);
+    const missingAmount = minStk - currStk;
+    const qty = parseFloat(talepEdilenMiktar || requestedQuantity) || (missingAmount > 0 ? missingAmount : 10);
 
     const forcePurchase = (targetModule === 'purchase' || targetModule === 'Purchase' || req.body.module === 'purchase');
-    const pMethod = item.procurementMethod || ((item.category === 'Mamul' || item.category === 'Yari_Mamul' || item.category === 'Yarı_Mamul') ? 'Üretim' : 'Satın Alma');
+    const pMethod = item.tedarikYontemi || item.procurementMethod || ((item.kategori === 'Mamul' || item.kategori === 'Yari_Mamul' || item.kategori === 'Yarı_Mamul') ? 'Üretim' : 'Satın Alma');
     const isProductionItem = !forcePurchase && (pMethod === 'Üretim' || pMethod === 'Production');
 
     if (isProductionItem) {
@@ -914,18 +932,18 @@ class StockController {
       nextWeek.setDate(today.getDate() + 7);
 
       await productionRepository.create({
-        workOrderNo: nextWorkOrderNo,
-        productionTitle: `[Kritik Stok Uyarısı] ${item.name} Üretim Talebi`,
-        stockItemId: item.id,
-        plannedQuantity: qty,
-        unit: item.unit || 'Adet',
-        status: 'Planned',
-        priority: urgency === 'Urgent' ? 'Urgent' : 'High',
-        workCenter: item.category === 'Mamul' ? 'Montaj İstasyonu' : 'İşleme İstasyonu',
-        plannedStartDate: today.toISOString().split('T')[0],
-        plannedEndDate: nextWeek.toISOString().split('T')[0],
-        notes: notes || `🚨 [Kritik Stok Uyarısı] Depoda '${item.name}' ürünü kritik seviyededir (Mevcut: ${item.currentStock} ${item.unit}, Min: ${item.minStock} ${item.unit}). Tedarik Yöntemi: Üretim. Lütfen acil imalatını tamamlayın.`,
-        createdBy: req.user.id
+        isEmriNo: nextWorkOrderNo,
+        uretimBasligi: `[Kritik Stok Uyarısı] ${item.ad} Üretim Talebi`,
+        stokId: item.id,
+        planlananMiktar: qty,
+        birim: item.birim || 'Adet',
+        durum: 'Planned',
+        oncelik: (aciliyet || urgency) === 'Urgent' ? 'Urgent' : 'High',
+        isMerkezi: item.kategori === 'Mamul' ? 'Montaj İstasyonu' : 'İşleme İstasyonu',
+        planlananBaslangicTarihi: today.toISOString().split('T')[0],
+        planlananBitisTarihi: nextWeek.toISOString().split('T')[0],
+        notlar: notlar || notes || `🚨 [Kritik Stok Uyarısı] Depoda '${item.ad}' ürünü kritik seviyededir (Mevcut: ${currStk} ${item.birim}, Min: ${minStk} ${item.birim}). Tedarik Yöntemi: Üretim. Lütfen acil imalatını tamamlayın.`,
+        olusturanId: req.user.id
       }, req.user, req.ip);
 
       return res.redirect(redirectUrl || '/stock/alerts?success=production');
@@ -933,16 +951,16 @@ class StockController {
       const nextReqNo = await purchaseService.getNextRequisitionNo();
 
       await purchaseService.createRequisition({
-        requisitionNo: nextReqNo,
-        sourceModule: 'Stock',
-        stockItemId: item.id,
-        requestedQuantity: qty,
-        unit: item.unit || 'Adet',
-        urgency: urgency === 'Urgent' ? 'Urgent' : (urgency === 'High' ? 'High' : 'Normal'),
-        status: 'Pending',
-        requesterName: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
-        notes: notes || `🚨 [Stok Modülünden Gelen Talep] Depodan '${item.name}' malzemesi için satın alma talebi oluşturulmuştur. (Mevcut: ${item.currentStock} ${item.unit}, Min: ${item.minStock} ${item.unit}).`,
-        createdBy: req.user.id
+        talepNo: nextReqNo,
+        kaynakModul: 'Stock',
+        stokId: item.id,
+        talepEdilenMiktar: qty,
+        birim: item.birim || 'Adet',
+        aciliyet: (aciliyet || urgency) === 'Urgent' ? 'Urgent' : ((aciliyet || urgency) === 'High' ? 'High' : 'Normal'),
+        durum: 'Pending',
+        talepEdenAdi: req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi,
+        notlar: notlar || notes || `🚨 [Stok Modülünden Gelen Talep] Depodan '${item.ad}' malzemesi için satın alma talebi oluşturulmuştur. (Mevcut: ${currStk} ${item.birim}, Min: ${minStk} ${item.birim}).`,
+        olusturanId: req.user.id
       }, req.user, req.ip);
 
       return res.redirect(redirectUrl || '/stock/alerts?success=purchase');

@@ -2,134 +2,134 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Supplier extends Model {
+  class Tedarikci extends Model {
     static associate(models) {
-      Supplier.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      Supplier.hasMany(models.PurchaseOrder, { foreignKey: 'supplierId', as: 'purchaseOrders' });
-      Supplier.hasMany(models.PurchaseRfq, { foreignKey: 'supplierId', as: 'rfqs' });
-      Supplier.hasMany(models.GoodsReceipt, { foreignKey: 'supplierId', as: 'goodsReceipts' });
+      Tedarikci.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      Tedarikci.hasMany(models.SatinAlmaSiparisi, { foreignKey: 'tedarikciId', as: 'satinAlmaSiparisleri' });
+      Tedarikci.hasMany(models.SatinAlmaTeklifTalebi, { foreignKey: 'tedarikciId', as: 'teklifTalepleri' });
+      Tedarikci.hasMany(models.MalKabul, { foreignKey: 'tedarikciId', as: 'malKabulleri' });
     }
   }
 
-  Supplier.init({
-    supplierCode: {
+  Tedarikci.init({
+    tedarikciKodu: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    companyName: {
+    firmaAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    taxNo: {
+    vergiNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    taxOffice: {
+    vergiDairesi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    contactPerson: {
+    ilgiliKisi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    email: {
+    eposta: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    phone: {
+    telefon: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    fax: {
+    faks: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    website: {
+    webSitesi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    address: {
+    adres: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    city: {
+    sehir: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    country: {
+    ulke: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: 'Türkiye'
     },
-    paymentTerm: {
+    odemeVadesi: {
       type: DataTypes.ENUM('Pesin', 'Vadeli_30', 'Vadeli_60', 'Vadeli_90', 'Kredi_Karti'),
       allowNull: false,
       defaultValue: 'Vadeli_30'
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.ENUM('TRY', 'USD', 'EUR'),
       allowNull: false,
       defaultValue: 'TRY'
     },
-    riskLimit: {
+    riskLimiti: {
       type: DataTypes.DECIMAL(15, 2),
       allowNull: false,
       defaultValue: 100000
     },
-    currentBalance: {
+    guncelBakiye: {
       type: DataTypes.DECIMAL(15, 2),
       allowNull: false,
       defaultValue: 0
     },
-    category: {
+    kategori: {
       type: DataTypes.ENUM('Hammadde', 'Yari_Mamul', 'Hizmet', 'Yedek_Parca', 'Ambalaj', 'Diger'),
       allowNull: true,
       defaultValue: 'Diger'
     },
-    performanceScore: {
+    performansSkoru: {
       type: DataTypes.DECIMAL(3, 1),
       allowNull: false,
       defaultValue: 0
     },
-    onTimeDeliveryRate: {
+    zamanindaTeslimatOrani: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 0
     },
-    qualityScore: {
+    kaliteSkoru: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 0
     },
-    totalOrderCount: {
+    toplamSiparisSayisi: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0
     },
-    totalSpend: {
+    toplamHarcama: {
       type: DataTypes.DECIMAL(15, 2),
       allowNull: false,
       defaultValue: 0
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Active', 'Inactive', 'Blacklisted'),
       allowNull: false,
       defaultValue: 'Active'
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'Supplier',
-    tableName: 'Suppliers'
+    modelName: 'Tedarikci',
+    tableName: 'Tedarikciler'
   });
 
-  return Supplier;
+  return Tedarikci;
 };

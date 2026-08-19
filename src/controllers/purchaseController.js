@@ -7,7 +7,7 @@ const supplierRepository = require('../repositories/supplierRepository');
 const rfqRepository = require('../repositories/rfqRepository');
 const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const asyncHandler = require('../utils/asyncHandler');
-const { StockItem, PurchaseOrder, Supplier, PurchaseRequisition, PurchaseRfq, PurchaseInvoice, GoodsReceipt, Warehouse } = require('../../models');
+const { StokKarti, SatinAlmaSiparisi, Tedarikci, SatinAlmaTalebi, SatinAlmaTeklifTalebi, SatinAlmaFaturasi, MalKabul, Depo } = require('../../models');
 const { Op } = require('sequelize');
 
 class PurchaseController {
@@ -46,7 +46,7 @@ class PurchaseController {
   renderAddOrder = asyncHandler(async (req, res) => {
     if (req.query.rfqId) {
       const newOrder = await purchaseService.acceptRfq(req.query.rfqId, req.user, req.ip);
-      const orderNo = newOrder ? newOrder.orderNo : '';
+      const orderNo = newOrder ? (newOrder.siparisNo || newOrder.orderNo) : '';
       return res.redirect(`/purchase/orders?success=created&orderNo=${encodeURIComponent(orderNo)}`);
     }
     return res.redirect('/purchase/orders');
@@ -56,7 +56,7 @@ class PurchaseController {
     const rfqId = req.body.rfqId || req.query.rfqId;
     if (rfqId) {
       const newOrder = await purchaseService.acceptRfq(rfqId, req.user, req.ip);
-      const orderNo = newOrder ? newOrder.orderNo : '';
+      const orderNo = newOrder ? (newOrder.siparisNo || newOrder.orderNo) : '';
       return res.redirect(`/purchase/orders?success=created&orderNo=${encodeURIComponent(orderNo)}`);
     }
     return res.redirect('/purchase/orders');
@@ -65,33 +65,33 @@ class PurchaseController {
   renderEditOrder = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const order = await purchaseService.getOrderById(id);
-    const stockItems = await StockItem.findAll({
-      where: { status: 'Active' },
-      order: [['name', 'ASC']]
+    const stockItems = await StokKarti.findAll({
+      where: { durum: 'Active' },
+      order: [['ad', 'ASC']]
     });
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
-    const warehouses = await Warehouse.findAll({
-      where: { status: 'Active' },
-      order: [['name', 'ASC']]
+    const warehouses = await Depo.findAll({
+      where: { durum: 'Active' },
+      order: [['ad', 'ASC']]
     });
 
     let itemsList = [];
-    if (order.itemsJson) {
-      try { itemsList = typeof order.itemsJson === 'string' ? JSON.parse(order.itemsJson) : order.itemsJson; } catch (e) { itemsList = []; }
+    const itemsJson = order.kalemlerJson || order.itemsJson;
+    if (itemsJson) {
+      try { itemsList = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson; } catch (e) { itemsList = []; }
     }
     if (!Array.isArray(itemsList) || itemsList.length === 0) {
       itemsList = [{
-        stockItemId: order.stockItemId,
-        stockCode: order.stockItem ? order.stockItem.stockCode : '',
-        productName: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
-        name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
-        quantity: order.quantity,
-        unit: order.stockItem ? order.stockItem.unit : 'Adet',
-        unitPrice: order.unitPrice,
-        discountRate: order.discountRate || 0,
-        vatRate: order.taxRate || 20,
-        subtotal: order.subtotal,
-        totalAmount: order.totalAmount
+        stokId: order.stokId,
+        stokKodu: order.stokKarti ? order.stokKarti.stokKodu : '',
+        ad: order.stokKarti ? order.stokKarti.ad : 'Ürün Kalemi',
+        miktar: order.miktar,
+        birim: order.stokKarti ? order.stokKarti.birim : 'Adet',
+        birimFiyat: order.birimFiyat,
+        iskontoOrani: order.iskontoOrani || 0,
+        kdvOrani: order.kdvOrani || 20,
+        araToplam: order.araToplam,
+        toplamTutar: order.toplamTutar
       }];
     }
 
@@ -109,10 +109,10 @@ class PurchaseController {
   editOrder = asyncHandler(async (req, res) => {
     const { id } = req.params;
     try {
-      const quantity = parseFloat(req.body.quantity) || 1;
-      const unitPrice = parseFloat(req.body.unitPrice) || 0;
-      const discountRate = parseFloat(req.body.discountRate) || 0;
-      const taxRate = parseFloat(req.body.taxRate) || 20;
+      const quantity = parseFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity) || 1;
+      const unitPrice = parseFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice) || 0;
+      const discountRate = parseFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate) || 0;
+      const taxRate = parseFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate) || 20;
 
       const subtotal = quantity * unitPrice;
       const discountAmount = subtotal * (discountRate / 100);
@@ -121,37 +121,37 @@ class PurchaseController {
       const totalAmount = afterDiscount + taxAmount;
 
       await purchaseService.updateOrder(id, {
-        supplierName: req.body.supplierName ? req.body.supplierName.trim() : '',
-        supplierId: req.body.supplierId ? parseInt(req.body.supplierId, 10) : null,
-        supplierTaxNo: req.body.supplierTaxNo || null,
-        supplierContactPerson: req.body.supplierContactPerson || null,
-        supplierEmail: req.body.supplierEmail || null,
-        supplierPhone: req.body.supplierPhone || null,
-        orderDate: req.body.orderDate,
-        expectedDeliveryDate: req.body.expectedDeliveryDate || null,
-        paymentTerm: req.body.paymentTerm,
-        status: req.body.status,
-        priority: req.body.priority,
-        deliveryWarehouse: req.body.deliveryWarehouse ? req.body.deliveryWarehouse.trim() : null,
-        stockItemId: parseInt(req.body.stockItemId, 10),
-        quantity,
-        unitPrice,
-        discountRate,
-        taxRate,
-        subtotal,
-        discountAmount,
-        taxAmount,
-        totalAmount,
-        currency: req.body.currency || 'TRY',
-        notes: req.body.notes || null
+        tedarikciAdi: req.body.tedarikciAdi ? req.body.tedarikciAdi.trim() : (req.body.supplierName ? req.body.supplierName.trim() : ''),
+        tedarikciId: req.body.tedarikciId ? parseInt(req.body.tedarikciId, 10) : (req.body.supplierId ? parseInt(req.body.supplierId, 10) : null),
+        tedarikciVergiNo: req.body.tedarikciVergiNo || req.body.supplierTaxNo || null,
+        tedarikciIlgiliKisi: req.body.tedarikciIlgiliKisi || req.body.supplierContactPerson || null,
+        tedarikciEposta: req.body.tedarikciEposta || req.body.supplierEmail || null,
+        tedarikciTelefon: req.body.tedarikciTelefon || req.body.supplierPhone || null,
+        siparisTarihi: req.body.siparisTarihi || req.body.orderDate,
+        beklenenTeslimTarihi: req.body.beklenenTeslimTarihi || req.body.expectedDeliveryDate || null,
+        odemeVadesi: req.body.odemeVadesi || req.body.paymentTerm,
+        durum: req.body.durum || req.body.status,
+        oncelik: req.body.oncelik || req.body.priority,
+        teslimDeposu: req.body.teslimDeposu ? req.body.teslimDeposu.trim() : (req.body.deliveryWarehouse ? req.body.deliveryWarehouse.trim() : null),
+        stokId: parseInt(req.body.stokId || req.body.stockItemId, 10),
+        miktar: quantity,
+        birimFiyat: unitPrice,
+        iskontoOrani: discountRate,
+        kdvOrani: taxRate,
+        araToplam: subtotal,
+        iskontoTutari: discountAmount,
+        kdvTutari: taxAmount,
+        toplamTutar: totalAmount,
+        paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY',
+        notlar: req.body.notlar || req.body.notes || null
       }, req.user, req.ip);
 
       res.redirect('/purchase/orders');
     } catch (err) {
       const order = await purchaseService.getOrderById(id);
-      const stockItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+      const stockItems = await StokKarti.findAll({ where: { durum: 'Active' }, order: [['ad', 'ASC']] });
       const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
-      const warehouses = await Warehouse.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+      const warehouses = await Depo.findAll({ where: { durum: 'Active' }, order: [['ad', 'ASC']] });
 
       res.render('purchase/edit', {
         user: req.user,
@@ -173,18 +173,17 @@ class PurchaseController {
     const { search, status, sourceModule } = req.query;
     const requisitions = await purchaseService.getAllRequisitions({ status, sourceModule });
 
-    // Kabul edilmiş RFQ'lardaki ürün ID'lerini hesapla
-    const acceptedRfqs = await PurchaseRfq.findAll({
-      where: { status: 'Accepted' }
+    const acceptedRfqs = await SatinAlmaTeklifTalebi.findAll({
+      where: { durum: 'Accepted' }
     });
     const acceptedStockItemIds = new Set();
     acceptedRfqs.forEach(rfq => {
-      const items = (rfq.itemsData && Array.isArray(rfq.itemsData)) ? rfq.itemsData : [];
+      const items = (rfq.kalemlerVerisi && Array.isArray(rfq.kalemlerVerisi)) ? rfq.kalemlerVerisi : [];
       items.forEach(item => {
-        if (item.stockItemId) acceptedStockItemIds.add(parseInt(item.stockItemId, 10));
+        if (item.stokId || item.stockItemId) acceptedStockItemIds.add(parseInt(item.stokId || item.stockItemId, 10));
       });
-      if (items.length === 0 && rfq.stockItemId) {
-        acceptedStockItemIds.add(parseInt(rfq.stockItemId, 10));
+      if (items.length === 0 && rfq.stokId) {
+        acceptedStockItemIds.add(parseInt(rfq.stokId, 10));
       }
     });
 
@@ -200,9 +199,9 @@ class PurchaseController {
 
   renderAddRequisition = asyncHandler(async (req, res) => {
     const nextReqNo = await purchaseService.getNextRequisitionNo();
-    const stockItems = await StockItem.findAll({
-      where: { status: 'Active' },
-      order: [['name', 'ASC']]
+    const stockItems = await StokKarti.findAll({
+      where: { durum: 'Active' },
+      order: [['ad', 'ASC']]
     });
 
     res.render('purchase/requisition_add', {
@@ -217,21 +216,21 @@ class PurchaseController {
   addRequisition = asyncHandler(async (req, res) => {
     try {
       await purchaseService.createRequisition({
-        requisitionNo: req.body.requisitionNo,
-        sourceModule: req.body.sourceModule || 'Manual',
-        stockItemId: parseInt(req.body.stockItemId, 10),
-        requestedQuantity: parseFloat(req.body.requestedQuantity) || 1,
-        unit: req.body.unit || 'Adet',
-        urgency: req.body.urgency || 'Normal',
-        status: 'Pending',
-        requesterName: req.body.requesterName || (req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username),
-        notes: req.body.notes || null
+        talepNo: req.body.talepNo || req.body.requisitionNo,
+        kaynakModul: req.body.kaynakModul || req.body.sourceModule || 'Manual',
+        stokId: parseInt(req.body.stokId || req.body.stockItemId, 10),
+        talepEdilenMiktar: parseFloat(req.body.talepEdilenMiktar !== undefined ? req.body.talepEdilenMiktar : req.body.requestedQuantity) || 1,
+        birim: req.body.birim || req.body.unit || 'Adet',
+        aciliyet: req.body.aciliyet || req.body.urgency || 'Normal',
+        durum: 'Pending',
+        talepEdenAdi: req.body.talepEdenAdi || req.body.requesterName || (req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi),
+        notlar: req.body.notlar || req.body.notes || null
       }, req.user, req.ip);
 
       res.redirect('/purchase/requisitions');
     } catch (err) {
       const nextReqNo = await purchaseService.getNextRequisitionNo();
-      const stockItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+      const stockItems = await StokKarti.findAll({ where: { durum: 'Active' }, order: [['ad', 'ASC']] });
 
       res.render('purchase/requisition_add', {
         user: req.user,
@@ -250,22 +249,22 @@ class PurchaseController {
 
     if (reqItem) {
       const nextOrderNo = await purchaseService.getNextOrderNo();
-      const stockItem = reqItem.stockItem;
+      const stockItem = reqItem.stokKarti;
 
       await purchaseService.createOrder({
-        orderNo: nextOrderNo,
-        supplierName: stockItem ? (stockItem.supplier || 'Ana Tedarikçi A.Ş.') : 'Genel Tedarikçi A.Ş.',
-        orderDate: new Date().toISOString().split('T')[0],
-        paymentTerm: 'Vadeli_30',
-        status: 'Ordered',
-        priority: reqItem.urgency === 'Urgent' ? 'Urgent' : 'Normal',
-        stockItemId: reqItem.stockItemId,
-        quantity: parseFloat(reqItem.requestedQuantity) || 1,
-        unitPrice: stockItem ? parseFloat(stockItem.purchasePrice) || 10 : 10,
-        taxRate: 20,
-        currency: stockItem ? stockItem.currency || 'TRY' : 'TRY',
-        notes: `[Talep No: ${reqItem.requisitionNo}] ${reqItem.sourceModule} Modülünden gelen talep doğrultusunda oluşturuldu.`,
-        purchasingAgent: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username
+        siparisNo: nextOrderNo,
+        tedarikciAdi: stockItem ? (stockItem.tedarikci || 'Ana Tedarikçi A.Ş.') : 'Genel Tedarikçi A.Ş.',
+        siparisTarihi: new Date().toISOString().split('T')[0],
+        odemeVadesi: 'Vadeli_30',
+        durum: 'Ordered',
+        oncelik: reqItem.aciliyet === 'Urgent' ? 'Urgent' : 'Normal',
+        stokId: reqItem.stokId,
+        miktar: parseFloat(reqItem.talepEdilenMiktar) || 1,
+        birimFiyat: stockItem ? parseFloat(stockItem.alisFiyati) || 10 : 10,
+        kdvOrani: 20,
+        paraBirimi: stockItem ? stockItem.paraBirimi || 'TRY' : 'TRY',
+        notlar: `[Talep No: ${reqItem.talepNo}] ${reqItem.kaynakModul} Modülünden gelen talep doğrultusunda oluşturuldu.`,
+        satinAlmaci: req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi
       }, req.user, req.ip);
 
       await requisitionRepository.updateStatus(id, 'Ordered', req.user, req.ip);
@@ -280,40 +279,39 @@ class PurchaseController {
     const rfqs = await purchaseService.getAllRfqs({ search, status });
     const rfqStats = await purchaseService.getRfqStats();
 
-    // Group RFQs by product (stockItemId)
     const groupedMap = new Map();
 
     rfqs.forEach(rfq => {
       let productsInRfq = [];
 
-      if (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData.length > 0) {
-        rfq.itemsData.forEach(item => {
-          if (item.stockItemId) {
+      const itemsData = rfq.kalemlerVerisi || rfq.itemsData;
+      if (itemsData && Array.isArray(itemsData) && itemsData.length > 0) {
+        itemsData.forEach(item => {
+          const sId = item.stokId || item.stockItemId;
+          if (sId) {
             productsInRfq.push({
-              stockItemId: parseInt(item.stockItemId, 10),
-              stockCode: item.stockCode || 'STK-000',
-              itemName: item.productName || 'Belirtilmemiş Ürün',
-              unit: item.unit || 'Adet',
-              unitPrice: parseFloat(item.unitPrice) || 0,
-              quantity: parseFloat(item.quantity) || 1
+              stockItemId: parseInt(sId, 10),
+              stockCode: item.stokKodu || item.stockCode || 'STK-000',
+              itemName: item.ad || item.productName || 'Belirtilmemiş Ürün',
+              unit: item.birim || item.unit || 'Adet',
+              unitPrice: parseFloat(item.birimFiyat || item.unitPrice) || 0,
+              quantity: parseFloat(item.miktar || item.quantity) || 1
             });
           }
         });
       }
 
-      // If no itemsData array, fallback to primary stockItem association
-      if (productsInRfq.length === 0 && rfq.stockItemId) {
+      if (productsInRfq.length === 0 && rfq.stokId) {
         productsInRfq.push({
-          stockItemId: parseInt(rfq.stockItemId, 10),
-          stockCode: rfq.stockItem ? rfq.stockItem.stockCode : 'GENEL-000',
-          itemName: rfq.stockItem ? rfq.stockItem.name : 'Genel Malzeme',
-          unit: rfq.stockItem ? rfq.stockItem.unit : 'Adet',
-          unitPrice: parseFloat(rfq.offeredUnitPrice) || 0,
-          quantity: parseFloat(rfq.requestedQuantity) || 1
+          stockItemId: parseInt(rfq.stokId, 10),
+          stockCode: rfq.stokKarti ? rfq.stokKarti.stokKodu : 'GENEL-000',
+          itemName: rfq.stokKarti ? rfq.stokKarti.ad : 'Genel Malzeme',
+          unit: rfq.stokKarti ? rfq.stokKarti.birim : 'Adet',
+          unitPrice: parseFloat(rfq.teklifEdilenBirimFiyat) || 0,
+          quantity: parseFloat(rfq.talepEdilenMiktar) || 1
         });
       }
 
-      // Add RFQ to each product group map
       productsInRfq.forEach(prod => {
         const key = prod.stockItemId;
         if (!groupedMap.has(key)) {
@@ -341,24 +339,21 @@ class PurchaseController {
 
     const groupedRfqs = Array.from(groupedMap.values());
 
-    // Kabul edilmiş RFQ'lardaki ürün ID'lerini hesapla (isLocked için)
     const acceptedStockItemIds = new Set();
     rfqs.forEach(rfq => {
       const rfqObj = rfq.toJSON ? rfq.toJSON() : rfq;
-      if (rfqObj.status === 'Accepted') {
-        const items = (rfqObj.itemsData && Array.isArray(rfqObj.itemsData)) ? rfqObj.itemsData : [];
+      if (rfqObj.durum === 'Accepted') {
+        const items = (rfqObj.kalemlerVerisi && Array.isArray(rfqObj.kalemlerVerisi)) ? rfqObj.kalemlerVerisi : [];
         items.forEach(item => {
-          if (item.stockItemId) acceptedStockItemIds.add(parseInt(item.stockItemId, 10));
+          if (item.stokId || item.stockItemId) acceptedStockItemIds.add(parseInt(item.stokId || item.stockItemId, 10));
         });
-        if (items.length === 0 && rfqObj.stockItemId) {
-          acceptedStockItemIds.add(parseInt(rfqObj.stockItemId, 10));
+        if (items.length === 0 && rfqObj.stokId) {
+          acceptedStockItemIds.add(parseInt(rfqObj.stokId, 10));
         }
       }
     });
 
-    // Price / Performance algorithm for each product group + isLocked
     groupedRfqs.forEach(group => {
-      // isLocked: grubun ürünü kabul edilmiş bir teklifte yer alıyorsa true
       group.isLocked = acceptedStockItemIds.has(group.stockItemId);
 
       const validOffers = group.items.filter(o => o.itemUnitPrice && parseFloat(o.itemUnitPrice) > 0);
@@ -367,22 +362,23 @@ class PurchaseController {
         const prices = validOffers.map(o => parseFloat(o.itemUnitPrice));
         const minPrice = Math.min(...prices);
 
-        const daysList = validOffers.map(o => parseInt(o.deliveryDays, 10) || 7);
+        const daysList = validOffers.map(o => parseInt(o.teslimSuresiGun || o.deliveryDays, 10) || 7);
         const minDeliveryDays = Math.min(...daysList);
 
         validOffers.forEach(o => {
           const unitPrice = parseFloat(o.itemUnitPrice) || 1;
           const priceScore = minPrice > 0 ? (minPrice / unitPrice) * 100 : 50;
 
-          const days = parseInt(o.deliveryDays, 10) || 7;
+          const days = parseInt(o.teslimSuresiGun || o.deliveryDays, 10) || 7;
           const deliveryScore = minDeliveryDays > 0 ? Math.min(100, Math.max(30, (minDeliveryDays / days) * 100)) : 70;
 
-          const supplierRating = o.supplier ? (parseFloat(o.supplier.performanceScore) || parseFloat(o.supplier.qualityScore) || 85) : 85;
+          const supplierRating = o.tedarikci ? (parseFloat(o.tedarikci.performansSkoru) || parseFloat(o.tedarikci.kaliteSkoru) || 85) : 85;
 
           let termBonus = 0;
-          if (o.paymentTerm === 'Vadeli_90') termBonus = 15;
-          else if (o.paymentTerm === 'Vadeli_60') termBonus = 10;
-          else if (o.paymentTerm === 'Vadeli_30') termBonus = 5;
+          const term = o.odemeVadesi || o.paymentTerm;
+          if (term === 'Vadeli_90') termBonus = 15;
+          else if (term === 'Vadeli_60') termBonus = 10;
+          else if (term === 'Vadeli_30') termBonus = 5;
 
           const deliveryTermScore = Math.min(100, deliveryScore + termBonus);
           const totalScore = (priceScore * 0.50) + (deliveryTermScore * 0.25) + (supplierRating * 0.25);
@@ -410,12 +406,11 @@ class PurchaseController {
     const nextRfqNo = await purchaseService.getNextRfqNo();
     const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
 
-    // Fetch products for which a PurchaseRequisition exists
     let requisitions = [];
     try {
-      requisitions = await PurchaseRequisition.findAll({
-        where: { status: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
-        include: [{ model: StockItem, as: 'stockItem' }],
+      requisitions = await SatinAlmaTalebi.findAll({
+        where: { durum: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
+        include: [{ model: StokKarti, as: 'stokKarti' }],
         order: [['createdAt', 'DESC']]
       });
     } catch (e) {
@@ -424,38 +419,37 @@ class PurchaseController {
 
     const reqMap = new Map();
     requisitions.forEach(reqItem => {
-      if (reqItem.stockItem && !reqMap.has(reqItem.stockItem.id)) {
-        const minStockVal = parseFloat(reqItem.stockItem.minStock) || 10;
-        reqMap.set(reqItem.stockItem.id, {
-          stockItemId: reqItem.stockItem.id,
-          stockCode: reqItem.stockItem.stockCode,
-          name: reqItem.stockItem.name,
-          category: reqItem.stockItem.category,
-          unit: reqItem.stockItem.unit || 'Adet',
+      if (reqItem.stokKarti && !reqMap.has(reqItem.stokKarti.id)) {
+        const minStockVal = parseFloat(reqItem.stokKarti.asgariStok) || 10;
+        reqMap.set(reqItem.stokKarti.id, {
+          stockItemId: reqItem.stokKarti.id,
+          stockCode: reqItem.stokKarti.stokKodu,
+          name: reqItem.stokKarti.ad,
+          category: reqItem.stokKarti.kategori,
+          unit: reqItem.stokKarti.birim || 'Adet',
           minStock: minStockVal > 0 ? minStockVal : 10,
-          purchasePrice: parseFloat(reqItem.stockItem.purchasePrice) || 0,
-          requisitionNo: reqItem.requisitionNo,
+          purchasePrice: parseFloat(reqItem.stokKarti.alisFiyati) || 0,
+          requisitionNo: reqItem.talepNo,
           requisitionId: reqItem.id,
-          requestedQuantity: parseFloat(reqItem.requestedQuantity) || minStockVal || 10
+          requestedQuantity: parseFloat(reqItem.talepEdilenMiktar) || minStockVal || 10
         });
       }
     });
 
     let requisitionedProducts = Array.from(reqMap.values());
 
-    // Fallback: If no requisitions exist in DB, load active stock items so the page ALWAYS opens smoothly!
     if (requisitionedProducts.length === 0) {
-      const allItems = await StockItem.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+      const allItems = await StokKarti.findAll({ where: { durum: 'Active' }, order: [['ad', 'ASC']] });
       requisitionedProducts = allItems.map(item => {
-        const minStockVal = parseFloat(item.minStock) || 10;
+        const minStockVal = parseFloat(item.asgariStok) || 10;
         return {
           stockItemId: item.id,
-          stockCode: item.stockCode,
-          name: item.name,
-          category: item.category,
-          unit: item.unit || 'Adet',
+          stockCode: item.stokKodu,
+          name: item.ad,
+          category: item.kategori,
+          unit: item.birim || 'Adet',
           minStock: minStockVal > 0 ? minStockVal : 10,
-          purchasePrice: parseFloat(item.purchasePrice) || 0,
+          purchasePrice: parseFloat(item.alisFiyati) || 0,
           requisitionNo: 'TAL-GENEL',
           requisitionId: 0,
           requestedQuantity: minStockVal || 10
@@ -468,9 +462,9 @@ class PurchaseController {
 
     if (targetReqId && !targetStockItemId) {
       try {
-        const reqObj = await PurchaseRequisition.findByPk(targetReqId);
-        if (reqObj && reqObj.stockItemId) {
-          targetStockItemId = reqObj.stockItemId;
+        const reqObj = await SatinAlmaTalebi.findByPk(targetReqId);
+        if (reqObj && reqObj.stokId) {
+          targetStockItemId = reqObj.stokId;
         }
       } catch (e) {
         console.error('Error finding target requisition:', e);
@@ -483,17 +477,17 @@ class PurchaseController {
         const [targetProd] = requisitionedProducts.splice(existingIdx, 1);
         requisitionedProducts.unshift(targetProd);
       } else if (existingIdx < 0) {
-        const targetItem = await StockItem.findByPk(targetStockItemId);
+        const targetItem = await StokKarti.findByPk(targetStockItemId);
         if (targetItem) {
-          const minStockVal = parseFloat(targetItem.minStock) || 10;
+          const minStockVal = parseFloat(targetItem.asgariStok) || 10;
           requisitionedProducts.unshift({
             stockItemId: targetItem.id,
-            stockCode: targetItem.stockCode,
-            name: targetItem.name,
-            category: targetItem.category,
-            unit: targetItem.unit || 'Adet',
+            stockCode: targetItem.stokKodu,
+            name: targetItem.ad,
+            category: targetItem.kategori,
+            unit: targetItem.birim || 'Adet',
             minStock: minStockVal > 0 ? minStockVal : 10,
-            purchasePrice: parseFloat(targetItem.purchasePrice) || 0,
+            purchasePrice: parseFloat(targetItem.alisFiyati) || 0,
             requisitionNo: targetReqId ? `TALEP-#${targetReqId}` : 'TAL-GENEL',
             requisitionId: targetReqId || 0,
             requestedQuantity: minStockVal || 10
@@ -502,25 +496,23 @@ class PurchaseController {
       }
     }
 
-    // Fetch accepted RFQs to collect locked/accepted stockItemIds
-    const acceptedRfqs = await PurchaseRfq.findAll({
-      where: { status: 'Accepted' }
+    const acceptedRfqs = await SatinAlmaTeklifTalebi.findAll({
+      where: { durum: 'Accepted' }
     });
     const acceptedStockItemIds = new Set();
     acceptedRfqs.forEach(rfq => {
-      const items = (rfq.itemsData && Array.isArray(rfq.itemsData)) ? rfq.itemsData : [];
+      const items = (rfq.kalemlerVerisi && Array.isArray(rfq.kalemlerVerisi)) ? rfq.kalemlerVerisi : [];
       items.forEach(item => {
-        if (item.stockItemId) acceptedStockItemIds.add(parseInt(item.stockItemId, 10));
+        if (item.stokId || item.stockItemId) acceptedStockItemIds.add(parseInt(item.stokId || item.stockItemId, 10));
       });
-      if (items.length === 0 && rfq.stockItemId) {
-        acceptedStockItemIds.add(parseInt(rfq.stockItemId, 10));
+      if (items.length === 0 && rfq.stokId) {
+        acceptedStockItemIds.add(parseInt(rfq.stokId, 10));
       }
     });
 
-    // Fetch active company warehouses from Stock & Warehouse module
-    const warehouses = await Warehouse.findAll({
-      where: { status: 'Active' },
-      order: [['name', 'ASC']]
+    const warehouses = await Depo.findAll({
+      where: { durum: 'Active' },
+      order: [['ad', 'ASC']]
     });
 
     res.render('purchase/rfq_add', {
@@ -539,15 +531,14 @@ class PurchaseController {
 
   addRfq = asyncHandler(async (req, res) => {
     try {
-      const supplierId = req.body.supplierId ? parseInt(req.body.supplierId, 10) : null;
-      let supplierName = req.body.supplierName ? req.body.supplierName.trim() : '';
+      const supplierId = req.body.supplierId || req.body.tedarikciId ? parseInt(req.body.supplierId || req.body.tedarikciId, 10) : null;
+      let supplierName = req.body.supplierName || req.body.tedarikciAdi ? (req.body.supplierName || req.body.tedarikciAdi).trim() : '';
 
       if (supplierId) {
-        const supObj = await Supplier.findByPk(supplierId);
-        if (supObj) supplierName = supObj.companyName;
+        const supObj = await Tedarikci.findByPk(supplierId);
+        if (supObj) supplierName = supObj.firmaAdi;
       }
 
-      // Parse line items
       let itemsData = [];
       if (Array.isArray(req.body.itemStockItemId)) {
         for (let i = 0; i < req.body.itemStockItemId.length; i++) {
@@ -564,17 +555,17 @@ class PurchaseController {
           const net = rawTotal - discAmt + taxAmt;
 
           itemsData.push({
-            stockItemId: sId,
-            stockCode: req.body.itemStockCode[i] || '',
-            productName: req.body.itemProductName[i] || '',
+            stokId: sId,
+            stokKodu: req.body.itemStockCode[i] || '',
+            ad: req.body.itemProductName[i] || '',
             requisitionNo: req.body.itemRequisitionNo[i] || '',
-            quantity: qty,
-            unit: req.body.itemUnit[i] || 'Adet',
-            unitPrice: price,
-            discountRate: disc,
-            vatRate: vat,
+            miktar: qty,
+            birim: req.body.itemUnit[i] || 'Adet',
+            birimFiyat: price,
+            iskontoOrani: disc,
+            kdvOrani: vat,
             netAmount: net,
-            notes: req.body.itemNotes ? (req.body.itemNotes[i] || '') : ''
+            notlar: req.body.itemNotes ? (req.body.itemNotes[i] || '') : ''
           });
         }
       } else if (req.body.itemStockItemId) {
@@ -591,52 +582,52 @@ class PurchaseController {
           const net = rawTotal - discAmt + taxAmt;
 
           itemsData.push({
-            stockItemId: sId,
-            stockCode: req.body.itemStockCode || '',
-            productName: req.body.itemProductName || '',
+            stokId: sId,
+            stokKodu: req.body.itemStockCode || '',
+            ad: req.body.itemProductName || '',
             requisitionNo: req.body.itemRequisitionNo || '',
-            quantity: qty,
-            unit: req.body.itemUnit || 'Adet',
-            unitPrice: price,
-            discountRate: disc,
-            vatRate: vat,
+            miktar: qty,
+            birim: req.body.itemUnit || 'Adet',
+            birimFiyat: price,
+            iskontoOrani: disc,
+            kdvOrani: vat,
             netAmount: net,
-            notes: req.body.itemNotes || ''
+            notlar: req.body.itemNotes || ''
           });
         }
       }
 
-      const subtotal = parseFloat(req.body.subtotal) || 0;
-      const totalDiscount = parseFloat(req.body.totalDiscount) || 0;
-      const totalTax = parseFloat(req.body.totalTax) || 0;
-      const offeredTotalPrice = parseFloat(req.body.offeredTotalPrice) || (subtotal - totalDiscount + totalTax);
+      const subtotal = parseFloat(req.body.subtotal || req.body.araToplam) || 0;
+      const totalDiscount = parseFloat(req.body.totalDiscount || req.body.toplamIskonto) || 0;
+      const totalTax = parseFloat(req.body.totalTax || req.body.toplamKdv) || 0;
+      const offeredTotalPrice = parseFloat(req.body.offeredTotalPrice || req.body.teklifEdilenToplamFiyat) || (subtotal - totalDiscount + totalTax);
 
       const firstItem = itemsData[0] || {};
 
       await purchaseService.createRfq({
-        rfqNo: req.body.rfqNo,
-        supplierId,
-        supplierName,
-        stockItemId: firstItem.stockItemId || 1,
-        requestedQuantity: firstItem.quantity || 1,
-        offeredUnitPrice: firstItem.unitPrice || 0,
-        offeredTotalPrice,
-        subtotal,
-        totalDiscount,
-        totalTax,
-        itemsData,
-        currency: req.body.currency || 'TRY',
-        paymentTerm: req.body.paymentTerm || 'Pesin',
-        deliveryDays: req.body.deliveryDays ? parseInt(req.body.deliveryDays, 10) : null,
-        deliveryPlace: req.body.deliveryPlace || null,
-        shippingStatus: req.body.shippingStatus || null,
-        vatStatus: req.body.vatStatus || null,
-        documentRef: req.body.documentRef || null,
-        validUntil: req.body.validUntil || null,
-        rfqDate: req.body.rfqDate || new Date().toISOString().split('T')[0],
-        status: req.body.status || 'Received',
-        requestedBy: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username,
-        notes: req.body.notes || null
+        teklifTalepNo: req.body.teklifTalepNo || req.body.rfqNo,
+        tedarikciId: supplierId,
+        tedarikciAdi: supplierName,
+        stokId: firstItem.stokId || 1,
+        talepEdilenMiktar: firstItem.miktar || 1,
+        teklifEdilenBirimFiyat: firstItem.birimFiyat || 0,
+        teklifEdilenToplamFiyat: offeredTotalPrice,
+        araToplam: subtotal,
+        toplamIskonto: totalDiscount,
+        toplamKdv: totalTax,
+        kalemlerVerisi: itemsData,
+        paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY',
+        odemeVadesi: req.body.odemeVadesi || req.body.paymentTerm || 'Pesin',
+        teslimSuresiGun: req.body.teslimSuresiGun || req.body.deliveryDays ? parseInt(req.body.teslimSuresiGun || req.body.deliveryDays, 10) : null,
+        teslimYeri: req.body.teslimYeri || req.body.deliveryPlace || null,
+        sevkiyatDurumu: req.body.sevkiyatDurumu || req.body.shippingStatus || null,
+        kdvDurumu: req.body.kdvDurumu || req.body.vatStatus || null,
+        belgeReferansi: req.body.belgeReferansi || req.body.documentRef || null,
+        gecerlilikBitis: req.body.gecerlilikBitis || req.body.validUntil || null,
+        teklifTalepTarihi: req.body.teklifTalepTarihi || req.body.rfqDate || new Date().toISOString().split('T')[0],
+        durum: req.body.durum || req.body.status || 'Received',
+        talepEden: req.body.talepEden || (req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi),
+        notlar: req.body.notlar || req.body.notes || null
       }, req.user, req.ip);
 
       res.redirect('/purchase/rfq');
@@ -644,31 +635,31 @@ class PurchaseController {
       console.error('addRfq Error:', err);
       const nextRfqNo = await purchaseService.getNextRfqNo();
       const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
-      const requisitions = await PurchaseRequisition.findAll({
-        where: { status: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
-        include: [{ model: StockItem, as: 'stockItem' }]
+      const requisitions = await SatinAlmaTalebi.findAll({
+        where: { durum: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
+        include: [{ model: StokKarti, as: 'stokKarti' }]
       });
 
       const reqMap = new Map();
       requisitions.forEach(reqItem => {
-        if (reqItem.stockItem && !reqMap.has(reqItem.stockItem.id)) {
-          const minStockVal = parseFloat(reqItem.stockItem.minStock) || 10;
-          reqMap.set(reqItem.stockItem.id, {
-            stockItemId: reqItem.stockItem.id,
-            stockCode: reqItem.stockItem.stockCode,
-            name: reqItem.stockItem.name,
-            category: reqItem.stockItem.category,
-            unit: reqItem.stockItem.unit || 'Adet',
+        if (reqItem.stokKarti && !reqMap.has(reqItem.stokKarti.id)) {
+          const minStockVal = parseFloat(reqItem.stokKarti.asgariStok) || 10;
+          reqMap.set(reqItem.stokKarti.id, {
+            stockItemId: reqItem.stokKarti.id,
+            stockCode: reqItem.stokKarti.stokKodu,
+            name: reqItem.stokKarti.ad,
+            category: reqItem.stokKarti.kategori,
+            unit: reqItem.stokKarti.birim || 'Adet',
             minStock: minStockVal > 0 ? minStockVal : 10,
-            purchasePrice: parseFloat(reqItem.stockItem.purchasePrice) || 0,
-            requisitionNo: reqItem.requisitionNo,
+            purchasePrice: parseFloat(reqItem.stokKarti.alisFiyati) || 0,
+            requisitionNo: reqItem.talepNo,
             requisitionId: reqItem.id,
-            requestedQuantity: parseFloat(reqItem.requestedQuantity) || minStockVal || 10
+            requestedQuantity: parseFloat(reqItem.talepEdilenMiktar) || minStockVal || 10
           });
         }
       });
 
-      const warehouses = await Warehouse.findAll({ where: { status: 'Active' }, order: [['name', 'ASC']] });
+      const warehouses = await Depo.findAll({ where: { durum: 'Active' }, order: [['ad', 'ASC']] });
 
       res.render('purchase/rfq_add', {
         user: req.user,
@@ -685,12 +676,12 @@ class PurchaseController {
 
   acceptRfq = asyncHandler(async (req, res) => {
     const order = await purchaseService.acceptRfq(req.params.id, req.user, req.ip);
-    const orderNo = order ? order.orderNo : '';
+    const orderNo = order ? (order.siparisNo || order.orderNo) : '';
     res.redirect(`/purchase/orders?success=created&orderNo=${encodeURIComponent(orderNo)}`);
   });
 
   rejectRfq = asyncHandler(async (req, res) => {
-    await purchaseService.updateRfq(req.params.id, { status: 'Rejected' }, req.user, req.ip);
+    await purchaseService.updateRfq(req.params.id, { durum: 'Rejected' }, req.user, req.ip);
     res.redirect('/purchase/rfq');
   });
 
@@ -723,25 +714,25 @@ class PurchaseController {
   addSupplier = asyncHandler(async (req, res) => {
     try {
       await purchaseService.createSupplier({
-        supplierCode: req.body.supplierCode ? req.body.supplierCode.trim() : '',
-        companyName: req.body.companyName ? req.body.companyName.trim() : '',
-        taxNo: req.body.taxNo || null,
-        taxOffice: req.body.taxOffice || null,
-        contactPerson: req.body.contactPerson || null,
-        email: req.body.email || null,
-        phone: req.body.phone || null,
-        fax: req.body.fax || null,
-        website: req.body.website || null,
-        address: req.body.address || null,
-        city: req.body.city || null,
-        country: req.body.country || 'Türkiye',
-        paymentTerm: req.body.paymentTerm || 'Vadeli_30',
-        currency: req.body.currency || 'TRY',
-        riskLimit: parseFloat(req.body.riskLimit) || 100000,
-        performanceScore: parseFloat(req.body.performanceScore) || 85,
-        category: req.body.category || 'Hammadde',
-        status: 'Active',
-        notes: req.body.notes ? req.body.notes.trim() : null
+        tedarikciKodu: req.body.tedarikciKodu ? req.body.tedarikciKodu.trim() : (req.body.supplierCode ? req.body.supplierCode.trim() : ''),
+        firmaAdi: req.body.firmaAdi ? req.body.firmaAdi.trim() : (req.body.companyName ? req.body.companyName.trim() : ''),
+        vergiNo: req.body.vergiNo || req.body.taxNo || null,
+        vergiDairesi: req.body.vergiDairesi || req.body.taxOffice || null,
+        ilgiliKisi: req.body.ilgiliKisi || req.body.contactPerson || null,
+        eposta: req.body.eposta || req.body.email || null,
+        telefon: req.body.telefon || req.body.phone || null,
+        faks: req.body.faks || req.body.fax || null,
+        webSitesi: req.body.webSitesi || req.body.website || null,
+        adres: req.body.adres || req.body.address || null,
+        sehir: req.body.sehir || req.body.city || null,
+        ulke: req.body.ulke || req.body.country || 'Türkiye',
+        odemeVadesi: req.body.odemeVadesi || req.body.paymentTerm || 'Vadeli_30',
+        paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY',
+        riskLimiti: parseFloat(req.body.riskLimiti || req.body.riskLimit) || 100000,
+        performansSkoru: parseFloat(req.body.performansSkoru || req.body.performanceScore) || 85,
+        kategori: req.body.kategori || req.body.category || 'Hammadde',
+        durum: 'Active',
+        notlar: req.body.notlar ? req.body.notlar.trim() : (req.body.notes ? req.body.notes.trim() : null)
       }, req.user, req.ip);
 
       res.redirect('/purchase/suppliers');
@@ -771,35 +762,33 @@ class PurchaseController {
     const { search, status, qualityStatus } = req.query;
     const allReceipts = await purchaseService.getAllGoodsReceipts({ search, status, qualityStatus });
     
-    // Satın alma modülü mal kabul sayfasında sadece teslimatı %100 tamamlanmış (status: 'Received') siparişlerin mal kabul kayıtları listelenir
-    const receipts = allReceipts.filter(grn => grn.purchaseOrder && grn.purchaseOrder.status === 'Received');
+    const receipts = allReceipts.filter(grn => grn.satinAlmaSiparisi && (grn.satinAlmaSiparisi.durum === 'Received' || grn.satinAlmaSiparisi.status === 'Received'));
     const grnStats = await purchaseService.getGoodsReceiptStats();
 
-    // Fetch all completed / fully received orders awaiting invoicing (status: 'Received')
-    const receivedOrders = await PurchaseOrder.findAll({
-      where: { status: 'Received' },
+    const receivedOrders = await SatinAlmaSiparisi.findAll({
+      where: { durum: 'Received' },
       include: [
-        { model: StockItem, as: 'stockItem' },
-        { model: Supplier, as: 'supplier' }
+        { model: StokKarti, as: 'stokKarti' },
+        { model: Tedarikci, as: 'tedarikci' }
       ],
       order: [['updatedAt', 'DESC']]
     });
 
-    // Attach existing invoice check for each order
     const awaitingOrders = await Promise.all(receivedOrders.map(async (order) => {
       const invoice = await purchaseInvoiceRepository.findByOrderId(order.id);
       let items = [];
-      if (order.itemsJson) {
-        try { items = typeof order.itemsJson === 'string' ? JSON.parse(order.itemsJson) : order.itemsJson; } catch (e) { items = []; }
+      const itemsJson = order.kalemlerJson || order.itemsJson;
+      if (itemsJson) {
+        try { items = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson; } catch (e) { items = []; }
       }
       if (!items || items.length === 0) {
         items = [{
-          stockItemId: order.stockItemId,
-          stockCode: order.stockItem ? order.stockItem.stockCode : 'STK-001',
-          productName: order.stockItem ? order.stockItem.name : (order.productName || 'Ürün Kalemi'),
-          quantity: order.quantity,
-          unit: order.stockItem ? order.stockItem.unit : 'Adet',
-          unitPrice: order.unitPrice
+          stokId: order.stokId,
+          stokKodu: order.stokKarti ? order.stokKarti.stokKodu : 'STK-001',
+          ad: order.stokKarti ? order.stokKarti.ad : 'Ürün Kalemi',
+          miktar: order.miktar,
+          birim: order.stokKarti ? order.stokKarti.birim : 'Adet',
+          birimFiyat: order.birimFiyat
         }];
       }
 
@@ -834,25 +823,24 @@ class PurchaseController {
       return res.redirect('/purchase/goods-receipt?error=' + encodeURIComponent('Satın alma siparişi bulunamadı.'));
     }
 
-    if (order.status !== 'Received') {
+    if (order.durum !== 'Received') {
       return res.redirect('/purchase/goods-receipt?error=' + encodeURIComponent('Sadece mal kabul süreci tamamlanan (Teslim Alındı) siparişler için fatura kesilebilir.'));
     }
 
     const existingInvoice = await purchaseInvoiceRepository.findByOrderId(order.id);
     if (existingInvoice) {
-      return res.redirect('/purchase/goods-receipt?error=' + encodeURIComponent(`⚠️ Bu sipariş (${order.orderNo}) için daha önce ${existingInvoice.invoiceNo} numaralı alış faturası kesilmiştir! Her sipariş için sadece bir fatura oluşturulabilir.`));
+      return res.redirect('/purchase/goods-receipt?error=' + encodeURIComponent(`⚠️ Bu sipariş (${order.siparisNo}) için daha önce ${existingInvoice.faturaNo} numaralı alış faturası kesilmiştir! Her sipariş için sadece bir fatura oluşturulabilir.`));
     }
 
-    // 3-Way matching check: find related GoodsReceipt safely
     let grn = null;
     try {
-      grn = await GoodsReceipt.findOne({ where: { purchaseOrderId: order.id }, order: [['id', 'DESC']] });
+      grn = await MalKabul.findOne({ where: { satinAlmaSiparisId: order.id }, order: [['id', 'DESC']] });
     } catch (e) {
-      console.warn('GoodsReceipt lookup failed:', e.message);
+      console.warn('MalKabul lookup failed:', e.message);
     }
 
-    const dispatchNo = req.body.dispatchNo && req.body.dispatchNo.trim() ? req.body.dispatchNo.trim() : (grn ? grn.deliveryNoteNo : `IRS-${order.orderNo}`);
-    const dispatchDate = req.body.dispatchDate && req.body.dispatchDate.trim() ? req.body.dispatchDate.trim() : (grn ? grn.receiptDate : (order.orderDate || new Date().toISOString().split('T')[0]));
+    const dispatchNo = req.body.dispatchNo && req.body.dispatchNo.trim() ? req.body.dispatchNo.trim() : (grn ? grn.irsaliyeNo : `IRS-${order.siparisNo}`);
+    const dispatchDate = req.body.dispatchDate && req.body.dispatchDate.trim() ? req.body.dispatchDate.trim() : (grn ? grn.kabulTarihi : (order.siparisTarihi || new Date().toISOString().split('T')[0]));
 
     const bankName = req.body.bankName && req.body.bankName.trim() ? req.body.bankName.trim() : 'T.C. Ziraat Bankası A.Ş. - Maslak Kurumsal Şubesi';
     const ibanNo = req.body.ibanNo && req.body.ibanNo.trim() ? req.body.ibanNo.trim() : 'TR62 0001 0000 0000 0000 1234 56';
@@ -863,35 +851,35 @@ class PurchaseController {
     }
     const invoiceDate = req.body.invoiceDate && req.body.invoiceDate.trim() ? req.body.invoiceDate.trim() : new Date().toISOString().split('T')[0];
 
-    const grandTotal = parseFloat(order.totalAmount) || 0;
-    const subtotal = parseFloat(req.body.subtotal) || (parseFloat(order.subtotal) || grandTotal / 1.2);
-    const taxAmount = parseFloat(req.body.taxAmount) || (parseFloat(order.taxAmount) || grandTotal - subtotal);
+    const grandTotal = parseFloat(order.toplamTutar) || 0;
+    const subtotal = parseFloat(req.body.subtotal) || (parseFloat(order.araToplam) || grandTotal / 1.2);
+    const taxAmount = parseFloat(req.body.taxAmount) || (parseFloat(order.kdvTutari) || grandTotal - subtotal);
 
     await purchaseInvoiceRepository.create({
-      invoiceNo,
-      purchaseOrderId: order.id,
-      supplierId: order.supplierId,
-      supplierName: order.supplierName || (order.supplier ? order.supplier.companyName : 'Tedarikçi Firma'),
-      supplierTaxOffice: order.supplier ? order.supplier.taxOffice : (order.supplierTaxNo || 'Kadıköy V.D.'),
-      supplierTaxNo: order.supplierTaxNo || (order.supplier ? order.supplier.taxNo : '1234567890'),
-      billingAddress: order.supplier ? order.supplier.address : 'Organize Sanayi Bölgesi, No: 45 Kadıköy / İSTANBUL',
-      supplierPhone: order.supplierPhone || (order.supplier ? order.supplier.phone : '+90 (216) 555 0000'),
-      supplierEmail: order.supplierEmail || (order.supplier ? order.supplier.email : 'muhasebe@tedarikci.com'),
-      invoiceDate,
-      orderNo: order.orderNo,
-      orderDate: order.orderDate,
-      dispatchNo,
-      dispatchDate,
-      bankName,
+      faturaNo: invoiceNo,
+      satinAlmaSiparisId: order.id,
+      tedarikciId: order.tedarikciId,
+      tedarikciAdi: order.tedarikciAdi || (order.tedarikci ? order.tedarikci.firmaAdi : 'Tedarikçi Firma'),
+      tedarikciVergiDairesi: order.tedarikci ? order.tedarikci.vergiDairesi : (order.tedarikciVergiNo || 'Kadıköy V.D.'),
+      tedarikciVergiNo: order.tedarikciVergiNo || (order.tedarikci ? order.tedarikci.vergiNo : '1234567890'),
+      faturaAdresi: order.tedarikci ? order.tedarikci.adres : 'Organize Sanayi Bölgesi, No: 45 Kadıköy / İSTANBUL',
+      tedarikciTelefon: order.tedarikciTelefon || (order.tedarikci ? order.tedarikci.telefon : '+90 (216) 555 0000'),
+      tedarikciEposta: order.tedarikciEposta || (order.tedarikci ? order.tedarikci.eposta : 'muhasebe@tedarikci.com'),
+      faturaTarihi: invoiceDate,
+      siparisNo: order.siparisNo,
+      siparisTarihi: order.siparisTarihi,
+      irsaliyeNo: dispatchNo,
+      irsaliyeTarihi: dispatchDate,
+      bankaAdi: bankName,
       ibanNo,
-      subtotal: parseFloat(subtotal.toFixed(2)),
-      discountAmount: parseFloat(order.discountAmount) || 0,
-      taxAmount: parseFloat(taxAmount.toFixed(2)),
-      totalAmount: parseFloat(grandTotal.toFixed(2)),
-      currency: order.currency || 'TRY',
-      paymentTerm: order.paymentTerm || 'Vadeli_30',
-      itemsJson: order.itemsJson,
-      notes: req.body.notes || `[Satın Alma Siparişi No: ${order.orderNo} | Mal Kabul İrsaliye No: ${dispatchNo}] Mal kabulü tamamlanan sipariş için kesilen resmi alış faturasıdır.`
+      araToplam: parseFloat(subtotal.toFixed(2)),
+      iskontoTutari: parseFloat(order.iskontoTutari) || 0,
+      kdvTutari: parseFloat(taxAmount.toFixed(2)),
+      toplamTutar: parseFloat(grandTotal.toFixed(2)),
+      paraBirimi: order.paraBirimi || 'TRY',
+      odemeVadesi: order.odemeVadesi || 'Vadeli_30',
+      kalemlerJson: order.kalemlerJson,
+      notlar: req.body.notes || `[Satın Alma Siparişi No: ${order.siparisNo} | Mal Kabul İrsaliye No: ${dispatchNo}] Mal kabulü tamamlanan sipariş için kesilen resmi alış faturasıdır.`
     }, req.user, req.ip);
 
     res.redirect('/purchase/goods-receipt?success=invoice_created');
@@ -903,20 +891,21 @@ class PurchaseController {
     if (!invoice) throw new NotFoundError('Satın alma faturası bulunamadı.');
 
     let items = [];
-    if (invoice.itemsJson) {
-      try { items = typeof invoice.itemsJson === 'string' ? JSON.parse(invoice.itemsJson) : invoice.itemsJson; } catch (e) { items = []; }
+    const itemsJson = invoice.kalemlerJson || invoice.itemsJson;
+    if (itemsJson) {
+      try { items = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson; } catch (e) { items = []; }
     }
     if (!items || items.length === 0) {
       items = [{
-        stockCode: invoice.purchaseOrder && invoice.purchaseOrder.stockItem ? invoice.purchaseOrder.stockItem.stockCode : 'STK-001',
-        productName: invoice.purchaseOrder && invoice.purchaseOrder.stockItem ? invoice.purchaseOrder.stockItem.name : 'Satın Alınan Malzeme Kalemi',
-        quantity: invoice.purchaseOrder ? invoice.purchaseOrder.quantity : 1,
-        unit: invoice.purchaseOrder && invoice.purchaseOrder.stockItem ? invoice.purchaseOrder.stockItem.unit : 'Adet',
-        unitPrice: invoice.subtotal || invoice.totalAmount / 1.2
+        stokKodu: invoice.satinAlmaSiparisi && invoice.satinAlmaSiparisi.stokKarti ? invoice.satinAlmaSiparisi.stokKarti.stokKodu : 'STK-001',
+        ad: invoice.satinAlmaSiparisi && invoice.satinAlmaSiparisi.stokKarti ? invoice.satinAlmaSiparisi.stokKarti.ad : 'Satın Alınan Malzeme Kalemi',
+        miktar: invoice.satinAlmaSiparisi ? invoice.satinAlmaSiparisi.miktar : 1,
+        birim: invoice.satinAlmaSiparisi && invoice.satinAlmaSiparisi.stokKarti ? invoice.satinAlmaSiparisi.stokKarti.birim : 'Adet',
+        birimFiyat: invoice.araToplam || invoice.toplamTutar / 1.2
       }];
     }
 
-    const wordsTotal = convertNumberToTurkishWords(invoice.totalAmount);
+    const wordsTotal = convertNumberToTurkishWords(invoice.toplamTutar);
 
     res.render('purchase/invoice_view', {
       user: req.user,
@@ -943,27 +932,27 @@ class PurchaseController {
 
   addGoodsReceipt = asyncHandler(async (req, res) => {
     try {
-      const receivedQty = parseFloat(req.body.receivedQuantity) || 0;
-      const acceptedQty = parseFloat(req.body.acceptedQuantity) || receivedQty;
+      const receivedQty = parseFloat(req.body.receivedQuantity || req.body.teslimAlinanMiktar) || 0;
+      const acceptedQty = parseFloat(req.body.acceptedQuantity || req.body.kabulEdilenMiktar) || receivedQty;
       const rejectedQty = receivedQty - acceptedQty;
 
       await purchaseService.createGoodsReceipt({
-        grnNo: req.body.grnNo,
-        purchaseOrderId: parseInt(req.body.purchaseOrderId, 10),
-        supplierId: req.body.supplierId ? parseInt(req.body.supplierId, 10) : null,
-        stockItemId: parseInt(req.body.stockItemId, 10),
-        orderedQuantity: parseFloat(req.body.orderedQuantity) || 0,
-        receivedQuantity: receivedQty,
-        acceptedQuantity: acceptedQty,
-        rejectedQuantity: rejectedQty > 0 ? rejectedQty : 0,
-        receiptDate: req.body.receiptDate || new Date().toISOString().split('T')[0],
-        deliveryNoteNo: req.body.deliveryNoteNo || null,
-        qualityStatus: req.body.qualityStatus || 'Approved',
-        inspectorName: req.body.inspectorName || (req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : req.user.username),
-        qualityNotes: req.body.qualityNotes || null,
-        warehouseLocation: req.body.warehouseLocation || null,
-        status: acceptedQty >= parseFloat(req.body.orderedQuantity) ? 'Completed' : 'Partial',
-        notes: req.body.notes || null
+        kabulNo: req.body.kabulNo || req.body.grnNo,
+        satinAlmaSiparisId: parseInt(req.body.satinAlmaSiparisId || req.body.purchaseOrderId, 10),
+        tedarikciId: req.body.tedarikciId || req.body.supplierId ? parseInt(req.body.tedarikciId || req.body.supplierId, 10) : null,
+        stokId: parseInt(req.body.stokId || req.body.stockItemId, 10),
+        siparisMiktari: parseFloat(req.body.siparisMiktari || req.body.orderedQuantity) || 0,
+        teslimAlinanMiktar: receivedQty,
+        kabulEdilenMiktar: acceptedQty,
+        reddedilenMiktar: rejectedQty > 0 ? rejectedQty : 0,
+        kabulTarihi: req.body.kabulTarihi || req.body.receiptDate || new Date().toISOString().split('T')[0],
+        irsaliyeNo: req.body.irsaliyeNo || req.body.deliveryNoteNo || null,
+        kaliteDurumu: req.body.kaliteDurumu || req.body.qualityStatus || 'Approved',
+        kabulEdenAdi: req.body.kabulEdenAdi || req.body.inspectorName || (req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi),
+        kaliteNotlari: req.body.kaliteNotlari || req.body.qualityNotes || null,
+        depoLokasyonu: req.body.depoLokasyonu || req.body.warehouseLocation || null,
+        durum: acceptedQty >= parseFloat(req.body.siparisMiktari || req.body.orderedQuantity) ? 'Completed' : 'Partial',
+        notlar: req.body.notlar || req.body.notes || null
       }, req.user, req.ip);
 
       res.redirect('/purchase/goods-receipt');

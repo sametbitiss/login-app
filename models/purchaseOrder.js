@@ -2,143 +2,143 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class PurchaseOrder extends Model {
+  class SatinAlmaSiparisi extends Model {
     static associate(models) {
-      PurchaseOrder.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      PurchaseOrder.belongsTo(models.StockItem, { foreignKey: 'stockItemId', as: 'stockItem' });
-      PurchaseOrder.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
-      PurchaseOrder.hasMany(models.GoodsReceipt, { foreignKey: 'purchaseOrderId', as: 'goodsReceipts' });
+      SatinAlmaSiparisi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      SatinAlmaSiparisi.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      SatinAlmaSiparisi.belongsTo(models.Tedarikci, { foreignKey: 'tedarikciId', as: 'tedarikci' });
+      SatinAlmaSiparisi.hasMany(models.MalKabul, { foreignKey: 'satinAlmaSiparisId', as: 'malKabulleri' });
     }
   }
 
-  PurchaseOrder.init({
-    orderNo: {
+  SatinAlmaSiparisi.init({
+    siparisNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    supplierName: {
+    tedarikciAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    supplierTaxNo: {
+    tedarikciVergiNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    supplierContactPerson: {
+    tedarikciIlgiliKisi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    supplierEmail: {
+    tedarikciEposta: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    supplierPhone: {
+    tedarikciTelefon: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    orderDate: {
+    siparisTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
-    expectedDeliveryDate: {
+    beklenenTeslimTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    paymentTerm: {
+    odemeVadesi: {
       type: DataTypes.ENUM('Pesin', 'Vadeli_30', 'Vadeli_60', 'Vadeli_90', 'Kredi_Karti'),
       allowNull: false,
       defaultValue: 'Pesin'
     },
-    status: {
+    durum: {
       type: DataTypes.ENUM('Draft', 'Pending_Approval', 'Ordered', 'Partial_Received', 'Received', 'Cancelled'),
       allowNull: false,
       defaultValue: 'Pending_Approval'
     },
-    priority: {
+    oncelik: {
       type: DataTypes.ENUM('Low', 'Normal', 'High', 'Urgent'),
       allowNull: false,
       defaultValue: 'Normal'
     },
-    stockItemId: {
+    stokId: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    quantity: {
+    miktar: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 1
     },
-    unitPrice: {
+    birimFiyat: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    discountRate: {
+    iskontoOrani: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 0
     },
-    taxRate: {
+    kdvOrani: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 20
     },
-    subtotal: {
+    araToplam: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    discountAmount: {
+    iskontoTutari: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    taxAmount: {
+    kdvTutari: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    totalAmount: {
+    toplamTutar: {
       type: DataTypes.DECIMAL(15, 4),
       allowNull: false,
       defaultValue: 0
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.ENUM('TRY', 'USD', 'EUR'),
       allowNull: false,
       defaultValue: 'TRY'
     },
-    deliveryWarehouse: {
+    teslimDeposu: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    purchasingAgent: {
+    satinAlmaci: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    supplierId: {
+    tedarikciId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    itemsJson: {
+    kalemlerJson: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'PurchaseOrder',
-    tableName: 'PurchaseOrders'
+    modelName: 'SatinAlmaSiparisi',
+    tableName: 'SatinAlmaSiparisleri'
   });
 
-  return PurchaseOrder;
+  return SatinAlmaSiparisi;
 };

@@ -1,4 +1,4 @@
-const { SaleDispatchNote, SaleOrder, CustomerAccount, StockItem, User } = require('../../models');
+const { SatisIrsaliyesi, SatisSiparisi, MusteriHesabi, StokKarti, Kullanici, StokHareketi } = require('../../models');
 const { Op } = require('sequelize');
 const logService = require('../services/logService');
 
@@ -8,106 +8,124 @@ class DispatchRepository {
     if (search && search.trim() !== '') {
       const s = `%${search.trim()}%`;
       where[Op.or] = [
-        { dispatchNo: { [Op.iLike]: s } },
-        { customerName: { [Op.iLike]: s } },
-        { vehiclePlate: { [Op.iLike]: s } },
-        { trackingNo: { [Op.iLike]: s } }
+        { irsaliyeNo: { [Op.iLike]: s } },
+        { musteriAdi: { [Op.iLike]: s } },
+        { aracPlakasi: { [Op.iLike]: s } },
+        { takipNo: { [Op.iLike]: s } }
       ];
     }
 
-    return await SaleDispatchNote.findAll({
+    return await SatisIrsaliyesi.findAll({
       where,
       include: [
-        { model: SaleOrder, as: 'saleOrder', include: [{ model: StockItem, as: 'stockItem' }] },
-        { model: CustomerAccount, as: 'customer' },
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }
+        { model: SatisSiparisi, as: 'satisSiparisi', include: [{ model: StokKarti, as: 'stokKarti' }] },
+        { model: MusteriHesabi, as: 'musteri' },
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }
       ],
       order: [['createdAt', 'DESC']]
     });
   }
 
   async findById(id) {
-    return await SaleDispatchNote.findByPk(id, {
+    return await SatisIrsaliyesi.findByPk(id, {
       include: [
-        { model: SaleOrder, as: 'saleOrder', include: [{ model: StockItem, as: 'stockItem' }] },
-        { model: CustomerAccount, as: 'customer' },
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }
+        { model: SatisSiparisi, as: 'satisSiparisi', include: [{ model: StokKarti, as: 'stokKarti' }] },
+        { model: MusteriHesabi, as: 'musteri' },
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }
       ]
     });
   }
 
   async getNextDispatchNo() {
-    const last = await SaleDispatchNote.findOne({ order: [['id', 'DESC']] });
+    const last = await SatisIrsaliyesi.findOne({ order: [['id', 'DESC']] });
     if (!last) return 'IRS-2026-0001';
     const num = last.id + 1;
     return `IRS-2026-${num.toString().padStart(4, '0')}`;
   }
 
   async getNextTrackingNo() {
-    const last = await SaleDispatchNote.findOne({ order: [['id', 'DESC']] });
+    const last = await SatisIrsaliyesi.findOne({ order: [['id', 'DESC']] });
     if (!last) return 'LOJ-2026-0001';
     const num = last.id + 1;
     return `LOJ-2026-${num.toString().padStart(4, '0')}`;
   }
 
   async create(data, currentUser = null, ipAddress = null) {
-    const dispatch = await SaleDispatchNote.create({
-      ...data,
-      createdBy: currentUser ? currentUser.id : null
-    });
+    const cleanData = {
+      irsaliyeNo: data.irsaliyeNo || data.dispatchNo,
+      irsaliyeTuru: data.irsaliyeTuru || data.dispatchType || 'Satış İrsaliyesi',
+      satisSiparisId: data.satisSiparisId || data.saleOrderId,
+      musteriId: data.musteriId || data.customerId,
+      musteriAdi: data.musteriAdi || data.customerName,
+      irsaliyeTarihi: data.irsaliyeTarihi || data.dispatchDate,
+      sevkiyatTarihi: data.sevkiyatTarihi || data.shipmentDate,
+      cikisDeposu: data.cikisDeposu || data.exitWarehouse || 'Merkez Lojistik Deposu',
+      tasiyiciFirma: data.tasiyiciFirma || data.carrierCompany,
+      aracPlakasi: data.aracPlakasi || data.vehiclePlate,
+      surucuAdi: data.surucuAdi || data.driverName,
+      takipNo: data.takipNo || data.trackingNo,
+      teslimatAdresi: data.teslimatAdresi || data.shippingAddress,
+      teslimatSehri: data.teslimatSehri || data.deliveryCity,
+      teslimatIlcesi: data.teslimatIlcesi || data.deliveryDistrict,
+      aliciKisi: data.aliciKisi || data.recipientPerson,
+      teslimatTuru: data.teslimatTuru || data.deliveryType,
+      projeNo: data.projeNo || data.projectNo,
+      durum: data.durum || data.status || 'Dispatched',
+      notlar: data.notlar || data.notes,
+      kalemlerJson: data.kalemlerJson || data.itemsJson,
+      olusturanId: currentUser ? currentUser.id : null
+    };
 
-    // Calculate total ordered quantity vs total dispatched quantity so far
-    const saleOrder = await SaleOrder.findByPk(data.saleOrderId);
+    const dispatch = await SatisIrsaliyesi.create(cleanData);
+
+    const saleOrder = await SatisSiparisi.findByPk(cleanData.satisSiparisId);
     if (saleOrder) {
       let totalOrderedQty = 0;
-      if (saleOrder.itemsJson) {
+      if (saleOrder.kalemlerJson) {
         try {
-          const orderItems = JSON.parse(saleOrder.itemsJson);
+          const orderItems = JSON.parse(saleOrder.kalemlerJson);
           if (Array.isArray(orderItems) && orderItems.length > 0) {
-            totalOrderedQty = orderItems.reduce((sum, it) => sum + (parseFloat(it.quantity) || 0), 0);
+            totalOrderedQty = orderItems.reduce((sum, it) => sum + (parseFloat(it.miktar || it.quantity) || 0), 0);
           }
         } catch (e) {}
       }
       if (totalOrderedQty <= 0) {
-        totalOrderedQty = parseFloat(saleOrder.quantity) || 0;
+        totalOrderedQty = parseFloat(saleOrder.miktar) || 0;
       }
 
-      // Calculate total cumulative dispatched quantity across ALL dispatches for this order
-      const allDispatches = await SaleDispatchNote.findAll({
-        where: { saleOrderId: saleOrder.id }
+      const allDispatches = await SatisIrsaliyesi.findAll({
+        where: { satisSiparisId: saleOrder.id }
       });
 
       let totalDispatchedQtySoFar = 0;
       for (const d of allDispatches) {
-        if (d.itemsJson) {
+        if (d.kalemlerJson) {
           try {
-            const dItems = JSON.parse(d.itemsJson);
+            const dItems = JSON.parse(d.kalemlerJson);
             if (Array.isArray(dItems)) {
               dItems.forEach(it => {
-                totalDispatchedQtySoFar += parseFloat(it.dispatchQuantity || it.quantity || 0);
+                totalDispatchedQtySoFar += parseFloat(it.dispatchQuantity || it.quantity || it.miktar || 0);
               });
             }
           } catch (e) {}
         } else {
-          totalDispatchedQtySoFar += parseFloat(saleOrder.quantity) || 0;
+          totalDispatchedQtySoFar += parseFloat(saleOrder.miktar) || 0;
         }
       }
 
-      // Set status: 'Completed' if fully shipped, 'Shipped' if partially shipped
       if (totalDispatchedQtySoFar >= totalOrderedQty) {
-        saleOrder.status = 'Completed';
-        saleOrder.fulfillmentStatus = 'Closed';
+        saleOrder.durum = 'Completed';
+        saleOrder.karsilanmaDurumu = 'Closed';
       } else {
-        saleOrder.status = 'Shipped';
-        saleOrder.fulfillmentStatus = 'Partial';
+        saleOrder.durum = 'Shipped';
+        saleOrder.karsilanmaDurumu = 'Partial';
       }
       await saleOrder.save();
 
-      // Parse items to deduct from stock
       let itemsToDeduct = [];
-      if (data.itemsJson) {
+      if (cleanData.kalemlerJson) {
         try {
-          itemsToDeduct = typeof data.itemsJson === 'string' ? JSON.parse(data.itemsJson) : data.itemsJson;
+          itemsToDeduct = typeof cleanData.kalemlerJson === 'string' ? JSON.parse(cleanData.kalemlerJson) : cleanData.kalemlerJson;
         } catch (e) {
           itemsToDeduct = [];
         }
@@ -115,38 +133,36 @@ class DispatchRepository {
 
       if (!Array.isArray(itemsToDeduct) || itemsToDeduct.length === 0) {
         itemsToDeduct = [{
-          stockItemId: saleOrder.stockItemId,
-          dispatchQuantity: saleOrder.quantity,
-          unitPrice: saleOrder.unitPrice
+          stokId: saleOrder.stokId,
+          dispatchQuantity: saleOrder.miktar,
+          unitPrice: saleOrder.birimFiyat
         }];
       }
 
-      const { StockItem, StockMovement } = require('../../models');
-
       for (const it of itemsToDeduct) {
-        const sId = parseInt(it.stockItemId, 10);
-        const qtyToDeduct = parseFloat(it.dispatchQuantity || it.quantity || 1);
+        const sId = parseInt(it.stokId || it.stockItemId, 10);
+        const qtyToDeduct = parseFloat(it.dispatchQuantity || it.quantity || it.miktar || 1);
         if (sId && sId > 0 && qtyToDeduct > 0) {
-          const item = await StockItem.findByPk(sId);
+          const item = await StokKarti.findByPk(sId);
           if (item) {
-            const newStock = parseFloat(item.currentStock) - qtyToDeduct;
-            item.currentStock = newStock < 0 ? 0 : newStock;
+            const newStock = parseFloat(item.mevcutStok) - qtyToDeduct;
+            item.mevcutStok = newStock < 0 ? 0 : newStock;
 
-            const newReserved = parseFloat(item.reservedStock || 0) - qtyToDeduct;
-            item.reservedStock = newReserved < 0 ? 0 : newReserved;
+            const newReserved = parseFloat(item.rezerveStok || 0) - qtyToDeduct;
+            item.rezerveStok = newReserved < 0 ? 0 : newReserved;
 
             await item.save();
 
-            await StockMovement.create({
-              movementNo: `SH-${Date.now().toString().slice(-6)}-${sId}`,
-              stockItemId: item.id,
-              sourceWarehouseId: 1,
-              movementType: 'Outbound',
-              quantity: qtyToDeduct,
-              unitPrice: it.unitPrice || item.salePrice || 0,
-              referenceNo: dispatch.dispatchNo,
-              notes: `[İrsaliyeli Sevkiyat] ${dispatch.dispatchNo} sevk irsaliyesi ile ${item.name} (${qtyToDeduct} Adet) depodan çıkış yapıldı.`,
-              performedBy: currentUser ? currentUser.id : null
+            await StokHareketi.create({
+              hareketNo: `SH-${Date.now().toString().slice(-6)}-${sId}`,
+              stokId: item.id,
+              cikisDepoId: 1,
+              hareketTuru: 'Outbound',
+              miktar: qtyToDeduct,
+              birimFiyat: it.birimFiyat || it.unitPrice || item.satisFiyati || 0,
+              referansNo: dispatch.irsaliyeNo,
+              notlar: `[İrsaliyeli Sevkiyat] ${dispatch.irsaliyeNo} sevk irsaliyesi ile ${item.ad} (${qtyToDeduct} Adet) depodan çıkış yapıldı.`,
+              yapanKullaniciId: currentUser ? currentUser.id : null
             });
           }
         }
@@ -154,13 +170,13 @@ class DispatchRepository {
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'SaleDispatchNote',
-      entityId: dispatch.id,
-      details: { dispatchNo: dispatch.dispatchNo, saleOrderId: dispatch.saleOrderId, customerName: dispatch.customerName },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'SatisIrsaliyesi',
+      varlikId: dispatch.id,
+      detaylar: { irsaliyeNo: dispatch.irsaliyeNo, satisSiparisId: dispatch.satisSiparisId, musteriAdi: dispatch.musteriAdi },
+      ipAdresi: ipAddress
     });
 
     return dispatch;

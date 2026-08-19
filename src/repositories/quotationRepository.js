@@ -1,42 +1,42 @@
-const { SaleQuotation, StockItem, CustomerAccount, User } = require('../../models');
+const { SatisTeklifi, StokKarti, MusteriHesabi, Kullanici } = require('../../models');
 const { Op } = require('sequelize');
 const logService = require('../services/logService');
 
 class QuotationRepository {
   async findAll({ search, status } = {}) {
     const where = {};
-    if (status && status !== '') where.status = status;
+    if (status && status !== '') where.durum = status;
     if (search && search.trim() !== '') {
       const s = `%${search.trim()}%`;
       where[Op.or] = [
-        { quotationNo: { [Op.iLike]: s } },
-        { customerName: { [Op.iLike]: s } }
+        { teklifNo: { [Op.iLike]: s } },
+        { musteriAdi: { [Op.iLike]: s } }
       ];
     }
 
-    return await SaleQuotation.findAll({
+    return await SatisTeklifi.findAll({
       where,
       include: [
-        { model: StockItem, as: 'stockItem' },
-        { model: CustomerAccount, as: 'customer' },
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }
+        { model: StokKarti, as: 'stokKarti' },
+        { model: MusteriHesabi, as: 'musteri' },
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }
       ],
       order: [['createdAt', 'DESC']]
     });
   }
 
   async findById(id) {
-    return await SaleQuotation.findByPk(id, {
+    return await SatisTeklifi.findByPk(id, {
       include: [
-        { model: StockItem, as: 'stockItem' },
-        { model: CustomerAccount, as: 'customer' },
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] }
+        { model: StokKarti, as: 'stokKarti' },
+        { model: MusteriHesabi, as: 'musteri' },
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }
       ]
     });
   }
 
   async getNextQuotationNo() {
-    const last = await SaleQuotation.findOne({ order: [['id', 'DESC']] });
+    const last = await SatisTeklifi.findOne({ order: [['id', 'DESC']] });
     if (!last) return 'TEK-2026-0001';
     const num = last.id + 1;
     return `TEK-2026-${num.toString().padStart(4, '0')}`;
@@ -54,59 +54,69 @@ class QuotationRepository {
       return Number.isNaN(n) ? defaultVal : n;
     };
 
-    const customerId = safeInt(data.customerId);
-    const stockItemId = safeInt(data.stockItemId);
-    const discountRate = safeFloat(data.discountRate, 0);
-    const totalAmount = safeFloat(data.totalAmount, 0);
-    const approvalNeeded = data.approvalNeeded !== undefined ? data.approvalNeeded : (discountRate > 20 || totalAmount > 100000);
-    const status = data.status ? data.status : (approvalNeeded ? 'Pending_Approval' : 'Approved');
+    const musteriId = safeInt(data.musteriId || data.customerId);
+    const stokId = safeInt(data.stokId || data.stockItemId);
+    const iskontoOrani = safeFloat(data.iskontoOrani !== undefined ? data.iskontoOrani : data.discountRate, 0);
+    const toplamTutar = safeFloat(data.toplamTutar !== undefined ? data.toplamTutar : data.totalAmount, 0);
+    const onayGerekli = data.onayGerekli !== undefined ? data.onayGerekli : (data.approvalNeeded !== undefined ? data.approvalNeeded : (iskontoOrani > 20 || toplamTutar > 100000));
+    const durum = (data.durum || data.status) ? (data.durum || data.status) : (onayGerekli ? 'Pending_Approval' : 'Approved');
 
-    const quotation = await SaleQuotation.create({
-      ...data,
-      customerId,
-      stockItemId,
-      discountRate,
-      totalAmount,
-      subtotal: safeFloat(data.subtotal, 0),
-      discountAmount: safeFloat(data.discountAmount, 0),
-      taxAmount: safeFloat(data.taxAmount, 0),
-      taxRate: safeFloat(data.taxRate, 20),
-      quantity: safeFloat(data.quantity, 1),
-      unitPrice: safeFloat(data.unitPrice, 0),
-      approvalNeeded,
-      status,
-      createdBy: currentUser ? currentUser.id : null
-    });
+    const cleanData = {
+      teklifNo: data.teklifNo || data.quotationNo,
+      musteriId,
+      musteriAdi: data.musteriAdi || data.customerName,
+      teklifTarihi: data.teklifTarihi || data.quotationDate || new Date().toISOString().split('T')[0],
+      gecerlilikBitis: data.gecerlilikBitis || data.validUntil,
+      stokId,
+      kalemlerJson: data.kalemlerJson || data.itemsJson,
+      miktar: safeFloat(data.miktar !== undefined ? data.miktar : data.quantity, 1),
+      birimFiyat: safeFloat(data.birimFiyat !== undefined ? data.birimFiyat : data.unitPrice, 0),
+      iskontoOrani,
+      kdvOrani: safeFloat(data.kdvOrani !== undefined ? data.kdvOrani : data.taxRate, 20),
+      araToplam: safeFloat(data.araToplam !== undefined ? data.araToplam : data.subtotal, 0),
+      iskontoTutari: safeFloat(data.iskontoTutari !== undefined ? data.iskontoTutari : data.discountAmount, 0),
+      kdvTutari: safeFloat(data.kdvTutari !== undefined ? data.kdvTutari : data.taxAmount, 0),
+      toplamTutar,
+      paraBirimi: data.paraBirimi || data.currency || 'TRY',
+      durum,
+      onayGerekli,
+      onayNedeni: data.onayNedeni || data.approvalReason,
+      yoneticiNotlari: data.yoneticiNotlari || data.managerNotes,
+      notlar: data.notlar || data.notes,
+      olusturanId: currentUser ? currentUser.id : null
+    };
+
+    const quotation = await SatisTeklifi.create(cleanData);
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'SaleQuotation',
-      entityId: quotation.id,
-      details: { quotationNo: quotation.quotationNo, customerName: quotation.customerName },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'SatisTeklifi',
+      varlikId: quotation.id,
+      detaylar: { teklifNo: quotation.teklifNo, musteriAdi: quotation.musteriAdi },
+      ipAdresi: ipAddress
     });
 
     return quotation;
   }
 
-  async updateStatus(id, status, managerNotes = null, currentUser = null, ipAddress = null) {
-    const quote = await SaleQuotation.findByPk(id);
+  async updateStatus(id, durum, yoneticiNotlari = null, currentUser = null, ipAddress = null) {
+    const quote = await SatisTeklifi.findByPk(id);
     if (!quote) return null;
 
-    quote.status = status;
-    if (managerNotes) quote.managerNotes = managerNotes;
+    quote.durum = durum;
+    if (yoneticiNotlari) quote.yoneticiNotlari = yoneticiNotlari;
     await quote.save();
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE_STATUS',
-      entity: 'SaleQuotation',
-      entityId: quote.id,
-      details: { status, managerNotes },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE_STATUS',
+      varlik: 'SatisTeklifi',
+      varlikId: quote.id,
+      detaylar: { durum, yoneticiNotlari },
+      ipAdresi: ipAddress
     });
 
     return quote;

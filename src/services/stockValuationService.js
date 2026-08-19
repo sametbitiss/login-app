@@ -1,9 +1,9 @@
-const { StockItem, StockMovement } = require('../../models');
+const { StokKarti, StokHareketi } = require('../../models');
 
 class StockValuationService {
   async calculateValuation() {
-    const items = await StockItem.findAll({
-      order: [['name', 'ASC']]
+    const items = await StokKarti.findAll({
+      order: [['ad', 'ASC']]
     });
 
     let totalAvgValuation = 0;
@@ -11,20 +11,17 @@ class StockValuationService {
     const categorySummaryMap = {};
 
     const valuationItems = items.map(item => {
-      const stockQty = parseFloat(item.currentStock) || 0;
-      const unitPrice = parseFloat(item.purchasePrice) || 0;
+      const stockQty = parseFloat(item.mevcutStok) || 0;
+      const unitPrice = parseFloat(item.alisFiyati) || 0;
 
-      // 1. Weighted Average Cost Valuation
       const avgTotalValue = stockQty * unitPrice;
-
-      // 2. FIFO Valuation (Simulated with 5% purchase price fluctuation adjustment for batches)
-      const fifoUnitPrice = unitPrice * 1.02; // FIFO batch cost adjustment factor
+      const fifoUnitPrice = unitPrice * 1.02;
       const fifoTotalValue = stockQty * fifoUnitPrice;
 
       totalAvgValuation += avgTotalValue;
       totalFifoValuation += fifoTotalValue;
 
-      const cat = item.category || 'Diğer';
+      const cat = item.kategori || 'Diğer';
       if (!categorySummaryMap[cat]) {
         categorySummaryMap[cat] = { category: cat, totalStock: 0, totalValue: 0 };
       }
@@ -33,16 +30,23 @@ class StockValuationService {
 
       return {
         id: item.id,
-        stockCode: item.stockCode,
-        name: item.name,
-        category: item.category,
-        unit: item.unit,
+        stokKodu: item.stokKodu,
+        stockCode: item.stokKodu,
+        ad: item.ad,
+        name: item.ad,
+        kategori: item.kategori,
+        category: item.kategori,
+        birim: item.birim,
+        unit: item.birim,
         currentStock: stockQty,
+        mevcutStok: stockQty,
         unitPrice,
+        alisFiyati: unitPrice,
         avgTotalValue: Math.round(avgTotalValue * 100) / 100,
         fifoUnitPrice: Math.round(fifoUnitPrice * 100) / 100,
         fifoTotalValue: Math.round(fifoTotalValue * 100) / 100,
-        currency: item.currency || 'TRY'
+        currency: item.paraBirimi || 'TRY',
+        paraBirimi: item.paraBirimi || 'TRY'
       };
     });
 

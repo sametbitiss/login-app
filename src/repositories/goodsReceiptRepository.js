@@ -1,4 +1,4 @@
-const { GoodsReceipt, PurchaseOrder, User, StockItem, Supplier, StockMovement, sequelize } = require('../../models');
+const { MalKabul, SatinAlmaSiparisi, Kullanici, StokKarti, Tedarikci, StokHareketi, sequelize } = require('../../models');
 const logService = require('../services/logService');
 const { Op } = require('sequelize');
 
@@ -7,160 +7,176 @@ class GoodsReceiptRepository {
     const where = {};
 
     if (filters.status) {
-      where.status = filters.status;
+      where.durum = filters.status;
     }
     if (filters.qualityStatus) {
-      where.qualityStatus = filters.qualityStatus;
+      where.kaliteDurumu = filters.qualityStatus;
     }
     if (filters.search) {
       where[Op.or] = [
-        { grnNo: { [Op.iLike || Op.like]: `%${filters.search}%` } },
-        { deliveryNoteNo: { [Op.iLike || Op.like]: `%${filters.search}%` } }
+        { malKabulNo: { [Op.iLike || Op.like]: `%${filters.search}%` } },
+        { irsaliyeNo: { [Op.iLike || Op.like]: `%${filters.search}%` } }
       ];
     }
 
-    return await GoodsReceipt.findAll({
+    return await MalKabul.findAll({
       where,
       order: [['createdAt', 'DESC']],
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
-        { model: PurchaseOrder, as: 'purchaseOrder', attributes: ['id', 'orderNo', 'supplierName', 'status'] },
-        { model: StockItem, as: 'stockItem', attributes: ['id', 'stockCode', 'name', 'unit'] },
-        { model: Supplier, as: 'supplier', attributes: ['id', 'supplierCode', 'companyName'] }
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
+        { model: SatinAlmaSiparisi, as: 'satinAlmaSiparisi', attributes: ['id', 'siparisNo', 'tedarikciAdi', 'durum'] },
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim'] },
+        { model: Tedarikci, as: 'tedarikci', attributes: ['id', 'tedarikciKodu', 'firmaAdi'] }
       ]
     });
   }
 
   async findById(id) {
-    return await GoodsReceipt.findByPk(id, {
+    return await MalKabul.findByPk(id, {
       include: [
-        { model: User, as: 'creator' },
-        { model: PurchaseOrder, as: 'purchaseOrder' },
-        { model: StockItem, as: 'stockItem' },
-        { model: Supplier, as: 'supplier' }
+        { model: Kullanici, as: 'olusturan' },
+        { model: SatinAlmaSiparisi, as: 'satinAlmaSiparisi' },
+        { model: StokKarti, as: 'stokKarti' },
+        { model: Tedarikci, as: 'tedarikci' }
       ]
     });
   }
 
   async create(data, currentUser = null, ipAddress = null) {
-    const grn = await GoodsReceipt.create({
-      ...data,
-      createdBy: currentUser ? currentUser.id : null
-    });
+    const cleanData = {
+      malKabulNo: data.malKabulNo || data.grnNo,
+      satinAlmaSiparisId: data.satinAlmaSiparisId || data.purchaseOrderId,
+      tedarikciId: data.tedarikciId || data.supplierId,
+      stokId: data.stokId || data.stockItemId,
+      siparisMiktari: data.siparisMiktari !== undefined ? data.siparisMiktari : data.orderedQuantity,
+      teslimMiktari: data.teslimMiktari !== undefined ? data.teslimMiktari : data.receivedQuantity,
+      kabulMiktari: data.kabulMiktari !== undefined ? data.kabulMiktari : data.acceptedQuantity,
+      redMiktari: data.redMiktari !== undefined ? data.redMiktari : data.rejectedQuantity,
+      kabulTarihi: data.kabulTarihi || data.receiptDate || new Date().toISOString().split('T')[0],
+      irsaliyeNo: data.irsaliyeNo || data.deliveryNoteNo,
+      irsaliyeTarihi: data.irsaliyeTarihi || data.deliveryNoteDate,
+      irsaliyeFotograf: data.irsaliyeFotograf || data.deliveryNotePhoto,
+      kalemlerVerisi: data.kalemlerVerisi || data.itemsData,
+      kaliteDurumu: data.kaliteDurumu || data.qualityStatus || 'Pending_Inspection',
+      denetciAdi: data.denetciAdi || data.inspectorName,
+      kaliteNotlari: data.kaliteNotlari || data.qualityNotes,
+      depoLokasyonu: data.depoLokasyonu || data.warehouseLocation,
+      durum: data.durum || data.status || 'Pending',
+      notlar: data.notlar || data.notes,
+      olusturanId: currentUser ? currentUser.id : null
+    };
 
-    // Update PurchaseOrder status
-    if (data.purchaseOrderId) {
-      const po = await PurchaseOrder.findByPk(data.purchaseOrderId);
+    const grn = await MalKabul.create(cleanData);
+
+    if (cleanData.satinAlmaSiparisId) {
+      const po = await SatinAlmaSiparisi.findByPk(cleanData.satinAlmaSiparisId);
       if (po) {
-        const receivedQty = parseFloat(data.receivedQuantity) || 0;
-        const orderedQty = parseFloat(po.quantity) || 0;
+        const orderedQty = parseFloat(po.miktar) || 0;
         
-        // Check total received for this PO
-        const totalReceived = await GoodsReceipt.sum('receivedQuantity', {
-          where: { purchaseOrderId: data.purchaseOrderId }
+        const totalReceived = await MalKabul.sum('teslimMiktari', {
+          where: { satinAlmaSiparisId: cleanData.satinAlmaSiparisId }
         }) || 0;
 
         if (totalReceived >= orderedQty) {
-          await po.update({ status: 'Received' });
+          await po.update({ durum: 'Received' });
         } else {
-          await po.update({ status: 'Partial_Received' });
+          await po.update({ durum: 'Partial_Received' });
         }
       }
     }
 
-    // If quality approved, update stock
-    if (data.qualityStatus === 'Approved') {
-      const acceptedQty = parseFloat(data.acceptedQuantity) || parseFloat(data.receivedQuantity) || 0;
-      if (acceptedQty > 0 && data.stockItemId) {
-        const item = await StockItem.findByPk(data.stockItemId);
+    if (cleanData.kaliteDurumu === 'Approved') {
+      const acceptedQty = parseFloat(cleanData.kabulMiktari) || parseFloat(cleanData.teslimMiktari) || 0;
+      if (acceptedQty > 0 && cleanData.stokId) {
+        const item = await StokKarti.findByPk(cleanData.stokId);
         if (item) {
-          item.currentStock = parseFloat(item.currentStock) + acceptedQty;
+          item.mevcutStok = parseFloat(item.mevcutStok) + acceptedQty;
           await item.save();
 
           const moveNo = `GRN-${Date.now().toString().slice(-6)}`;
-          await StockMovement.create({
-            movementNo: moveNo,
-            stockItemId: item.id,
-            targetWarehouseId: 1,
-            movementType: 'Inbound',
-            quantity: acceptedQty,
-            unitPrice: 0,
-            referenceNo: data.grnNo,
-            notes: `[Mal Kabul] ${data.grnNo} mal kabul fişi ile stok girişi yapıldı.`,
-            performedBy: currentUser ? currentUser.id : null
+          await StokHareketi.create({
+            hareketNo: moveNo,
+            stokId: item.id,
+            varisDepoId: 1,
+            hareketTuru: 'Inbound',
+            miktar: acceptedQty,
+            birimFiyat: 0,
+            referansNo: cleanData.malKabulNo,
+            notlar: `[Mal Kabul] ${cleanData.malKabulNo} mal kabul fişi ile stok girişi yapıldı.`,
+            yapanKullaniciId: currentUser ? currentUser.id : null
           });
         }
       }
     }
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'CREATE',
-      entity: 'GoodsReceipt',
-      entityId: grn.id,
-      details: { grnNo: grn.grnNo, purchaseOrderId: grn.purchaseOrderId, receivedQuantity: grn.receivedQuantity },
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'CREATE',
+      varlik: 'MalKabul',
+      varlikId: grn.id,
+      detaylar: { malKabulNo: grn.malKabulNo, satinAlmaSiparisId: grn.satinAlmaSiparisId, teslimMiktari: grn.teslimMiktari },
+      ipAdresi: ipAddress
     });
 
     return grn;
   }
 
   async update(id, data, currentUser = null, ipAddress = null) {
-    const grn = await GoodsReceipt.findByPk(id);
+    const grn = await MalKabul.findByPk(id);
     if (!grn) return null;
 
     await grn.update(data);
 
     await logService.logCrud({
-      userId: currentUser ? currentUser.id : null,
-      username: currentUser ? currentUser.username : 'System',
-      action: 'UPDATE',
-      entity: 'GoodsReceipt',
-      entityId: grn.id,
-      details: data,
-      ipAddress
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'MalKabul',
+      varlikId: grn.id,
+      detaylar: data,
+      ipAdresi: ipAddress
     });
 
     return grn;
   }
 
   async getReceiptsByOrderId(orderId) {
-    return await GoodsReceipt.findAll({
-      where: { purchaseOrderId: orderId },
+    return await MalKabul.findAll({
+      where: { satinAlmaSiparisId: orderId },
       order: [['createdAt', 'DESC']],
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'username', 'firstName', 'lastName'] },
-        { model: Supplier, as: 'supplier', attributes: ['id', 'supplierCode', 'companyName'] }
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
+        { model: Tedarikci, as: 'tedarikci', attributes: ['id', 'tedarikciKodu', 'firmaAdi'] }
       ]
     });
   }
 
   async getReceivedTotalsForOrder(orderId) {
-    const receipts = await GoodsReceipt.findAll({
-      where: { purchaseOrderId: orderId }
+    const receipts = await MalKabul.findAll({
+      where: { satinAlmaSiparisId: orderId }
     });
 
     const receivedMap = {};
     receipts.forEach(gr => {
       let items = [];
-      if (gr.itemsData) {
+      if (gr.kalemlerVerisi) {
         try {
-          items = typeof gr.itemsData === 'string' ? JSON.parse(gr.itemsData) : gr.itemsData;
+          items = typeof gr.kalemlerVerisi === 'string' ? JSON.parse(gr.kalemlerVerisi) : gr.kalemlerVerisi;
         } catch (e) { items = []; }
       }
 
       if (Array.isArray(items) && items.length > 0) {
         items.forEach(it => {
-          const sId = parseInt(it.stockItemId, 10);
-          const qty = parseFloat(it.currentReceivedQuantity || it.receivedQuantity || 0);
+          const sId = parseInt(it.stokId || it.stockItemId, 10);
+          const qty = parseFloat(it.currentReceivedQuantity || it.receivedQuantity || it.teslimMiktari || 0);
           if (sId) {
             receivedMap[sId] = (receivedMap[sId] || 0) + qty;
           }
         });
-      } else if (gr.stockItemId) {
-        const sId = parseInt(gr.stockItemId, 10);
-        const qty = parseFloat(gr.receivedQuantity || 0);
+      } else if (gr.stokId) {
+        const sId = parseInt(gr.stokId, 10);
+        const qty = parseFloat(gr.teslimMiktari || 0);
         if (sId) {
           receivedMap[sId] = (receivedMap[sId] || 0) + qty;
         }
@@ -173,14 +189,14 @@ class GoodsReceiptRepository {
   async getNextGrnNo() {
     const year = new Date().getFullYear();
     const prefix = `GRN-${year}-`;
-    const receipts = await GoodsReceipt.findAll({
-      where: { grnNo: { [Op.like]: `${prefix}%` } },
-      attributes: ['grnNo']
+    const receipts = await MalKabul.findAll({
+      where: { malKabulNo: { [Op.like]: `${prefix}%` } },
+      attributes: ['malKabulNo']
     });
 
     let maxSeq = 0;
     receipts.forEach(r => {
-      const numStr = r.grnNo.replace(prefix, '');
+      const numStr = r.malKabulNo.replace(prefix, '');
       const num = parseInt(numStr, 10);
       if (!isNaN(num) && num > maxSeq) {
         maxSeq = num;
@@ -189,7 +205,7 @@ class GoodsReceiptRepository {
 
     let nextSeq = maxSeq + 1;
     let candidate = `${prefix}${String(nextSeq).padStart(4, '0')}`;
-    while (await GoodsReceipt.findOne({ where: { grnNo: candidate } })) {
+    while (await MalKabul.findOne({ where: { malKabulNo: candidate } })) {
       nextSeq++;
       candidate = `${prefix}${String(nextSeq).padStart(4, '0')}`;
     }
@@ -197,9 +213,9 @@ class GoodsReceiptRepository {
   }
 
   async getStats() {
-    const totalReceipts = await GoodsReceipt.count();
-    const pendingInspection = await GoodsReceipt.count({ where: { qualityStatus: 'Pending_Inspection' } });
-    const completedReceipts = await GoodsReceipt.count({ where: { status: 'Completed' } });
+    const totalReceipts = await MalKabul.count();
+    const pendingInspection = await MalKabul.count({ where: { kaliteDurumu: 'Pending_Inspection' } });
+    const completedReceipts = await MalKabul.count({ where: { durum: 'Completed' } });
     return { totalReceipts, pendingInspection, completedReceipts };
   }
 }

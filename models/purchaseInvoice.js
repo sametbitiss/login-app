@@ -2,81 +2,81 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class PurchaseInvoice extends Model {
+  class SatinAlmaFaturasi extends Model {
     static associate(models) {
-      PurchaseInvoice.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-      PurchaseInvoice.belongsTo(models.PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'purchaseOrder' });
-      PurchaseInvoice.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+      SatinAlmaFaturasi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      SatinAlmaFaturasi.belongsTo(models.SatinAlmaSiparisi, { foreignKey: 'satinAlmaSiparisId', as: 'satinAlmaSiparisi' });
+      SatinAlmaFaturasi.belongsTo(models.Tedarikci, { foreignKey: 'tedarikciId', as: 'tedarikci' });
     }
   }
 
-  PurchaseInvoice.init({
-    invoiceNo: {
+  SatinAlmaFaturasi.init({
+    faturaNo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    purchaseOrderId: {
+    satinAlmaSiparisId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    supplierId: {
+    tedarikciId: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    supplierName: {
+    tedarikciAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    supplierTaxOffice: {
+    tedarikciVergiDairesi: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    supplierTaxNo: {
+    tedarikciVergiNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    billingAddress: {
+    faturaAdresi: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    supplierPhone: {
+    tedarikciTelefon: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    supplierEmail: {
+    tedarikciEposta: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    invoiceDate: {
+    faturaTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: false
     },
-    invoiceTime: {
+    faturaSaati: {
       type: DataTypes.STRING,
       defaultValue: '10:30:00'
     },
-    invoiceType: {
+    faturaTuru: {
       type: DataTypes.STRING,
       defaultValue: 'SATIN_ALMA'
     },
-    orderNo: {
+    siparisNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    orderDate: {
+    siparisTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    dispatchNo: {
+    irsaliyeNo: {
       type: DataTypes.STRING,
       allowNull: true
     },
-    dispatchDate: {
+    irsaliyeTarihi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    bankName: {
+    bankaAdi: {
       type: DataTypes.STRING,
       defaultValue: 'T.C. Ziraat Bankası A.Ş.'
     },
@@ -84,55 +84,55 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: 'TR62 0001 0000 0000 0000 1234 56'
     },
-    subtotal: {
+    araToplam: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    discountAmount: {
+    iskontoTutari: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    taxAmount: {
+    kdvTutari: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    totalAmount: {
+    toplamTutar: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0.00
     },
-    currency: {
+    paraBirimi: {
       type: DataTypes.STRING,
       defaultValue: 'TRY'
     },
-    paymentTerm: {
+    odemeVadesi: {
       type: DataTypes.STRING,
       defaultValue: 'Vadeli_30'
     },
-    paymentStatus: {
+    odemeDurumu: {
       type: DataTypes.STRING,
       defaultValue: 'Unpaid'
     },
-    status: {
+    durum: {
       type: DataTypes.STRING,
       defaultValue: 'Issued'
     },
-    itemsJson: {
+    kalemlerJson: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    notes: {
+    notlar: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
+    olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
     sequelize,
-    modelName: 'PurchaseInvoice',
-    tableName: 'PurchaseInvoices'
+    modelName: 'SatinAlmaFaturasi',
+    tableName: 'SatinAlmaFaturalari'
   });
 
-  return PurchaseInvoice;
+  return SatinAlmaFaturasi;
 };
