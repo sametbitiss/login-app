@@ -32,9 +32,7 @@ router.post('/roles/update-role', adminController.updateRole);
 router.post('/roles/delete-role', adminController.deleteRole);
 router.post('/roles/permissions', adminController.updateRolePermissions);
 
-// System Settings & Audit Logs
-router.get('/settings', adminController.renderSettings);
-router.post('/settings', adminController.updateSettings);
+// Audit Logs
 router.get('/logs', adminController.renderLogs);
 
 module.exports = router;

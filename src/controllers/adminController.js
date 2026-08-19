@@ -303,16 +303,6 @@ class AdminController {
     res.redirect('/admin/users');
   });
 
-  renderSettings = asyncHandler(async (req, res) => {
-    const settings = await userRepository.getAllSettings();
-    res.render('admin/settings', { user: req.user, settings, successMessage: req.query.success || null });
-  });
-
-  updateSettings = asyncHandler(async (req, res) => {
-    await userRepository.updateSettings(req.body, req.user, req.ip);
-    res.redirect('/admin/settings?success=Sistem parametreleri başarıyla güncellendi.');
-  });
-
   renderRoles = asyncHandler(async (req, res) => {
     const { PERMISSION_MODULES, APP_DEPARTMENTS } = require('../config/permissionMatrix');
     const customRoles = await userRepository.getCustomRoles();
