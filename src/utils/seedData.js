@@ -42,12 +42,8 @@ async function seedInitialData() {
       });
     }
 
-    // 2. Seed Users
+    // 2. Seed Admin User
     const hashedAdminPassword = await bcrypt.hash('admin123', 10);
-    const hashedStockPassword = await bcrypt.hash('stok123456', 10);
-    const hashedSalesPassword = await bcrypt.hash('satis123456', 10);
-    const hashedPurchasePassword = await bcrypt.hash('satinalma123456', 10);
-    const hashedProductionPassword = await bcrypt.hash('uretim123456', 10);
 
     let [adminUser] = await Kullanici.findOrCreate({
       where: { kullaniciAdi: 'admin' },
@@ -61,70 +57,6 @@ async function seedInitialData() {
         departman: 'Sistem Yönetimi',
         unvan: 'Sistem Yöneticisi & Admin',
         rol: 'Admin',
-        durum: 'Active'
-      }
-    });
-
-    let [stockUser] = await Kullanici.findOrCreate({
-      where: { kullaniciAdi: 'stok_yoneticisi' },
-      defaults: {
-        kullaniciAdi: 'stok_yoneticisi',
-        sifre: hashedStockPassword,
-        eposta: 'stok@enterprise-erp.com',
-        ad: 'Murat',
-        soyad: 'Kaya',
-        telefon: '+90 (212) 555 0002',
-        departman: 'Stok & Depo Yönetimi',
-        unvan: 'Depo ve Envanter Sorumlusu',
-        rol: 'Stock_Manager',
-        durum: 'Active'
-      }
-    });
-
-    let [salesUser] = await Kullanici.findOrCreate({
-      where: { kullaniciAdi: 'satis_yoneticisi' },
-      defaults: {
-        kullaniciAdi: 'satis_yoneticisi',
-        sifre: hashedSalesPassword,
-        eposta: 'satis@enterprise-erp.com',
-        ad: 'Selin',
-        soyad: 'Demir',
-        telefon: '+90 (212) 555 0003',
-        departman: 'Satış Yönetimi',
-        unvan: 'Kıdemli Satış Yöneticisi',
-        rol: 'Sales_Manager',
-        durum: 'Active'
-      }
-    });
-
-    let [purchaseUser] = await Kullanici.findOrCreate({
-      where: { kullaniciAdi: 'satinalma_yoneticisi' },
-      defaults: {
-        kullaniciAdi: 'satinalma_yoneticisi',
-        sifre: hashedPurchasePassword,
-        eposta: 'satinalma@enterprise-erp.com',
-        ad: 'Caner',
-        soyad: 'Öztürk',
-        telefon: '+90 (212) 555 0004',
-        departman: 'Satın Alma Yönetimi',
-        unvan: 'Satın Alma Sorumlusu',
-        rol: 'Purchase_Manager',
-        durum: 'Active'
-      }
-    });
-
-    let [productionUser] = await Kullanici.findOrCreate({
-      where: { kullaniciAdi: 'uretim_yoneticisi' },
-      defaults: {
-        kullaniciAdi: 'uretim_yoneticisi',
-        sifre: hashedProductionPassword,
-        eposta: 'uretim@enterprise-erp.com',
-        ad: 'Oğuz',
-        soyad: 'Aydın',
-        telefon: '+90 (212) 555 0005',
-        departman: 'Üretim Planlama',
-        unvan: 'Üretim ve Planlama Müdürü',
-        rol: 'Production_Manager',
         durum: 'Active'
       }
     });
