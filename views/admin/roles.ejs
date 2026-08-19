@@ -3,611 +3,732 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rol ve Yetki Matrisi Yönetimi — Enterprise ERP</title>
+  <title>Rol ve Yetki Yapılandırma Merkezi — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* UX Control Toolbar */
-    .matrix-toolbar {
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --border-card: #334155;
+      --accent-indigo: #6366f1;
+      --accent-indigo-hover: #4f46e5;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --accent-amber: #f59e0b;
+    }
+
+    /* Main Tab Navigation */
+    .main-tabs-header {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .main-tab-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .main-tab-btn:hover {
+      border-color: var(--accent-indigo);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    .main-tab-btn.active {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      border-color: #6366f1;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+    }
+
+    .main-tab-btn .badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+    }
+
+    /* Metrics Summary Cards */
+    .metrics-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 16px 20px;
-      margin-bottom: 24px;
+      padding: 18px 20px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
       align-items: center;
-      justify-content: space-between;
+      gap: 16px;
       box-shadow: var(--shadow-sm);
     }
-    .mt-search {
-      flex: 1;
-      min-width: 280px;
-      position: relative;
+
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: rgba(99, 102, 241, 0.1);
+      color: #818cf8;
     }
-    .mt-search input {
+
+    .metric-val { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
+    .metric-lbl { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+    /* Layout for Tab 1: Role Creation & List */
+    .roles-management-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .roles-management-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Custom Role Creation Card */
+    .create-role-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-section-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-section-subtitle {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
       width: 100%;
       background: #090e1a;
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 10px 14px 10px 38px;
+      padding: 10px 14px;
       color: var(--text-primary);
       font-size: 0.88rem;
       outline: none;
       transition: all 0.2s ease;
     }
-    .mt-search input:focus {
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       border-color: #6366f1;
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
     }
-    .mt-search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-muted);
-    }
 
-    .view-switcher {
-      display: flex;
-      background: #090e1a;
-      padding: 4px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-    }
-    .vs-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      padding: 8px 16px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .vs-btn.active {
-      background: #6366f1;
-      color: #ffffff;
-      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
-    }
-
-    /* Role Quick Cards Strip */
-    .role-cards-grid {
+    /* Role Cards List */
+    .role-cards-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .role-item-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .role-item-card:hover {
+      border-color: #6366f1;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .ric-dept-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      margin-bottom: 10px;
+    }
+
+    .ric-title { font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+    .ric-key { font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; }
+    .ric-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 16px; flex: 1; }
+
+    .ric-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 14px;
+    }
+
+    .ric-user-count {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ric-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Role Selector Strip (Tab 2) */
+    .role-selector-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 12px;
       margin-bottom: 24px;
     }
-    .role-quick-card {
+
+    .role-selector-chip {
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 16px;
+      padding: 12px 18px;
+      min-width: 200px;
       cursor: pointer;
       transition: all 0.2s ease;
-      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-    .role-quick-card:hover, .role-quick-card.selected {
-      border-color: #6366f1;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
-    }
-    .rqc-name { font-size: 0.88rem; font-weight: 800; color: var(--text-primary); }
-    .rqc-key { font-size: 0.72rem; color: #818cf8; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
-    .rqc-count { font-size: 0.78rem; font-weight: 700; color: #34d399; margin-top: 6px; }
 
-    /* Matrix Table Design */
-    .matrix-card {
+    .role-selector-chip:hover {
+      border-color: #6366f1;
+    }
+
+    .role-selector-chip.active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(79, 70, 229, 0.25) 100%);
+      border-color: #6366f1;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+    }
+
+    .rsc-name { font-size: 0.9rem; font-weight: 800; color: var(--text-primary); }
+    .rsc-dept { font-size: 0.75rem; color: var(--text-muted); }
+    .rsc-perm-count { font-size: 0.78rem; font-weight: 700; color: #34d399; margin-top: 4px; }
+
+    /* Module Permissions Grid */
+    .modules-perm-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .module-perm-block {
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: var(--shadow-md);
-      margin-bottom: 30px;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
-    .matrix-header {
+
+    .module-perm-header {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 16px 24px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
+      justify-content: space-between;
       border-bottom: 1px solid var(--border);
     }
 
-    .matrix-table-wrapper {
-      overflow-x: auto;
-      max-height: 680px;
-      position: relative;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-    }
-
-    .matrix-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    .matrix-table th {
-      position: sticky;
-      top: 0;
-      z-index: 12;
-      background: #0b1120;
-      font-size: 0.8rem;
+    .mph-title {
+      font-size: 1.05rem;
       font-weight: 800;
       color: var(--text-primary);
-      padding: 14px 10px;
-      text-align: center;
-      border-bottom: 2px solid var(--border);
-    }
-    .matrix-table th:first-child {
-      text-align: left;
-      padding-left: 20px;
-      min-width: 320px;
-      z-index: 13;
-    }
-    .matrix-table td {
-      padding: 12px 10px;
-      font-size: 0.84rem;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      vertical-align: middle;
-      text-align: center;
-      transition: background 0.15s ease;
-    }
-    .matrix-table td:first-child {
-      text-align: left;
-      padding-left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    /* Column & Row Highlight */
-    .matrix-table tr:hover td {
-      background: rgba(99, 102, 241, 0.08) !important;
-    }
-    .matrix-table td.col-hover {
-      background: rgba(99, 102, 241, 0.05);
-    }
-
-    .module-heading-row td {
-      background: #111827 !important;
-      font-size: 0.92rem;
-      font-weight: 800;
-      color: #a78bfa;
-      padding: 12px 20px;
-      border-top: 2px solid var(--border);
-      position: sticky;
-      z-index: 5;
+    .mph-badge {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
     }
 
-    /* Toggle Switch */
+    .perm-items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .perm-item-card {
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .perm-item-card:hover {
+      border-color: #475569;
+      background: #0d1527;
+    }
+
+    .pic-label { font-size: 0.88rem; font-weight: 700; color: var(--text-primary); }
+    .pic-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35; }
+
+    /* Custom Toggle Switch */
     .toggle-switch {
       position: relative;
       display: inline-block;
-      width: 42px;
+      width: 44px;
       height: 24px;
+      flex-shrink: 0;
     }
+
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
     .toggle-slider {
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
       background-color: #334155;
-      transition: .2s ease;
+      transition: .25s ease;
       border-radius: 24px;
-      border: 1px solid rgba(255,255,255,0.1);
     }
+
     .toggle-slider:before {
       position: absolute;
       content: "";
-      height: 18px; width: 18px;
-      left: 2px; bottom: 2px;
-      background-color: white;
-      transition: .2s ease;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #ffffff;
+      transition: .25s ease;
       border-radius: 50%;
     }
+
     input:checked + .toggle-slider {
-      background-color: #10b981;
-      border-color: #10b981;
+      background-color: #6366f1;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
     }
+
     input:checked + .toggle-slider:before {
-      transform: translateX(18px);
-    }
-
-    /* Role Detailed View Cards */
-    .role-detail-cards {
-      display: none;
-    }
-    .rd-role-picker {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 12px;
-      margin-bottom: 24px;
-    }
-    .rd-role-tab {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 18px;
-      font-weight: 700;
-      font-size: 0.88rem;
-      color: var(--text-secondary);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-    }
-    .rd-role-tab.active {
-      background: #6366f1;
-      color: #ffffff;
-      border-color: #6366f1;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-    }
-
-    .rd-module-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .rd-module-title {
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: #a78bfa;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-    }
-    .rd-perm-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      border-radius: 10px;
-      background: #090e1a;
-      border: 1px solid rgba(255,255,255,0.04);
-      margin-bottom: 8px;
-    }
-    .rd-perm-item:hover {
-      border-color: rgba(99, 102, 241, 0.3);
-    }
-
-    .btn-indigo-gradient {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 0.95rem;
-      padding: 12px 28px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-indigo-gradient:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(99, 102, 241, 0.55);
-    }
-
-    .btn-secondary {
-      background: #1e293b;
-      color: #cbd5e1;
-      border: 1px solid var(--border);
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .btn-secondary:hover {
-      background: #334155;
-      color: #fff;
+      transform: translateX(20px);
     }
   </style>
-  <script src="/sidebar.js" defer></script>
 </head>
-<body class="module-body">
-  <!-- Sidebar -->
-  <aside class="module-sidebar">
-    <div class="module-sidebar-brand">
-      <a href="/" class="msb-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
-        <span>Enterprise ERP</span>
-      </a>
-    </div>
+<body>
+  <div class="app-layout">
+    <%- include('../partials/sidebar', { activeModule: 'admin', activeView: 'admin_roles' }) %>
 
-    <div class="module-sidebar-section">
-      <div class="mss-label">🛡️ SİSTEM YÖNETİMİ & GÜVENLİK</div>
+    <main class="app-main">
+      <%- include('../partials/header', { user }) %>
 
-      <div class="mss-group-title">📊 KONTROL PANELİ & ANALİTİK</div>
-      <div class="mss-sub">
-        <a href="/admin" class="mss-sub-link">📊 Yönetim Özeti</a>
-      </div>
-
-      <div class="mss-group-title">👥 KULLANICI & ROL YÖNETİMİ</div>
-      <div class="mss-sub">
-        <a href="/admin/users" class="mss-sub-link">👥 Kullanıcı Hesapları</a>
-        <a href="/admin/users/add" class="mss-sub-link">➕ Yeni Kullanıcı Ekle</a>
-        <a href="/admin/roles" class="mss-sub-link active">🔐 Rol & Yetki Matrisi</a>
-      </div>
-
-      <div class="mss-group-title">⚙️ SİSTEM & GÜVENLİK AYARLARI</div>
-      <div class="mss-sub">
-        <a href="/admin/settings" class="mss-sub-link">⚙️ Sistem Parametreleri</a>
-        <a href="/admin/logs" class="mss-sub-link">📜 İşlem Günlüğü (Audit Log)</a>
-      </div>
-    </div>
-
-    <div class="module-sidebar-user">
-      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
-      <div class="msu-meta">
-        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
-        <span><%= user.role %></span>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Main Content -->
-  <div class="module-main">
-    <header class="module-topbar">
-      <div class="mt-left">
-        <a href="/" class="mt-link">Ana Sayfa</a>
-        <a href="/admin" class="mt-link active">Sistem Yönetimi</a>
-        <a href="/stock" class="mt-link">Stok & Depo</a>
-        <a href="/sales" class="mt-link">Satış Yönetimi</a>
-        <a href="/purchase" class="mt-link">Satın Alma</a>
-        <a href="/production" class="mt-link">Üretim Planlama</a>
-        <a href="/quality" class="mt-link">Kalite Kontrol</a>
-      </div>
-      <div class="mt-right">
-        <span class="mt-time" id="liveTime"></span>
-        <a href="/logout" class="mt-logout" title="Çıkış">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </a>
-      </div>
-    </header>
-
-    <main class="module-content">
-
-      <div class="page-header">
-        <div>
-          <h1>Rol ve Erişim Yetki Matrisi</h1>
-          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Sistem rollerinin hangi modüllere, ekranlara ve yönetsel kartlara erişebileceğini yapılandırın.</p>
+      <!-- Top Header & Breadcrumb -->
+      <div class="header-banner" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(15, 23, 42, 0) 100%); padding: 24px; border-radius: 18px; border: 1px solid var(--border); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Sistem Yönetimi & Güvenlik</div>
+            <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 10px;">
+              <span>🔐 Rol & Modül Yetki Yapılandırması</span>
+            </h1>
+            <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 6px;">Departman bazlı özel roller tanımlayın ve her bir rol için 6 ana ERP modülündeki ekran yetkilerini yönetin.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <a href="/admin/users" class="btn btn-secondary">👥 Kullanıcı Listesine Dön</a>
+          </div>
         </div>
       </div>
 
+      <!-- Notifications -->
       <% if (successMessage) { %>
-        <div style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
-          <span>✅</span> <%= successMessage %>
+        <div class="alert alert-success" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; padding: 14px 18px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; color: #34d399; font-weight: 600;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><%= successMessage %></span>
         </div>
       <% } %>
 
-      <!-- Role Summary Quick Cards -->
-      <% const totalPermsCount = PERMISSION_MODULES.reduce((acc, m) => acc + m.permissions.length, 0); %>
-      <div class="role-cards-grid">
-        <% roleKeys.forEach(r => { %>
-          <% const rolePerms = matrix[r] || {}; %>
-          <% const activeCount = Object.values(rolePerms).filter(Boolean).length; %>
-          <div class="role-quick-card" onclick="selectRoleView('<%= r %>')">
-            <div class="rqc-name"><%= ALL_ROLES[r] || r %></div>
-            <div class="rqc-key"><%= r %></div>
-            <div class="rqc-count">✓ <%= activeCount %> / <%= totalPermsCount %> İzin Aktif</div>
+      <% if (errorMessage) { %>
+        <div class="alert alert-danger" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; padding: 14px 18px; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 12px; color: #fb7185; font-weight: 600;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span><%= errorMessage %></span>
+        </div>
+      <% } %>
+
+      <!-- Top Metrics Summary Cards -->
+      <div class="metrics-summary-grid">
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">🎭</div>
+          <div>
+            <div class="metric-val"><%= customRoles.length %></div>
+            <div class="metric-lbl">Tanımlı Sistem Rolü</div>
           </div>
-        <% }); %>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🏢</div>
+          <div>
+            <div class="metric-val"><%= DEPARTMENTS.length %></div>
+            <div class="metric-lbl">Bağlı Departman</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">🔑</div>
+          <div>
+            <% const totalPerms = PERMISSION_MODULES.reduce((acc, m) => acc + m.permissions.length, 0); %>
+            <div class="metric-val"><%= totalPerms %></div>
+            <div class="metric-lbl">Modül & Kart Yetkisi</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">👥</div>
+          <div>
+            <% const totalAssignedUsers = Object.values(roleUserCounts).reduce((a, b) => a + b, 0); %>
+            <div class="metric-val"><%= totalAssignedUsers %></div>
+            <div class="metric-lbl">Atanmış Kullanıcı</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Control Toolbar -->
-      <div class="matrix-toolbar">
-        <div class="mt-search">
-          <span class="mt-search-icon">🔍</span>
-          <input type="text" id="matrixSearch" onkeyup="filterMatrix()" placeholder="Yetki, ekran veya açıklama ara (ör: Reçete, Fatura, Sayım)...">
-        </div>
+      <!-- Main Navigation Tabs Bar -->
+      <div class="main-tabs-header">
+        <button type="button" class="main-tab-btn <%= activeTab === '1' ? 'active' : '' %>" id="tabBtn1" onclick="switchMainTab('1')">
+          <span>🎭 Sekme 1: Departman & Rol Yönetimi</span>
+          <span class="badge"><%= customRoles.length %> Rol</span>
+        </button>
 
-        <div class="view-switcher">
-          <button type="button" class="vs-btn active" id="btnTableView" onclick="switchViewMode('table')">📊 Tablo Matrisi</button>
-          <button type="button" class="vs-btn" id="btnCardView" onclick="switchViewMode('cards')">👤 Rol Detay Kartları</button>
-        </div>
+        <button type="button" class="main-tab-btn <%= activeTab === '2' ? 'active' : '' %>" id="tabBtn2" onclick="switchMainTab('2')">
+          <span>🔑 Sekme 2: Rol Bazlı Yetki Yapılandırma</span>
+          <span class="badge"><%= totalPerms %> Yetki</span>
+        </button>
       </div>
 
-      <!-- Form Wrap -->
-      <form action="/admin/roles" method="POST" id="matrixForm">
-        <!-- 1. TABLE MATRIX VIEW -->
-        <div class="matrix-card" id="tableViewContainer">
-          <div class="matrix-header">
-            <div>
-              <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Genel Rol & İzin Matris Tablosu</h3>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Kolon ve satır üzerine gelindiğinde ilgili rol ve yetki vurgulanır. Anahtarlarla erişimleri kolayca değiştirin.</p>
+      <!-- ================================================================= -->
+      <!-- TAB 1: DEPARTMAN & ROL TANIMLAMA PANELİ -->
+      <!-- ================================================================= -->
+      <div id="tabPane1" style="<%= activeTab === '1' ? '' : 'display: none;' %>">
+        <div class="roles-management-layout">
+          
+          <!-- Left Column: Create New Custom Role Form -->
+          <div class="create-role-card">
+            <div class="card-section-title">
+              <span>✨ Yeni Rol Tanımla</span>
             </div>
-            <button type="submit" class="btn-indigo-gradient">
-              💾 Matrisi Kaydet ve Güncelle
-            </button>
-          </div>
+            <div class="card-section-subtitle">Departmanınıza özel yeni bir yetki rolü tanımlayın.</div>
 
-          <div class="matrix-table-wrapper">
-            <table class="matrix-table" id="matrixTable">
-              <thead>
-                <tr>
-                  <th>Modül & Ekran İzni</th>
-                  <% roleKeys.forEach((r, colIdx) => { %>
-                    <th data-col="<%= colIdx + 1 %>">
-                      <div style="font-size: 0.82rem; font-weight: 800;"><%= ALL_ROLES[r] || r %></div>
-                      <div style="font-size: 0.7rem; color: #818cf8; font-weight: 600;"><%= r %></div>
-                    </th>
-                  <% }); %>
-                </tr>
-              </thead>
-              <tbody>
-                <% PERMISSION_MODULES.forEach(mod => { %>
-                  <tr class="module-heading-row" data-mod-title="<%= mod.name.toLowerCase() %>">
-                    <td colspan="<%= roleKeys.length + 1 %>">
-                      <%= mod.name %>
-                    </td>
-                  </tr>
-                  <% mod.permissions.forEach(p => { %>
-                    <tr class="perm-row" data-search="<%= (p.label + ' ' + p.desc + ' ' + mod.name).toLowerCase() %>">
-                      <td>
-                        <div style="font-weight: 700; color: var(--text-primary);"><%= p.label %></div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);"><%= p.desc %></div>
-                      </td>
-                      <% roleKeys.forEach((role, colIdx) => { %>
-                        <% const isAllowed = matrix[role] && matrix[role][p.key]; %>
-                        <td data-col="<%= colIdx + 1 %>">
-                          <label class="toggle-switch">
-                            <input type="checkbox" name="perm_<%= role %>_<%= p.key %>" class="perm-check-<%= role %>" <%= isAllowed ? 'checked' : '' %>>
-                            <span class="toggle-slider"></span>
-                          </label>
-                        </td>
-                      <% }); %>
-                    </tr>
-                  <% }); %>
-                <% }); %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 2. ROLE DETAILED CARDS VIEW -->
-        <div class="role-detail-cards" id="cardViewContainer">
-          <div class="matrix-header" style="background: var(--bg-surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 20px;">
-            <div>
-              <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Rol Bazlı İzin Detayları</h3>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Seçili rol için modül izinlerini detaylı inceleyin ve tek tıkla toplu güncelleme yapın.</p>
-            </div>
-            <button type="submit" class="btn-indigo-gradient">
-              💾 Değişiklikleri Kaydet
-            </button>
-          </div>
-
-          <!-- Role Selector Tabs -->
-          <div class="rd-role-picker">
-            <% roleKeys.forEach((r, idx) => { %>
-              <div class="rd-role-tab <%= idx === 0 ? 'active' : '' %>" id="tab_<%= r %>" onclick="activateRoleTab('<%= r %>')">
-                <%= ALL_ROLES[r] || r %>
-              </div>
-            <% }); %>
-          </div>
-
-          <!-- Role Cards Body -->
-          <% roleKeys.forEach((r, idx) => { %>
-            <div class="role-card-pane" id="pane_<%= r %>" style="<%= idx === 0 ? '' : 'display: none;' %>">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary);"><%= ALL_ROLES[r] || r %> — İzin Listesi</h2>
-                <div style="display: flex; gap: 10px;">
-                  <button type="button" class="btn-secondary" onclick="toggleAllRolePerms('<%= r %>', true)">⚡ Tüm İzinleri Ver</button>
-                  <button type="button" class="btn-secondary" onclick="toggleAllRolePerms('<%= r %>', false)">🧹 Tüm İzinleri Kaldır</button>
-                </div>
+            <form action="/admin/roles/create" method="POST" id="createRoleForm">
+              <div class="form-group">
+                <label for="roleLabel">Rol Adı <span style="color: #f43f5e;">*</span></label>
+                <input type="text" id="roleLabel" name="label" placeholder="Örn: Saha Satış Temsilcisi" required>
               </div>
 
-              <% PERMISSION_MODULES.forEach(mod => { %>
-                <div class="rd-module-card">
-                  <div class="rd-module-title">
-                    <span><%= mod.name %></span>
+              <div class="form-group">
+                <label for="roleDepartment">Bağlı Departman <span style="color: #f43f5e;">*</span></label>
+                <select id="roleDepartment" name="department" required>
+                  <option value="" disabled selected>-- Departman Seçiniz --</option>
+                  <% DEPARTMENTS.forEach(dept => { %>
+                    <option value="<%= dept %>"><%= dept %></option>
+                  <% }); %>
+                  <option value="Genel">Genel / Tüm Departmanlar</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="roleDescription">Rol Tanımı & Amacı</label>
+                <textarea id="roleDescription" name="description" rows="3" placeholder="Bu rolün sorumluluk alanlarını ve amacını açıklayın..."></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+                ➕ Rolü Kaydet ve Yetkilendir
+              </button>
+            </form>
+          </div>
+
+          <!-- Right Column: List of Roles with Filters -->
+          <div>
+            <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Sistemde Tanımlı Rol Listesi</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Rol kartlarına tıklayarak yetkilerini düzenleyebilir veya yeni yetkiler atayabilirsiniz.</p>
+              </div>
+
+              <div style="position: relative; min-width: 260px;">
+                <input type="text" id="roleSearchInput" onkeyup="filterRoleCards()" placeholder="Rol veya departman ara..." style="width: 100%; background: #090e1a; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px 8px 34px; color: var(--text-primary); font-size: 0.85rem; outline: none;">
+                <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">🔍</span>
+              </div>
+            </div>
+
+            <!-- Role Cards Grid -->
+            <div class="role-cards-container" id="roleCardsGrid">
+              <% customRoles.forEach(r => { %>
+                <% const uCount = roleUserCounts[r.key] || 0; %>
+                <% const rPerms = matrix[r.key] || {}; %>
+                <% const activePCount = Object.values(rPerms).filter(Boolean).length; %>
+
+                <div class="role-item-card" data-role-key="<%= r.key %>" data-search="<%= (r.label + ' ' + r.department + ' ' + r.key).toLowerCase() %>">
+                  <div>
+                    <div class="ric-dept-badge">
+                      <span>🏢 <%= r.department || 'Genel' %></span>
+                    </div>
+                    <div class="ric-title"><%= r.label %></div>
+                    <div class="ric-key"><%= r.key %></div>
+                    <div class="ric-desc"><%= r.description || 'Sistem rol tanımı' %></div>
                   </div>
-                  <% mod.permissions.forEach(p => { %>
-                    <% const isAllowed = matrix[r] && matrix[r][p.key]; %>
-                    <div class="rd-perm-item">
-                      <div>
-                        <div style="font-weight: 700; color: var(--text-primary); font-size: 0.9rem;"><%= p.label %></div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;"><%= p.desc %></div>
+
+                  <div class="ric-footer">
+                    <div>
+                      <div class="ric-user-count">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span><%= uCount %> Kullanıcı</span>
                       </div>
+                      <div style="font-size: 0.75rem; color: #818cf8; font-weight: 700; margin-top: 2px;">
+                        ✓ <%= activePCount %> / <%= totalPerms %> Yetki
+                      </div>
+                    </div>
+
+                    <div class="ric-actions">
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="editRolePermissions('<%= r.key %>')" title="Ekran Yetkilerini Düzenle">
+                        🔑 Yetkiler
+                      </button>
+                      
+                      <% if (!r.isSystem && r.key !== 'Admin') { %>
+                        <form action="/admin/roles/delete-role" method="POST" onsubmit="return confirm('<%= r.label %> rolünü silmek istediğinize emin misiniz? Bu role sahip kullanıcılar varsayılan role aktarılacaktır.');" style="display: inline;">
+                          <input type="hidden" name="key" value="<%= r.key %>">
+                          <button type="submit" class="btn btn-secondary btn-sm" style="color: #fb7185; border-color: rgba(244, 63, 94, 0.3);" title="Rolü Sil">
+                            🗑️
+                          </button>
+                        </form>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- TAB 2: ROL BAZLI YETKİ YAPILANDIRMA PANELİ -->
+      <!-- ================================================================= -->
+      <div id="tabPane2" style="<%= activeTab === '2' ? '' : 'display: none;' %>">
+        
+        <!-- Role Selection Horizontal Strip -->
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+          Yetkisini Düzenlemek İstediğiniz Rolü Seçin:
+        </div>
+
+        <div class="role-selector-strip">
+          <% customRoles.forEach(r => { %>
+            <% const rPerms = matrix[r.key] || {}; %>
+            <% const activePCount = Object.values(rPerms).filter(Boolean).length; %>
+            <div class="role-selector-chip <%= activeRole === r.key ? 'active' : '' %>" onclick="selectActiveRole('<%= r.key %>')">
+              <div class="rsc-name"><%= r.label %></div>
+              <div class="rsc-dept">🏢 <%= r.department || 'Genel' %></div>
+              <div class="rsc-perm-count">✓ <%= activePCount %> / <%= totalPerms %> İzin Aktif</div>
+            </div>
+          <% }); %>
+        </div>
+
+        <!-- Selected Role Permissions Editing Form -->
+        <% const selectedRoleObj = customRoles.find(r => r.key === activeRole) || customRoles[0]; %>
+        <% const currentRolePerms = matrix[selectedRoleObj.key] || {}; %>
+
+        <form action="/admin/roles/permissions" method="POST" id="rolePermissionsForm">
+          <input type="hidden" name="roleKey" value="<%= selectedRoleObj.key %>">
+
+          <!-- Selected Role Header Banner -->
+          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px 24px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h2 style="font-size: 1.3rem; font-weight: 900; color: var(--text-primary); margin: 0;">
+                  <%= selectedRoleObj.label %>
+                </h2>
+                <span class="ric-dept-badge" style="margin: 0;">🏢 <%= selectedRoleObj.department || 'Genel' %></span>
+              </div>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
+                <%= selectedRoleObj.description || 'Bu rol için 6 ERP modülündeki ekran ve işlem erişim izinlerini düzenleyin.' %>
+              </p>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleRoleAllPerms(true)">
+                ⚡ Tümünü Aç
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleRoleAllPerms(false)">
+                🧹 Tümünü Kapat
+              </button>
+              <button type="submit" class="btn btn-primary" style="font-weight: 800; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+                💾 Rol Yetkilerini Kaydet
+              </button>
+            </div>
+          </div>
+
+          <!-- 6 ERP Module Permission Blocks -->
+          <div class="modules-perm-container">
+            <% PERMISSION_MODULES.forEach(mod => { %>
+              <% const modActiveCount = mod.permissions.filter(p => currentRolePerms[p.key]).length; %>
+              
+              <div class="module-perm-block">
+                <div class="module-perm-header">
+                  <div class="mph-title">
+                    <span><%= mod.name %></span>
+                    <span class="mph-badge"><%= modActiveCount %> / <%= mod.permissions.length %> Aktif</span>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Modül Yetkilerini Toplu Değiştir:</span>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleModulePerms('<%= mod.id %>', true)">Tümünü Aç</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleModulePerms('<%= mod.id %>', false)">Tümünü Kapat</button>
+                  </div>
+                </div>
+
+                <!-- Module Permission Cards Grid -->
+                <div class="perm-items-grid" id="mod_grid_<%= mod.id %>">
+                  <% mod.permissions.forEach(p => { %>
+                    <% const isChecked = !!currentRolePerms[p.key]; %>
+                    <div class="perm-item-card">
+                      <div style="flex: 1;">
+                        <div class="pic-label"><%= p.label %></div>
+                        <div class="pic-desc"><%= p.desc %></div>
+                      </div>
+
                       <label class="toggle-switch">
-                        <input type="checkbox" class="perm-card-check-<%= r %>" data-sync="perm_<%= r %>_<%= p.key %>" <%= isAllowed ? 'checked' : '' %> onchange="syncFromCard(this, 'perm_<%= r %>_<%= p.key %>')">
+                        <input type="checkbox" name="perm_<%= selectedRoleObj.key %>_<%= p.key %>" class="perm-chk-<%= mod.id %> perm-chk-role" <%= isChecked ? 'checked' : '' %>>
                         <span class="toggle-slider"></span>
                       </label>
                     </div>
                   <% }); %>
                 </div>
-              <% }); %>
+              </div>
+            <% }); %>
+          </div>
+
+          <!-- Floating Submit Bar Footer -->
+          <div style="margin-top: 24px; padding: 20px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.88rem; color: var(--text-secondary); font-weight: 600;">
+              Seçili Rol: <strong style="color: var(--text-primary);"><%= selectedRoleObj.label %></strong> (<%= selectedRoleObj.department %>)
             </div>
-          <% }); %>
-        </div>
-      </form>
+            <button type="submit" class="btn btn-primary btn-lg" style="font-weight: 800; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+              💾 <%= selectedRoleObj.label %> Yetkilerini Kaydet ve Uygula
+            </button>
+          </div>
+        </form>
+
+      </div>
+
     </main>
   </div>
 
   <script>
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
 
-    // Switch View Mode
-    function switchViewMode(mode) {
-      const tblView = document.getElementById('tableViewContainer');
-      const cardView = document.getElementById('cardViewContainer');
-      const btnTbl = document.getElementById('btnTableView');
-      const btnCrd = document.getElementById('btnCardView');
+    // Main Tab Switching
+    function switchMainTab(tabNum) {
+      document.getElementById('tabPane1').style.display = tabNum === '1' ? 'block' : 'none';
+      document.getElementById('tabPane2').style.display = tabNum === '2' ? 'block' : 'none';
 
-      if (mode === 'table') {
-        tblView.style.display = 'block';
-        cardView.style.display = 'none';
-        btnTbl.classList.add('active');
-        btnCrd.classList.remove('active');
-      } else {
-        tblView.style.display = 'none';
-        cardView.style.display = 'block';
-        btnCrd.classList.add('active');
-        btnTbl.classList.remove('active');
-      }
+      document.getElementById('tabBtn1').classList.toggle('active', tabNum === '1');
+      document.getElementById('tabBtn2').classList.toggle('active', tabNum === '2');
     }
 
-    // Role Tab Selector in Card View
-    function activateRoleTab(roleKey) {
-      document.querySelectorAll('.rd-role-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.role-card-pane').forEach(p => p.style.display = 'none');
-
-      const activeTab = document.getElementById('tab_' + roleKey);
-      const activePane = document.getElementById('pane_' + roleKey);
-      if (activeTab) activeTab.classList.add('active');
-      if (activePane) activePane.style.display = 'block';
-    }
-
-    function selectRoleView(roleKey) {
-      switchViewMode('cards');
-      activateRoleTab(roleKey);
-    }
-
-    // Bulk Toggle
-    function toggleAllRolePerms(roleKey, state) {
-      const checks = document.querySelectorAll('.perm-check-' + roleKey);
-      checks.forEach(c => c.checked = state);
-      const cardChecks = document.querySelectorAll('.perm-card-check-' + roleKey);
-      cardChecks.forEach(c => c.checked = state);
-    }
-
-    function syncFromCard(cardElem, mainInputName) {
-      const mainInput = document.querySelector(`input[name="${mainInputName}"]`);
-      if (mainInput) mainInput.checked = cardElem.checked;
-    }
-
-    // Matrix Search Filter
-    function filterMatrix() {
-      const q = document.getElementById('matrixSearch').value.toLowerCase().trim();
-      const rows = document.querySelectorAll('.perm-row');
-      rows.forEach(r => {
-        const text = r.getAttribute('data-search') || '';
-        r.style.display = text.includes(q) ? '' : 'none';
+    // Role Card Filtering in Tab 1
+    function filterRoleCards() {
+      const q = document.getElementById('roleSearchInput').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.role-item-card');
+      cards.forEach(c => {
+        const text = c.getAttribute('data-search') || '';
+        c.style.display = text.includes(q) ? 'flex' : 'none';
       });
     }
 
-    // Column Hover Effect
-    const table = document.getElementById('matrixTable');
-    if (table) {
-      table.querySelectorAll('td[data-col], th[data-col]').forEach(cell => {
-        cell.addEventListener('mouseenter', () => {
-          const colIdx = cell.getAttribute('data-col');
-          table.querySelectorAll(`td[data-col="${colIdx}"]`).forEach(c => c.classList.add('col-hover'));
-        });
-        cell.addEventListener('mouseleave', () => {
-          const colIdx = cell.getAttribute('data-col');
-          table.querySelectorAll(`td[data-col="${colIdx}"]`).forEach(c => c.classList.remove('col-hover'));
-        });
-      });
+    // Jump from Tab 1 Role Card to Tab 2 Editing
+    function editRolePermissions(roleKey) {
+      window.location.href = `/admin/roles?role=${roleKey}&tab=2`;
+    }
+
+    // Select Active Role in Tab 2 Strip
+    function selectActiveRole(roleKey) {
+      window.location.href = `/admin/roles?role=${roleKey}&tab=2`;
+    }
+
+    // Toggle All Permissions for Current Role
+    function toggleRoleAllPerms(enable) {
+      const checkboxes = document.querySelectorAll('.perm-chk-role');
+      checkboxes.forEach(cb => { cb.checked = enable; });
+    }
+
+    // Toggle Module Permissions
+    function toggleModulePerms(moduleId, enable) {
+      const checkboxes = document.querySelectorAll(`.perm-chk-${moduleId}`);
+      checkboxes.forEach(cb => { cb.checked = enable; });
     }
   </script>
 </body>

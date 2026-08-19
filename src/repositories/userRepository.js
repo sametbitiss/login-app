@@ -188,6 +188,46 @@ class UserRepository {
     return DEFAULT_ROLE_MATRIX;
   }
 
+  async getCustomRoles() {
+    const { DEFAULT_ROLES } = require('../config/permissionMatrix');
+    const setting = await SistemAyari.findOne({ where: { anahtar: 'custom_roles_list' } });
+    if (setting && setting.deger) {
+      try {
+        const parsed = JSON.parse(setting.deger);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_ROLES;
+  }
+
+  async saveCustomRoles(rolesList, currentUser = null, ipAddress = null) {
+    let setting = await SistemAyari.findOne({ where: { anahtar: 'custom_roles_list' } });
+    const val = JSON.stringify(rolesList);
+    if (setting) {
+      setting.deger = val;
+      await setting.save();
+    } else {
+      await SistemAyari.create({
+        anahtar: 'custom_roles_list',
+        deger: val,
+        aciklama: 'Dinamik sistem rol tanımları',
+        kategori: 'Security'
+      });
+    }
+
+    await logService.logCrud({
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'SistemAyari',
+      varlikId: 'custom_roles_list',
+      detaylar: { action: 'Updated Custom Roles List' },
+      ipAdresi: ipAddress
+    });
+  }
+
   async savePermissionMatrix(matrix, currentUser = null, ipAddress = null) {
     let setting = await SistemAyari.findOne({ where: { anahtar: 'role_permission_matrix' } });
     const val = JSON.stringify(matrix);

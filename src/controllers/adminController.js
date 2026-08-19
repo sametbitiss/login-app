@@ -99,6 +99,15 @@ const DEPARTMENT_ROLES = {
 
 const DEPARTMENTS = Object.keys(DEPARTMENT_TITLES);
 
+const getDynamicRolesMap = async () => {
+  const customRoles = await userRepository.getCustomRoles();
+  const map = {};
+  customRoles.forEach(r => {
+    map[r.key] = r.label;
+  });
+  return map;
+};
+
 class AdminController {
   renderDashboard = asyncHandler(async (req, res) => {
     const users = await userRepository.findAll();
@@ -151,11 +160,13 @@ class AdminController {
 
   listUsers = asyncHandler(async (req, res) => {
     const users = await userRepository.findAll();
-    res.render('admin/users', { user: req.user, users, ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+    const dynamicRoles = await getDynamicRolesMap();
+    res.render('admin/users', { user: req.user, users, ALL_ROLES: dynamicRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
   });
 
   renderAddUser = asyncHandler(async (req, res) => {
-    res.render('admin/add_user', { user: req.user, error: null, ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+    const dynamicRoles = await getDynamicRolesMap();
+    res.render('admin/add_user', { user: req.user, error: null, ALL_ROLES: dynamicRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
   });
 
   addUser = asyncHandler(async (req, res) => {
@@ -163,16 +174,17 @@ class AdminController {
     const targetUsername = kullaniciAdi || username;
     const targetPassword = sifre || password;
     const targetEmail = eposta || email;
+    const dynamicRoles = await getDynamicRolesMap();
 
     const existingUser = await userRepository.findByUsername(targetUsername);
     if (existingUser) {
-      return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı sistemde zaten kayıtlı.', ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+      return res.render('admin/add_user', { user: req.user, error: 'Bu kullanıcı adı sistemde zaten kayıtlı.', ALL_ROLES: dynamicRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
     }
 
     if (targetEmail) {
       const existingEmail = await userRepository.findByEmail(targetEmail);
       if (existingEmail) {
-        return res.render('admin/add_user', { user: req.user, error: 'Bu e-posta adresi sistemde zaten kayıtlı.', ALL_ROLES, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
+        return res.render('admin/add_user', { user: req.user, error: 'Bu e-posta adresi sistemde zaten kayıtlı.', ALL_ROLES: dynamicRoles, DEPARTMENTS, DEPARTMENT_TITLES, DEPARTMENT_ROLES });
       }
     }
 
@@ -197,6 +209,7 @@ class AdminController {
   userDetail = asyncHandler(async (req, res) => {
     const id = req.params.id;
     const targetUser = await userRepository.findById(id);
+    const dynamicRoles = await getDynamicRolesMap();
 
     if (!targetUser) {
       throw new NotFoundError('Kullanıcı bulunamadı');
@@ -205,7 +218,7 @@ class AdminController {
     res.render('admin/user_detail', {
       user: req.user,
       targetUser,
-      ALL_ROLES,
+      ALL_ROLES: dynamicRoles,
       DEPARTMENTS,
       DEPARTMENT_TITLES,
       DEPARTMENT_ROLES,
@@ -313,35 +326,161 @@ class AdminController {
 
   renderRoles = asyncHandler(async (req, res) => {
     const { PERMISSION_MODULES } = require('../config/permissionMatrix');
+    const customRoles = await userRepository.getCustomRoles();
     const matrix = await userRepository.getPermissionMatrix();
-    const roleKeys = Object.keys(ALL_ROLES);
+    const allUsers = await userRepository.findAll();
+
+    const roleUserCounts = {};
+    customRoles.forEach(r => { roleUserCounts[r.key] = 0; });
+    allUsers.forEach(u => {
+      const userRole = u.rol || u.role;
+      if (typeof roleUserCounts[userRole] !== 'undefined') {
+        roleUserCounts[userRole]++;
+      }
+    });
+
+    const dynamicAllRoles = {};
+    customRoles.forEach(r => {
+      dynamicAllRoles[r.key] = r.label;
+    });
+
     res.render('admin/roles', {
       user: req.user,
-      ALL_ROLES,
-      roleKeys,
-      PERMISSION_MODULES,
+      ALL_ROLES: dynamicAllRoles,
+      customRoles,
       matrix,
-      successMessage: req.query.success || null
+      roleUserCounts,
+      PERMISSION_MODULES,
+      DEPARTMENTS,
+      DEPARTMENT_TITLES,
+      DEPARTMENT_ROLES,
+      successMessage: req.query.success || null,
+      errorMessage: req.query.error || null,
+      activeRole: req.query.role || customRoles[0]?.key || 'Admin',
+      activeTab: req.query.tab || '1'
     });
+  });
+
+  createRole = asyncHandler(async (req, res) => {
+    const { label, department, description } = req.body;
+    if (!label || !label.trim()) {
+      throw new ValidationError('Rol adı zorunludur.');
+    }
+
+    const customRoles = await userRepository.getCustomRoles();
+    const matrix = await userRepository.getPermissionMatrix();
+
+    let keySlug = label.trim().replace(/[^a-zA-Z0-9]/g, '_');
+    if (!keySlug || keySlug.length < 2) keySlug = 'Custom_Role_' + Date.now();
+    if (customRoles.some(r => r.key === keySlug)) {
+      keySlug += '_' + Math.floor(Math.random() * 1000);
+    }
+
+    const newRoleObj = {
+      key: keySlug,
+      label: label.trim(),
+      department: department ? department.trim() : 'Genel',
+      description: description ? description.trim() : 'Özel tanımlanmış kullanıcı rolü',
+      isSystem: false
+    };
+
+    customRoles.push(newRoleObj);
+    await userRepository.saveCustomRoles(customRoles, req.user, req.ip);
+
+    const { PERMISSION_MODULES } = require('../config/permissionMatrix');
+    matrix[keySlug] = {};
+    PERMISSION_MODULES.forEach(mod => {
+      mod.permissions.forEach(p => {
+        matrix[keySlug][p.key] = p.key.includes('_view') || p.key.includes('_items') || p.key.includes('_orders');
+      });
+    });
+
+    await userRepository.savePermissionMatrix(matrix, req.user, req.ip);
+    res.redirect(`/admin/roles?role=${keySlug}&tab=2&success=Yeni+rol+${encodeURIComponent(label.trim())}+başarıyla+oluşturuldu.`);
+  });
+
+  updateRole = asyncHandler(async (req, res) => {
+    const { key, label, department, description } = req.body;
+    const customRoles = await userRepository.getCustomRoles();
+    const targetRole = customRoles.find(r => r.key === key);
+
+    if (targetRole) {
+      if (label && label.trim()) targetRole.label = label.trim();
+      if (department) targetRole.department = department.trim();
+      if (typeof description !== 'undefined') targetRole.description = description.trim();
+
+      await userRepository.saveCustomRoles(customRoles, req.user, req.ip);
+    }
+
+    res.redirect(`/admin/roles?role=${key}&tab=1&success=Rol+bilgileri+başarıyla+güncellendi.`);
+  });
+
+  deleteRole = asyncHandler(async (req, res) => {
+    const { key } = req.body;
+    if (key === 'Admin') {
+      throw new ValidationError('Sistem Yöneticisi (Admin) rolü silinemez.');
+    }
+
+    let customRoles = await userRepository.getCustomRoles();
+    const roleToDelete = customRoles.find(r => r.key === key);
+    if (roleToDelete && roleToDelete.isSystem) {
+      throw new ValidationError('Sistem başlangıç rolü silinemez.');
+    }
+
+    customRoles = customRoles.filter(r => r.key !== key);
+    await userRepository.saveCustomRoles(customRoles, req.user, req.ip);
+
+    const matrix = await userRepository.getPermissionMatrix();
+    delete matrix[key];
+    await userRepository.savePermissionMatrix(matrix, req.user, req.ip);
+
+    const allUsers = await userRepository.findAll();
+    for (const u of allUsers) {
+      if (u.rol === key || u.role === key) {
+        await userRepository.updateRole(u.id, 'Employee', req.user, req.ip);
+      }
+    }
+
+    res.redirect('/admin/roles?tab=1&success=Rol+başarıyla+silindi+ve+bağlı+kullanıcılar+Genel+Personel+rolüne+aktarıldı.');
+  });
+
+  updateRolePermissions = asyncHandler(async (req, res) => {
+    const { roleKey } = req.body;
+    const { PERMISSION_MODULES } = require('../config/permissionMatrix');
+    const matrix = await userRepository.getPermissionMatrix();
+
+    if (!matrix[roleKey]) matrix[roleKey] = {};
+
+    PERMISSION_MODULES.forEach(mod => {
+      mod.permissions.forEach(p => {
+        const fieldKey = `perm_${roleKey}_${p.key}`;
+        matrix[roleKey][p.key] = req.body[fieldKey] === 'on' || req.body[fieldKey] === 'true';
+      });
+    });
+
+    await userRepository.savePermissionMatrix(matrix, req.user, req.ip);
+    res.redirect(`/admin/roles?role=${roleKey}&tab=2&success=Rol+yetkileri+başarıyla+güncellendi.`);
   });
 
   updateRoles = asyncHandler(async (req, res) => {
     const { PERMISSION_MODULES } = require('../config/permissionMatrix');
-    const roleKeys = Object.keys(ALL_ROLES);
-    const newMatrix = {};
+    const customRoles = await userRepository.getCustomRoles();
+    const matrix = await userRepository.getPermissionMatrix();
 
-    for (const role of roleKeys) {
-      newMatrix[role] = {};
-      for (const mod of PERMISSION_MODULES) {
-        for (const p of mod.permissions) {
-          const fieldKey = `perm_${role}_${p.key}`;
-          newMatrix[role][p.key] = req.body[fieldKey] === 'on' || req.body[fieldKey] === 'true';
-        }
-      }
-    }
+    customRoles.forEach(r => {
+      if (!matrix[r.key]) matrix[r.key] = {};
+      PERMISSION_MODULES.forEach(mod => {
+        mod.permissions.forEach(p => {
+          const fieldKey = `perm_${r.key}_${p.key}`;
+          if (typeof req.body[fieldKey] !== 'undefined') {
+            matrix[r.key][p.key] = req.body[fieldKey] === 'on' || req.body[fieldKey] === 'true';
+          }
+        });
+      });
+    });
 
-    await userRepository.savePermissionMatrix(newMatrix, req.user, req.ip);
-    res.redirect('/admin/roles?success=Rol+ve+yetki+matrisi+başarıyla+güncellendi.');
+    await userRepository.savePermissionMatrix(matrix, req.user, req.ip);
+    res.redirect('/admin/roles?success=Tüm+rol+ve+yetkiler+başarıyla+güncellendi.');
   });
 }
 
