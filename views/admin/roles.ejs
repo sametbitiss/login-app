@@ -374,12 +374,71 @@
     }
   </style>
 </head>
-<body>
-  <div class="app-layout">
-    <%- include('../partials/sidebar', { activeModule: 'admin', activeView: 'admin_roles' }) %>
+<body class="module-body">
 
-    <main class="app-main">
-      <%- include('../partials/header', { user }) %>
+  <!-- Module Sidebar -->
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
+    <div class="module-sidebar-section">
+      <div class="mss-label">🛡️ SİSTEM YÖNETİMİ & GÜVENLİK</div>
+
+      <div class="mss-group-title">📊 KONTROL PANELİ & ANALİTİK</div>
+      <div class="mss-sub">
+        <a href="/admin" class="mss-sub-link">📊 Yönetim Özeti</a>
+      </div>
+
+      <div class="mss-group-title">👥 KULLANICI & ROL YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/admin/users" class="mss-sub-link">👥 Kullanıcı Hesapları</a>
+        <a href="/admin/users/add" class="mss-sub-link">➕ Yeni Kullanıcı Ekle</a>
+        <a href="/admin/roles" class="mss-sub-link active">🔐 Rol & Yetki Matrisi</a>
+      </div>
+
+      <div class="mss-group-title">⚙️ SİSTEM & GÜVENLİK AYARLARI</div>
+      <div class="mss-sub">
+        <a href="/admin/settings" class="mss-sub-link">⚙️ Sistem Parametreleri</a>
+        <a href="/admin/logs" class="mss-sub-link">📜 İşlem Günlüğü (Audit Log)</a>
+      </div>
+    </div>
+
+    <!-- Sidebar User -->
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username ? user.username.charAt(0).toUpperCase() : 'A' %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role || 'Admin' %></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Area -->
+  <div class="module-main">
+    <!-- Top Navbar -->
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <a href="/admin" class="mt-link active">Sistem Yönetimi</a>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <a href="/production" class="mt-link">Üretim Planlama</a>
+        <a href="/quality" class="mt-link">Kalite Kontrol</a>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
 
       <!-- Top Header & Breadcrumb -->
       <div class="header-banner" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(15, 23, 42, 0) 100%); padding: 24px; border-radius: 18px; border: 1px solid var(--border); margin-bottom: 24px;">
