@@ -88,45 +88,6 @@
       justify-content: space-between;
     }
 
-    .ops-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 14px;
-      margin-bottom: 28px;
-    }
-
-    .op-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 18px 16px;
-      box-shadow: var(--shadow-sm);
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .op-card:hover {
-      transform: translateY(-3px);
-      border-color: #6366f1;
-      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
-    }
-
-    .op-card-icon {
-      width: 38px; height: 38px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
-      background: rgba(99, 102, 241, 0.12);
-      color: #818cf8;
-    }
-
-    .op-card-title { font-size: 0.9rem; font-weight: 800; color: var(--text-primary); }
-    .op-card-desc { font-size: 0.775rem; color: var(--text-muted); line-height: 1.35; }
-
     .fancy-card {
       background: var(--bg-surface);
       border: 1px solid var(--border);
@@ -186,12 +147,10 @@
 
     @media (max-width: 1200px) {
       .exec-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-      .ops-grid { grid-template-columns: repeat(3, 1fr); }
       .dash-charts-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       .exec-kpi-grid { grid-template-columns: 1fr; }
-      .ops-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -280,9 +239,6 @@
               🟢 SİSTEM ÇALIŞIYOR (NORMAL)
             </span>
           <% } %>
-          <a href="/admin/users/add" class="btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; color: #fff; padding: 8px 16px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-            ➕ Yeni Kullanıcı
-          </a>
         </div>
       </div>
 
@@ -321,39 +277,6 @@
         </div>
       </div>
 
-      <!-- Quick Operations Grid -->
-      <div class="ops-grid">
-        <a href="/admin/users" class="op-card">
-          <div class="op-card-icon">👥</div>
-          <div class="op-card-title">Kullanıcı Hesapları</div>
-          <div class="op-card-desc">Personel listesi, unvan, departman ve aktiflik durumları</div>
-        </a>
-
-        <a href="/admin/users/add" class="op-card">
-          <div class="op-card-icon" style="background: rgba(16, 185, 129, 0.12); color: #34d399;">➕</div>
-          <div class="op-card-title">Yeni Kullanıcı Ekle</div>
-          <div class="op-card-desc">Sisteme yeni personel ekleyin ve başlangıç rolünü atayın</div>
-        </a>
-
-        <a href="/admin/roles" class="op-card">
-          <div class="op-card-icon" style="background: rgba(168, 85, 247, 0.12); color: #c084fc;">🔐</div>
-          <div class="op-card-title">Rol & Yetki Matrisi</div>
-          <div class="op-card-desc">Modül bazlı okuma/yazma/silme RBAC erişim matrisi</div>
-        </a>
-
-        <a href="/admin/settings" class="op-card">
-          <div class="op-card-icon" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">⚙️</div>
-          <div class="op-card-title">Sistem Ayarları</div>
-          <div class="op-card-desc">Bakım modu, parola politikası ve genel parametreler</div>
-        </a>
-
-        <a href="/admin/logs" class="op-card">
-          <div class="op-card-icon" style="background: rgba(6, 182, 212, 0.12); color: #22d3ee;">📜</div>
-          <div class="op-card-title">İşlem Günlüğü</div>
-          <div class="op-card-desc">Tüm modüllerdeki ekleme, düzenleme ve silme logları</div>
-        </a>
-      </div>
-
       <!-- Interactive Charts Row -->
       <div class="dash-charts-grid">
         <div class="dash-chart-box">
@@ -384,10 +307,9 @@
             <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">📜 Son Güvenlik & Denetim Kayıtları</h3>
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Sistem genelinde gerçekleştirilen son 15 güvenlik işlemi</p>
           </div>
-          <a href="/admin/logs" style="font-size: 0.8rem; font-weight: 700; color: var(--indigo); text-decoration: none;">Tüm Logları İncele →</a>
         </div>
 
-        <div style="overflow-x: auto;">
+        <div style="overflow-x. auto;">
           <table class="fancy-table">
             <thead>
               <tr>
