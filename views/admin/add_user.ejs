@@ -492,6 +492,19 @@
           return;
         }
 
+        const matchingRoles = customRolesList.filter(r => r.department === selectedDept);
+
+        if (matchingRoles.length === 0) {
+          roleSelect.disabled = true;
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.disabled = true;
+          opt.selected = true;
+          opt.textContent = '-- Bu Departmana Ait Tanımlı Rol Bulunmuyor --';
+          roleSelect.appendChild(opt);
+          return;
+        }
+
         roleSelect.disabled = false;
         const promptOpt = document.createElement('option');
         promptOpt.value = '';
@@ -500,10 +513,7 @@
         promptOpt.textContent = '-- Rol Yetkisi Seçiniz --';
         roleSelect.appendChild(promptOpt);
 
-        const matchingRoles = customRolesList.filter(r => (r.department === selectedDept || r.department === 'Genel / Tüm Modüller' || r.department === 'Genel'));
-        const rolesToRender = matchingRoles.length > 0 ? matchingRoles : customRolesList;
-
-        rolesToRender.forEach(r => {
+        matchingRoles.forEach(r => {
           const opt = document.createElement('option');
           opt.value = r.key;
           opt.textContent = `${r.label} (${r.key})`;
