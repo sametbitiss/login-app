@@ -114,6 +114,7 @@
       border-radius: 18px;
       padding: 24px;
       box-shadow: var(--shadow-sm);
+      height: fit-content;
     }
 
     .card-section-title {
@@ -161,18 +162,82 @@
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
     }
 
-    /* Role Cards List */
-    .role-cards-container {
+    /* Department Filter Pills */
+    .dept-filter-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .dept-pill {
+      background: #090e1a;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dept-pill:hover, .dept-pill.active {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border-color: #6366f1;
+    }
+
+    /* Grouped Department Sections */
+    .dept-group-block {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .dept-group-header {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dgh-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dgh-badge {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .dept-group-body {
+      padding: 16px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 16px;
     }
 
     .role-item-card {
-      background: var(--bg-surface);
+      background: #090e1a;
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 14px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -186,45 +251,56 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
-    .ric-dept-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(99, 102, 241, 0.12);
-      color: #a5b4fc;
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid rgba(99, 102, 241, 0.25);
-      margin-bottom: 10px;
+    .ric-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
     }
 
-    .ric-title { font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
-    .ric-key { font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; }
-    .ric-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 16px; flex: 1; }
+    .ric-title { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
+    .ric-key { font-size: 0.72rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    
+    .sys-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .custom-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .ric-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 14px; flex: 1; }
 
     .ric-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
-      padding-top: 14px;
+      padding-top: 12px;
     }
 
-    .ric-user-count {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #34d399;
+    .ric-stats {
       display: flex;
-      align-items: center;
-      gap: 4px;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .ric-actions {
-      display: flex;
-      gap: 8px;
-    }
+    .ric-user-count { font-size: 0.78rem; font-weight: 700; color: #34d399; display: flex; align-items: center; gap: 4px; }
+    .ric-perm-count { font-size: 0.75rem; color: #818cf8; font-weight: 700; }
+
+    .ric-actions { display: flex; gap: 6px; }
 
     /* Role Selector Strip (Tab 2) */
     .role-selector-strip {
@@ -446,9 +522,9 @@
           <div>
             <div style="font-size: 0.8rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Sistem Yönetimi & Güvenlik</div>
             <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 10px;">
-              <span>🔐 Rol & Modül Yetki Yapılandırması</span>
+              <span>🔐 Rol & Modül Yetki Yapılandırma Merkezi</span>
             </h1>
-            <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 6px;">Departman bazlı özel roller tanımlayın ve her bir rol için 6 ana ERP modülündeki ekran yetkilerini yönetin.</p>
+            <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 6px;">Uygulamanızdaki 6 ana ERP modülüne özel roller tanımlayın ve her bir rol için ekran yetkilerini yönetin.</p>
           </div>
           <div style="display: flex; gap: 10px;">
             <a href="/admin/users" class="btn btn-secondary">👥 Kullanıcı Listesine Dön</a>
@@ -477,7 +553,7 @@
           <div class="metric-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">🎭</div>
           <div>
             <div class="metric-val"><%= customRoles.length %></div>
-            <div class="metric-lbl">Tanımlı Sistem Rolü</div>
+            <div class="metric-lbl">Tanımlı Rol Sayısı</div>
           </div>
         </div>
 
@@ -485,7 +561,7 @@
           <div class="metric-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🏢</div>
           <div>
             <div class="metric-val"><%= DEPARTMENTS.length %></div>
-            <div class="metric-lbl">Bağlı Departman</div>
+            <div class="metric-lbl">Uygulama Modül Departmanı</div>
           </div>
         </div>
 
@@ -532,7 +608,7 @@
             <div class="card-section-title">
               <span>✨ Yeni Rol Tanımla</span>
             </div>
-            <div class="card-section-subtitle">Departmanınıza özel yeni bir yetki rolü tanımlayın.</div>
+            <div class="card-section-subtitle">Uygulamamızdaki 6 ERP modülünden birine özel yeni bir yetki rolü tanımlayın.</div>
 
             <form action="/admin/roles/create" method="POST" id="createRoleForm">
               <div class="form-group">
@@ -541,13 +617,12 @@
               </div>
 
               <div class="form-group">
-                <label for="roleDepartment">Bağlı Departman <span style="color: #f43f5e;">*</span></label>
+                <label for="roleDepartment">Bağlı ERP Modül / Departman <span style="color: #f43f5e;">*</span></label>
                 <select id="roleDepartment" name="department" required>
-                  <option value="" disabled selected>-- Departman Seçiniz --</option>
+                  <option value="" disabled selected>-- Modül / Departman Seçiniz --</option>
                   <% DEPARTMENTS.forEach(dept => { %>
                     <option value="<%= dept %>"><%= dept %></option>
                   <% }); %>
-                  <option value="Genel">Genel / Tüm Departmanlar</option>
                 </select>
               </div>
 
@@ -562,66 +637,136 @@
             </form>
           </div>
 
-          <!-- Right Column: List of Roles with Filters -->
+          <!-- Right Column: Structured Department-Grouped Role List -->
           <div>
-            <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center;">
-              <div>
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Sistemde Tanımlı Rol Listesi</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Rol kartlarına tıklayarak yetkilerini düzenleyebilir veya yeni yetkiler atayabilirsiniz.</p>
+            
+            <!-- Header Filter Bar -->
+            <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 20px;">
+              <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div>
+                  <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Sistemde Tanımlı Rol Hiyerarşisi</h3>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Roller bağlı oldukları ERP modül departmanına göre gruplanmıştır.</p>
+                </div>
+
+                <div style="position: relative; min-width: 260px;">
+                  <input type="text" id="roleSearchInput" onkeyup="filterRoleCards()" placeholder="Rol veya açıklama ara..." style="width: 100%; background: #090e1a; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px 8px 34px; color: var(--text-primary); font-size: 0.85rem; outline: none;">
+                  <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">🔍</span>
+                </div>
               </div>
 
-              <div style="position: relative; min-width: 260px;">
-                <input type="text" id="roleSearchInput" onkeyup="filterRoleCards()" placeholder="Rol veya departman ara..." style="width: 100%; background: #090e1a; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px 8px 34px; color: var(--text-primary); font-size: 0.85rem; outline: none;">
-                <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">🔍</span>
+              <!-- Department Filter Pills -->
+              <div class="dept-filter-pills">
+                <button type="button" class="dept-pill active" onclick="filterByDept('all', this)">🌐 Tüm Departmanlar</button>
+                <% DEPARTMENTS.forEach(dept => { %>
+                  <button type="button" class="dept-pill" onclick="filterByDept('<%= dept %>', this)"><%= dept %></button>
+                <% }); %>
               </div>
             </div>
 
-            <!-- Role Cards Grid -->
-            <div class="role-cards-container" id="roleCardsGrid">
-              <% customRoles.forEach(r => { %>
-                <% const uCount = roleUserCounts[r.key] || 0; %>
-                <% const rPerms = matrix[r.key] || {}; %>
-                <% const activePCount = Object.values(rPerms).filter(Boolean).length; %>
-
-                <div class="role-item-card" data-role-key="<%= r.key %>" data-search="<%= (r.label + ' ' + r.department + ' ' + r.key).toLowerCase() %>">
-                  <div>
-                    <div class="ric-dept-badge">
-                      <span>🏢 <%= r.department || 'Genel' %></span>
-                    </div>
-                    <div class="ric-title"><%= r.label %></div>
-                    <div class="ric-key"><%= r.key %></div>
-                    <div class="ric-desc"><%= r.description || 'Sistem rol tanımı' %></div>
-                  </div>
-
-                  <div class="ric-footer">
-                    <div>
-                      <div class="ric-user-count">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        <span><%= uCount %> Kullanıcı</span>
+            <!-- Department Grouped Sections Container -->
+            <div id="deptGroupedContainer">
+              <% DEPARTMENTS.forEach(dept => { %>
+                <% const deptRoles = customRoles.filter(r => (r.department || 'Genel / Tüm Modüller') === dept); %>
+                <% if (deptRoles.length > 0) { %>
+                  <div class="dept-group-block" data-dept-name="<%= dept %>">
+                    
+                    <div class="dept-group-header">
+                      <div class="dgh-title">
+                        <span>🏢 <%= dept %></span>
                       </div>
-                      <div style="font-size: 0.75rem; color: #818cf8; font-weight: 700; margin-top: 2px;">
-                        ✓ <%= activePCount %> / <%= totalPerms %> Yetki
-                      </div>
+                      <span class="dgh-badge"><%= deptRoles.length %> Rol Tanımlı</span>
                     </div>
 
-                    <div class="ric-actions">
-                      <button type="button" class="btn btn-secondary btn-sm" onclick="editRolePermissions('<%= r.key %>')" title="Ekran Yetkilerini Düzenle">
-                        🔑 Yetkiler
-                      </button>
-                      
-                      <% if (!r.isSystem && r.key !== 'Admin') { %>
-                        <form action="/admin/roles/delete-role" method="POST" onsubmit="return confirm('<%= r.label %> rolünü silmek istediğinize emin misiniz? Bu role sahip kullanıcılar varsayılan role aktarılacaktır.');" style="display: inline;">
-                          <input type="hidden" name="key" value="<%= r.key %>">
-                          <button type="submit" class="btn btn-secondary btn-sm" style="color: #fb7185; border-color: rgba(244, 63, 94, 0.3);" title="Rolü Sil">
-                            🗑️
-                          </button>
-                        </form>
-                      <% } %>
+                    <div class="dept-group-body">
+                      <% deptRoles.forEach(r => { %>
+                        <% const uCount = roleUserCounts[r.key] || 0; %>
+                        <% const rPerms = matrix[r.key] || {}; %>
+                        <% const activePCount = Object.values(rPerms).filter(Boolean).length; %>
+
+                        <div class="role-item-card" data-role-key="<%= r.key %>" data-search="<%= (r.label + ' ' + r.department + ' ' + r.key + ' ' + (r.description||'')).toLowerCase() %>">
+                          <div>
+                            <div class="ric-top">
+                              <div class="ric-title"><%= r.label %></div>
+                              <% if (r.isSystem || r.key === 'Admin') { %>
+                                <span class="sys-badge">🔒 Sistem Rolü</span>
+                              <% } else { %>
+                                <span class="custom-badge">✨ Özel Rol</span>
+                              <% } %>
+                            </div>
+
+                            <div class="ric-key"><%= r.key %></div>
+                            <div class="ric-desc"><%= r.description || 'Sistem rol tanımı' %></div>
+                          </div>
+
+                          <div class="ric-footer">
+                            <div class="ric-stats">
+                              <div class="ric-user-count">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                <span><%= uCount %> Kullanıcı</span>
+                              </div>
+                              <div class="ric-perm-count">
+                                ✓ <%= activePCount %> / <%= totalPerms %> Yetki
+                              </div>
+                            </div>
+
+                            <div class="ric-actions">
+                              <button type="button" class="btn btn-primary btn-sm" onclick="editRolePermissions('<%= r.key %>')" style="font-weight: 700; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+                                🔑 Yetkiler
+                              </button>
+
+                              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleInlineEdit('<%= r.key %>')" title="Rol Bilgilerini Düzenle">
+                                ✏️
+                              </button>
+                              
+                              <% if (!r.isSystem && r.key !== 'Admin') { %>
+                                <form action="/admin/roles/delete-role" method="POST" onsubmit="return confirm('<%= r.label %> rolünü silmek istediğinize emin misiniz? Bu role sahip kullanıcılar varsayılan role aktarılacaktır.');" style="display: inline;">
+                                  <input type="hidden" name="key" value="<%= r.key %>">
+                                  <button type="submit" class="btn btn-secondary btn-sm" style="color: #fb7185; border-color: rgba(244, 63, 94, 0.3);" title="Rolü Sil">
+                                    🗑️
+                                  </button>
+                                </form>
+                              <% } %>
+                            </div>
+                          </div>
+
+                          <!-- Inline Edit Panel -->
+                          <form action="/admin/roles/update-role" method="POST" class="role-inline-edit-form" id="editForm_<%= r.key %>" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);">
+                            <input type="hidden" name="key" value="<%= r.key %>">
+                            
+                            <div style="margin-bottom: 10px;">
+                              <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Rol Adı</label>
+                              <input type="text" name="label" value="<%= r.label %>" required style="width: 100%; padding: 6px 10px; font-size: 0.82rem; background: #090e1a; border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                            </div>
+
+                            <div style="margin-bottom: 10px;">
+                              <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Departman</label>
+                              <select name="department" required style="width: 100%; padding: 6px 10px; font-size: 0.82rem; background: #090e1a; border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                                <% DEPARTMENTS.forEach(d => { %>
+                                  <option value="<%= d %>" <%= (r.department === d) ? 'selected' : '' %>><%= d %></option>
+                                <% }); %>
+                              </select>
+                            </div>
+
+                            <div style="margin-bottom: 12px;">
+                              <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Açıklama</label>
+                              <input type="text" name="description" value="<%= r.description || '' %>" style="width: 100%; padding: 6px 10px; font-size: 0.82rem; background: #090e1a; border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                            </div>
+
+                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleInlineEdit('<%= r.key %>')">İptal</button>
+                              <button type="submit" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">💾 Güncelle</button>
+                            </div>
+                          </form>
+
+                        </div>
+                      <% }); %>
                     </div>
+
                   </div>
-                </div>
+                <% } %>
               <% }); %>
             </div>
+
           </div>
 
         </div>
@@ -766,6 +911,29 @@
         const text = c.getAttribute('data-search') || '';
         c.style.display = text.includes(q) ? 'flex' : 'none';
       });
+    }
+
+    // Department Filter Pills in Tab 1
+    function filterByDept(deptName, btn) {
+      document.querySelectorAll('.dept-pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+
+      const blocks = document.querySelectorAll('.dept-group-block');
+      blocks.forEach(b => {
+        if (deptName === 'all' || b.getAttribute('data-dept-name') === deptName) {
+          b.style.display = 'block';
+        } else {
+          b.style.display = 'none';
+        }
+      });
+    }
+
+    // Toggle Inline Edit Panel
+    function toggleInlineEdit(roleKey) {
+      const form = document.getElementById(`editForm_${roleKey}`);
+      if (form) {
+        form.style.display = (form.style.display === 'none' || !form.style.display) ? 'block' : 'none';
+      }
     }
 
     // Jump from Tab 1 Role Card to Tab 2 Editing

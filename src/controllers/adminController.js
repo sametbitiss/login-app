@@ -325,7 +325,7 @@ class AdminController {
   });
 
   renderRoles = asyncHandler(async (req, res) => {
-    const { PERMISSION_MODULES } = require('../config/permissionMatrix');
+    const { PERMISSION_MODULES, APP_DEPARTMENTS } = require('../config/permissionMatrix');
     const customRoles = await userRepository.getCustomRoles();
     const matrix = await userRepository.getPermissionMatrix();
     const allUsers = await userRepository.findAll();
@@ -351,7 +351,7 @@ class AdminController {
       matrix,
       roleUserCounts,
       PERMISSION_MODULES,
-      DEPARTMENTS,
+      DEPARTMENTS: APP_DEPARTMENTS,
       DEPARTMENT_TITLES,
       DEPARTMENT_ROLES,
       successMessage: req.query.success || null,

@@ -136,18 +136,29 @@ const DEFAULT_ROLE_MATRIX = {
   }
 };
 
+const APP_DEPARTMENTS = [
+  'Sistem Yönetimi & Güvenlik',
+  'Stok & Depo Yönetimi',
+  'Satış Yönetimi',
+  'Satın Alma Yönetimi',
+  'Üretim Planlama & İmalat',
+  'Kalite Kontrol & Güvence',
+  'Genel / Tüm Modüller'
+];
+
 const DEFAULT_ROLES = [
-  { key: 'Admin', label: 'Sistem Yöneticisi & Admin', department: 'Sistem Yönetimi', description: 'Tüm modüllere ve sistem parametrelerine tam yetkili üst yönetici', isSystem: true },
-  { key: 'Stock_Manager', label: 'Stok & Depo Yöneticisi', department: 'Stok & Depo', description: 'Depo, lokasyon, fiziki sayım ve transfer işlemlerini yöneten birim yöneticisi', isSystem: false },
-  { key: 'Sales_Manager', label: 'Satış & Pazarlama Müdürü', department: 'Satış & Pazarlama', description: 'Satış teklif, sipariş, sevkiyat ve müşteri cari hesap yöneticisi', isSystem: false },
-  { key: 'Purchase_Manager', label: 'Satın Alma Yöneticisi', department: 'Satın Alma', description: 'Tedarikçi ilişkileri, satın alma sipariş ve RFQ teklif yöneticisi', isSystem: false },
-  { key: 'Production_Manager', label: 'Üretim & İmalat Müdürü', department: 'Üretim & İmalat', description: 'Fabrika imalat iş emirleri, reçete (BOM) ve MRP planlama yöneticisi', isSystem: false },
-  { key: 'Quality_Manager', label: 'Kalite Kontrol & Güvence Müdürü', department: 'Kalite Kontrol', description: 'Giriş/proses muayeneleri, NCR uygunsuzluk ve CAPA aksiyon yöneticisi', isSystem: false },
-  { key: 'Employee', label: 'Departman Uzman Personel', department: 'Genel', description: 'Standart operasyonel kayıt ve izleme yetkisine sahip personel', isSystem: false }
+  { key: 'Admin', label: 'Sistem Yöneticisi & Admin', department: 'Sistem Yönetimi & Güvenlik', description: 'Tüm modüllere ve sistem parametrelerine tam yetkili üst yönetici', isSystem: true },
+  { key: 'Stock_Manager', label: 'Stok & Depo Yöneticisi', department: 'Stok & Depo Yönetimi', description: 'Depo, lokasyon, fiziki sayım ve transfer işlemlerini yöneten birim yöneticisi', isSystem: false },
+  { key: 'Sales_Manager', label: 'Satış & Pazarlama Müdürü', department: 'Satış Yönetimi', description: 'Satış teklif, sipariş, sevkiyat ve müşteri cari hesap yöneticisi', isSystem: false },
+  { key: 'Purchase_Manager', label: 'Satın Alma Yöneticisi', department: 'Satın Alma Yönetimi', description: 'Tedarikçi ilişkileri, satın alma sipariş ve RFQ teklif yöneticisi', isSystem: false },
+  { key: 'Production_Manager', label: 'Üretim & İmalat Müdürü', department: 'Üretim Planlama & İmalat', description: 'Fabrika imalat iş emirleri, reçete (BOM) ve MRP planlama yöneticisi', isSystem: false },
+  { key: 'Quality_Manager', label: 'Kalite Kontrol & Güvence Müdürü', department: 'Kalite Kontrol & Güvence', description: 'Giriş/proses muayeneleri, NCR uygunsuzluk ve CAPA aksiyon yöneticisi', isSystem: false },
+  { key: 'Employee', label: 'Departman Uzman Personel', department: 'Genel / Tüm Modüller', description: 'Standart operasyonel kayıt ve izleme yetkisine sahip personel', isSystem: false }
 ];
 
 module.exports = {
   PERMISSION_MODULES,
   DEFAULT_ROLE_MATRIX,
-  DEFAULT_ROLES
+  DEFAULT_ROLES,
+  APP_DEPARTMENTS
 };
