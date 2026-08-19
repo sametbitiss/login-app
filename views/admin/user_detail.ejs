@@ -281,6 +281,57 @@
     btnPrev.addEventListener('click', () => switchTab(currentTabIndex - 1));
     btnNext.addEventListener('click', () => switchTab(currentTabIndex + 1));
 
+    // Strict Real-time Filtering & Validation Listeners
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+      phoneInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9\+\s\(\)\-]/g, '');
+        const digits = this.value.replace(/\D/g, '');
+        if (this.value.trim() !== '' && digits.length < 10) {
+          this.classList.add('is-invalid');
+        } else {
+          this.classList.remove('is-invalid');
+        }
+      });
+    }
+
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      emailInput.addEventListener('input', function() {
+        if (this.value && !emailRegex.test(this.value.trim())) {
+          this.classList.add('is-invalid');
+        } else {
+          this.classList.remove('is-invalid');
+        }
+      });
+    }
+
+    const firstNameInput = document.getElementById('firstName');
+    if (firstNameInput) {
+      firstNameInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^a-zA-ZçğıöşüÇĞİÖŞÜ\s'-]/g, '');
+      });
+    }
+
+    const lastNameInput = document.getElementById('lastName');
+    if (lastNameInput) {
+      lastNameInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^a-zA-ZçğıöşüÇĞİÖŞÜ\s'-]/g, '');
+      });
+    }
+
+    const newPasswordInput = document.getElementById('newPassword');
+    if (newPasswordInput) {
+      newPasswordInput.addEventListener('input', function() {
+        if (this.value && this.value.length < 6) {
+          this.classList.add('is-invalid');
+        } else {
+          this.classList.remove('is-invalid');
+        }
+      });
+    }
+
     // Dynamic Department ➔ Titles & Allowed ERP Roles dropdown filtering
     const deptTitlesMap = <%- JSON.stringify(DEPARTMENT_TITLES) %>;
     const deptRolesMap = <%- JSON.stringify(DEPARTMENT_ROLES) %>;
@@ -315,8 +366,8 @@
     }
 
     if (deptSelect) {
-      populateTitles(deptSelect.value, "<%= targetUser.title || '' %>");
-      populateRoles(deptSelect.value, "<%= targetUser.role || '' %>");
+      populateTitles(deptSelect.value, "<%= targetUser.unvan || targetUser.title || '' %>");
+      populateRoles(deptSelect.value, "<%= targetUser.rol || targetUser.role || '' %>");
 
       deptSelect.addEventListener('change', function() {
         populateTitles(this.value, '');

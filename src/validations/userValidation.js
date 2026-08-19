@@ -8,24 +8,89 @@ const validRoles = [
   'Employee'
 ];
 
+const validStatuses = ['Active', 'Inactive', 'Suspended'];
+
+// Strict Validation Helper Functions
+const isValidEmail = (email) => {
+  if (!email || typeof email !== 'string') return false;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email.trim());
+};
+
+const isValidPhone = (phone) => {
+  if (!phone || typeof phone !== 'string') return true; // Optional field, but if filled, must be valid
+  const trimmed = phone.trim();
+  if (trimmed === '') return true;
+
+  // Reject if contains any letters
+  if (/[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(trimmed)) return false;
+
+  // Must match phone format (digits, +, -, (, ), spaces allowed)
+  const phoneFormatRegex = /^[\+\(\)\-\s0-9]{10,20}$/;
+  if (!phoneFormatRegex.test(trimmed)) return false;
+
+  // Extract digits only; must have between 10 and 15 digits
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  return digitsOnly.length >= 10 && digitsOnly.length <= 15;
+};
+
+const isValidName = (name) => {
+  if (!name || typeof name !== 'string') return true;
+  const trimmed = name.trim();
+  if (trimmed === '') return true;
+  // Allows letters, spaces, apostrophes and hyphens; no numbers or special symbols
+  const nameRegex = /^[a-zA-ZçğıöşüÇĞİÖŞÜ\s'-]{2,50}$/;
+  return nameRegex.test(trimmed);
+};
+
+const isValidUsername = (username) => {
+  if (!username || typeof username !== 'string') return false;
+  const usernameRegex = /^[a-zA-Z0-9_.-]{3,30}$/;
+  return usernameRegex.test(username.trim());
+};
+
 const validateUserCreate = (req) => {
-  const { username, password, email, role } = req.body || {};
+  const { username, kullaniciAdi, password, sifre, email, eposta, phone, telefon, firstName, ad, lastName, soyad, role, rol } = req.body || {};
   const errors = [];
 
-  if (!username || username.trim().length < 3) {
-    errors.push('Kullanıcı adı en az 3 karakter olmalıdır.');
+  const targetUsername = kullaniciAdi || username;
+  const targetPassword = sifre || password;
+  const targetEmail = eposta || email;
+  const targetPhone = telefon || phone;
+  const targetAd = ad || firstName;
+  const targetSoyad = soyad || lastName;
+  const targetRole = rol || role;
+
+  // 1. Kullanıcı Adı
+  if (!isValidUsername(targetUsername)) {
+    errors.push('Kullanıcı adı en az 3 karakter olmalı, harf, rakam, alt tire (_) veya nokta içermelidir.');
   }
 
-  if (!password || password.length < 6) {
-    errors.push('Şifre en az 6 karakter olmalıdır.');
+  // 2. Şifre
+  if (!targetPassword || targetPassword.length < 6) {
+    errors.push('Şifre en az 6 karakter uzunluğunda olmalıdır.');
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || !emailRegex.test(email)) {
-    errors.push('Geçerli bir e-posta adresi giriniz.');
+  // 3. E-Posta
+  if (!isValidEmail(targetEmail)) {
+    errors.push('Lütfen geçerli bir e-posta adresi giriniz (Örn: ahmet@enterprise-erp.com).');
   }
 
-  if (role && !validRoles.includes(role)) {
+  // 4. Telefon
+  if (!isValidPhone(targetPhone)) {
+    errors.push('Telefon numarası yalnızca rakam ve telefon karakterleri (+, -, parantez) içerebilir ve en az 10 rakamdan oluşmalıdır.');
+  }
+
+  // 5. Ad & Soyad
+  if (targetAd && !isValidName(targetAd)) {
+    errors.push('Ad alanına rakam veya özel karakter girilemez.');
+  }
+  if (targetSoyad && !isValidName(targetSoyad)) {
+    errors.push('Soyad alanına rakam veya özel karakter girilemez.');
+  }
+
+  // 6. Rol
+  if (targetRole && !validRoles.includes(targetRole)) {
     errors.push('Geçersiz kullanıcı rolü seçildi.');
   }
 
@@ -36,22 +101,41 @@ const validateUserCreate = (req) => {
 };
 
 const validateUserUpdate = (req) => {
-  const { firstName, lastName, email, role, status } = req.body || {};
+  const { email, eposta, phone, telefon, firstName, ad, lastName, soyad, role, rol, status, durum } = req.body || {};
   const errors = [];
 
-  if (email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      errors.push('Geçerli bir e-posta adresi giriniz.');
-    }
+  const targetEmail = eposta || email;
+  const targetPhone = telefon || phone;
+  const targetAd = ad || firstName;
+  const targetSoyad = soyad || lastName;
+  const targetRole = rol || role;
+  const targetStatus = durum || status;
+
+  // 1. E-Posta
+  if (targetEmail && !isValidEmail(targetEmail)) {
+    errors.push('Lütfen geçerli bir e-posta adresi giriniz (Örn: ahmet@enterprise-erp.com).');
   }
 
-  if (role && !validRoles.includes(role)) {
+  // 2. Telefon
+  if (targetPhone && !isValidPhone(targetPhone)) {
+    errors.push('Telefon numarası yalnızca rakam ve telefon karakterleri (+, -, parantez) içerebilir ve en az 10 rakamdan oluşmalıdır.');
+  }
+
+  // 3. Ad & Soyad
+  if (targetAd && !isValidName(targetAd)) {
+    errors.push('Ad alanına rakam veya özel karakter girilemez.');
+  }
+  if (targetSoyad && !isValidName(targetSoyad)) {
+    errors.push('Soyad alanına rakam veya özel karakter girilemez.');
+  }
+
+  // 4. Rol
+  if (targetRole && !validRoles.includes(targetRole)) {
     errors.push('Geçersiz kullanıcı rolü seçildi.');
   }
 
-  const validStatuses = ['Active', 'Inactive', 'Suspended'];
-  if (status && !validStatuses.includes(status)) {
+  // 5. Durum
+  if (targetStatus && !validStatuses.includes(targetStatus)) {
     errors.push('Geçersiz hesap durumu seçildi.');
   }
 
@@ -64,5 +148,10 @@ const validateUserUpdate = (req) => {
 module.exports = {
   validateUserCreate,
   validateUserUpdate,
-  validRoles
+  isValidEmail,
+  isValidPhone,
+  isValidName,
+  isValidUsername,
+  validRoles,
+  validStatuses
 };
