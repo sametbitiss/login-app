@@ -5,99 +5,84 @@ const asyncHandler = require('../utils/asyncHandler');
 const { NotFoundError, ValidationError } = require('../utils/appError');
 const { ALL_ROLES } = require('../middleware/rbacMiddleware');
 
+const { APP_DEPARTMENTS } = require('../config/permissionMatrix');
+
 const DEPARTMENT_TITLES = {
-  'Bilgi Teknolojileri & BT': [
+  'Sistem Yönetimi & Güvenlik': [
     'Sistem Yöneticisi (Admin)',
     'Sistem & Ağ Uzmanı',
     'Yazılım Geliştirici Uzmanı',
     'Veritabanı Yöneticisi (DBA)',
     'BT Destek Sorumlusu'
   ],
-  'Yönetim Kurulu & Genel Müdürlük': [
-    'Genel Müdür',
-    'Yönetim Kurulu Başkanı',
-    'Genel Müdür Yardımcısı',
-    'Genel Sekreter / Asistan'
-  ],
-  'Stok & Depo Lojistik Yönetimi': [
+  'Stok & Depo Yönetimi': [
     'Envanter & Depo Müdürü',
     'Ambar Şefi / Sorumlusu',
     'Lojistik Uzmanı',
     'Depo Sevkiyat & Sayım Elemanı'
   ],
-  'Satış & Pazarlama Direktörlüğü': [
+  'Satış Yönetimi': [
     'Kıdemli Satış Yöneticisi',
     'Müşteri İlişkileri (CRM) Uzmanı',
     'Bölge Satış Müdürü',
     'Pazarlama & Dijital Saha Sorumlusu'
   ],
-  'Satın Alma & Tedarik Zinciri': [
-    'Satın Alma Müdürü',
+  'Satın Alma Yönetimi': [
+    'Satın Alma Yöneticisi',
     'Tedarik Zinciri Uzmanı',
     'Satın Alma Sorumlusu',
     'İrsaliye & Mal Kabul Elemanı'
   ],
-  'Üretim & İmalat Planlama': [
+  'Üretim Planlama & İmalat': [
     'Üretim Müdürü',
     'Planlama Mühendisi (MRP)',
     'Vardiya Amiri',
     'CNC & Tezgah Operatörü'
-  ],
-  'İnsan Kaynakları': [
-    'İnsan Kaynakları Yöneticisi',
-    'İKK & İşe Alım Uzmanı',
-    'Bordro & Özlük İşleri Sorumlusu'
   ],
   'Kalite Kontrol & Güvence': [
     'Kalite Güvence Yöneticisi',
     'Giriş Kalite Kontrolör (IQC)',
     'Proses & Final Kontrol Uzmanı (IPQC/FQC)'
   ],
-  'Kurumsal Operasyonlar': [
-    'Operasyon Müdürü',
-    'Operasyon Uzmanı',
-    'Ofis Yöneticisi'
+  'Genel / Tüm Modüller': [
+    'Genel Müdür / Üst Yönetici',
+    'Departman Uzmanı',
+    'Operasyon Elemanı',
+    'Genel Personel'
   ]
 };
 
 const DEPARTMENT_ROLES = {
-  'Bilgi Teknolojileri & BT': [
+  'Sistem Yönetimi & Güvenlik': [
     { key: 'Admin', label: '🛡️ Sistem Yöneticisi (Admin)' },
     { key: 'Employee', label: '👤 Personel / BT Uzmanı' }
   ],
-  'Yönetim Kurulu & Genel Müdürlük': [
-    { key: 'Admin', label: '🛡️ Sistem Yöneticisi (Admin)' },
-    { key: 'Employee', label: '👤 Personel / Yönetici' }
-  ],
-  'Stok & Depo Lojistik Yönetimi': [
+  'Stok & Depo Yönetimi': [
     { key: 'Stock_Manager', label: '📦 Stok Yöneticisi' },
     { key: 'Employee', label: '👤 Personel / Depo Görevlisi' }
   ],
-  'Satış & Pazarlama Direktörlüğü': [
+  'Satış Yönetimi': [
     { key: 'Sales_Manager', label: '🛍️ Satış Yöneticisi' },
     { key: 'Employee', label: '👤 Personel / Satış Temsilcisi' }
   ],
-  'Satın Alma & Tedarik Zinciri': [
+  'Satın Alma Yönetimi': [
     { key: 'Purchase_Manager', label: '💳 Satın Alma Yöneticisi' },
     { key: 'Employee', label: '👤 Personel / Satın Alma Uzmanı' }
   ],
-  'Üretim & İmalat Planlama': [
+  'Üretim Planlama & İmalat': [
     { key: 'Production_Manager', label: '🏭 Üretim Müdürü' },
     { key: 'Employee', label: '👤 Personel / Üretim Elemanı' }
-  ],
-  'İnsan Kaynakları': [
-    { key: 'Employee', label: '👤 Personel / HR Sorumlusu' }
   ],
   'Kalite Kontrol & Güvence': [
     { key: 'Quality_Manager', label: '🔬 Kalite Kontrol Yöneticisi' },
     { key: 'Employee', label: '👤 Personel / Kalite Kontrolör' }
   ],
-  'Kurumsal Operasyonlar': [
-    { key: 'Employee', label: '👤 Personel / Operasyon' }
+  'Genel / Tüm Modüller': [
+    { key: 'Employee', label: '👤 Personel / Genel' }
   ]
 };
 
-const DEPARTMENTS = Object.keys(DEPARTMENT_TITLES);
+const DEPARTMENTS = APP_DEPARTMENTS;
 
 const getDynamicRolesMap = async () => {
   const customRoles = await userRepository.getCustomRoles();

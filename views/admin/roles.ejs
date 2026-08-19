@@ -665,8 +665,10 @@
 
             <!-- Department Grouped Sections Container -->
             <div id="deptGroupedContainer">
+              <% const groupedKeys = []; %>
               <% DEPARTMENTS.forEach(dept => { %>
                 <% const deptRoles = customRoles.filter(r => (r.department || 'Genel / Tüm Modüller') === dept); %>
+                <% deptRoles.forEach(r => groupedKeys.push(r.key)); %>
                 <% if (deptRoles.length > 0) { %>
                   <div class="dept-group-block" data-dept-name="<%= dept %>">
                     
@@ -765,6 +767,73 @@
                   </div>
                 <% } %>
               <% }); %>
+
+              <% const unGroupedRoles = customRoles.filter(r => !groupedKeys.includes(r.key)); %>
+              <% if (unGroupedRoles.length > 0) { %>
+                <div class="dept-group-block" data-dept-name="Diğer Modüller">
+                  <div class="dept-group-header">
+                    <div class="dgh-title">
+                      <span>🏢 Diğer / Özel Tanımlı Roller</span>
+                    </div>
+                    <span class="dgh-badge"><%= unGroupedRoles.length %> Rol Tanımlı</span>
+                  </div>
+
+                  <div class="dept-group-body">
+                    <% unGroupedRoles.forEach(r => { %>
+                      <% const uCount = roleUserCounts[r.key] || 0; %>
+                      <% const rPerms = matrix[r.key] || {}; %>
+                      <% const activePCount = Object.values(rPerms).filter(Boolean).length; %>
+
+                      <div class="role-item-card" data-role-key="<%= r.key %>" data-search="<%= (r.label + ' ' + r.department + ' ' + r.key + ' ' + (r.description||'')).toLowerCase() %>">
+                        <div>
+                          <div class="ric-top">
+                            <div class="ric-title"><%= r.label %></div>
+                            <% if (r.isSystem || r.key === 'Admin') { %>
+                              <span class="sys-badge">🔒 Sistem Rolü</span>
+                            <% } else { %>
+                              <span class="custom-badge">✨ Özel Rol</span>
+                            <% } %>
+                          </div>
+
+                          <div class="ric-key"><%= r.key %></div>
+                          <div class="ric-desc"><%= r.description || 'Sistem rol tanımı' %></div>
+                        </div>
+
+                        <div class="ric-footer">
+                          <div class="ric-stats">
+                            <div class="ric-user-count">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                              <span><%= uCount %> Kullanıcı</span>
+                            </div>
+                            <div class="ric-perm-count">
+                              ✓ <%= activePCount %> / <%= totalPerms %> Yetki
+                            </div>
+                          </div>
+
+                          <div class="ric-actions">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="editRolePermissions('<%= r.key %>')" style="font-weight: 700; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+                              🔑 Yetkiler
+                            </button>
+
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleInlineEdit('<%= r.key %>')" title="Rol Bilgilerini Düzenle">
+                              ✏️
+                            </button>
+                            
+                            <% if (!r.isSystem && r.key !== 'Admin') { %>
+                              <form action="/admin/roles/delete-role" method="POST" onsubmit="return confirm('<%= r.label %> rolünü silmek istediğinize emin misiniz? Bu role sahip kullanıcılar varsayılan role aktarılacaktır.');" style="display: inline;">
+                                <input type="hidden" name="key" value="<%= r.key %>">
+                                <button type="submit" class="btn btn-secondary btn-sm" style="color: #fb7185; border-color: rgba(244, 63, 94, 0.3);" title="Rolü Sil">
+                                  🗑️
+                                </button>
+                              </form>
+                            <% } %>
+                          </div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } %>
             </div>
 
           </div>

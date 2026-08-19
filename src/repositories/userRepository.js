@@ -191,15 +191,33 @@ class UserRepository {
   async getCustomRoles() {
     const { DEFAULT_ROLES } = require('../config/permissionMatrix');
     const setting = await SistemAyari.findOne({ where: { anahtar: 'custom_roles_list' } });
+    let roles = DEFAULT_ROLES;
     if (setting && setting.deger) {
       try {
         const parsed = JSON.parse(setting.deger);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          roles = parsed;
         }
       } catch (e) {}
     }
-    return DEFAULT_ROLES;
+
+    const deptMap = {
+      'Sistem Yönetimi': 'Sistem Yönetimi & Güvenlik',
+      'Stok & Depo': 'Stok & Depo Yönetimi',
+      'Satış & Pazarlama': 'Satış Yönetimi',
+      'Satış': 'Satış Yönetimi',
+      'Satın Alma': 'Satın Alma Yönetimi',
+      'Üretim & İmalat': 'Üretim Planlama & İmalat',
+      'Üretim': 'Üretim Planlama & İmalat',
+      'Kalite Kontrol': 'Kalite Kontrol & Güvence',
+      'Kalite': 'Kalite Kontrol & Güvence',
+      'Genel': 'Genel / Tüm Modüller'
+    };
+
+    return roles.map(r => ({
+      ...r,
+      department: deptMap[r.department] || r.department || 'Genel / Tüm Modüller'
+    }));
   }
 
   async saveCustomRoles(rolesList, currentUser = null, ipAddress = null) {
