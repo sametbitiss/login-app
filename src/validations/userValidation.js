@@ -93,7 +93,7 @@ const validateUserCreate = (req) => {
   }
 
   // 6. Rol
-  if (targetRole && !validRoles.includes(targetRole)) {
+  if (targetRole && (typeof targetRole !== 'string' || targetRole.trim() === '')) {
     errors.push('Geçersiz kullanıcı rolü seçildi.');
   }
 
@@ -133,7 +133,7 @@ const validateUserUpdate = (req) => {
   }
 
   // 4. Rol
-  if (targetRole && !validRoles.includes(targetRole)) {
+  if (targetRole && (typeof targetRole !== 'string' || targetRole.trim() === '')) {
     errors.push('Geçersiz kullanıcı rolü seçildi.');
   }
 
