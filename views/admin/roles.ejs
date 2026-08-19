@@ -390,6 +390,7 @@
       <% } %>
 
       <!-- Role Summary Quick Cards -->
+      <% const totalPermsCount = PERMISSION_MODULES.reduce((acc, m) => acc + m.permissions.length, 0); %>
       <div class="role-cards-grid">
         <% roleKeys.forEach(r => { %>
           <% const rolePerms = matrix[r] || {}; %>
@@ -397,7 +398,7 @@
           <div class="role-quick-card" onclick="selectRoleView('<%= r %>')">
             <div class="rqc-name"><%= ALL_ROLES[r] || r %></div>
             <div class="rqc-key"><%= r %></div>
-            <div class="rqc-count">✓ <%= activeCount %> / 23 İzin Aktif</div>
+            <div class="rqc-count">✓ <%= activeCount %> / <%= totalPermsCount %> İzin Aktif</div>
           </div>
         <% }); %>
       </div>

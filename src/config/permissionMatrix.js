@@ -1,121 +1,138 @@
 const PERMISSION_MODULES = [
   {
+    id: 'admin',
+    name: '🛡️ Sistem Yönetimi & Güvenlik',
+    permissions: [
+      { key: 'admin_dashboard', label: '📊 Kontrol Paneli & Analitik', desc: 'Yönetim özet paneli ve sistem metriklerini izleme' },
+      { key: 'admin_users', label: '👥 Kullanıcı Hesapları', desc: 'Sistem kullanıcı listesini, unvan ve profillerini görüntüleme' },
+      { key: 'admin_users_add', label: '➕ Yeni Kullanıcı Ekleme', desc: 'Sisteme yeni personel hesabı tanımlama' },
+      { key: 'admin_roles', label: '🔐 Rol & Yetki Matrisi', desc: 'Sistem rolleri ve modül bazlı yetki matrisini yönetme' },
+      { key: 'admin_settings', label: '⚙️ Sistem Parametreleri', desc: 'Bakım modu, sistem yapılandırması ve genel ayarlar' },
+      { key: 'admin_logs', label: '📜 İşlem Günlüğü (Audit Log)', desc: 'Tüm modüllerdeki ekleme, güncelleme ve silme denetim izleri' }
+    ]
+  },
+  {
     id: 'stock',
     name: '📦 Stok & Depo Yönetimi',
     permissions: [
-      { key: 'stock_view', label: 'Stok Kartları & Analitik İzleme', desc: 'Stok listesini ve stok analitiğini görme' },
-      { key: 'stock_manage', label: 'Stok Kartı Ekleme / Düzenleme', desc: 'Yeni stok kartı açma ve detay değiştirme' },
-      { key: 'warehouse_manage', label: 'Depo & Lokasyon Yönetimi', desc: 'Depo ve koridor/raf lokasyonu tanımlama' },
-      { key: 'stock_transfer', label: 'Depolar Arası Transfer & Sevk', desc: 'Depolar arası malzeme transferi yapma' },
-      { key: 'stock_counting', label: 'Envanter Fiziksel Sayımı', desc: 'Fiziksel sayım fişi başlatma ve mutabakat' }
+      { key: 'stock_items', label: '📋 Stok Kartları Listesi', desc: 'Tüm malzeme, mamul ve hammadde kartlarını listeleme ve arama' },
+      { key: 'stock_items_add', label: '➕ Yeni Stok Kartı Ekleme', desc: 'Sisteme yeni malzeme veya ürün kartı tanımlama' },
+      { key: 'stock_warehouses', label: '🏬 Depo & Lokasyon Yönetimi', desc: 'Fiziki depoları, koridor, raf ve göz lokasyonlarını yönetme' },
+      { key: 'stock_transfers', label: '🔄 Depolar Arası Transferler', desc: 'Depolar ve lokasyonlar arası malzeme sevk fişi kesme' },
+      { key: 'stock_counting', label: '📊 Stok Sayım İşlemleri', desc: 'Fiziksel envanter sayım fişi başlatma ve mutabakat kaydı' },
+      { key: 'stock_goods_receipt', label: '📥 Mal Kabul İşlemleri', desc: 'Gelen malzeme teslim alma ve ambar kabul kayıtları' },
+      { key: 'stock_alerts', label: '⚠️ Kritik Stok & Rezerve Uyarısı', desc: 'Asgari stok seviyesi altındaki ve rezerve ürünleri izleme' },
+      { key: 'stock_analytics', label: '📈 Stok Analitiği & Raporlama', desc: 'Envanter değeri, stok devir hızı ve depo doluluk raporları' }
     ]
   },
   {
     id: 'sales',
-    name: '💼 Satış & Pazarlama',
+    name: '🛍️ Satış Yönetimi',
     permissions: [
-      { key: 'sales_view', label: 'Satış Siparişleri & Analitik İzleme', desc: 'Satış raporlarını ve sipariş listesini görme' },
-      { key: 'sales_create', label: 'Teklif & Sipariş Oluşturma', desc: 'Müşteriye teklif verme ve sipariş açma' },
-      { key: 'sales_approve', label: 'Yönetsel Satış & İskonto Onayı', desc: 'Limit üstü satış ve özel teklif onaylama' },
-      { key: 'sales_dispatch', label: 'Sevkiyat & İrsaliye / Fatura', desc: 'Sevkiyat yapma ve fatura oluşturma' },
-      { key: 'customer_manage', label: 'Cari Müşteri & Fiyat Listesi', desc: 'Müşteri kartı açma ve özel fiyat tanımlama' }
+      { key: 'sales_orders', label: '📋 Satış Siparişleri', desc: 'Müşteri sipariş listesini ve teslimat durumlarını görüntüleme' },
+      { key: 'sales_orders_add', label: '➕ Yeni Sipariş Oluşturma', desc: 'Müşterilere yeni satış siparişi girme ve kalem tanımlama' },
+      { key: 'sales_quotes', label: '📝 Satış Teklifleri', desc: 'Müşteri teklifleri oluşturma, fiyat verme ve revizyon takibi' },
+      { key: 'sales_dispatches', label: '🚚 Sevk & İrsaliye Yönetimi', desc: 'Depodan sevkiyat çıkarma ve resmi sevk irsaliyesi düzenleme' },
+      { key: 'sales_invoices', label: '🧾 Satış Faturaları', desc: 'E-Fatura/A4 fatura oluşturma ve muhasebeleşme kayıtları' },
+      { key: 'sales_customers', label: '👥 Müşteri Cari Hesapları', desc: 'Müşteri kartları, bakiyeler ve cari hesap ekstreleri' },
+      { key: 'sales_analytics', label: '📊 Satış Analitiği & Performans', desc: 'Satış cirosu, temsilci ve bölge performans raporları' }
     ]
   },
   {
     id: 'purchase',
-    name: '🛒 Satın Alma Yönetimi',
+    name: '💳 Satın Alma Yönetimi',
     permissions: [
-      { key: 'purchase_view', label: 'Satın Alma Siparişleri & Analitik', desc: 'Satın alma raporlarını ve siparişleri görme' },
-      { key: 'purchase_request', label: 'Satın Alma Talebi Açma', desc: 'Departman adına malzeme/hizmet talep etme' },
-      { key: 'purchase_rfq', label: 'Teklif Yönetimi & RFQ', desc: 'Tedarikçiden teklif alma ve karşılaştırma' },
-      { key: 'purchase_approve', label: 'Yönetsel Satın Alma Bütçe Onayı', desc: '50.000 TL üzeri satın alma siparişi onaylama' },
-      { key: 'supplier_manage', label: 'Tedarikçi Kartları Yönetimi', desc: 'Tedarikçi firma ve cari hesap tanımlama' }
+      { key: 'purchase_orders', label: '📦 Satın Alma Siparişleri', desc: 'Tedarikçi sipariş listesi ve sipariş durum takibi' },
+      { key: 'purchase_requisitions', label: '📋 Satın Alma Talepleri', desc: 'Departman içi malzeme ve hizmet talep fişleri oluşturma' },
+      { key: 'purchase_rfq', label: '📑 Teklif Talepleri (RFQ)', desc: 'Tedarikçilerden fiyat teklifi toplama ve karşılaştırma' },
+      { key: 'purchase_suppliers', label: '🏢 Tedarikçi Cari Yönetimi', desc: 'Tedarikçi firma kartları, vergi ve adres kayıtları' },
+      { key: 'purchase_receipts', label: '📥 Mal Kabul Kayıtları', desc: 'Gelen tedarikçi teslimatlarını ambar kabul ile eşleştirme' },
+      { key: 'purchase_invoices', label: '🧾 Satın Alma Faturaları', desc: 'Gelen tedarikçi faturaları ve borç cari kayıtları' },
+      { key: 'purchase_analytics', label: '📊 Satın Alma Analitiği', desc: 'Tedarikçi harcama, fiyat değişim ve maliyet analizleri' }
     ]
   },
   {
     id: 'production',
-    name: '🏭 Üretim & İmalat Yönetimi',
+    name: '🏭 Üretim Planlama & İmalat',
     permissions: [
-      { key: 'production_view', label: 'Üretim Analitiği & İş Emirleri', desc: 'Fabrika imalat raporlarını ve iş emirlerini görme' },
-      { key: 'production_order_manage', label: 'İş Emri Oluşturma & Düzenleme', desc: 'Fabrikaya yeni iş emri açma' },
-      { key: 'production_mrp', label: 'MRP Hesaplama Çalıştırma', desc: 'Malzeme ihtiyaç planlama motorunu tetikleme' },
-      { key: 'production_bom', label: 'BOM Reçete & Rotalama Yönetimi', desc: 'Ürün reçetesi (BOM) ve tezgah rotası girme' },
-      { key: 'production_mes', label: 'MES Saha Terminali Üretim Sonu', desc: 'Sahadan üretilen miktar ve backflushing bildirimi' }
+      { key: 'production_orders', label: '🛠️ Üretim İş Emirleri', desc: 'Fabrika imalat iş emirlerini listeleme ve durum izleme' },
+      { key: 'production_bom', label: '📑 Ürün Reçeteleri (BOM)', desc: 'Mamul ürün reçetesi (BOM) ve hammadde ihtiyaç katsayıları' },
+      { key: 'production_routing', label: '🔄 Rota & Operasyon Planlama', desc: 'İş merkezi tezgah rotaları, istasyonlar ve işlem süreleri' },
+      { key: 'production_mrp', label: '📊 Malzeme İhtiyaç Planlaması (MRP)', desc: 'Net malzeme ve satın alma gereksinimi hesaplama motoru' },
+      { key: 'production_requisitions', label: '📦 Üretim İçin Malzeme Talebi', desc: 'Fabrika sahası imalatı için depodan hammadde çıkış talebi' }
     ]
   },
   {
     id: 'quality',
-    name: '🛡️ Kalite Kontrol & Güvence',
+    name: '🔬 Kalite Kontrol & Güvence',
     permissions: [
-      { key: 'quality_view', label: 'Kalite Analitiği & Özet Paneli', desc: 'Kalite kabul/ret oranları ve özet raporları izleme' },
-      { key: 'quality_inspection', label: 'Giriş, Proses ve Final Muayeneleri', desc: 'IQC, IPQC ve FQC muayene kayıtları ve karar verme' },
-      { key: 'quality_ncr', label: 'Uygunsuzluk Yönetimi (NCR)', desc: 'NCR açma, karantinalama ve fiziki karar belirleme' },
-      { key: 'quality_capa', label: 'Düzeltici ve Önleyici Faaliyet (CAPA)', desc: '5-Why kök neden analizi ve aksiyon planlama' },
-      { key: 'quality_traceability', label: 'Lot/Seri Soyağacı İzlenebilirlik', desc: 'Tedarikçi ➔ Üretim ➔ Müşteri uçtan uca lot takibi' },
-      { key: 'quality_equipment', label: 'Ölçüm Cihazı Kalibrasyon Takibi', desc: 'Kumpas/terazi kalibrasyon periyotları ve bakım takibi' },
-      { key: 'quality_documents', label: 'ISO Kalite Belgeleri & Dokümanlar', desc: 'ISO prosedürleri, talimatlar ve form arşivi' }
-    ]
-  },
-  {
-    id: 'admin',
-    name: '⚙️ Sistem Yönetimi & Güvenlik',
-    permissions: [
-      { key: 'admin_users', label: 'Kullanıcı Hesapları & Şifre Sıfırlama', desc: 'Sistem kullanıcılarını yönetme ve şifre değiştirme' },
-      { key: 'admin_roles', label: 'Rol & Yetki Matrisi Yönetimi', desc: 'Hangi rolün hangi modülü görebileceğini belirleme' },
-      { key: 'admin_settings', label: 'Sistem Ayarları & Audit Logları', desc: 'Bakım modu, parametreler ve güvenlik audit kayıtları' }
+      { key: 'quality_dashboard', label: '📊 Kalite Özet Paneli', desc: 'Giriş/proses kabul-ret oranları ve kalite KPI paneli' },
+      { key: 'quality_inspections', label: '🔍 Giriş, Proses ve Final Muayeneleri', desc: 'IQC, IPQC ve FQC kalite test kayıtları ve karar süreci' },
+      { key: 'quality_ncr', label: '⚠️ Uygunsuzluk Yönetimi (NCR)', desc: 'Hatalı malzeme tespiti, karantina ve fiziki karar yönetimi' },
+      { key: 'quality_capa', label: '🛠️ Düzeltici & Önleyici Faaliyetler (CAPA)', desc: '5-Why kök neden analizi ve aksiyon planlama takibi' },
+      { key: 'quality_traceability', label: '🌳 Lot / Seri Soyağacı İzlenebilirlik', desc: 'Tedarikçiden müşteriye uçtan uca lot ve seri takip soyağacı' },
+      { key: 'quality_equipment', label: '📏 Ölçüm Cihazı Kalibrasyon Takibi', desc: 'Terazi, kumpas ve cihaz periyodik kalibrasyon kayıtları' },
+      { key: 'quality_documents', label: '📜 ISO Kalite Belge & Doküman Yönetimi', desc: 'ISO prosedürleri, talimatlar ve form arşivi' }
     ]
   }
 ];
 
 const DEFAULT_ROLE_MATRIX = {
   Admin: {
-    stock_view: true, stock_manage: true, warehouse_manage: true, stock_transfer: true, stock_counting: true,
-    sales_view: true, sales_create: true, sales_approve: true, sales_dispatch: true, customer_manage: true,
-    purchase_view: true, purchase_request: true, purchase_rfq: true, purchase_approve: true, supplier_manage: true,
-    production_view: true, production_order_manage: true, production_mrp: true, production_bom: true, production_mes: true,
-    admin_users: true, admin_roles: true, admin_settings: true
+    admin_dashboard: true, admin_users: true, admin_users_add: true, admin_roles: true, admin_settings: true, admin_logs: true,
+    stock_items: true, stock_items_add: true, stock_warehouses: true, stock_transfers: true, stock_counting: true, stock_goods_receipt: true, stock_alerts: true, stock_analytics: true,
+    sales_orders: true, sales_orders_add: true, sales_quotes: true, sales_dispatches: true, sales_invoices: true, sales_customers: true, sales_analytics: true,
+    purchase_orders: true, purchase_requisitions: true, purchase_rfq: true, purchase_suppliers: true, purchase_receipts: true, purchase_invoices: true, purchase_analytics: true,
+    production_orders: true, production_bom: true, production_routing: true, production_mrp: true, production_requisitions: true,
+    quality_dashboard: true, quality_inspections: true, quality_ncr: true, quality_capa: true, quality_traceability: true, quality_equipment: true, quality_documents: true
   },
   Stock_Manager: {
-    stock_view: true, stock_manage: true, warehouse_manage: true, stock_transfer: true, stock_counting: true,
-    sales_view: false, sales_create: false, sales_approve: false, sales_dispatch: true, customer_manage: false,
-    purchase_view: true, purchase_request: true, purchase_rfq: false, purchase_approve: false, supplier_manage: false,
-    production_view: true, production_order_manage: false, production_mrp: false, production_bom: false, production_mes: true,
-    admin_users: false, admin_roles: false, admin_settings: false
+    admin_dashboard: false, admin_users: false, admin_users_add: false, admin_roles: false, admin_settings: false, admin_logs: false,
+    stock_items: true, stock_items_add: true, stock_warehouses: true, stock_transfers: true, stock_counting: true, stock_goods_receipt: true, stock_alerts: true, stock_analytics: true,
+    sales_orders: true, sales_orders_add: false, sales_quotes: false, sales_dispatches: true, sales_invoices: false, sales_customers: false, sales_analytics: false,
+    purchase_orders: true, purchase_requisitions: true, purchase_rfq: false, purchase_suppliers: false, purchase_receipts: true, purchase_invoices: false, purchase_analytics: false,
+    production_orders: true, production_bom: false, production_routing: false, production_mrp: false, production_requisitions: true,
+    quality_dashboard: false, quality_inspections: true, quality_ncr: true, quality_capa: false, quality_traceability: true, quality_equipment: false, quality_documents: false
   },
   Sales_Manager: {
-    stock_view: true, stock_manage: false, warehouse_manage: false, stock_transfer: false, stock_counting: false,
-    sales_view: true, sales_create: true, sales_approve: true, sales_dispatch: true, customer_manage: true,
-    purchase_view: true, purchase_request: true, purchase_rfq: false, purchase_approve: false, supplier_manage: false,
-    production_view: true, production_order_manage: false, production_mrp: false, production_bom: false, production_mes: false,
-    admin_users: false, admin_roles: false, admin_settings: false
+    admin_dashboard: false, admin_users: false, admin_users_add: false, admin_roles: false, admin_settings: false, admin_logs: false,
+    stock_items: true, stock_items_add: false, stock_warehouses: false, stock_transfers: false, stock_counting: false, stock_goods_receipt: false, stock_alerts: true, stock_analytics: false,
+    sales_orders: true, sales_orders_add: true, sales_quotes: true, sales_dispatches: true, sales_invoices: true, sales_customers: true, sales_analytics: true,
+    purchase_orders: false, purchase_requisitions: true, purchase_rfq: false, purchase_suppliers: false, purchase_receipts: false, purchase_invoices: false, purchase_analytics: false,
+    production_orders: true, production_bom: false, production_routing: false, production_mrp: false, production_requisitions: false,
+    quality_dashboard: false, quality_inspections: false, quality_ncr: false, quality_capa: false, quality_traceability: false, quality_equipment: false, quality_documents: false
   },
   Purchase_Manager: {
-    stock_view: true, stock_manage: true, warehouse_manage: false, stock_transfer: false, stock_counting: false,
-    sales_view: false, sales_create: false, sales_approve: false, sales_dispatch: false, customer_manage: false,
-    purchase_view: true, purchase_request: true, purchase_rfq: true, purchase_approve: true, supplier_manage: true,
-    production_view: true, production_order_manage: false, production_mrp: true, production_bom: false, production_mes: false,
-    admin_users: false, admin_roles: false, admin_settings: false
+    admin_dashboard: false, admin_users: false, admin_users_add: false, admin_roles: false, admin_settings: false, admin_logs: false,
+    stock_items: true, stock_items_add: true, stock_warehouses: false, stock_transfers: false, stock_counting: false, stock_goods_receipt: true, stock_alerts: true, stock_analytics: false,
+    sales_orders: false, sales_orders_add: false, sales_quotes: false, sales_dispatches: false, sales_invoices: false, sales_customers: false, sales_analytics: false,
+    purchase_orders: true, purchase_requisitions: true, purchase_rfq: true, purchase_suppliers: true, purchase_receipts: true, purchase_invoices: true, purchase_analytics: true,
+    production_orders: false, production_bom: true, production_routing: false, production_mrp: true, production_requisitions: false,
+    quality_dashboard: false, quality_inspections: true, quality_ncr: true, quality_capa: false, quality_traceability: false, quality_equipment: false, quality_documents: false
   },
   Production_Manager: {
-    stock_view: true, stock_manage: false, warehouse_manage: false, stock_transfer: true, stock_counting: false,
-    sales_view: true, sales_create: false, sales_approve: false, sales_dispatch: false, customer_manage: false,
-    purchase_view: true, purchase_request: true, purchase_rfq: false, purchase_approve: false, supplier_manage: false,
-    production_view: true, production_order_manage: true, production_mrp: true, production_bom: true, production_mes: true,
-    admin_users: false, admin_roles: false, admin_settings: false
+    admin_dashboard: false, admin_users: false, admin_users_add: false, admin_roles: false, admin_settings: false, admin_logs: false,
+    stock_items: true, stock_items_add: false, stock_warehouses: false, stock_transfers: true, stock_counting: false, stock_goods_receipt: false, stock_alerts: true, stock_analytics: false,
+    sales_orders: true, sales_orders_add: false, sales_quotes: false, sales_dispatches: false, sales_invoices: false, sales_customers: false, sales_analytics: false,
+    purchase_orders: false, purchase_requisitions: true, purchase_rfq: false, purchase_suppliers: false, purchase_receipts: false, purchase_invoices: false, purchase_analytics: false,
+    production_orders: true, production_bom: true, production_routing: true, production_mrp: true, production_requisitions: true,
+    quality_dashboard: false, quality_inspections: true, quality_ncr: true, quality_capa: true, quality_traceability: true, quality_equipment: false, quality_documents: false
   },
   Quality_Manager: {
-    stock_view: true, stock_manage: true, warehouse_manage: false, stock_transfer: false, stock_counting: true,
-    sales_view: false, sales_create: false, sales_approve: false, sales_dispatch: false, customer_manage: false,
-    purchase_view: true, purchase_request: true, purchase_rfq: false, purchase_approve: false, supplier_manage: false,
-    production_view: true, production_order_manage: false, production_mrp: false, production_bom: true, production_mes: true,
-    admin_users: false, admin_roles: false, admin_settings: false
+    admin_dashboard: false, admin_users: false, admin_users_add: false, admin_roles: false, admin_settings: false, admin_logs: false,
+    stock_items: true, stock_items_add: false, stock_warehouses: false, stock_transfers: false, stock_counting: true, stock_goods_receipt: true, stock_alerts: true, stock_analytics: false,
+    sales_orders: false, sales_orders_add: false, sales_quotes: false, sales_dispatches: false, sales_invoices: false, sales_customers: false, sales_analytics: false,
+    purchase_orders: false, purchase_requisitions: true, purchase_rfq: false, purchase_suppliers: false, purchase_receipts: true, purchase_invoices: false, purchase_analytics: false,
+    production_orders: true, production_bom: true, production_routing: false, production_mrp: false, production_requisitions: false,
+    quality_dashboard: true, quality_inspections: true, quality_ncr: true, quality_capa: true, quality_traceability: true, quality_equipment: true, quality_documents: true
   },
   Employee: {
-    stock_view: true, stock_manage: false, warehouse_manage: false, stock_transfer: false, stock_counting: false,
-    sales_view: false, sales_create: false, sales_approve: false, sales_dispatch: false, customer_manage: false,
-    purchase_view: false, purchase_request: true, purchase_rfq: false, purchase_approve: false, supplier_manage: false,
-    production_view: false, production_order_manage: false, production_mrp: false, production_bom: false, production_mes: false,
-    admin_users: false, admin_roles: false, admin_settings: false
+    admin_dashboard: false, admin_users: false, admin_users_add: false, admin_roles: false, admin_settings: false, admin_logs: false,
+    stock_items: true, stock_items_add: false, stock_warehouses: false, stock_transfers: false, stock_counting: false, stock_goods_receipt: false, stock_alerts: false, stock_analytics: false,
+    sales_orders: false, sales_orders_add: false, sales_quotes: false, sales_dispatches: false, sales_invoices: false, sales_customers: false, sales_analytics: false,
+    purchase_orders: false, purchase_requisitions: true, purchase_rfq: false, purchase_suppliers: false, purchase_receipts: false, purchase_invoices: false, purchase_analytics: false,
+    production_orders: false, production_bom: false, production_routing: false, production_mrp: false, production_requisitions: false,
+    quality_dashboard: false, quality_inspections: false, quality_ncr: false, quality_capa: false, quality_traceability: false, quality_equipment: false, quality_documents: false
   }
 };
 
