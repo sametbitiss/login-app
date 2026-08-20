@@ -50,6 +50,155 @@ class SaleController {
     });
   });
 
+  _parseItemsFromRequest = async (req) => {
+    const safeInt = (val) => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return null;
+      const n = parseInt(val, 10);
+      return Number.isNaN(n) ? null : n;
+    };
+    const safeFloat = (val, defaultVal = 0) => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+      const n = parseFloat(val);
+      return Number.isNaN(n) ? defaultVal : n;
+    };
+
+    let items = [];
+    const itemsJson = req.body.itemsJson || req.body.kalemlerJson;
+    if (itemsJson) {
+      try {
+        const parsed = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          items = parsed.filter(it => it && (it.stokId || it.stockItemId || it.ad || it.name));
+        }
+      } catch (e) { items = []; }
+    }
+
+    if (items.length === 0) {
+      const stokIdArr = req.body['stokId[]'] || req.body['stockItemId[]'] || (Array.isArray(req.body.stokId) ? req.body.stokId : (Array.isArray(req.body.stockItemId) ? req.body.stockItemId : null));
+      if (Array.isArray(stokIdArr) && stokIdArr.length > 0) {
+        const miktarArr = req.body['miktar[]'] || req.body['quantity[]'] || (Array.isArray(req.body.miktar) ? req.body.miktar : (Array.isArray(req.body.quantity) ? req.body.quantity : []));
+        const birimFiyatArr = req.body['birimFiyat[]'] || req.body['unitPrice[]'] || (Array.isArray(req.body.birimFiyat) ? req.body.birimFiyat : (Array.isArray(req.body.unitPrice) ? req.body.unitPrice : []));
+        const iskontoArr = req.body['iskontoOrani[]'] || req.body['discountRate[]'] || (Array.isArray(req.body.iskontoOrani) ? req.body.iskontoOrani : (Array.isArray(req.body.discountRate) ? req.body.discountRate : []));
+        const kdvArr = req.body['kdvOrani[]'] || req.body['taxRate[]'] || (Array.isArray(req.body.kdvOrani) ? req.body.kdvOrani : (Array.isArray(req.body.taxRate) ? req.body.taxRate : []));
+
+        stokIdArr.forEach((sId, idx) => {
+          const parsedId = safeInt(sId);
+          if (parsedId && parsedId > 0) {
+            items.push({
+              stokId: parsedId,
+              stockItemId: parsedId,
+              miktar: safeFloat(miktarArr[idx], 1),
+              quantity: safeFloat(miktarArr[idx], 1),
+              birimFiyat: safeFloat(birimFiyatArr[idx], 0),
+              unitPrice: safeFloat(birimFiyatArr[idx], 0),
+              iskontoOrani: safeFloat(iskontoArr[idx], 0),
+              discountRate: safeFloat(iskontoArr[idx], 0),
+              kdvOrani: safeFloat(kdvArr[idx], 20),
+              taxRate: safeFloat(kdvArr[idx], 20)
+            });
+          }
+        });
+      }
+    }
+
+    if (items.length === 0) {
+      const stockItemId = safeInt(req.body.stokId || req.body.stockItemId);
+      if (stockItemId && stockItemId > 0) {
+        items = [{
+          stokId: stockItemId,
+          stockItemId: stockItemId,
+          miktar: safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1),
+          quantity: safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1),
+          birimFiyat: safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0),
+          unitPrice: safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0),
+          iskontoOrani: safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0),
+          discountRate: safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0),
+          kdvOrani: safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20),
+          taxRate: safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20)
+        }];
+      }
+    }
+
+    let grandSubtotal = 0;
+    let grandDiscountAmount = 0;
+    let grandTaxAmount = 0;
+    let grandTotalAmount = 0;
+    let maxDiscountRate = 0;
+    const processedItems = [];
+
+    for (const item of items) {
+      const qty = safeFloat(item.miktar !== undefined ? item.miktar : item.quantity, 1);
+      const price = safeFloat(item.birimFiyat !== undefined ? item.birimFiyat : item.unitPrice, 0);
+      const disc = safeFloat(item.iskontoOrani !== undefined ? item.iskontoOrani : item.discountRate, 0);
+      const tax = safeFloat(item.kdvOrani !== undefined ? item.kdvOrani : item.taxRate, 20);
+
+      const sub = qty * price;
+      const discAmt = sub * (disc / 100);
+      const afterDisc = sub - discAmt;
+      const taxAmt = afterDisc * (tax / 100);
+      const tot = afterDisc + taxAmt;
+
+      grandSubtotal += sub;
+      grandDiscountAmount += discAmt;
+      grandTaxAmount += taxAmt;
+      grandTotalAmount += tot;
+
+      if (disc > maxDiscountRate) maxDiscountRate = disc;
+
+      const itemId = safeInt(item.stokId || item.stockItemId);
+      let itemName = (item.ad || item.name || '').trim();
+      let stockCode = (item.stokKodu || item.stockCode || '').trim();
+      let unit = (item.birim || item.unit || 'Adet').trim();
+
+      if (itemId && itemId > 0) {
+        const st = await StokKarti.findByPk(itemId);
+        if (st) {
+          if (!itemName) itemName = st.ad;
+          if (!stockCode) stockCode = st.stokKodu;
+          if (!unit) unit = st.birim;
+        }
+      }
+      if (!itemName) itemName = 'Ürün Kalemi';
+      if (!stockCode) stockCode = '—';
+
+      processedItems.push({
+        stokId: itemId && itemId > 0 ? itemId : null,
+        stockItemId: itemId && itemId > 0 ? itemId : null,
+        stokKodu: stockCode,
+        stockCode: stockCode,
+        ad: itemName,
+        name: itemName,
+        birim: unit,
+        unit: unit,
+        miktar: qty,
+        quantity: qty,
+        birimFiyat: price,
+        unitPrice: price,
+        iskontoOrani: disc,
+        discountRate: disc,
+        kdvOrani: tax,
+        taxRate: tax,
+        araToplam: sub,
+        subtotal: sub,
+        iskontoTutari: discAmt,
+        discountAmount: discAmt,
+        kdvTutari: taxAmt,
+        taxAmount: taxAmt,
+        toplamTutar: tot,
+        totalAmount: tot
+      });
+    }
+
+    return {
+      processedItems,
+      grandSubtotal,
+      grandDiscountAmount,
+      grandTaxAmount,
+      grandTotalAmount,
+      maxDiscountRate
+    };
+  };
+
   addOrder = asyncHandler(async (req, res) => {
     try {
       const safeInt = (val) => {
@@ -63,111 +212,13 @@ class SaleController {
         return Number.isNaN(n) ? defaultVal : n;
       };
 
-      let items = [];
-      const itemsJson = req.body.itemsJson || req.body.kalemlerJson;
-      if (itemsJson) {
-        try {
-          items = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
-        } catch (e) {
-          items = [];
-        }
-      }
-
-      if (!Array.isArray(items) || items.length === 0) {
-        const stockItemId = safeInt(req.body.stokId || req.body.stockItemId);
-        const quantity = safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1);
-        const unitPrice = safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0);
-        const discountRate = safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0);
-        const taxRate = safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20);
-
-        const subtotal = quantity * unitPrice;
-        const discountAmount = subtotal * (discountRate / 100);
-        const afterDiscount = subtotal - discountAmount;
-        const taxAmount = afterDiscount * (taxRate / 100);
-        const totalAmount = afterDiscount + taxAmount;
-
-        items = [{
-          stokId: stockItemId,
-          miktar: quantity,
-          birimFiyat: unitPrice,
-          iskontoOrani: discountRate,
-          kdvOrani: taxRate,
-          araToplam: subtotal,
-          iskontoTutari: discountAmount,
-          kdvTutari: taxAmount,
-          toplamTutar: totalAmount
-        }];
-      }
-
-      let grandSubtotal = 0;
-      let grandDiscountAmount = 0;
-      let grandTaxAmount = 0;
-      let grandTotalAmount = 0;
-      let maxDiscountRate = 0;
-      const processedItems = [];
-
-      for (const item of items) {
-        const qty = safeFloat(item.miktar !== undefined ? item.miktar : item.quantity, 1);
-        const price = safeFloat(item.birimFiyat !== undefined ? item.birimFiyat : item.unitPrice, 0);
-        const disc = safeFloat(item.iskontoOrani !== undefined ? item.iskontoOrani : item.discountRate, 0);
-        const tax = safeFloat(item.kdvOrani !== undefined ? item.kdvOrani : item.taxRate, 20);
-
-        const sub = qty * price;
-        const discAmt = sub * (disc / 100);
-        const afterDisc = sub - discAmt;
-        const taxAmt = afterDisc * (tax / 100);
-        const tot = afterDisc + taxAmt;
-
-        grandSubtotal += sub;
-        grandDiscountAmount += discAmt;
-        grandTaxAmount += taxAmt;
-        grandTotalAmount += tot;
-
-        if (disc > maxDiscountRate) maxDiscountRate = disc;
-
-        const itemId = safeInt(item.stokId || item.stockItemId);
-        let itemName = (item.ad || item.name || '').trim();
-        let stockCode = (item.stokKodu || item.stockCode || '').trim();
-        let unit = (item.birim || item.unit || 'Adet').trim();
-
-        if (itemId && itemId > 0) {
-          const st = await StokKarti.findByPk(itemId);
-          if (st) {
-            if (!itemName) itemName = st.ad;
-            if (!stockCode) stockCode = st.stokKodu;
-            if (!unit) unit = st.birim;
-          }
-        }
-        if (!itemName) itemName = 'Ürün Kalemi';
-        if (!stockCode) stockCode = '—';
-
-        processedItems.push({
-          stokId: itemId && itemId > 0 ? itemId : null,
-          stockItemId: itemId && itemId > 0 ? itemId : null,
-          stokKodu: stockCode,
-          stockCode: stockCode,
-          ad: itemName,
-          name: itemName,
-          birim: unit,
-          unit: unit,
-          miktar: qty,
-          quantity: qty,
-          birimFiyat: price,
-          unitPrice: price,
-          iskontoOrani: disc,
-          discountRate: disc,
-          kdvOrani: tax,
-          taxRate: tax,
-          araToplam: sub,
-          subtotal: sub,
-          iskontoTutari: discAmt,
-          discountAmount: discAmt,
-          kdvTutari: taxAmt,
-          taxAmount: taxAmt,
-          toplamTutar: tot,
-          totalAmount: tot
-        });
-      }
+      const parsedData = await this._parseItemsFromRequest(req);
+      const processedItems = parsedData.processedItems;
+      const grandSubtotal = parsedData.grandSubtotal;
+      const grandDiscountAmount = parsedData.grandDiscountAmount;
+      const grandTaxAmount = parsedData.grandTaxAmount;
+      const grandTotalAmount = parsedData.grandTotalAmount;
+      const maxDiscountRate = parsedData.maxDiscountRate;
 
       const primaryItem = processedItems[0] || {};
       let primaryStockItemId = safeInt(primaryItem.stokId);
@@ -560,107 +611,13 @@ class SaleController {
         return Number.isNaN(n) ? defaultVal : n;
       };
 
-      let items = [];
-      const itemsJson = req.body.itemsJson || req.body.kalemlerJson;
-      if (itemsJson) {
-        try {
-          items = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
-        } catch (e) {
-          items = [];
-        }
-      }
-
-      if (!Array.isArray(items) || items.length === 0) {
-        const stockItemId = safeInt(req.body.stokId || req.body.stockItemId);
-        const quantity = safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1);
-        const unitPrice = safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0);
-        const discountRate = safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0);
-        const taxRate = safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20);
-
-        const subtotal = quantity * unitPrice;
-        const discountAmount = subtotal * (discountRate / 100);
-        const afterDiscount = subtotal - discountAmount;
-        const taxAmount = afterDiscount * (taxRate / 100);
-        const totalAmount = afterDiscount + taxAmount;
-
-        items = [{
-          stokId: stockItemId,
-          miktar: quantity,
-          birimFiyat: unitPrice,
-          iskontoOrani: discountRate,
-          kdvOrani: taxRate,
-          araToplam: subtotal,
-          iskontoTutari: discountAmount,
-          kdvTutari: taxAmount,
-          toplamTutar: totalAmount
-        }];
-      }
-
-      let grandSubtotal = 0;
-      let grandDiscountAmount = 0;
-      let grandTaxAmount = 0;
-      let grandTotalAmount = 0;
-      let maxDiscountRate = 0;
-
-      const processedItems = [];
-      for (const item of items) {
-        const itemId = safeInt(item.stokId || item.stockItemId);
-        const q = safeFloat(item.miktar !== undefined ? item.miktar : item.quantity, 1);
-        const p = safeFloat(item.birimFiyat !== undefined ? item.birimFiyat : item.unitPrice, 0);
-        const d = safeFloat(item.iskontoOrani !== undefined ? item.iskontoOrani : item.discountRate, 0);
-        const t = safeFloat(item.kdvOrani !== undefined ? item.kdvOrani : item.taxRate, 20);
-
-        const sub = q * p;
-        const disc = sub * (d / 100);
-        const afterDisc = sub - disc;
-        const tax = afterDisc * (t / 100);
-        const tot = afterDisc + tax;
-
-        grandSubtotal += sub;
-        grandDiscountAmount += disc;
-        grandTaxAmount += tax;
-        grandTotalAmount += tot;
-        if (d > maxDiscountRate) maxDiscountRate = d;
-
-        let itemName = (item.ad || item.name || '').trim();
-        let stockCode = (item.stokKodu || item.stockCode || '').trim();
-        let unit = (item.birim || item.unit || 'Adet').trim();
-
-        if (itemId && itemId > 0) {
-          const st = await StokKarti.findByPk(itemId);
-          if (st) {
-            if (!itemName) itemName = st.ad;
-            if (!stockCode) stockCode = st.stokKodu;
-            if (!unit) unit = st.birim;
-          }
-        }
-        if (!itemName) itemName = 'Ürün Kalemi';
-
-        processedItems.push({
-          stokId: itemId,
-          stockItemId: itemId,
-          stokKodu: stockCode,
-          stockCode: stockCode,
-          ad: itemName,
-          name: itemName,
-          birim: unit,
-          unit: unit,
-          miktar: q,
-          quantity: q,
-          birimFiyat: p,
-          unitPrice: p,
-          iskontoOrani: d,
-          discountRate: d,
-          kdvOrani: t,
-          taxRate: t,
-          araToplam: sub,
-          subtotal: sub,
-          iskontoTutari: disc,
-          discountAmount: disc,
-          kdvTutari: tax,
-          taxAmount: tax,
-        });
-      }
+      const parsedData = await this._parseItemsFromRequest(req);
+      const processedItems = parsedData.processedItems;
+      const grandSubtotal = parsedData.grandSubtotal;
+      const grandDiscountAmount = parsedData.grandDiscountAmount;
+      const grandTaxAmount = parsedData.grandTaxAmount;
+      const grandTotalAmount = parsedData.grandTotalAmount;
+      const maxDiscountRate = parsedData.maxDiscountRate;
 
       const primaryItem = processedItems[0] || {};
       let primaryStockItemId = safeInt(primaryItem.stokId);

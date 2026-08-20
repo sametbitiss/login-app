@@ -129,13 +129,22 @@
                   let itemsList = [];
                   const rawJson = q.kalemlerJson || q.itemsJson;
                   if (rawJson) {
-                    try { itemsList = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson; } catch (e) { itemsList = []; }
+                    try {
+                      const parsed = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson;
+                      if (Array.isArray(parsed)) {
+                        itemsList = parsed.filter(it => it && (it.ad || it.name || it.stokId || it.stockItemId));
+                      }
+                    } catch (e) { itemsList = []; }
                   }
                   if (!Array.isArray(itemsList) || itemsList.length === 0) {
                     const sObj = q.stokKarti || q.stockItem;
                     itemsList = [{
                       stockCode: sObj ? (sObj.stokKodu || sObj.stockCode || '-') : '-',
+                      stokKodu: sObj ? (sObj.stokKodu || sObj.stockCode || '-') : '-',
                       name: sObj ? (sObj.ad || sObj.name || 'Ürün Kalemi') : 'Ürün Kalemi',
+                      ad: sObj ? (sObj.ad || sObj.name || 'Ürün Kalemi') : 'Ürün Kalemi',
+                      birim: sObj ? (sObj.birim || 'Adet') : 'Adet',
+                      unit: sObj ? (sObj.birim || 'Adet') : 'Adet',
                       quantity: q.miktar || q.quantity || 1,
                       unitPrice: q.birimFiyat || q.unitPrice || 0,
                       discountRate: q.iskontoOrani || q.discountRate || 0,
@@ -150,15 +159,24 @@
                   <td><strong><%= cName %></strong></td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                      <% itemsList.forEach(it => { %>
-                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;"><%= it.name || it.ad || 'Ürün Kalemi' %></div>
+                      <% itemsList.forEach(it => { 
+                        const name = (it.ad || it.name || '').trim() || (q.stokKarti ? q.stokKarti.ad : 'Ürün Kalemi');
+                        const code = (it.stokKodu || it.stockCode || '').trim() || (q.stokKarti ? q.stokKarti.stokKodu : '');
+                      %>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">
+                          <% if (code) { %><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #f472b6; font-weight: 700;">[<%= code %>]</span> <% } %>
+                          <%= name %>
+                        </div>
                       <% }); %>
                     </div>
                   </td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: var(--text-secondary);">
-                      <% itemsList.forEach(it => { %>
-                        <div><%= safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1).toLocaleString('tr-TR') %> Adet</div>
+                      <% itemsList.forEach(it => { 
+                        const qty = safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1);
+                        const unit = it.birim || it.unit || 'Adet';
+                      %>
+                        <div><strong><%= qty.toLocaleString('tr-TR') %></strong> <%= unit %></div>
                       <% }); %>
                     </div>
                   </td>

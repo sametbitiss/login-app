@@ -1002,6 +1002,22 @@
       document.getElementById('itemsJsonInput').value = JSON.stringify(itemsData);
     }
 
+    const orderForm = document.getElementById('orderForm');
+    if (orderForm) {
+      orderForm.addEventListener('submit', function(e) {
+        recalculate();
+        const payload = document.getElementById('itemsJsonInput').value;
+        let arr = [];
+        try { arr = JSON.parse(payload); } catch(err) { arr = []; }
+        if (!arr || arr.length === 0) {
+          e.preventDefault();
+          alert('⚠️ Lütfen siparişe en az 1 adet geçerli stok kalemi ekleyiniz!');
+          switchOrderTab(2);
+          return false;
+        }
+      });
+    }
+
     // Populate initial items on load
     window.addEventListener('DOMContentLoaded', () => {
       if (initialItems && initialItems.length > 0) {
