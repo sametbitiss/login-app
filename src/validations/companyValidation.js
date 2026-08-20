@@ -1,5 +1,5 @@
 /**
- * Strict & Pure Numeric Validation Rules for Company & Firm Profile Settings
+ * Strict & Comprehensive Corporate Validation Rules for Company & Firm Profile Settings
  */
 
 const validateCompanyProfile = (req) => {
@@ -65,11 +65,11 @@ const validateCompanyProfile = (req) => {
     }
   }
 
-  // 7. Kurumsal E-Posta Adresi Validation (Strict Email Pattern)
+  // 7. Kurumsal E-Posta Adresi Validation (Strict RFC-Compliant Email Pattern)
   if (eposta !== '') {
-    const strictEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!strictEmailRegex.test(eposta)) {
-      errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz olmalıdır (Örn: satis@enterprise-erp.com.tr).');
+    const corporateEmailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]{2,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+    if (!corporateEmailRegex.test(eposta)) {
+      errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz bir e-posta formatında olmalıdır (Örn: satis@enterprise-erp.com.tr).');
     }
   }
 

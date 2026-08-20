@@ -369,12 +369,12 @@
         }
       }
 
-      // 7. E-Posta
+      // 7. E-Posta (Strict RFC-Compliant Email Pattern)
       const emailEl = document.getElementById('eposta');
       if (emailEl.value && emailEl.value.trim() !== '') {
-        const strictEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!strictEmailRegex.test(emailEl.value.trim())) {
-          errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz olmalıdır (Örn: satis@enterprise-erp.com.tr).');
+        const corporateEmailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]{2,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+        if (!corporateEmailRegex.test(emailEl.value.trim())) {
+          errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz bir e-posta formatında olmalıdır (Örn: satis@enterprise-erp.com.tr).');
           emailEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-3';
         } else {
