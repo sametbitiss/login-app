@@ -13,9 +13,7 @@ const { MalKabul, SatinAlmaSiparisi, StokKarti, StokHareketi, Tedarikci, Depo } 
 const CATEGORIES = [
   { value: 'Hammadde', label: 'Hammadde' },
   { value: 'Yari_Mamul', label: 'Yarı Mamul' },
-  { value: 'Mamul', label: 'Mamul' },
-  { value: 'Ticari_Mal', label: 'Ticari Mal' },
-  { value: 'Diger', label: 'Diğer' }
+  { value: 'Mamul', label: 'Mamul' }
 ];
 
 class StockController {
@@ -89,7 +87,7 @@ class StockController {
   addItem = asyncHandler(async (req, res) => {
     try {
       const nextStockCode = await stockRepository.getNextStockCode();
-      let category = req.body.category || req.body.kategori || 'Ticari_Mal';
+      let category = req.body.category || req.body.kategori || 'Hammadde';
       if (category === 'Yarı_Mamul') category = 'Yari_Mamul';
 
       const barkod = (req.body.barkod || req.body.barcode || '').trim() || null;

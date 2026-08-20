@@ -64,7 +64,7 @@ class SaleRepository {
     let stokId = safeInt(data.stokId || data.stockItemId);
 
     if (!stokId || stokId <= 0) {
-      const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+      const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } } });
       stokId = defaultStock ? defaultStock.id : 1;
     }
 

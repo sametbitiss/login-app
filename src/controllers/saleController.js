@@ -31,7 +31,7 @@ class SaleController {
   renderAddOrder = asyncHandler(async (req, res) => {
     const nextOrderNo = await saleService.getNextOrderNo();
     const stockItems = await StokKarti.findAll({
-      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
       order: [['ad', 'ASC']]
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
@@ -154,7 +154,7 @@ class SaleController {
       const primaryItem = processedItems[0] || {};
       let primaryStockItemId = safeInt(primaryItem.stokId);
       if (!primaryStockItemId || primaryStockItemId <= 0) {
-        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } } });
         primaryStockItemId = defaultStock ? defaultStock.id : 1;
       }
       const customerId = safeInt(req.body.musteriId || req.body.customerId);
@@ -167,7 +167,7 @@ class SaleController {
           const isBlocked = score < 50 || riskLvl === 'High' || riskLvl === 'Blocked' || riskLvl === 'Critical';
           if (isBlocked) {
             const nextOrderNo = await saleService.getNextOrderNo();
-            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
+            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }, order: [['ad', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
             const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
@@ -189,7 +189,7 @@ class SaleController {
 
           if (creditLimit > 0 && grandTotalAmount > availableCredit) {
             const nextOrderNo = await saleService.getNextOrderNo();
-            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
+            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }, order: [['ad', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
             const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
@@ -279,7 +279,7 @@ class SaleController {
     } catch (err) {
       const nextOrderNo = await saleService.getNextOrderNo();
       const stockItems = await StokKarti.findAll({
-        where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }
+        where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }
       });
       const customers = await customerRepository.findAll({ status: 'Active' });
       const exchangeRates = await exchangeRateRepository.getLatestRates();
@@ -302,7 +302,7 @@ class SaleController {
     const { id } = req.params;
     const order = await saleService.getOrderById(id);
     const stockItems = await StokKarti.findAll({
-      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
       order: [['ad', 'ASC']]
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
@@ -433,7 +433,7 @@ class SaleController {
       const primaryItem = processedItems[0] || {};
       let stockItemId = safeInt(primaryItem.stokId);
       if (!stockItemId || stockItemId <= 0) {
-        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } } });
         stockItemId = defaultStock ? defaultStock.id : 1;
       }
 
@@ -468,7 +468,7 @@ class SaleController {
     } catch (err) {
       const order = await saleService.getOrderById(id);
       const stockItems = await StokKarti.findAll({
-        where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }
+        where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }
       });
       const customers = await customerRepository.findAll({ status: 'Active' });
 
@@ -511,7 +511,7 @@ class SaleController {
   renderAddQuotation = asyncHandler(async (req, res) => {
     const nextQuotationNo = await quotationRepository.getNextQuotationNo();
     const stockItems = await StokKarti.findAll({
-      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
       order: [['ad', 'ASC']]
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
@@ -632,7 +632,7 @@ class SaleController {
       const primaryItem = processedItems[0] || {};
       let primaryStockItemId = safeInt(primaryItem.stokId);
       if (!primaryStockItemId || primaryStockItemId <= 0) {
-        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } } });
         primaryStockItemId = defaultStock ? defaultStock.id : 1;
       }
       const customerId = safeInt(req.body.musteriId || req.body.customerId);
@@ -645,7 +645,7 @@ class SaleController {
           const isBlocked = score < 50 || riskLvl === 'High' || riskLvl === 'Blocked' || riskLvl === 'Critical';
           if (isBlocked) {
             const nextQuotationNo = await quotationRepository.getNextQuotationNo();
-            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
+            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }, order: [['ad', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
             const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
@@ -667,7 +667,7 @@ class SaleController {
 
           if (creditLimit > 0 && grandTotalAmount > availableCredit) {
             const nextQuotationNo = await quotationRepository.getNextQuotationNo();
-            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
+            const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }, order: [['ad', 'ASC']] });
             const customers = await customerRepository.findAll({ status: 'Active' });
             const exchangeRates = await exchangeRateRepository.getLatestRates();
             const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
@@ -751,7 +751,7 @@ class SaleController {
       res.redirect('/sales/quotes');
     } catch (err) {
       const nextQuotationNo = await quotationRepository.getNextQuotationNo();
-      const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
+      const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } } });
       const customers = await customerRepository.findAll({ status: 'Active' });
       const exchangeRates = await exchangeRateRepository.getLatestRates();
       const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
@@ -941,7 +941,7 @@ class SaleController {
   listPriceLists = asyncHandler(async (req, res) => {
     const rawPriceLists = await priceListRepository.findAll();
     const customers = await customerRepository.findAll({ status: 'Active' });
-    const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
+    const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } }, order: [['ad', 'ASC']] });
 
     const groupsMap = new Map();
 
@@ -1018,7 +1018,7 @@ class SaleController {
   renderAddPriceList = asyncHandler(async (req, res) => {
     const customers = await customerRepository.findAll({ status: 'Active' });
     const stockItems = await StokKarti.findAll({
-      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } },
       order: [['ad', 'ASC']]
     });
 

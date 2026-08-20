@@ -16,7 +16,7 @@ class StockRepository {
   // --- 1. STOCK ITEMS METHODS ---
   async findAll(filters = {}) {
     const where = {};
-    const validCategories = ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Ticari_Mal', 'Diger'];
+    const validCategories = ['Hammadde', 'Yari_Mamul', 'Yarı_Mamul', 'Mamul', 'Diger'];
     const validStatuses = ['Active', 'Passive', 'Discontinued'];
 
     if (filters.status && validStatuses.includes(filters.status)) {
@@ -62,10 +62,10 @@ class StockRepository {
   }
 
   async create(data, currentUser = null, ipAddress = null) {
-    const targetCategory = data.kategori || data.category || 'Ticari_Mal';
+    const targetCategory = data.kategori || data.category || 'Hammadde';
     let targetProcurementMethod = data.tedarikYontemi || data.procurementMethod;
 
-    if (['Hammadde', 'Ticari_Mal', 'Ticari Mal'].includes(targetCategory)) {
+    if (targetCategory === 'Hammadde') {
       targetProcurementMethod = 'Satın Alma';
     } else if (['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(targetCategory)) {
       targetProcurementMethod = targetProcurementMethod || 'Üretim';
