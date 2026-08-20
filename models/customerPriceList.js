@@ -54,6 +54,58 @@ module.exports = (sequelize, DataTypes) => {
     olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    listName: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('listeAdi'); }
+    },
+    customerId: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('musteriId'); }
+    },
+    stockId: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('stokId'); }
+    },
+    stockItemId: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('stokId'); }
+    },
+    specialPrice: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('ozelFiyat'); }
+    },
+    customDiscountRate: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('ozelIskontoOrani'); }
+    },
+    currency: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('paraBirimi'); }
+    },
+    validFrom: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('gecerlilikBaslangic'); }
+    },
+    validUntil: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('gecerlilikBitis'); }
+    },
+    status: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('durum'); }
+    },
+    notes: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('notlar'); }
+    },
+    stockItem: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.stokKarti; }
+    },
+    customer: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.musteri; }
     }
   }, {
     sequelize,

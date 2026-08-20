@@ -206,11 +206,17 @@
                     <td>
                       <div style="display: flex; flex-wrap: wrap; gap: 4px; max-height: 70px; overflow-y: auto;">
                         <% g.items.slice(0, 3).forEach(it => { %>
+                          <% 
+                            const stCode = it.stockCode || (it.stokKarti ? (it.stokKarti.stokKodu || it.stokKarti.stockCode) : (it.stockItem ? (it.stockItem.stokKodu || it.stockItem.stockCode) : 'STK'));
+                            const spPrice = parseFloat(it.specialPrice !== undefined ? it.specialPrice : (it.ozelFiyat !== undefined ? it.ozelFiyat : 0)) || 0;
+                            const cdRate = parseFloat(it.customDiscountRate !== undefined ? it.customDiscountRate : (it.ozelIskontoOrani !== undefined ? it.ozelIskontoOrani : 0)) || 0;
+                            const curr = it.currency || it.paraBirimi || 'TRY';
+                          %>
                           <span class="item-pill">
-                            <strong style="color: #34d399;"><%= it.stockItem ? it.stockItem.stockCode : 'STK' %></strong>: 
-                            <span class="price-tag" style="font-size: 0.8rem;"><%= parseFloat(it.specialPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= it.currency %></span>
-                            <% if (parseFloat(it.customDiscountRate) > 0) { %>
-                              <small style="color: #fb7185; font-weight: 700;">(%<%= parseFloat(it.customDiscountRate) %> İsk.)</small>
+                            <strong style="color: #34d399;"><%= stCode %></strong>: 
+                            <span class="price-tag" style="font-size: 0.8rem;"><%= spPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %></span>
+                            <% if (cdRate > 0) { %>
+                              <small style="color: #fb7185; font-weight: 700;">(%<%= cdRate %> İsk.)</small>
                             <% } %>
                           </span>
                         <% }); %>
@@ -306,24 +312,30 @@
       const title = document.getElementById('modalCustomerTitle');
       const tbody = document.getElementById('modalItemsTbody');
 
-      if (title) title.textContent = `[${group.customerCode}] ${group.customerName} — Özel Fiyat Listesi Detayı`;
+      const custCode = group.customerCode || (group.customer ? (group.customer.musteriKodu || group.customer.customerCode) : 'GENEL-000');
+      const custName = group.customerName || (group.customer ? (group.customer.firmaAdi || group.customer.companyName) : 'Tüm Müşteriler (Genel İskonto)');
+
+      if (title) title.textContent = `[${custCode}] ${custName} — Özel Fiyat Listesi Detayı`;
       
       tbody.innerHTML = '';
-      group.items.forEach(it => {
+      (group.items || []).forEach(it => {
         const tr = document.createElement('tr');
-        const stockCode = it.stockItem ? (it.stockItem.stokKodu || it.stockItem.stockCode || '—') : '—';
-        const stockName = it.stockItem ? (it.stockItem.ad || it.stockItem.name || 'Stok Ürünü') : 'Stok Ürünü';
-        const salePrice = it.stockItem ? parseFloat(it.stockItem.satisFiyati || it.stockItem.salePrice || 0) : 0;
-        const specPrice = parseFloat(it.specialPrice);
-        const discRate = parseFloat(it.customDiscountRate);
+        const st = it.stokKarti || it.stockItem;
+        const stockCode = it.stockCode || (st ? (st.stokKodu || st.stockCode) : '—') || '—';
+        const stockName = it.stockName || (st ? (st.ad || st.name) : 'Stok Ürünü') || 'Stok Ürünü';
+        const salePrice = parseFloat(it.salePrice !== undefined ? it.salePrice : (st ? (st.satisFiyati || st.salePrice) : 0)) || 0;
+        const specPrice = parseFloat(it.specialPrice !== undefined ? it.specialPrice : (it.ozelFiyat !== undefined ? it.ozelFiyat : 0)) || 0;
+        const discRate = parseFloat(it.customDiscountRate !== undefined ? it.customDiscountRate : (it.ozelIskontoOrani !== undefined ? it.ozelIskontoOrani : 0)) || 0;
+        const currency = it.currency || it.paraBirimi || 'TRY';
+        const validFromDate = it.validFrom || it.gecerlilikBaslangic || 'Süresiz';
 
         tr.innerHTML = `
           <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">${stockCode}</strong></td>
           <td><strong>${stockName}</strong></td>
           <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">${salePrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</td>
-          <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34d399;">${specPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${it.currency}</td>
+          <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34d399;">${specPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${currency}</td>
           <td style="text-align: center; font-weight: 700; color: #fb7185;">%${discRate}</td>
-          <td style="text-align: center; font-size: 0.8rem; color: var(--text-muted);">${it.validFrom || 'Süresiz'}</td>
+          <td style="text-align: center; font-size: 0.8rem; color: var(--text-muted);">${validFromDate}</td>
           <td style="text-align: center;">
             <form action="/sales/price-lists/delete-item/${it.id}" method="POST" onsubmit="return confirm('⚠️ Bu ürünü özel fiyat listesinden silmek istediğinize emin misiniz?');" style="margin:0;">
               <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.725rem; padding: 4px 8px; border-radius: 6px;">🗑️ Sil</button>

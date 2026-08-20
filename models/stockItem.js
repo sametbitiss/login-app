@@ -121,6 +121,34 @@ module.exports = (sequelize, DataTypes) => {
     olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    stockCode: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('stokKodu'); }
+    },
+    name: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('ad'); }
+    },
+    salePrice: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('satisFiyati'); }
+    },
+    currentStock: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('mevcutStok'); }
+    },
+    unit: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('birim'); }
+    },
+    category: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('kategori'); }
+    },
+    taxRate: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('kdvOrani'); }
     }
   }, {
     sequelize,

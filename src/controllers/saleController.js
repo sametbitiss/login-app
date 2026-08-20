@@ -784,20 +784,60 @@ class SaleController {
     const groupsMap = new Map();
 
     rawPriceLists.forEach(item => {
-      const custId = item.musteriId || 0;
+      const custId = item.musteriId || item.customerId || 0;
+      const custObj = item.musteri || item.customer;
+      const custName = custObj ? (custObj.firmaAdi || custObj.companyName) : 'Tüm Müşteriler (Genel İskonto)';
+      const custCode = custObj ? (custObj.musteriKodu || custObj.customerCode) : 'GENEL-000';
+
       if (!groupsMap.has(custId)) {
         groupsMap.set(custId, {
-          customerId: item.musteriId,
-          customerName: item.musteri ? item.musteri.firmaAdi : 'Tüm Müşteriler (Genel İskonto)',
-          customerCode: item.musteri ? item.musteri.musteriKodu : 'GENEL-000',
-          customer: item.musteri,
-          listName: item.listeAdi || 'Özel Fiyat Listesi',
-          validFrom: item.gecerlilikBaslangic,
-          validUntil: item.gecerlilikBitis,
+          customerId: custId,
+          customerName: custName,
+          customerCode: custCode,
+          customer: custObj,
+          listName: item.listeAdi || item.listName || 'Özel Fiyat Listesi',
+          validFrom: item.gecerlilikBaslangic || item.validFrom,
+          validUntil: item.gecerlilikBitis || item.validUntil,
           items: []
         });
       }
-      groupsMap.get(custId).items.push(item);
+
+      const st = item.stokKarti || item.stockItem;
+      const stockCode = st ? (st.stokKodu || st.stockCode || 'STK') : 'STK';
+      const stockName = st ? (st.ad || st.name || 'Stok Ürünü') : 'Stok Ürünü';
+      const salePrice = st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0;
+      const specialPrice = parseFloat(item.ozelFiyat !== undefined ? item.ozelFiyat : item.specialPrice) || 0;
+      const customDiscountRate = parseFloat(item.ozelIskontoOrani !== undefined ? item.ozelIskontoOrani : item.customDiscountRate) || 0;
+      const currency = item.paraBirimi || item.currency || 'TRY';
+
+      groupsMap.get(custId).items.push({
+        id: item.id,
+        stockId: item.stokId || item.stockId,
+        stockItemId: item.stokId || item.stockId,
+        stockCode,
+        stockName,
+        salePrice,
+        specialPrice,
+        customDiscountRate,
+        currency,
+        ozelFiyat: specialPrice,
+        ozelIskontoOrani: customDiscountRate,
+        paraBirimi: currency,
+        gecerlilikBaslangic: item.gecerlilikBaslangic || item.validFrom,
+        gecerlilikBitis: item.gecerlilikBitis || item.validUntil,
+        validFrom: item.gecerlilikBaslangic || item.validFrom,
+        validUntil: item.gecerlilikBitis || item.validUntil,
+        stokKarti: st,
+        stockItem: {
+          id: st ? st.id : null,
+          stokKodu: stockCode,
+          stockCode: stockCode,
+          ad: stockName,
+          name: stockName,
+          satisFiyati: salePrice,
+          salePrice: salePrice
+        }
+      });
     });
 
     const groupedPriceLists = Array.from(groupsMap.values());
