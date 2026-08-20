@@ -69,6 +69,25 @@
       display: block;
     }
 
+    .inline-error-msg {
+      font-size: 0.8rem;
+      color: #f43f5e;
+      font-weight: 600;
+      margin-top: 5px;
+      display: none;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .input-group.has-error input {
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2) !important;
+    }
+
+    .input-group.has-error .inline-error-msg {
+      display: flex;
+    }
+
     .invalid-input {
       border-color: #f43f5e !important;
       color: #f43f5e !important;
@@ -181,6 +200,7 @@
                 <label for="unvan">Resmi Şirket Unvanı <span class="req-star">*</span></label>
                 <input type="text" id="unvan" name="unvan" value="<%= profile.unvan || '' %>" required minlength="3" placeholder="Örn: ENTERPRISE ERP YAZILIM VE SANAYİ A.Ş.">
                 <span class="field-hint">En az 3 karakter olmalıdır.</span>
+                <span class="inline-error-msg" id="err-unvan"></span>
               </div>
               <div class="input-group">
                 <label for="markaAdi">Marka / Kısa Ad</label>
@@ -192,6 +212,7 @@
               <label for="webSitesi">Kurumsal Web Sitesi</label>
               <input type="text" id="webSitesi" name="webSitesi" value="<%= profile.webSitesi || '' %>" placeholder="Örn: www.enterprise-erp.com.tr veya enterprise-erp.com">
               <span class="field-hint">Geçerli bir web sitesi veya domain adresi giriniz.</span>
+              <span class="inline-error-msg" id="err-webSitesi"></span>
             </div>
           </div>
 
@@ -210,6 +231,7 @@
                 <label for="vergiNo">Vergi Numarası <small style="color: var(--text-muted);">(Sadece Rakam)</small></label>
                 <input type="text" id="vergiNo" name="vergiNo" value="<%= profile.vergiNo || '' %>" maxlength="10" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="10 Haneli Vergi No (Örn: 1234567890)" style="font-family: 'JetBrains Mono', monospace;">
                 <span class="field-hint">Sadece 10 haneli rakam girilebilir.</span>
+                <span class="inline-error-msg" id="err-vergiNo"></span>
               </div>
             </div>
 
@@ -218,11 +240,13 @@
                 <label for="mersisNo">Mersis Numarası <small style="color: var(--text-muted);">(Sadece Rakam)</small></label>
                 <input type="text" id="mersisNo" name="mersisNo" value="<%= profile.mersisNo || '' %>" maxlength="16" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="16 Haneli Mersis No (Örn: 0123456789000015)" style="font-family: 'JetBrains Mono', monospace;">
                 <span class="field-hint">Sadece 16 haneli rakam girilebilir.</span>
+                <span class="inline-error-msg" id="err-mersisNo"></span>
               </div>
               <div class="input-group">
                 <label for="ticaretSicilNo">Ticaret Sicil No <small style="color: var(--text-muted);">(Sadece Rakam)</small></label>
                 <input type="text" id="ticaretSicilNo" name="ticaretSicilNo" value="<%= profile.ticaretSicilNo || '' %>" maxlength="12" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="Sicil No (Sadece Rakam: 123456)" style="font-family: 'JetBrains Mono', monospace;">
                 <span class="field-hint">Sadece 4 ile 12 haneli rakam girilebilir.</span>
+                <span class="inline-error-msg" id="err-ticaretSicilNo"></span>
               </div>
             </div>
           </div>
@@ -238,11 +262,13 @@
                 <label for="telefon">Telefon Numarası <small style="color: var(--text-muted);">(Kesinlikle Sadece Rakam)</small></label>
                 <input type="text" id="telefon" name="telefon" value="<%= profile.telefon || '' %>" maxlength="11" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="Örn: 02244440377 veya 4440377 (Sadece Rakam)" style="font-family: 'JetBrains Mono', monospace;">
                 <span class="field-hint">Sadece rakam girilebilir (7-11 haneli. Örn: 02244440377 veya 4440377).</span>
+                <span class="inline-error-msg" id="err-telefon"></span>
               </div>
               <div class="input-group">
                 <label for="eposta">Kurumsal E-Posta Adresi</label>
                 <input type="email" id="eposta" name="eposta" value="<%= profile.eposta || '' %>" placeholder="Örn: satis@enterprise-erp.com.tr">
                 <span class="field-hint">Geçerli ve eksiksiz e-posta formatı (satis@domain.com).</span>
+                <span class="inline-error-msg" id="err-eposta"></span>
               </div>
             </div>
 
@@ -293,106 +319,149 @@
       if (btnEl) btnEl.classList.add('active');
     }
 
-    // Client-Side Real-Time Form Validation
-    document.getElementById('companySettingsForm').addEventListener('submit', function (e) {
-      const errors = [];
-      let targetTabId = null;
+    // Individual Field Real-Time Live Validation Functions
+    function validateField(id, errId, checkFn, errorMsg, isRequired = false) {
+      const inputEl = document.getElementById(id);
+      const errEl = document.getElementById(errId);
+      if (!inputEl || !errEl) return true;
 
-      // 1. Unvan
-      const unvanEl = document.getElementById('unvan');
-      if (!unvanEl.value || unvanEl.value.trim().length < 3) {
-        errors.push('Resmi Şirket Unvanı zorunludur ve en az 3 karakter olmalıdır.');
-        unvanEl.classList.add('invalid-input');
-        if (!targetTabId) targetTabId = 'comp-tab-1';
-      } else {
-        unvanEl.classList.remove('invalid-input');
+      const group = inputEl.closest('.input-group');
+      const val = inputEl.value.trim();
+
+      if (val === '') {
+        if (isRequired) {
+          errEl.textContent = `❌ ${errorMsg}`;
+          group.classList.add('has-error');
+          return false;
+        } else {
+          errEl.textContent = '';
+          group.classList.remove('has-error');
+          return true;
+        }
       }
 
-      // 2. Web Sitesi
+      if (!checkFn(val)) {
+        errEl.textContent = `❌ ${errorMsg}`;
+        group.classList.add('has-error');
+        return false;
+      }
+
+      errEl.textContent = '';
+      group.classList.remove('has-error');
+      return true;
+    }
+
+    // Field Rules Definition
+    const corporateEmailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]{2,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+    const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/;
+
+    // Attach Real-Time Blur and Input Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      const epostaEl = document.getElementById('eposta');
+      if (epostaEl) {
+        epostaEl.addEventListener('blur', () => {
+          validateField('eposta', 'err-eposta', v => corporateEmailRegex.test(v), 'Lütfen geçerli ve eksiksiz bir e-posta adresi giriniz (Örn: satis@enterprise-erp.com.tr).', false);
+        });
+        epostaEl.addEventListener('input', () => {
+          if (epostaEl.closest('.input-group').classList.contains('has-error') || epostaEl.value.trim() !== '') {
+            validateField('eposta', 'err-eposta', v => corporateEmailRegex.test(v), 'Lütfen geçerli ve eksiksiz bir e-posta adresi giriniz (Örn: satis@enterprise-erp.com.tr).', false);
+          }
+        });
+      }
+
       const webEl = document.getElementById('webSitesi');
-      if (webEl.value && webEl.value.trim() !== '') {
-        const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/;
-        if (!domainRegex.test(webEl.value.trim())) {
-          errors.push('Kurumsal Web Sitesi geçerli bir web sitesi veya domain adresi olmalıdır (Örn: www.enterprise-erp.com.tr veya enterprise-erp.com).');
-          webEl.classList.add('invalid-input');
-          if (!targetTabId) targetTabId = 'comp-tab-1';
-        } else {
-          webEl.classList.remove('invalid-input');
-        }
+      if (webEl) {
+        webEl.addEventListener('blur', () => {
+          validateField('webSitesi', 'err-webSitesi', v => domainRegex.test(v), 'Geçerli bir web sitesi giriniz (Örn: www.enterprise-erp.com.tr).', false);
+        });
+        webEl.addEventListener('input', () => {
+          if (webEl.closest('.input-group').classList.contains('has-error')) {
+            validateField('webSitesi', 'err-webSitesi', v => domainRegex.test(v), 'Geçerli bir web sitesi giriniz (Örn: www.enterprise-erp.com.tr).', false);
+          }
+        });
       }
 
-      // 3. Vergi No (Strict 10 Digits)
-      const vNoEl = document.getElementById('vergiNo');
-      if (vNoEl.value && vNoEl.value.trim() !== '') {
-        if (!/^\d{10}$/.test(vNoEl.value.trim())) {
-          errors.push('Vergi Numarası sadece rakamlardan oluşmalı ve tam 10 haneli olmalıdır (Örn: 1234567890).');
-          vNoEl.classList.add('invalid-input');
-          if (!targetTabId) targetTabId = 'comp-tab-2';
-        } else {
-          vNoEl.classList.remove('invalid-input');
-        }
-      }
-
-      // 4. Mersis No (Strict 16 Digits)
-      const mersisEl = document.getElementById('mersisNo');
-      if (mersisEl.value && mersisEl.value.trim() !== '') {
-        if (!/^\d{16}$/.test(mersisEl.value.trim())) {
-          errors.push('Mersis Numarası sadece rakamlardan oluşmalı ve tam 16 haneli olmalıdır (Örn: 0123456789000015).');
-          mersisEl.classList.add('invalid-input');
-          if (!targetTabId) targetTabId = 'comp-tab-2';
-        } else {
-          mersisEl.classList.remove('invalid-input');
-        }
-      }
-
-      // 5. Ticaret Sicil No (Strict 4-12 Digits)
-      const sicilEl = document.getElementById('ticaretSicilNo');
-      if (sicilEl.value && sicilEl.value.trim() !== '') {
-        if (!/^\d{4,12}$/.test(sicilEl.value.trim())) {
-          errors.push('Ticaret Sicil Numarası sadece rakamlardan oluşmalı ve 4 ile 12 haneli olmalıdır (Örn: 123456).');
-          sicilEl.classList.add('invalid-input');
-          if (!targetTabId) targetTabId = 'comp-tab-2';
-        } else {
-          sicilEl.classList.remove('invalid-input');
-        }
-      }
-
-      // 6. Telefon (Strict 7-11 Digits, Pure Numeric)
       const telEl = document.getElementById('telefon');
-      if (telEl.value && telEl.value.trim() !== '') {
-        if (!/^\d{7,11}$/.test(telEl.value.trim())) {
-          errors.push('Telefon numarası alanına kesinlikle sadece rakam girilmelidir (7 ile 11 haneli rakam. Örn: 02244440377 veya 4440377).');
-          telEl.classList.add('invalid-input');
-          if (!targetTabId) targetTabId = 'comp-tab-3';
-        } else {
-          telEl.classList.remove('invalid-input');
-        }
+      if (telEl) {
+        telEl.addEventListener('blur', () => {
+          validateField('telefon', 'err-telefon', v => /^\d{7,11}$/.test(v), 'Telefon 7-11 haneli sadece rakam olmalıdır (Örn: 02244440377).', false);
+        });
+        telEl.addEventListener('input', () => {
+          if (telEl.closest('.input-group').classList.contains('has-error')) {
+            validateField('telefon', 'err-telefon', v => /^\d{7,11}$/.test(v), 'Telefon 7-11 haneli sadece rakam olmalıdır (Örn: 02244440377).', false);
+          }
+        });
       }
 
-      // 7. E-Posta (Strict RFC-Compliant Email Pattern)
-      const emailEl = document.getElementById('eposta');
-      if (emailEl.value && emailEl.value.trim() !== '') {
-        const corporateEmailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]{2,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
-        if (!corporateEmailRegex.test(emailEl.value.trim())) {
-          errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz bir e-posta formatında olmalıdır (Örn: satis@enterprise-erp.com.tr).');
-          emailEl.classList.add('invalid-input');
-          if (!targetTabId) targetTabId = 'comp-tab-3';
-        } else {
-          emailEl.classList.remove('invalid-input');
-        }
+      const vNoEl = document.getElementById('vergiNo');
+      if (vNoEl) {
+        vNoEl.addEventListener('blur', () => {
+          validateField('vergiNo', 'err-vergiNo', v => /^\d{10}$/.test(v), 'Vergi Numarası tam 10 haneli rakam olmalıdır.', false);
+        });
+        vNoEl.addEventListener('input', () => {
+          if (vNoEl.closest('.input-group').classList.contains('has-error')) {
+            validateField('vergiNo', 'err-vergiNo', v => /^\d{10}$/.test(v), 'Vergi Numarası tam 10 haneli rakam olmalıdır.', false);
+          }
+        });
       }
 
-      if (errors.length > 0) {
+      const mersisEl = document.getElementById('mersisNo');
+      if (mersisEl) {
+        mersisEl.addEventListener('blur', () => {
+          validateField('mersisNo', 'err-mersisNo', v => /^\d{16}$/.test(v), 'Mersis Numarası tam 16 haneli rakam olmalıdır.', false);
+        });
+        mersisEl.addEventListener('input', () => {
+          if (mersisEl.closest('.input-group').classList.contains('has-error')) {
+            validateField('mersisNo', 'err-mersisNo', v => /^\d{16}$/.test(v), 'Mersis Numarası tam 16 haneli rakam olmalıdır.', false);
+          }
+        });
+      }
+
+      const sicilEl = document.getElementById('ticaretSicilNo');
+      if (sicilEl) {
+        sicilEl.addEventListener('blur', () => {
+          validateField('ticaretSicilNo', 'err-ticaretSicilNo', v => /^\d{4,12}$/.test(v), 'Ticaret Sicil No 4-12 haneli rakam olmalıdır.', false);
+        });
+        sicilEl.addEventListener('input', () => {
+          if (sicilEl.closest('.input-group').classList.contains('has-error')) {
+            validateField('ticaretSicilNo', 'err-ticaretSicilNo', v => /^\d{4,12}$/.test(v), 'Ticaret Sicil No 4-12 haneli rakam olmalıdır.', false);
+          }
+        });
+      }
+
+      const unvanEl = document.getElementById('unvan');
+      if (unvanEl) {
+        unvanEl.addEventListener('blur', () => {
+          validateField('unvan', 'err-unvan', v => v.length >= 3, 'Resmi Şirket Unvanı en az 3 karakter olmalıdır.', true);
+        });
+        unvanEl.addEventListener('input', () => {
+          if (unvanEl.closest('.input-group').classList.contains('has-error')) {
+            validateField('unvan', 'err-unvan', v => v.length >= 3, 'Resmi Şirket Unvanı en az 3 karakter olmalıdır.', true);
+          }
+        });
+      }
+    });
+
+    // Form Submission Validation Guard
+    document.getElementById('companySettingsForm').addEventListener('submit', function (e) {
+      const isUnvanValid = validateField('unvan', 'err-unvan', v => v.length >= 3, 'Resmi Şirket Unvanı zorunludur ve en az 3 karakter olmalıdır.', true);
+      const isWebValid = validateField('webSitesi', 'err-webSitesi', v => domainRegex.test(v), 'Geçerli bir web sitesi veya domain adresi olmalıdır.', false);
+      const isVergiValid = validateField('vergiNo', 'err-vergiNo', v => /^\d{10}$/.test(v), 'Vergi Numarası tam 10 haneli rakam olmalıdır.', false);
+      const isMersisValid = validateField('mersisNo', 'err-mersisNo', v => /^\d{16}$/.test(v), 'Mersis Numarası tam 16 haneli rakam olmalıdır.', false);
+      const isSicilValid = validateField('ticaretSicilNo', 'err-ticaretSicilNo', v => /^\d{4,12}$/.test(v), 'Ticaret Sicil Numarası 4-12 haneli rakam olmalıdır.', false);
+      const isTelValid = validateField('telefon', 'err-telefon', v => /^\d{7,11}$/.test(v), 'Telefon 7-11 haneli sadece rakam olmalıdır.', false);
+      const isEmailValid = validateField('eposta', 'err-eposta', v => corporateEmailRegex.test(v), 'Lütfen geçerli ve eksiksiz bir e-posta adresi giriniz.', false);
+
+      if (!isUnvanValid || !isWebValid || !isVergiValid || !isMersisValid || !isSicilValid || !isTelValid || !isEmailValid) {
         e.preventDefault();
-        const alertEl = document.getElementById('validationAlert');
-        const textEl = document.getElementById('validationErrorText');
-        textEl.textContent = errors.join(' • ');
-        alertEl.style.display = 'flex';
+        
+        let targetTabId = 'comp-tab-1';
+        if (!isUnvanValid || !isWebValid) targetTabId = 'comp-tab-1';
+        else if (!isVergiValid || !isMersisValid || !isSicilValid) targetTabId = 'comp-tab-2';
+        else if (!isTelValid || !isEmailValid) targetTabId = 'comp-tab-3';
 
-        if (targetTabId) {
-          const tabBtnId = targetTabId.replace('comp-tab-', 'btn-tab-');
-          switchCompanyTab(targetTabId, document.getElementById(tabBtnId));
-        }
+        const tabBtnId = targetTabId.replace('comp-tab-', 'btn-tab-');
+        switchCompanyTab(targetTabId, document.getElementById(tabBtnId));
       }
     });
 
