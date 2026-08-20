@@ -388,9 +388,9 @@
                       style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed;">
                   </div>
                   <div class="input-group">
-                    <label for="validUntil">Geçerlilik Son Tarihi <span class="req-star">*</span></label>
+                    <label for="validUntil">Geçerlilik Son Tarihi</label>
                     <input type="date" id="validUntil" name="validUntil" value=""
-                      min="<%= new Date().toISOString().split('T')[0] %>" required>
+                      min="<%= new Date().toISOString().split('T')[0] %>">
                   </div>
                 </div>
               </div>
@@ -441,17 +441,7 @@
                       tüm ürünleri ekleyin, miktar ve satır bazlı iskontoları belirtin.</p>
                   </div>
 
-                  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                    <!-- PARA BİRİMİ SELECT EVENTİ (Ürünler Ekranında) -->
-                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(15, 23, 42, 0.9); border: 1px solid var(--border); padding: 6px 14px; border-radius: 10px;">
-                      <label for="currency" style="font-size: 0.825rem; font-weight: 700; color: #818cf8; margin: 0; white-space: nowrap;">💱 Para Birimi:</label>
-                      <select id="currency" name="currency" onchange="recalculate()" style="background: transparent; border: none; color: #fff; font-size: 0.875rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; outline: none; cursor: pointer;">
-                        <option value="TRY" style="background: #0f172a; color: #fff;">TRY (₺)</option>
-                        <option value="USD" style="background: #0f172a; color: #fff;">USD ($)</option>
-                        <option value="EUR" style="background: #0f172a; color: #fff;">EUR (€)</option>
-                      </select>
-                    </div>
-
+                  <div>
                     <button type="button" onclick="openProductSelectModal()" class="btn btn-sm"
                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); gap: 8px;">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
@@ -473,11 +463,23 @@
                       <tr
                         style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
                         <th style="padding: 14px 16px; width: 45px; text-align: center;">#</th>
-                        <th style="padding: 14px 16px; min-width: 260px;">Ürün / Mamul Kalemi</th>
-                        <th style="padding: 14px 16px; width: 110px;">Miktar</th>
-                        <th style="padding: 14px 16px; width: 140px;">Birim Fiyat</th>
+                        <th style="padding: 14px 16px; min-width: 240px;">Ürün / Mamul Kalemi</th>
+                        <th style="padding: 14px 16px; width: 100px;">Miktar</th>
+                        <th style="padding: 14px 16px; width: 170px;">
+                          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                            <span>Birim Fiyat</span>
+                            <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 6px; border-radius: 6px;">
+                              <span style="font-size: 0.7rem; color: #818cf8;">💱</span>
+                              <select id="currency" name="currency" onchange="recalculate()" style="background: transparent; border: none; color: #fff; font-size: 0.75rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; outline: none; cursor: pointer; text-transform: uppercase;">
+                                <option value="TRY" style="background: #0f172a; color: #fff;">TRY (₺)</option>
+                                <option value="USD" style="background: #0f172a; color: #fff;">USD ($)</option>
+                                <option value="EUR" style="background: #0f172a; color: #fff;">EUR (€)</option>
+                              </select>
+                            </div>
+                          </div>
+                        </th>
                         <th style="padding: 14px 16px; width: 110px;">İskonto (%)</th>
-                        <th style="padding: 14px 16px; width: 100px;">KDV (%)</th>
+                        <th style="padding: 14px 16px; width: 90px;">KDV (%)</th>
                         <th style="padding: 14px 16px; width: 150px; text-align: right;">Satır Toplamı</th>
                         <th style="padding: 14px 16px; width: 60px; text-align: center;">Sil</th>
                       </tr>
@@ -674,15 +676,9 @@
       if (direction === 1) {
         if (currentStep === 1) {
           const custNameInput = document.getElementById('customerName');
-          const validUntilInput = document.getElementById('validUntil');
           if (!custNameInput || !custNameInput.value.trim()) {
             alert('⚠️ Lütfen önce Müşteri Unvanını giriniz veya Cari seçiniz.');
             if (custNameInput) custNameInput.focus();
-            return;
-          }
-          if (!validUntilInput || !validUntilInput.value) {
-            alert('⚠️ Lütfen Teklif Geçerlilik Son Tarihini seçiniz.');
-            if (validUntilInput) validUntilInput.focus();
             return;
           }
         }
@@ -775,19 +771,6 @@
 
       recalculate();
     }
-
-    // Set Default Valid Until Date (+14 days)
-    (function setInitialValidUntil() {
-      const today = new Date();
-      today.setDate(today.getDate() + 14);
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
-      const validUntilInput = document.getElementById('validUntil');
-      if (validUntilInput && !validUntilInput.value) {
-        validUntilInput.value = `${yyyy}-${mm}-${dd}`;
-      }
-    })();
 
     // Multi-Item Row Logic
     let rowIdCounter = 0;
