@@ -203,13 +203,22 @@
                   let itemsList = [];
                   const rawJson = order.itemsJson || order.kalemlerJson;
                   if (rawJson) {
-                    try { itemsList = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson; } catch (e) { itemsList = []; }
+                    try { 
+                      const parsed = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson;
+                      if (Array.isArray(parsed)) {
+                        itemsList = parsed.filter(it => it && (it.ad || it.name || it.stokId || it.stockItemId));
+                      }
+                    } catch (e) { itemsList = []; }
                   }
                   if (!Array.isArray(itemsList) || itemsList.length === 0) {
                     const sObj = order.stockItem || order.stokKarti;
                     itemsList = [{
                       stockCode: sObj ? (sObj.stockCode || sObj.stokKodu || '-') : '-',
+                      stokKodu: sObj ? (sObj.stockCode || sObj.stokKodu || '-') : '-',
                       name: sObj ? (sObj.name || sObj.ad || 'Ürün Kalemi') : 'Ürün Kalemi',
+                      ad: sObj ? (sObj.name || sObj.ad || 'Ürün Kalemi') : 'Ürün Kalemi',
+                      birim: sObj ? (sObj.birim || 'Adet') : 'Adet',
+                      unit: sObj ? (sObj.birim || 'Adet') : 'Adet',
                       quantity: safeFloat(order.quantity !== undefined ? order.quantity : order.miktar, 1),
                       unitPrice: safeFloat(order.unitPrice !== undefined ? order.unitPrice : order.birimFiyat, 0),
                       discountRate: safeFloat(order.discountRate !== undefined ? order.discountRate : order.iskontoOrani, 0),
@@ -241,15 +250,24 @@
                   </td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                      <% itemsList.forEach(it => { %>
-                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;"><%= it.name || it.ad || 'Ürün Kalemi' %></div>
+                      <% itemsList.forEach(it => { 
+                        const name = (it.ad || it.name || '').trim() || (order.stokKarti ? order.stokKarti.ad : 'Ürün Kalemi');
+                        const code = (it.stokKodu || it.stockCode || '').trim() || (order.stokKarti ? order.stokKarti.stokKodu : '');
+                      %>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">
+                          <% if (code) { %><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #818cf8; font-weight: 700;">[<%= code %>]</span> <% } %>
+                          <%= name %>
+                        </div>
                       <% }); %>
                     </div>
                   </td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: var(--text-secondary);">
-                      <% itemsList.forEach(it => { %>
-                        <div><%= safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1).toLocaleString('tr-TR') %> Adet</div>
+                      <% itemsList.forEach(it => { 
+                        const q = safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1);
+                        const u = it.birim || it.unit || 'Adet';
+                      %>
+                        <div><strong><%= q.toLocaleString('tr-TR') %></strong> <%= u %></div>
                       <% }); %>
                     </div>
                   </td>

@@ -303,13 +303,22 @@
         let itemsList = [];
         const rawJson = order.itemsJson || order.kalemlerJson;
         if (rawJson) {
-          try { itemsList = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson; } catch (e) { itemsList = []; }
+          try { 
+            const parsed = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson;
+            if (Array.isArray(parsed)) {
+              itemsList = parsed.filter(it => it && (it.ad || it.name || it.stokId || it.stockItemId));
+            }
+          } catch (e) { itemsList = []; }
         }
         if (!Array.isArray(itemsList) || itemsList.length === 0) {
           const sObj = order.stockItem || order.stokKarti;
           itemsList = [{
             stockCode: sObj ? (sObj.stockCode || sObj.stokKodu || '-') : '-',
+            stokKodu: sObj ? (sObj.stockCode || sObj.stokKodu || '-') : '-',
             name: sObj ? (sObj.name || sObj.ad || 'Ürün Kalemi') : 'Ürün Kalemi',
+            ad: sObj ? (sObj.name || sObj.ad || 'Ürün Kalemi') : 'Ürün Kalemi',
+            birim: sObj ? (sObj.birim || 'Adet') : 'Adet',
+            unit: sObj ? (sObj.birim || 'Adet') : 'Adet',
             quantity: safeFloat(order.quantity !== undefined ? order.quantity : order.miktar, 1),
             unitPrice: safeFloat(order.unitPrice !== undefined ? order.unitPrice : order.birimFiyat, 0),
             discountRate: safeFloat(order.discountRate !== undefined ? order.discountRate : order.iskontoOrani, 0),
@@ -461,8 +470,9 @@
             </thead>
             <tbody>
               <% itemsList.forEach((it, idx) => { 
-                const sCode = it.stockCode || it.stokKodu || '-';
-                const iName = it.name || it.ad || 'Ürün Kalemi';
+                const sCode = (it.stokKodu || it.stockCode || '').trim() || (order.stokKarti ? order.stokKarti.stokKodu : '—');
+                const iName = (it.ad || it.name || '').trim() || (order.stokKarti ? order.stokKarti.ad : 'Ürün Kalemi');
+                const unit = it.birim || it.unit || (order.stokKarti ? order.stokKarti.birim : 'Adet');
                 const q = safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1);
                 const p = safeFloat(it.unitPrice !== undefined ? it.unitPrice : it.birimFiyat, 0);
                 const d = safeFloat(it.discountRate !== undefined ? it.discountRate : it.iskontoOrani, 0);
@@ -474,9 +484,9 @@
               %>
                 <tr>
                   <td style="text-align: center; font-weight: 700; color: #64748b;"><%= idx + 1 %></td>
-                  <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 600;"><%= sCode %></td>
+                  <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700; color: #4338ca;"><%= sCode %></td>
                   <td><strong style="color: #0f172a;"><%= iName %></strong></td>
-                  <td style="text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;"><%= q.toLocaleString('tr-TR') %> Adet</td>
+                  <td style="text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;"><%= q.toLocaleString('tr-TR') %> <%= unit %></td>
                   <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= p.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2}) %> <%= orderCurr %></td>
                   <td style="text-align: center; font-family: 'JetBrains Mono', monospace;"><%= d > 0 ? '%' + d : '-' %></td>
                   <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">%<%= t %></td>

@@ -126,28 +126,46 @@ class SaleController {
         if (disc > maxDiscountRate) maxDiscountRate = disc;
 
         const itemId = safeInt(item.stokId || item.stockItemId);
-        let itemName = item.ad || item.name || 'Ürün Kalemi';
-        let stockCode = item.stokKodu || item.stockCode || '';
+        let itemName = (item.ad || item.name || '').trim();
+        let stockCode = (item.stokKodu || item.stockCode || '').trim();
+        let unit = (item.birim || item.unit || 'Adet').trim();
+
         if (itemId && itemId > 0) {
           const st = await StokKarti.findByPk(itemId);
           if (st) {
-            itemName = st.ad;
-            stockCode = st.stokKodu;
+            if (!itemName) itemName = st.ad;
+            if (!stockCode) stockCode = st.stokKodu;
+            if (!unit) unit = st.birim;
           }
         }
+        if (!itemName) itemName = 'Ürün Kalemi';
+        if (!stockCode) stockCode = '—';
 
         processedItems.push({
           stokId: itemId && itemId > 0 ? itemId : null,
+          stockItemId: itemId && itemId > 0 ? itemId : null,
           stokKodu: stockCode,
+          stockCode: stockCode,
           ad: itemName,
+          name: itemName,
+          birim: unit,
+          unit: unit,
           miktar: qty,
+          quantity: qty,
           birimFiyat: price,
+          unitPrice: price,
           iskontoOrani: disc,
+          discountRate: disc,
           kdvOrani: tax,
+          taxRate: tax,
           araToplam: sub,
+          subtotal: sub,
           iskontoTutari: discAmt,
+          discountAmount: discAmt,
           kdvTutari: taxAmt,
-          toplamTutar: tot
+          taxAmount: taxAmt,
+          toplamTutar: tot,
+          totalAmount: tot
         });
       }
 
@@ -604,25 +622,46 @@ class SaleController {
         grandTotalAmount += tot;
         if (d > maxDiscountRate) maxDiscountRate = d;
 
-        let itemName = item.ad || item.name || '';
-        let stockCode = item.stokKodu || item.stockCode || '';
-        if (itemId) {
+        let itemName = (item.ad || item.name || '').trim();
+        let stockCode = (item.stokKodu || item.stockCode || '').trim();
+        let unit = (item.birim || item.unit || 'Adet').trim();
+
+        if (itemId && itemId > 0) {
           const st = await StokKarti.findByPk(itemId);
           if (st) {
-            itemName = st.ad;
-            stockCode = st.stokKodu;
+            if (!itemName) itemName = st.ad;
+            if (!stockCode) stockCode = st.stokKodu;
+            if (!unit) unit = st.birim;
           }
         }
+        if (!itemName) itemName = 'Ürün Kalemi';
 
         processedItems.push({
           stokId: itemId,
+          stockItemId: itemId,
           stokKodu: stockCode,
+          stockCode: stockCode,
           ad: itemName,
+          name: itemName,
+          birim: unit,
+          unit: unit,
           miktar: q,
+          quantity: q,
           birimFiyat: p,
+          unitPrice: p,
           iskontoOrani: d,
+          discountRate: d,
           kdvOrani: t,
+          taxRate: t,
           araToplam: sub,
+          subtotal: sub,
+          iskontoTutari: disc,
+          discountAmount: disc,
+          kdvTutari: tax,
+          taxAmount: tax,
+          toplamTutar: tot,
+          totalAmount: tot
+        });
           iskontoTutari: disc,
           kdvTutari: tax,
           toplamTutar: tot
