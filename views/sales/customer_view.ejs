@@ -92,18 +92,29 @@
     <main class="module-content">
       <% if (!customer) { %>
         <div class="alert alert-danger">Müşteri kaydı bulunamadı.</div>
-      <% } else { %>
+      <% } else { 
+        const code = customer.musteriKodu || customer.customerCode || ('CAR-' + customer.id);
+        const name = customer.firmaAdi || customer.companyName || 'İsimsiz Cari';
+        const contact = customer.ilgiliKisi || customer.contactPerson || '';
+        const email = customer.eposta || customer.email || '';
+        const phone = customer.telefon || customer.phone || '';
+        const status = customer.durum || customer.status || 'Active';
+        const currentBalance = Number(customer.guncelBakiye !== undefined ? customer.guncelBakiye : (customer.currentBalance || 0));
+        const creditLimit = Number(customer.krediLimiti !== undefined ? customer.krediLimiti : (customer.creditLimit || 0));
+        const paymentTermDays = customer.vadeGunu !== undefined ? customer.vadeGunu : (customer.paymentTermDays || 30);
+        const riskLevel = customer.riskSeviyesi || customer.riskLevel || 'Low';
+      %>
         <div class="cust-card">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
             <div>
-              <span class="badge bg-secondary mb-2" style="font-family: 'JetBrains Mono', monospace;"><%= customer.customerCode %></span>
-              <h1 style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 800; color: var(--text-primary);"><%= customer.companyName %></h1>
+              <span class="badge bg-secondary mb-2" style="font-family: 'JetBrains Mono', monospace;"><%= code %></span>
+              <h1 style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 800; color: var(--text-primary);"><%= name %></h1>
               <p style="color: var(--text-secondary); margin: 6px 0 0 0; font-size: 0.95rem;">
-                <%= customer.contactPerson ? 'İletişim Kişisi: ' + customer.contactPerson : '' %> | <%= customer.email || 'E-posta Belirtilmedi' %> | <%= customer.phone || 'Tel Belirtilmedi' %>
+                <%= contact ? 'İletişim Kişisi: ' + contact : '' %> | <%= email || 'E-posta Belirtilmedi' %> | <%= phone || 'Tel Belirtilmedi' %>
               </p>
             </div>
             <div>
-              <span class="badge bg-success" style="font-size: 0.95rem; padding: 8px 16px; font-weight: 700;"><%= customer.status %></span>
+              <span class="badge bg-success" style="font-size: 0.95rem; padding: 8px 16px; font-weight: 700;"><%= status %></span>
             </div>
           </div>
 
@@ -111,14 +122,14 @@
           <div class="grid-3">
             <div class="metric-card">
               <span>Güncel Bakiye (Borç)</span>
-              <strong style="color: var(--rose);"><%= Number(customer.currentBalance || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> ₺</strong>
+              <strong style="color: var(--rose); font-family: 'JetBrains Mono', monospace;"><%= currentBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> ₺</strong>
             </div>
 
             <div class="metric-card">
               <span>Kredi / Risk Limiti</span>
-              <strong><%= Number(customer.creditLimit || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> ₺</strong>
+              <strong style="font-family: 'JetBrains Mono', monospace;"><%= creditLimit.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> ₺</strong>
               <% 
-                const usage = customer.creditLimit > 0 ? (customer.currentBalance / customer.creditLimit) * 100 : 0;
+                const usage = creditLimit > 0 ? (currentBalance / creditLimit) * 100 : 0;
                 const fillColor = usage > 90 ? 'var(--rose)' : (usage > 70 ? 'var(--amber)' : 'var(--emerald)');
               %>
               <div class="risk-bar-container">
@@ -129,10 +140,10 @@
 
             <div class="metric-card">
               <span>Ödeme Vadesi & Risk Seviyesi</span>
-              <strong style="color: var(--cyan);"><%= customer.paymentTermDays %> Gün</strong>
+              <strong style="color: var(--cyan);"><%= paymentTermDays %> Gün</strong>
               <div style="margin-top: 6px;">
-                <span class="badge <%= customer.riskLevel === 'High' ? 'bg-danger' : (customer.riskLevel === 'Medium' ? 'bg-warning' : 'bg-info') %>">
-                  Risk: <%= customer.riskLevel %>
+                <span class="badge <%= riskLevel === 'High' || riskLevel === 'Blocked' ? 'bg-danger' : (riskLevel === 'Medium' ? 'bg-warning' : 'bg-info') %>">
+                  Risk: <%= riskLevel %>
                 </span>
               </div>
             </div>

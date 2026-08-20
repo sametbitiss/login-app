@@ -109,26 +109,38 @@
               </tr>
             <% } else { %>
               <% customers.forEach(c => { 
-                const score = c.customerScore !== undefined ? c.customerScore : 85;
-                const isRiskBlocked = score < 50 || c.riskLevel === 'High' || c.riskLevel === 'Blocked' || c.riskLevel === 'Critical';
+                const score = c.musteriSkoru !== undefined ? c.musteriSkoru : (c.customerScore !== undefined ? c.customerScore : 85);
+                const riskLevel = c.riskSeviyesi || c.riskLevel || 'Low';
+                const isRiskBlocked = score < 50 || riskLevel === 'High' || riskLevel === 'Blocked' || riskLevel === 'Critical';
+                const code = c.musteriKodu || c.customerCode || ('CAR-' + c.id);
+                const name = c.firmaAdi || c.companyName || 'İsimsiz Cari';
+                const contact = c.ilgiliKisi || c.contactPerson || '—';
+                const email = c.eposta || c.email || '—';
+                const phone = c.telefon || c.phone || '—';
+                const taxOffice = c.vergiDairesi || c.taxOffice || '';
+                const taxNo = c.vergiNo || c.taxNo || '';
+                const creditLimit = parseFloat(c.krediLimiti !== undefined ? c.krediLimiti : c.creditLimit) || 0;
+                const currentBalance = parseFloat(c.guncelBakiye !== undefined ? c.guncelBakiye : c.currentBalance) || 0;
+                const status = c.durum || c.status || 'Active';
+
                 let stars = '⭐⭐⭐⭐⭐';
                 if (score < 50) stars = '⭐';
                 else if (score < 70) stars = '⭐⭐⭐';
                 else if (score < 90) stars = '⭐⭐⭐⭐';
               %>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= c.customerCode %></strong></td>
-                  <td><strong><%= c.companyName %></strong></td>
-                  <td><%= c.contactPerson || '—' %></td>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= code %></strong></td>
+                  <td><strong><%= name %></strong></td>
+                  <td><%= contact %></td>
                   <td>
-                    <div style="font-size: 0.8rem;"><%= c.email || '—' %></div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= c.phone || '—' %></div>
+                    <div style="font-size: 0.8rem;"><%= email %></div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= phone %></div>
                   </td>
-                  <td style="font-size: 0.8rem;"><%= c.taxOffice ? c.taxOffice + ' / ' : '' %><%= c.taxNo || '—' %></td>
-                  <td><%= parseFloat(c.creditLimit).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> TL</td>
+                  <td style="font-size: 0.8rem;"><%= taxOffice ? taxOffice + ' / ' : '' %><%= taxNo || '—' %></td>
+                  <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;"><%= creditLimit.toLocaleString('tr-TR', {minimumFractionDigits:2}) %> TL</td>
                   <td>
-                    <strong style="color: <%= parseFloat(c.currentBalance) > parseFloat(c.creditLimit) ? 'var(--rose)' : 'var(--emerald)' %>;">
-                      <%= parseFloat(c.currentBalance).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> TL
+                    <strong style="font-family: 'JetBrains Mono', monospace; color: <%= currentBalance > creditLimit ? 'var(--rose)' : 'var(--emerald)' %>;">
+                      <%= currentBalance.toLocaleString('tr-TR', {minimumFractionDigits:2}) %> TL
                     </strong>
                   </td>
                   <td>
@@ -138,7 +150,7 @@
                       </div>
                       <% if (isRiskBlocked) { %>
                         <span class="status-pill status-rejected" style="font-size: 0.7rem; font-weight: 700;">🚫 SİPARİŞ/TEKLİF KİLİTLİ</span>
-                      <% } else if (c.riskLevel === 'Medium' || score < 70) { %>
+                      <% } else if (riskLevel === 'Medium' || score < 70) { %>
                         <span class="status-pill status-pending" style="font-size: 0.7rem;">● Orta Risk</span>
                       <% } else { %>
                         <span class="status-pill status-active" style="font-size: 0.7rem;">● Güvenilir Cari</span>
@@ -146,7 +158,7 @@
                     </div>
                   </td>
                   <td>
-                    <span class="status-pill status-approved">● <%= c.status %></span>
+                    <span class="status-pill status-approved">● <%= status %></span>
                   </td>
                   <td>
                     <a href="/sales/customers/<%= c.id %>" class="btn btn-sm btn-outline-primary" style="white-space: nowrap; font-size: 0.75rem;">👁️ Cari Detay & Ekstre</a>

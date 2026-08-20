@@ -86,6 +86,74 @@ module.exports = (sequelize, DataTypes) => {
     olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    customerCode: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('musteriKodu'); }
+    },
+    companyName: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('firmaAdi'); }
+    },
+    taxOffice: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('vergiDairesi'); }
+    },
+    taxNo: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('vergiNo'); }
+    },
+    contactPerson: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('ilgiliKisi'); }
+    },
+    email: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('eposta'); }
+    },
+    phone: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('telefon'); }
+    },
+    address: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('adres'); }
+    },
+    city: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('sehir'); }
+    },
+    country: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('ulke'); }
+    },
+    creditLimit: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('krediLimiti'); }
+    },
+    currentBalance: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('guncelBakiye'); }
+    },
+    paymentTermDays: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('vadeGunu'); }
+    },
+    riskLevel: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('riskSeviyesi'); }
+    },
+    customerScore: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('musteriSkoru'); }
+    },
+    status: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('durum'); }
+    },
+    notes: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('notlar'); }
     }
   }, {
     sequelize,
