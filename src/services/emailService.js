@@ -11,14 +11,16 @@ class EmailService {
   async getTransporter() {
     // 1. .env veya process.env üzerinden kontrol
     if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      const gmailUser = process.env.GMAIL_USER.trim();
+      const gmailPass = process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, '');
       this.transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_APP_PASSWORD
+          user: gmailUser,
+          pass: gmailPass
         }
       });
-      this.configSource = `Gmail (${process.env.GMAIL_USER})`;
+      this.configSource = `Gmail (${gmailUser})`;
       return this.transporter;
     }
 
