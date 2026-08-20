@@ -64,6 +64,12 @@ app.use(errorHandler);
     await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "seviye" INTEGER DEFAULT 1;`);
     await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "alternatifBilesenStokId" INTEGER;`);
     await sequelize.query(`ALTER TABLE "UrunReceteleri" ADD COLUMN IF NOT EXISTS "alternatifNotlar" TEXT;`);
+    await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "ilgiliKisi" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "iletisimBilgisi" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "faturaAdresi" TEXT;`);
+    await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "sevkAdresi" TEXT;`);
+    await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "istenenTerminTarihi" DATE;`);
+    await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "teslimatSekli" VARCHAR(255);`);
   } catch (e) {
     console.log('Pre-sync alter table warning:', e.message);
   }

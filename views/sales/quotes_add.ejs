@@ -311,16 +311,21 @@
                     <select id="customerId" name="customerId" onchange="fillCustomerName(this)">
                       <option value="">-- Genel / Kayıtsız Müşteri --</option>
                       <% customers.forEach(c=> {
-                        const score = c.customerScore !== undefined ? c.customerScore : 85;
-                        const isBlocked = score < 50 || c.riskLevel==='High' || c.riskLevel==='Blocked' ||
-                          c.riskLevel==='Critical' ; const cLimit=parseFloat(c.creditLimit) || 100000; const
-                          cBal=parseFloat(c.currentBalance) || 0; %>
-                          <option value="<%= c.id %>" data-name="<%= c.companyName %>" data-creditlimit="<%= cLimit %>"
-                            data-currentbalance="<%= cBal %>" data-blocked="<%= isBlocked %>" <%=isBlocked
-                            ? 'disabled style="color:#f43f5e;"' : '' %>>
-                            [<%= c.customerCode %>] <%= c.companyName %>
-                                <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / TEKLİF ENGELLİ)` : `(Puan:
-                                  ${score}/100 ⭐ - Risk Limiti: ${cLimit.toLocaleString('tr-TR')} TL)` %>
+                        const score = c.customerScore !== undefined ? c.customerScore : (c.musteriSkoru !== undefined ? c.musteriSkoru : 85);
+                        const isBlocked = score < 50 || c.riskLevel==='High' || c.riskLevel==='Blocked' || c.riskLevel==='Critical' || c.riskSeviyesi==='Yuksek' || c.riskSeviyesi==='Kritik';
+                        const cLimit=parseFloat(c.creditLimit || c.krediLimiti) || 100000;
+                        const cBal=parseFloat(c.currentBalance || c.guncelBakiye) || 0;
+                        const cPerson = c.contactPerson || c.ilgiliKisi || '';
+                        const cPhone = c.phone || c.telefon || '';
+                        const cEmail = c.email || c.eposta || '';
+                        const cAddress = c.address || c.adres || '';
+                      %>
+                          <option value="<%= c.id %>" data-name="<%= c.companyName || c.firmaAdi %>" data-creditlimit="<%= cLimit %>"
+                            data-currentbalance="<%= cBal %>" data-blocked="<%= isBlocked %>"
+                            data-contactperson="<%= cPerson %>" data-phone="<%= cPhone %>" data-email="<%= cEmail %>" data-address="<%= cAddress %>"
+                            <%=isBlocked ? 'disabled style="color:#f43f5e;"' : '' %>>
+                            [<%= c.customerCode || c.musteriKodu %>] <%= c.companyName || c.firmaAdi %>
+                                <%= isBlocked ? `(Puan: ${score}/100 ⭐ - 🚫 RİSKLİ / TEKLİF ENGELLİ)` : `(Puan: ${score}/100 ⭐ - Risk Limiti: ${cLimit.toLocaleString('tr-TR')} TL)` %>
                           </option>
                           <% }); %>
                     </select>
@@ -331,8 +336,7 @@
                       <div
                         style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div><span style="color: var(--text-muted);">Toplam Risk Limiti:</span> <strong
-                            id="cardCreditLimit" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00
-                            TL</strong></div>
+                            id="cardCreditLimit" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
                         <div><span style="color: var(--text-muted);">Güncel Borç:</span> <strong id="cardCurrentBalance"
                             style="color: #fbbf24; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
                         <div><span style="color: var(--text-muted);">Kullanılabilir Limit:</span> <strong
@@ -347,7 +351,35 @@
                   </div>
                 </div>
 
-                <div class="form-grid form-grid--3">
+                <!-- Readonly Contact Info Grid (Auto-filled from Customer DB) -->
+                <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
+                  <div class="input-group">
+                    <label for="contactPerson">İlgili Kişi <small style="color: var(--text-muted);">(Cari Karttan Otomatik)</small></label>
+                    <input type="text" id="contactPerson" name="contactPerson" placeholder="— Cari seçildiğinde otomatik gelir —" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
+                  </div>
+                  <div class="input-group">
+                    <label for="contactInfo">İletişim Bilgileri (Tel / E-Posta) <small style="color: var(--text-muted);">(Otomatik)</small></label>
+                    <input type="text" id="contactInfo" name="contactInfo" placeholder="— Cari seçildiğinde otomatik gelir —" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
+                  </div>
+                  <div class="input-group">
+                    <label for="requestedDeliveryDate">İstenen Termin Tarihi</label>
+                    <input type="date" id="requestedDeliveryDate" name="requestedDeliveryDate" min="<%= new Date().toISOString().split('T')[0] %>">
+                  </div>
+                </div>
+
+                <!-- Address Inputs Grid -->
+                <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
+                  <div class="input-group">
+                    <label for="billingAddress">Fatura Adresi</label>
+                    <textarea id="billingAddress" name="billingAddress" rows="2" placeholder="Fatura adresi (Cari kartından otomatik doldurulur, düzenlenebilir)" style="width:100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 10px; font-size: 0.875rem;"></textarea>
+                  </div>
+                  <div class="input-group">
+                    <label for="shippingAddress">Sevk Adresi</label>
+                    <textarea id="shippingAddress" name="shippingAddress" rows="2" placeholder="Sevkiyat adresi (Cari kartından otomatik doldurulur, düzenlenebilir)" style="width:100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 10px; font-size: 0.875rem;"></textarea>
+                  </div>
+                </div>
+
+                <div class="form-grid form-grid--2">
                   <div class="input-group">
                     <label for="quotationDate">Teklif Tarihi <small
                         style="color: var(--text-muted);">(Bugün)</small></label>
@@ -359,14 +391,6 @@
                     <label for="validUntil">Geçerlilik Son Tarihi <span class="req-star">*</span></label>
                     <input type="date" id="validUntil" name="validUntil" value=""
                       min="<%= new Date().toISOString().split('T')[0] %>" required>
-                  </div>
-                  <div class="input-group">
-                    <label for="currency">Para Birimi</label>
-                    <select id="currency" name="currency" onchange="recalculate()">
-                      <option value="TRY">TRY (₺)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR (€)">EUR (€)</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -417,7 +441,17 @@
                       tüm ürünleri ekleyin, miktar ve satır bazlı iskontoları belirtin.</p>
                   </div>
 
-                  <div>
+                  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <!-- PARA BİRİMİ SELECT EVENTİ (Ürünler Ekranında) -->
+                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(15, 23, 42, 0.9); border: 1px solid var(--border); padding: 6px 14px; border-radius: 10px;">
+                      <label for="currency" style="font-size: 0.825rem; font-weight: 700; color: #818cf8; margin: 0; white-space: nowrap;">💱 Para Birimi:</label>
+                      <select id="currency" name="currency" onchange="recalculate()" style="background: transparent; border: none; color: #fff; font-size: 0.875rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; outline: none; cursor: pointer;">
+                        <option value="TRY" style="background: #0f172a; color: #fff;">TRY (₺)</option>
+                        <option value="USD" style="background: #0f172a; color: #fff;">USD ($)</option>
+                        <option value="EUR" style="background: #0f172a; color: #fff;">EUR (€)</option>
+                      </select>
+                    </div>
+
                     <button type="button" onclick="openProductSelectModal()" class="btn btn-sm"
                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); gap: 8px;">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
@@ -523,7 +557,7 @@
                   <span>📝</span> 3. Teklif Koşulları, Teslimat Şartları ve Özel Notlar
                 </h4>
 
-                <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
+                <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
                   <div class="input-group">
                     <label for="paymentTerm">Ödeme Koşulu</label>
                     <select id="paymentTerm" name="paymentTerm">
@@ -539,6 +573,12 @@
                     <input type="text" id="deliveryTerm" name="deliveryTerm"
                       placeholder="Örn: Sipariş onayından sonra 7 iş günü içinde adrese teslim."
                       value="Sipariş onayından sonra 7 iş günü içinde adrese teslim.">
+                  </div>
+                  <div class="input-group">
+                    <label for="deliveryTerms">Teslimat Şekli</label>
+                    <input type="text" id="deliveryTerms" name="deliveryTerms"
+                      placeholder="Örn: Fabrika Teslim (EXW) veya Adrese Teslim (DDP)"
+                      value="Fabrika Teslim (EXW)">
                   </div>
                 </div>
 
@@ -678,19 +718,35 @@
         alert('⛔ DİKKAT: Seçilen cari müşterinin risk seviyesi yüksek veya puanı kritik olduğu için yeni teklif/sipariş oluşturulamaz!');
         selectEl.value = '';
         document.getElementById('customerName').value = '';
+        document.getElementById('contactPerson').value = '';
+        document.getElementById('contactInfo').value = '';
+        document.getElementById('billingAddress').value = '';
+        document.getElementById('shippingAddress').value = '';
         document.getElementById('customerRiskCard').style.display = 'none';
         selectedCustomerCreditLimit = 0;
         selectedCustomerCurrentBalance = 0;
         return;
       }
 
-      const name = selectedOption.getAttribute('data-name');
+      const name = selectedOption.getAttribute('data-name') || '';
+      const contactPerson = selectedOption.getAttribute('data-contactperson') || '—';
+      const phone = selectedOption.getAttribute('data-phone') || '';
+      const email = selectedOption.getAttribute('data-email') || '';
+      const address = selectedOption.getAttribute('data-address') || '';
+
+      let contactInfoStr = '—';
+      if (phone && email) contactInfoStr = `${phone} / ${email}`;
+      else if (phone) contactInfoStr = phone;
+      else if (email) contactInfoStr = email;
+
       const cLimit = parseFloat(selectedOption.getAttribute('data-creditlimit')) || 0;
       const cBalance = parseFloat(selectedOption.getAttribute('data-currentbalance')) || 0;
 
-      if (name) {
-        document.getElementById('customerName').value = name;
-      }
+      document.getElementById('customerName').value = name;
+      document.getElementById('contactPerson').value = selectEl.value ? contactPerson : '';
+      document.getElementById('contactInfo').value = selectEl.value ? contactInfoStr : '';
+      document.getElementById('billingAddress').value = selectEl.value ? address : '';
+      document.getElementById('shippingAddress').value = selectEl.value ? address : '';
 
       const riskCard = document.getElementById('customerRiskCard');
       if (selectEl.value && cLimit > 0) {

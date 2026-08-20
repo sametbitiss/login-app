@@ -98,9 +98,57 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    ilgiliKisi: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    iletisimBilgisi: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    faturaAdresi: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    sevkAdresi: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    istenenTerminTarihi: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    teslimatSekli: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    contactPerson: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('ilgiliKisi'); }
+    },
+    contactInfo: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('iletisimBilgisi'); }
+    },
+    billingAddress: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('faturaAdresi'); }
+    },
+    shippingAddress: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('sevkAdresi'); }
+    },
+    requestedDeliveryDate: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('istenenTerminTarihi'); }
+    },
+    deliveryTerms: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('teslimatSekli'); }
     },
     quotationNo: {
       type: DataTypes.VIRTUAL,
