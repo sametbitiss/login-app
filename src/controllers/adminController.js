@@ -498,12 +498,11 @@ class AdminController {
   });
 
   updateCompanySettings = asyncHandler(async (req, res) => {
-    const { SirketProfili } = require('../../models');
-    await SirketProfili.sync();
-    let profile = await SirketProfili.findOne({ order: [['id', 'ASC']] });
+    const { validateCompanyProfile } = require('../validations/companyValidation');
+    const { valid, errors } = validateCompanyProfile(req);
 
     const updateData = {
-      unvan: (req.body.unvan || '').trim() || 'ENTERPRISE ERP A.Ş.',
+      unvan: (req.body.unvan || '').trim(),
       markaAdi: (req.body.markaAdi || '').trim(),
       vergiDairesi: (req.body.vergiDairesi || '').trim(),
       vergiNo: (req.body.vergiNo || '').trim(),
@@ -516,6 +515,19 @@ class AdminController {
       bankaBilgileri: (req.body.bankaBilgileri || '').trim(),
       notlar: (req.body.notlar || '').trim()
     };
+
+    if (!valid) {
+      return res.render('admin/company_settings', {
+        user: req.user,
+        profile: updateData,
+        success: null,
+        error: errors.join(' • ')
+      });
+    }
+
+    const { SirketProfili } = require('../../models');
+    await SirketProfili.sync();
+    let profile = await SirketProfili.findOne({ order: [['id', 'ASC']] });
 
     if (profile) {
       await profile.update(updateData);
