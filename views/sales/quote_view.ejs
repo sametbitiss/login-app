@@ -3,86 +3,244 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Satış Teklifi Detayı (<%= quote ? quote.quotationNo : '' %>) — Enterprise ERP</title>
+  <title>Satış Teklifi <%= quote ? (quote.teklifNo || quote.quotationNo) : '' %> — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     @media print {
+      body { background: #fff !important; color: #000 !important; font-size: 11pt !important; }
       .module-sidebar, .module-topbar, .no-print { display: none !important; }
-      .module-main { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-      .paper-invoice { border: none !important; box-shadow: none !important; background: #ffffff !important; color: #0f172a !important; }
+      .module-main { margin-left: 0 !important; width: 100% !important; padding: 0 !important; background: transparent !important; }
+      .pdf-paper { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; background: #fff !important; }
+      .data-table th { background: #f1f5f9 !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
-    
-    .paper-invoice { 
-      background: #ffffff; 
+
+    .pdf-paper {
+      background: #ffffff;
       color: #0f172a;
-      border: 1px solid #cbd5e1; 
-      border-radius: 16px; 
-      padding: 44px; 
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); 
-      max-width: 920px; 
-      margin: 0 auto 30px auto; 
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 44px 48px;
+      box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.4);
+      max-width: 900px;
+      margin: 1.5rem auto 3rem auto;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
-    .pi-header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: flex-start; 
-      border-bottom: 2px solid #e2e8f0; 
-      padding-bottom: 24px; 
-      margin-bottom: 30px; 
+
+    .pdf-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 24px;
+      margin-bottom: 24px;
     }
-    .pi-brand { 
-      font-size: 1.6rem; 
-      font-weight: 900; 
-      color: #312e81; 
-      display: flex; 
-      align-items: center; 
-      gap: 12px; 
+
+    .company-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .company-title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #0f172a;
       letter-spacing: -0.02em;
+      margin: 0;
     }
-    .pi-title { text-align: right; }
-    .pi-title h2 { font-size: 1.6rem; font-weight: 900; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
-    .pi-title p { color: #334155; font-size: 0.95rem; font-weight: 600; margin: 5px 0 0 0; }
-    .pi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px; }
-    .pi-box { 
-      background: #f8fafc; 
-      padding: 20px; 
-      border-radius: 12px; 
-      border: 1px solid #cbd5e1; 
+
+    .company-details {
+      font-size: 0.8rem;
+      color: #475569;
+      line-height: 1.5;
+      font-weight: 500;
     }
-    .pi-box h4 { 
-      font-size: 0.85rem; 
-      font-weight: 800; 
-      color: #475569; 
-      text-transform: uppercase; 
-      margin-bottom: 10px; 
-      letter-spacing: 0.05em;
+
+    .pdf-doc-info {
+      text-align: right;
     }
-    .pi-box p { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 6px 0; }
-    .pi-box-detail { color: #334155; font-size: 0.9rem; font-weight: 500; line-height: 1.6; }
-    
-    .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-    .summary-table th { 
-      background: #e2e8f0; 
-      color: #0f172a; 
-      font-weight: 800; 
-      text-align: left; 
-      padding: 14px 16px; 
-      border-bottom: 2px solid #94a3b8; 
-      font-size: 0.9rem;
+
+    .pdf-doc-badge {
+      display: inline-block;
+      background: #0f172a;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 8px;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
     }
-    .summary-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; color: #0f172a; font-weight: 500; }
-    .totals-box { margin-left: auto; width: 340px; background: #f8fafc; padding: 16px 20px; border-radius: 12px; border: 1px solid #cbd5e1; }
-    .tb-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; color: #334155; font-weight: 600; }
-    .tb-row strong { color: #0f172a; }
-    .tb-row.final { 
-      border-bottom: none; 
-      font-size: 1.25rem; 
-      font-weight: 900; 
-      color: #312e81; 
-      border-top: 2px solid #cbd5e1; 
-      padding-top: 14px; 
-      margin-top: 6px; 
+
+    .info-table {
+      font-size: 0.85rem;
+      margin-left: auto;
+    }
+
+    .info-table td {
+      padding: 3px 0;
+      text-align: right;
+    }
+
+    .info-table td.lbl {
+      color: #64748b;
+      font-weight: 600;
+      padding-right: 10px;
+    }
+
+    .info-table td.val {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .pdf-section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .pdf-card-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .pdf-card-title {
+      font-size: 0.775rem;
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pdf-card-body {
+      font-size: 0.85rem;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    .pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+
+    .pdf-table th {
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 10px 12px;
+      text-align: left;
+      border: 1px solid #0f172a;
+    }
+
+    .pdf-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      border-left: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
+      font-size: 0.85rem;
+      color: #0f172a;
+    }
+
+    .totals-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 28px;
+      gap: 20px;
+    }
+
+    .notes-box {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.825rem;
+    }
+
+    .totals-box {
+      width: 320px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .tot-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 0.85rem;
+      color: #475569;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 600;
+    }
+
+    .tot-row strong {
+      color: #0f172a;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .tot-row.grand {
+      border-top: 2px solid #0f172a;
+      border-bottom: none;
+      padding-top: 12px;
+      margin-top: 6px;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .signature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 35px;
+      padding-top: 24px;
+      border-top: 1px dashed #cbd5e1;
+    }
+
+    .sig-box {
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      background: #fff;
+    }
+
+    .sig-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      margin-bottom: 45px;
+    }
+
+    .sig-line {
+      border-top: 1px solid #94a3b8;
+      width: 70%;
+      margin: 0 auto 6px auto;
+    }
+
+    .sig-sub {
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 600;
     }
   </style>
   <script src="/sidebar.js" defer></script>
@@ -98,15 +256,35 @@
     </div>
 
     <div class="module-sidebar-section">
-      <div class="mss-label">SATIŞ YÖNETİMİ</div>
+      <div class="mss-label">💼 SATIŞ & PAZARLAMA</div>
+
+      <div class="mss-group-title">📊 DASHBOARD & ONAY</div>
+      <div class="mss-sub">
+        <a href="/sales/analytics" class="mss-sub-link">📊 Satış Analitiği</a>
+        <a href="/sales/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+      </div>
+
+      <div class="mss-group-title">📋 SATIŞ OPERASYONLARI</div>
       <div class="mss-sub">
         <a href="/sales/quotes" class="mss-sub-link active">📜 Teklif & Fiyatlandırma</a>
-        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri Listesi</a>
-        <a href="/sales/customers" class="mss-sub-link">👥 Cari & Müşteri Kartları</a>
+        <a href="/sales/quotes/add" class="mss-sub-link">➕ Yeni Teklif Oluştur</a>
+        <a href="/sales/orders" class="mss-sub-link">📋 Satış Siparişleri</a>
         <a href="/sales/dispatches" class="mss-sub-link">🚚 Sevkiyat & İrsaliye</a>
-        <a href="/sales/invoices" class="mss-sub-link">🧾 Faturalandırma</a>
-        <a href="/sales/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
-        <a href="/sales/analytics" class="mss-sub-link">📊 Satış Analitiği</a>
+        <a href="/sales/invoices" class="mss-sub-link">🧾 Satış Faturaları</a>
+      </div>
+
+      <div class="mss-group-title">👥 MÜŞTERİ & FİYAT YÖNETİMİ</div>
+      <div class="mss-sub">
+        <a href="/sales/customers" class="mss-sub-link">👥 Cari Müşteri Kartları</a>
+        <a href="/sales/price-lists" class="mss-sub-link">💰 Özel Fiyat Listeleri</a>
+      </div>
+    </div>
+
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
       </div>
     </div>
   </aside>
@@ -114,13 +292,19 @@
   <div class="module-main">
     <header class="module-topbar no-print">
       <div class="mt-left">
-        <a href="/sales/quotes" class="btn btn-outline-secondary btn-sm">← Tekliflere Dön</a>
+        <a href="/sales/quotes" class="btn btn-outline-secondary btn-sm" style="font-weight: 600; border-radius: 8px;">
+          ← Teklif Listesine Dön
+        </a>
       </div>
       <div class="mt-right" style="display: flex; gap: 10px;">
-        <button onclick="window.print()" class="btn btn-outline-primary btn-sm">🖨️ Teklifi Yazdır / PDF</button>
-        <% if (quote && quote.status === 'Approved') { %>
+        <button onclick="window.print()" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-weight: 700; border-radius: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+          🖨️ Teklifi Yazdır / PDF İndir
+        </button>
+        <% if (quote && (quote.durum === 'Approved' || quote.status === 'Approved' || quote.durum === 'Active' || quote.durum === 'Draft')) { %>
           <form action="/sales/quotes/<%= quote.id %>/convert" method="POST" style="display:inline;">
-            <button type="submit" class="btn btn-success btn-sm">⚡ Siparişe Dönüştür</button>
+            <button type="submit" class="btn btn-warning btn-sm" style="font-weight: 700; border-radius: 8px;">
+              🛍️ Siparişe Dönüştür
+            </button>
           </form>
         <% } %>
       </div>
@@ -128,102 +312,226 @@
 
     <main class="module-content">
       <% if (!quote) { %>
-        <div class="alert alert-danger">Teklif bulunamadı.</div>
-      <% } else { %>
-        <div class="paper-invoice">
-          <div class="pi-header">
-            <div class="pi-brand">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#4338ca"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-              ENTERPRISE A.Ş.
+        <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #f43f5e; padding: 1.5rem; border-radius: 12px; font-weight: 700; text-align: center;">
+          ⚠️ Teklif kaydı bulunamadı veya silinmiş.
+        </div>
+      <% } else { 
+        const qNo = quote.teklifNo || quote.quotationNo || 'TEK-2026-0000';
+        const cName = quote.musteriAdi || quote.customerName || (quote.musteri ? (quote.musteri.firmaAdi || quote.musteri.companyName) : 'Genel Müşteri');
+        const cCode = quote.musteri ? (quote.musteri.musteriKodu || quote.musteri.customerCode) : 'GENEL-000';
+        const cTaxNo = quote.musteri ? (quote.musteri.vergiNo || quote.musteri.taxNo || '—') : '—';
+        const cTaxOffice = quote.musteri ? (quote.musteri.vergiDairesi || quote.musteri.taxOffice || '—') : '—';
+
+        const contactPerson = quote.ilgiliKisi || quote.contactPerson || (quote.musteri ? (quote.musteri.ilgiliKisi || quote.musteri.contactPerson) : '—') || '—';
+        const contactInfo = quote.iletisimBilgisi || quote.contactInfo || (quote.musteri ? `${quote.musteri.telefon || quote.musteri.phone || ''} ${quote.musteri.eposta || quote.musteri.email || ''}`.trim() : '—') || '—';
+        const billingAddr = quote.faturaAdresi || quote.billingAddress || (quote.musteri ? (quote.musteri.adres || quote.musteri.address) : '—') || '—';
+        const shippingAddr = quote.sevkAdresi || quote.shippingAddress || (quote.musteri ? (quote.musteri.adres || quote.musteri.address) : '—') || '—';
+
+        const qDate = quote.teklifTarihi || quote.quotationDate || new Date().toISOString().split('T')[0];
+        const vUntil = quote.gecerlilikBitis || quote.validUntil || '—';
+        const reqDelivery = quote.istenenTerminTarihi || quote.requestedDeliveryDate || '—';
+        const delTerms = quote.teslimatSekli || quote.deliveryTerms || 'Fabrika Teslim (EXW)';
+
+        const currency = quote.paraBirimi || quote.currency || 'TRY';
+        const currSign = currency === 'USD' ? '$' : (currency === 'EUR' ? '€' : '₺');
+
+        const subtotal = parseFloat(quote.araToplam !== undefined ? quote.araToplam : (quote.subtotal !== undefined ? quote.subtotal : 0)) || 0;
+        const discountAmount = parseFloat(quote.iskontoTutari !== undefined ? quote.iskontoTutari : (quote.discountAmount !== undefined ? quote.discountAmount : 0)) || 0;
+        const taxAmount = parseFloat(quote.kdvTutari !== undefined ? quote.kdvTutari : (quote.taxAmount !== undefined ? quote.taxAmount : 0)) || 0;
+        const totalAmount = parseFloat(quote.toplamTutar !== undefined ? quote.toplamTutar : (quote.totalAmount !== undefined ? quote.totalAmount : 0)) || 0;
+
+        const statusStr = quote.durum || quote.status || 'Draft';
+        let statusBadge = `<span style="background: #3b82f6; color: #fff; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.775rem;">Aktif Teklif</span>`;
+        if (statusStr === 'Converted' || statusStr === 'Siparişe Dönüştü') {
+          statusBadge = `<span style="background: #10b981; color: #fff; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.775rem;">✓ Siparişe Dönüştü</span>`;
+        } else if (statusStr === 'Pending_Approval' || statusStr === 'Onay Bekliyor') {
+          statusBadge = `<span style="background: #f59e0b; color: #fff; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.775rem;">⏳ Yönetsel Onay Bekliyor</span>`;
+        } else if (statusStr === 'Rejected' || statusStr === 'Reddedildi') {
+          statusBadge = `<span style="background: #ef4444; color: #fff; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.775rem;">✕ Reddedildi</span>`;
+        }
+      %>
+        <!-- A4 OFFICIAL PDF OFFER SHEET -->
+        <div class="pdf-paper">
+          
+          <!-- PDF Header -->
+          <div class="pdf-header">
+            <div>
+              <div class="company-brand">
+                <svg width="34" height="34" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0f172a"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+                <h1 class="company-title">ENTERPRISE ERP A.Ş.</h1>
+              </div>
+              <div class="company-details">
+                Organize Sanayi Bölgesi 1. Cadde No:42 Nilüfer / BURSA<br>
+                Tel: +90 (224) 444 0 377 | E-Posta: satis@enterprise-erp.com.tr<br>
+                Mersis No: 0388012345600017 | Vergi Dairesi: Nilüfer V.D. 3880123456
+              </div>
             </div>
-            <div class="pi-title">
-              <h2>SATIŞ TEKLİFİ</h2>
-              <p>Teklif No: <strong style="color: #4338ca;"><%= quote.quotationNo %></strong></p>
-              <p>Tarih: <strong><%= quote.quotationDate %></strong></p>
-              <p>Geçerlilik: <strong><%= quote.validUntil || 'Belirtilmedi' %></strong></p>
+
+            <div class="pdf-doc-info">
+              <div class="pdf-doc-badge">SATIŞ TEKLİFİ</div>
+              <table class="info-table">
+                <tr><td class="lbl">Teklif No:</td><td class="val" style="font-family: 'JetBrains Mono', monospace; color: #4338ca;"><%= qNo %></td></tr>
+                <tr><td class="lbl">Teklif Tarihi:</td><td class="val"><%= qDate %></td></tr>
+                <tr><td class="lbl">Geçerlilik Sonu:</td><td class="val"><%= vUntil %></td></tr>
+                <tr><td class="lbl">İstenen Termin:</td><td class="val"><%= reqDelivery %></td></tr>
+                <tr><td class="lbl">Teklif Statüsü:</td><td class="val" style="padding-top: 4px;"><%- statusBadge %></td></tr>
+              </table>
             </div>
           </div>
 
-          <div class="pi-grid">
-            <div class="pi-box">
-              <h4>MÜŞTERİ BİLGİLERİ</h4>
-              <p><%= quote.customerName %></p>
-              <div class="pi-box-detail">
-                <%= quote.customer ? 'Cari Kodu: ' + quote.customer.customerCode : '' %><br>
-                <%= quote.customer && quote.customer.taxNo ? 'Vergi No: ' + quote.customer.taxNo : '' %><br>
-                <%= quote.customer && quote.customer.phone ? 'Tel: ' + quote.customer.phone : '' %>
+          <!-- Section Grid: Customer & Delivery Addresses -->
+          <div class="pdf-section-grid">
+            <div class="pdf-card-box">
+              <div class="pdf-card-title">
+                🏢 Cari Müşteri & İletişim Bilgileri
+              </div>
+              <div class="pdf-card-body">
+                <strong style="font-size: 1rem; color: #0f172a; display: block; margin-bottom: 4px;"><%= cName %></strong>
+                <div><strong>Müşteri Kodu:</strong> <span style="font-family: 'JetBrains Mono', monospace; color: #4338ca;"><%= cCode %></span></div>
+                <div><strong>Vergi Dairesi / No:</strong> <%= cTaxOffice %> / <%= cTaxNo %></div>
+                <div><strong>İlgili Kişi:</strong> <%= contactPerson %></div>
+                <div><strong>İletişim Bilgisi:</strong> <%= contactInfo %></div>
               </div>
             </div>
-            <div class="pi-box">
-              <h4>TEKLİF DURUMU & KOŞULLARI</h4>
-              <p>Statü: 
-                <span class="badge bg-primary" style="font-size: 0.85rem; padding: 4px 10px;"><%= quote.status %></span>
-              </p>
-              <div class="pi-box-detail">
-                Para Birimi: <strong style="color: #0f172a;"><%= quote.currency %></strong><br>
-                Hazırlayan: <strong style="color: #0f172a;"><%= quote.creator ? quote.creator.username : 'Satış Temsilcisi' %></strong>
+
+            <div class="pdf-card-box">
+              <div class="pdf-card-title">
+                🚚 Fatura & Sevkiyat Adres Bilgileri
+              </div>
+              <div class="pdf-card-body">
+                <div style="margin-bottom: 8px;">
+                  <strong style="color: #475569; font-size: 0.775rem; text-transform: uppercase; display: block;">Fatura Adresi:</strong>
+                  <span style="color: #0f172a;"><%= billingAddr %></span>
+                </div>
+                <div>
+                  <strong style="color: #475569; font-size: 0.775rem; text-transform: uppercase; display: block;">Sevk Adresi:</strong>
+                  <span style="color: #0f172a;"><%= shippingAddr %></span>
+                </div>
               </div>
             </div>
           </div>
 
-          <table class="summary-table">
+          <!-- Products Table -->
+          <table class="pdf-table">
             <thead>
               <tr>
-                <th>Ürün / Hizmet Açıklaması</th>
-                <th>Miktar</th>
-                <th>Birim Fiyat</th>
-                <th>İskonto</th>
-                <th>KDV (%)</th>
-                <th class="text-end">Toplam Tutar</th>
+                <th style="width: 35px; text-align: center;">#</th>
+                <th style="width: 120px;">Stok Kodu</th>
+                <th>Ürün / Mamul Kalemi Açıklaması</th>
+                <th style="width: 90px; text-align: center;">Miktar</th>
+                <th style="width: 110px; text-align: right;">Birim Fiyat</th>
+                <th style="width: 80px; text-align: center;">İsk. %</th>
+                <th style="width: 75px; text-align: center;">KDV %</th>
+                <th style="width: 130px; text-align: right;">Satır Toplamı</th>
               </tr>
             </thead>
             <tbody>
-              <% (items && items.length > 0 ? items : [quote]).forEach(item => { %>
+              <% if (items && items.length > 0) { %>
+                <% items.forEach((it, idx) => { 
+                  const stCode = it.stockCode || it.stokKodu || (quote.stokKarti ? quote.stokKarti.stokKodu : 'STK');
+                  const stName = it.name || it.ad || (quote.stokKarti ? quote.stokKarti.ad : 'Ürün Kalemi');
+                  const qty = parseFloat(it.quantity !== undefined ? it.quantity : (it.miktar !== undefined ? it.miktar : 1)) || 1;
+                  const price = parseFloat(it.unitPrice !== undefined ? it.unitPrice : (it.birimFiyat !== undefined ? it.birimFiyat : 0)) || 0;
+                  const disc = parseFloat(it.discountRate !== undefined ? it.discountRate : (it.iskontoOrani !== undefined ? it.iskontoOrani : 0)) || 0;
+                  const tax = parseFloat(it.taxRate !== undefined ? it.taxRate : (it.kdvOrani !== undefined ? it.kdvOrani : 20)) || 20;
+
+                  const lineSubtotal = qty * price;
+                  const lineDiscount = lineSubtotal * (disc / 100);
+                  const lineNet = lineSubtotal - lineDiscount;
+                  const lineTax = lineNet * (tax / 100);
+                  const lineTotal = parseFloat(it.totalAmount !== undefined ? it.totalAmount : (lineNet + lineTax)) || (lineNet + lineTax);
+                %>
+                  <tr>
+                    <td style="text-align: center; font-weight: 700; color: #64748b;"><%= idx + 1 %></td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700; color: #4338ca;"><%= stCode %></td>
+                    <td><strong style="color: #0f172a;"><%= stName %></strong></td>
+                    <td style="text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;"><%= qty.toLocaleString('tr-TR') %> Adet</td>
+                    <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></td>
+                    <td style="text-align: center; font-weight: 700; color: <%= disc > 0 ? '#ef4444' : '#64748b' %>;">%<%= disc %></td>
+                    <td style="text-align: center; color: #475569;">%<%= tax %></td>
+                    <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #0f172a;"><%= lineTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></td>
+                  </tr>
+                <% }); %>
+              <% } else { %>
                 <tr>
-                  <td>
-                    <strong style="font-size: 0.95rem; color: #0f172a;"><%= item.name || (quote.stockItem ? quote.stockItem.name : 'Ürün Kalemi') %></strong><br>
-                    <span style="color: #64748b; font-weight: 600; font-size: 0.8rem;"><%= item.stockCode || (quote.stockItem ? quote.stockItem.stockCode : '-') %></span>
-                  </td>
-                  <td><strong><%= item.quantity %></strong> Adet</td>
-                  <td><strong><%= Number(item.unitPrice).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %></strong> <%= quote.currency %></td>
-                  <td><strong style="color: #dc2626;">%<%= item.discountRate || 0 %></strong></td>
-                  <td>%<%= item.taxRate !== undefined ? item.taxRate : quote.taxRate %></td>
-                  <td class="text-end" style="font-size: 1rem; font-weight: 800; color: #4338ca;">
-                    <%= Number(item.totalAmount || ((item.quantity * item.unitPrice) * (1 - (item.discountRate||0)/100) * (1 + (item.taxRate||20)/100))).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %>
+                  <td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">
+                    Bu teklife henüz ürün kalemi eklenmemiştir.
                   </td>
                 </tr>
-              <% }); %>
+              <% } %>
             </tbody>
           </table>
 
-          <div class="totals-box">
-            <div class="tb-row">
-              <span>Ara Toplam:</span>
-              <strong><%= Number(quote.subtotal).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></strong>
+          <!-- Totals & Terms Section -->
+          <div class="totals-container">
+            <div class="notes-box">
+              <strong style="font-size: 0.85rem; color: #0f172a; display: block; margin-bottom: 8px;">📝 Teklif Şartları, Teslimat & Özel Notlar:</strong>
+              <div style="line-height: 1.6; color: #334155;">
+                <div>• <strong>Ödeme Koşulu:</strong> <%= quote.paymentTerm || quote.odemeVadesi || '30 Gün Vadeli' %></div>
+                <div>• <strong>Sevkiyat Süresi:</strong> <%= quote.deliveryTerm || 'Sipariş onayından sonra 7 iş günü içinde teslim.' %></div>
+                <div>• <strong>Teslimat Şekli:</strong> <%= delTerms %></div>
+                <% if (quote.notes || quote.notlar) { %>
+                  <div style="margin-top: 8px; border-top: 1px solid #e2e8f0; padding-top: 6px; font-style: italic; color: #475569;">
+                    "<%= quote.notes || quote.notlar %>"
+                  </div>
+                <% } %>
+              </div>
             </div>
-            <div class="tb-row">
-              <span>İskonto Tutar:</span>
-              <strong style="color: #dc2626;">-<%= Number(quote.discountAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></strong>
-            </div>
-            <div class="tb-row">
-              <span>KDV Tutarı:</span>
-              <strong><%= Number(quote.taxAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></strong>
-            </div>
-            <div class="tb-row final">
-              <span>GENEL TOPLAM:</span>
-              <span><%= Number(quote.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= quote.currency %></span>
+
+            <div class="totals-box">
+              <div class="tot-row">
+                <span>Ara Toplam (Brüt):</span>
+                <strong><%= subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></strong>
+              </div>
+              <div class="tot-row">
+                <span>Toplam İskonto:</span>
+                <strong style="color: #ef4444;">- <%= discountAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></strong>
+              </div>
+              <div class="tot-row">
+                <span>Hesaplanan KDV:</span>
+                <strong><%= taxAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></strong>
+              </div>
+              <div class="tot-row grand">
+                <span>GENEL TOPLAM:</span>
+                <span><%= totalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></span>
+              </div>
             </div>
           </div>
 
-          <% if (quote.notes) { %>
-            <div style="margin-top: 30px; background: #fefce8; padding: 18px; border-radius: 12px; border: 1px solid #fef08a; color: #713f12;">
-              <strong style="font-size: 0.95rem;">Teklif Notları & Koşulları:</strong>
-              <p style="margin: 6px 0 0 0; font-size: 0.95rem; font-weight: 500; color: #854d0e;"><%= quote.notes %></p>
+          <!-- Formal Corporate Signature Blocks -->
+          <div class="signature-grid">
+            <div class="sig-box">
+              <div class="sig-title">Teklifi Hazırlayan & Satan</div>
+              <div class="sig-line"></div>
+              <div class="sig-sub">
+                <strong><%= quote.olusturan ? (quote.olusturan.ad ? `${quote.olusturan.ad} ${quote.olusturan.soyad}` : quote.olusturan.kullaniciAdi) : 'Satış Departmanı' %></strong><br>
+                Enterprise ERP A.Ş. Satış Temsilcisi
+              </div>
             </div>
-          <% } %>
+
+            <div class="sig-box">
+              <div class="sig-title">Müşteri Onayı & Firma Kaşesi</div>
+              <div class="sig-line"></div>
+              <div class="sig-sub">
+                <strong><%= cName %></strong><br>
+                Yetkili İmza & Kaşe
+              </div>
+            </div>
+          </div>
+
         </div>
       <% } %>
     </main>
   </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
 </body>
 </html>
