@@ -1,4 +1,5 @@
 'use strict';
+const bcrypt = require('bcrypt');
 const userRepository = require('../repositories/userRepository');
 const emailService = require('./emailService');
 const logger = require('../utils/logger');
@@ -20,10 +21,10 @@ class AuthService {
   }
 
   /**
-   * Kullanıcı adına göre 6 haneli doğrulama kodu üretir ve e-postaya gönderir.
+   * Kullanıcı adı ve şifreyi doğrular, geçerliyse 6 haneli doğrulama kodu üretip e-postaya gönderir.
    * Kod veritabanında yalnızca 1 dakika (60 saniye) geçerli tutulur.
    */
-  async sendVerificationCode(username, ip = null) {
+  async sendVerificationCode(username, password = null, ip = null, isResend = false) {
     if (!username || !username.trim()) {
       throw new Error('Lütfen kullanıcı adınızı giriniz.');
     }
@@ -37,7 +38,18 @@ class AuthService {
     }
 
     if (!user) {
-      throw new Error('Belirtilen kullanıcı adı sistemde kayıtlı değildir.');
+      throw new Error('Girdiğiniz kullanıcı adı veya şifre hatalı.');
+    }
+
+    // Eğer yeniden kod gönderimi (resend) değilse şifre kontrolü yap
+    if (!isResend) {
+      if (!password) {
+        throw new Error('Lütfen şifrenizi giriniz.');
+      }
+      const isMatch = await bcrypt.compare(password, user.sifre || user.password);
+      if (!isMatch) {
+        throw new Error('Girdiğiniz kullanıcı adı veya şifre hatalı.');
+      }
     }
 
     const userStatus = user.durum || user.status;
@@ -87,7 +99,7 @@ class AuthService {
    */
   async verifyCode(userId, inputCode, ip = null) {
     if (!userId) {
-      throw new Error('Geçersiz doğrulama oturumu. Lütfen kullanıcı adınızı tekrar giriniz.');
+      throw new Error('Geçersiz doğrulama oturumu. Lütfen kullanıcı adınızı ve şifrenizi tekrar giriniz.');
     }
 
     if (!inputCode || String(inputCode).trim().length !== 6) {
@@ -107,7 +119,7 @@ class AuthService {
     }
 
     if (!user.dogrulamaKodu || !user.dogrulamaKoduSonKullanma) {
-      throw new Error('Aktif bir doğrulama kodu bulunamadı veya kodun süresi doldu. Lütfen yeni kod talep ediniz.');
+      throw new Error('Aktif bir doğrulama kodu bulunamadı veya kodun süresi doldu. Lütfen tekrar kod talep ediniz.');
     }
 
     const now = new Date();

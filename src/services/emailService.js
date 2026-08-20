@@ -5,27 +5,72 @@ const logger = require('../utils/logger');
 class EmailService {
   constructor() {
     this.transporter = null;
-    this.initTransporter();
+    this.configSource = 'Uninitialized';
   }
 
-  async initTransporter() {
+  async getTransporter() {
+    // 1. .env veya process.env üzerinden kontrol
+    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD
+        }
+      });
+      this.configSource = `Gmail (${process.env.GMAIL_USER})`;
+      return this.transporter;
+    }
+
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      this.transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+      this.configSource = `Custom SMTP (${process.env.SMTP_HOST}:${process.env.SMTP_PORT || 587})`;
+      return this.transporter;
+    }
+
+    // 2. Veritabanı Sistem Ayarlarından Kontrol
     try {
-      if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-        this.transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: parseInt(process.env.SMTP_PORT || '587', 10),
-          secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-          },
-          tls: {
-            rejectUnauthorized: false
-          }
-        });
-        logger.info('Nodemailer: Özel SMTP sunucusu yapılandırıldı.');
-      } else {
-        // Otomatik test/geliştirme hesabı (Ethereal Email) oluştur
+      const { SistemAyari } = require('../../models');
+      if (SistemAyari) {
+        const smtpHost = await SistemAyari.findOne({ where: { anahtar: 'smtp_host' } });
+        const smtpUser = await SistemAyari.findOne({ where: { anahtar: 'smtp_user' } });
+        const smtpPass = await SistemAyari.findOne({ where: { anahtar: 'smtp_pass' } });
+        const smtpPort = await SistemAyari.findOne({ where: { anahtar: 'smtp_port' } });
+
+        if (smtpHost && smtpHost.deger && smtpUser && smtpUser.deger && smtpPass && smtpPass.deger) {
+          this.transporter = nodemailer.createTransport({
+            host: smtpHost.deger,
+            port: parseInt(smtpPort ? smtpPort.deger : '587', 10),
+            auth: {
+              user: smtpUser.deger,
+              pass: smtpPass.deger
+            },
+            tls: {
+              rejectUnauthorized: false
+            }
+          });
+          this.configSource = `DB SMTP (${smtpHost.deger})`;
+          return this.transporter;
+        }
+      }
+    } catch (e) {
+      // DB check failed
+    }
+
+    // 3. Fallback: Ethereal Test Account
+    if (!this.transporter || this.configSource === 'Uninitialized') {
+      try {
         const testAccount = await nodemailer.createTestAccount();
         this.transporter = nodemailer.createTransport({
           host: testAccount.smtp.host,
@@ -36,15 +81,14 @@ class EmailService {
             pass: testAccount.pass
           }
         });
-        logger.info(`Nodemailer: Geliştirme SMTP test hesabı hazırlandı (${testAccount.user})`);
+        this.configSource = `Ethereal Test SMTP (${testAccount.user})`;
+      } catch (err) {
+        this.transporter = nodemailer.createTransport({ jsonTransport: true });
+        this.configSource = 'JSON Fallback Transport';
       }
-    } catch (err) {
-      logger.error('Nodemailer Transporter Başlatma Hatası: ' + err.message);
-      // Fallback transport
-      this.transporter = nodemailer.createTransport({
-        jsonTransport: true
-      });
     }
+
+    return this.transporter;
   }
 
   /**
@@ -56,11 +100,9 @@ class EmailService {
    * @param {string} params.username - Kullanıcı adı
    */
   async sendOtpEmail({ to, code, fullName, username }) {
-    if (!this.transporter) {
-      await this.initTransporter();
-    }
+    const transporter = await this.getTransporter();
 
-    const fromAddress = process.env.SMTP_FROM || '"Enterprise ERP Güvenlik" <security@enterprise-erp.com>';
+    const fromAddress = process.env.SMTP_FROM || process.env.GMAIL_USER || '"Enterprise ERP Güvenlik" <security@enterprise-erp.com>';
     const userDisplayName = fullName || username || 'Kullanıcı';
 
     const htmlContent = `
@@ -82,7 +124,6 @@ class EmailService {
           .otp-code { font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #ffffff; margin: 0; text-shadow: 0 0 12px rgba(99,102,241,0.5); }
           .warning-box { background: rgba(244, 63, 94, 0.1); border-left: 4px solid #f43f5e; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #fda4af; margin-bottom: 24px; line-height: 1.5; }
           .footer { background: #0c111d; border-top: 1px solid #1e293b; padding: 20px; text-align: center; font-size: 12px; color: #64748b; }
-          .footer a { color: #818cf8; text-decoration: none; }
         </style>
       </head>
       <body>
@@ -101,10 +142,10 @@ class EmailService {
               <div class="otp-code">${code}</div>
             </div>
             <div class="warning-box">
-              ⏱️ <strong>Dikkat:</strong> Bu doğrulama kodu güvenlik sebebiyle yalnızca <strong>1 dakika (60 saniye)</strong> geçerlidir. Süre dolduktan sonra kod geçersiz olacaktır.
+              ⏱️ <strong>Dikkat:</strong> Bu doğrulama kodu güvenlik gerekçesiyle yalnızca <strong>1 dakika (60 saniye)</strong> geçerlidir. Süre dolduktan sonra kod otomatik olarak iptal edilecektir.
             </div>
             <div class="message" style="font-size: 12px; margin-bottom: 0;">
-              Eğer bu giriş talebini siz gerçekleştirmediyseniz, lütfen derhal sistem yöneticiniz ile iletişime geçiniz.
+              Eğer bu giriş talebini siz gerçekleştirmediyseniz, lütfen sistem yöneticiniz ile iletişime geçiniz.
             </div>
           </div>
           <div class="footer">
@@ -124,12 +165,14 @@ class EmailService {
     };
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
+      const info = await transporter.sendMail(mailOptions);
       const previewUrl = nodemailer.getTestMessageUrl(info);
-      
+
       console.log(`\n======================================================`);
       console.log(`✉️  [E-POSTA GÖNDERİLDİ]`);
-      console.log(`👤 Alıcı: ${to} (${userDisplayName})`);
+      console.log(`📡 SMTP Kaynağı: ${this.configSource}`);
+      console.log(`👤 Kimden: ${fromAddress}`);
+      console.log(`🎯 Kime: ${to} (${userDisplayName})`);
       console.log(`🔑 6 Haneli Doğrulama Kodu: [ ${code} ]`);
       console.log(`⏳ Geçerlilik Süresi: 60 Saniye (1 Dakika)`);
       if (previewUrl) {
@@ -137,14 +180,13 @@ class EmailService {
       }
       console.log(`======================================================\n`);
 
-      logger.info(`OTP E-Postası Başarıyla Gönderildi -> ${to}`);
-      return { success: true, messageId: info.messageId, previewUrl };
+      logger.info(`OTP E-Postası Başarıyla Gönderildi -> ${to} (Kaynak: ${this.configSource})`);
+      return { success: true, messageId: info.messageId, previewUrl, configSource: this.configSource };
     } catch (error) {
       console.error('E-posta Gönderme Hatası:', error);
       logger.error('OTP E-Posta Gönderme Hatası: ' + error.message);
-      // Fallback konsol logu sayesinde geliştirme/test ortamında asla bloklanmaz
       console.log(`\n⚠️  [FALLBACK] E-posta gönderilemedi ancak kod üretildi: [ ${code} ] -> Alıcı: ${to}\n`);
-      return { success: true, fallback: true, code };
+      return { success: true, fallback: true, code, configSource: this.configSource };
     }
   }
 }

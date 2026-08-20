@@ -37,18 +37,18 @@
           </svg>
         </div>
         <h1 class="login-title" style="letter-spacing: -0.5px;">Enterprise ERP</h1>
-        <p class="login-subtitle">Güvenli E-Posta OTP Kimlik Doğrulama</p>
+        <p class="login-subtitle">Kurumsal Güvenlik & OTP Giriş Portalı</p>
       </div>
 
       <!-- Info Alert Banner -->
-      <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 12px; font-size: 0.825rem; color: #c7d2fe; line-height: 1.45;">
+      <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: 12px; font-size: 0.825rem; color: #c7d2fe; line-height: 1.45;">
         <span style="font-size: 1.1rem; line-height: 1;">✉️</span>
-        <div>Kullanıcı adınızı girdikten sonra sistemde kayıtlı e-posta adresinize <strong>1 dakika</strong> geçerli <strong>6 haneli doğrulama kodu</strong> gönderilecektir.</div>
+        <div>Kullanıcı adı ve şifrenizi doğruladıktan sonra kayıtlı e-posta adresinize <strong>1 dakika</strong> geçerli <strong>6 haneli güvenlik kodu</strong> gönderilecektir.</div>
       </div>
 
       <!-- Error Alert -->
       <% if (error) { %>
-        <div class="error" style="margin-bottom: 1.5rem; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600;">
+        <div class="error" style="margin-bottom: 1.25rem; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <%= error %>
         </div>
@@ -60,34 +60,45 @@
           <label for="username" style="font-size: 0.85rem; font-weight: 600; color: #e2e8f0; margin-bottom: 8px;">Kullanıcı Adı</label>
           <div class="input-with-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <input type="text" id="username" name="username" value="<%= typeof prevUsername !== 'undefined' ? prevUsername : '' %>" placeholder="Örn: sametbitis veya admin" required autofocus autocomplete="username" style="font-size: 0.95rem; font-weight: 600; padding: 12px 14px 12px 42px; border-radius: 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff;">
+            <input type="text" id="username" name="username" value="<%= typeof prevUsername !== 'undefined' ? prevUsername : '' %>" placeholder="Kullanıcı adınızı girin" required autofocus autocomplete="username" style="font-size: 0.95rem; font-weight: 600; padding: 12px 14px 12px 42px; border-radius: 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff;">
           </div>
         </div>
 
-        <button type="submit" id="btnSendCode" class="btn btn-lg" style="width: 100%; margin-top: 1rem; padding: 13px; font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35); gap: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+        <div class="input-group" style="margin-top: 1rem;">
+          <label for="password" style="font-size: 0.85rem; font-weight: 600; color: #e2e8f0; margin-bottom: 8px;">Şifre</label>
+          <div class="input-with-icon" style="position: relative;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" style="font-size: 0.95rem; font-weight: 600; padding: 12px 42px 12px 42px; border-radius: 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; width: 100%;">
+            <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;">
+              <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btnSendCode" class="btn btn-lg" style="width: 100%; margin-top: 1.25rem; padding: 13px; font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35); gap: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
           <span>Doğrulama Kodu Gönder</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </form>
 
       <!-- Quick Fill User Accounts Hint -->
-      <div class="login-hints" style="margin-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem;">
+      <div class="login-hints" style="margin-top: 1.75rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem;">
         <div class="hints-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 10px; font-weight: 700;">Hızlı Seçim (Sistemdeki Hesaplar)</div>
         <div class="hints-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <% if (typeof accounts !== 'undefined' && accounts && accounts.length > 0) { %>
             <% accounts.forEach(acc => { %>
-              <div class="hint-chip" onclick="fillUsername('<%= acc.kullaniciAdi %>')" style="cursor: pointer; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 2px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(99,102,241,0.12)'; this.style.borderColor='rgba(99,102,241,0.3)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+              <div class="hint-chip" onclick="fillCredentials('<%= acc.kullaniciAdi %>', 'admin123')" style="cursor: pointer; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 2px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(99,102,241,0.12)'; this.style.borderColor='rgba(99,102,241,0.3)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.08)';">
                 <span class="hint-role" style="font-size: 0.7rem; color: #818cf8; font-weight: 700;"><%= acc.rol %></span>
                 <code style="font-size: 0.78rem; color: #fff; font-family: 'JetBrains Mono', monospace;"><%= acc.kullaniciAdi %></code>
                 <span style="font-size: 0.68rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= acc.eposta || '—' %></span>
               </div>
             <% }); %>
           <% } else { %>
-            <div class="hint-chip" onclick="fillUsername('sametbitis')" style="cursor: pointer;">
+            <div class="hint-chip" onclick="fillCredentials('sametbitis', 'admin123')" style="cursor: pointer;">
               <span class="hint-role">Admin</span>
               <code>sametbitis</code>
             </div>
-            <div class="hint-chip" onclick="fillUsername('admin')" style="cursor: pointer;">
+            <div class="hint-chip" onclick="fillCredentials('admin', 'admin123')" style="cursor: pointer;">
               <span class="hint-role">Yönetici</span>
               <code>admin</code>
             </div>
@@ -99,11 +110,24 @@
   </div>
 
   <script>
-    function fillUsername(uName) {
-      const inp = document.getElementById('username');
-      if (inp) {
-        inp.value = uName;
-        inp.focus();
+    function fillCredentials(uName, pass) {
+      const uInp = document.getElementById('username');
+      const pInp = document.getElementById('password');
+      if (uInp) uInp.value = uName;
+      if (pInp) pInp.value = pass || 'admin123';
+      if (uInp) uInp.focus();
+    }
+
+    function togglePasswordVisibility() {
+      const pInp = document.getElementById('password');
+      const eye = document.getElementById('eyeIcon');
+      if (!pInp) return;
+      if (pInp.type === 'password') {
+        pInp.type = 'text';
+        eye.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      } else {
+        pInp.type = 'password';
+        eye.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
       }
     }
   </script>

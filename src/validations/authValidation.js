@@ -1,9 +1,13 @@
 const validateSendCode = (req) => {
-  const { username } = req.body || {};
+  const { username, password } = req.body || {};
   const errors = [];
 
   if (!username || typeof username !== 'string' || username.trim().length === 0) {
     errors.push('Kullanıcı adı boş bırakılamaz.');
+  }
+
+  if (!password || typeof password !== 'string' || password.trim().length === 0) {
+    errors.push('Şifre boş bırakılamaz.');
   }
 
   return {

@@ -30,9 +30,9 @@ class AuthController {
    * Kullanıcı adına göre 6 haneli doğrulama kodu gönderir
    */
   sendCode = asyncHandler(async (req, res) => {
-    const { username } = req.body;
+    const { username, password } = req.body;
     try {
-      const result = await authService.sendVerificationCode(username, req.ip);
+      const result = await authService.sendVerificationCode(username, password, req.ip, false);
 
       // Geçici doğrulama oturum çerezi (15 dk geçerli)
       const sessionPayload = {
@@ -53,7 +53,7 @@ class AuthController {
     } catch (err) {
       const defaultAccounts = await userRepository.findAll();
       return res.render('login', {
-        error: err.message || 'Doğrulama kodu gönderilirken bir hata oluştu.',
+        error: err.message || 'Giriş bilgileri doğrulanırken bir hata oluştu.',
         accounts: defaultAccounts.slice(0, 4),
         prevUsername: username || ''
       });
@@ -189,7 +189,7 @@ class AuthController {
       const user = await userRepository.findById(userId);
       if (!user) throw new Error('Kullanıcı bulunamadı.');
 
-      const result = await authService.sendVerificationCode(user.kullaniciAdi, req.ip);
+      const result = await authService.sendVerificationCode(user.kullaniciAdi, null, req.ip, true);
 
       const sessionPayload = {
         userId: result.userId,
