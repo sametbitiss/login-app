@@ -943,7 +943,9 @@
       rows.forEach(tr => {
         const stockInput = tr.querySelector('.item-stock-id');
         if (!stockInput) return;
-        const stockItemId = stockInput.value;
+        const stockItemId = parseInt(stockInput.value, 10);
+        if (isNaN(stockItemId) || stockItemId <= 0) return;
+
         let stockCode = stockInput.getAttribute('data-code') || '';
         let name = stockInput.getAttribute('data-name') || '';
 
@@ -1213,19 +1215,17 @@
         return;
       }
 
-      const tbody = document.getElementById('itemsTbody');
-      const existingRows = tbody.querySelectorAll('tr');
-      
+      const existingRows = tbody.querySelectorAll('tr:not(#emptyItemsPlaceholder)');
       if (existingRows.length === 1) {
-        const firstSelect = existingRows[0].querySelector('.item-stock-id');
-        if (firstSelect && !firstSelect.value) {
-          tbody.innerHTML = '';
+        const firstStockInput = existingRows[0].querySelector('.item-stock-id');
+        if (firstStockInput && (!firstStockInput.value || firstStockInput.value === 'null' || firstStockInput.value === 'NaN')) {
+          existingRows[0].remove();
         }
       }
 
       checkedChks.forEach(chk => {
-        const stockId = parseInt(chk.getAttribute('data-id'), 10);
-        const item = (stockCatalog || []).find(s => s.id === stockId);
+        const stockId = chk.getAttribute('data-id');
+        const item = (stockCatalog || []).find(s => String(s.id) === String(stockId));
         if (!item) return;
 
         const qtyInput = document.querySelector(`.modal-product-qty[data-id="${stockId}"]`);

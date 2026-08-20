@@ -752,9 +752,17 @@
       const placeholder = document.getElementById('emptyItemsPlaceholder');
       if (placeholder) placeholder.remove();
 
+      const existingRows = tbody.querySelectorAll('tr:not(#emptyItemsPlaceholder)');
+      if (existingRows.length === 1) {
+        const firstStockInput = existingRows[0].querySelector('.item-stock-id');
+        if (firstStockInput && (!firstStockInput.value || firstStockInput.value === 'null' || firstStockInput.value === 'NaN')) {
+          existingRows[0].remove();
+        }
+      }
+
       checkedChks.forEach(chk => {
-        const stockId = parseInt(chk.getAttribute('data-id'), 10);
-        const item = (stockCatalog || []).find(s => s.id === stockId);
+        const stockId = chk.getAttribute('data-id');
+        const item = (stockCatalog || []).find(s => String(s.id) === String(stockId));
         if (!item) return;
 
         const qtyInput = document.querySelector(`.modal-product-qty[data-id="${stockId}"]`);
@@ -921,6 +929,8 @@
         const stockIdInput = tr.querySelector('.item-stock-id');
         if (!stockIdInput) return;
         const stockItemId = parseInt(stockIdInput.value, 10);
+        if (isNaN(stockItemId) || stockItemId <= 0) return;
+
         let stockCode = stockIdInput.getAttribute('data-code') || '';
         let stockName = stockIdInput.getAttribute('data-name') || '';
 

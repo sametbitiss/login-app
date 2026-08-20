@@ -165,11 +165,9 @@
 
                         if (!name || name === 'Ürün Kalemi' || name === 'Seçilen Ürün') {
                           if (it.stokKarti && it.stokKarti.ad) name = it.stokKarti.ad;
-                          else if (q.stokKarti && q.stokKarti.ad) name = q.stokKarti.ad;
                         }
                         if (!code || code === '—' || code === 'STOK-N/A') {
                           if (it.stokKarti && it.stokKarti.stokKodu) code = it.stokKarti.stokKodu;
-                          else if (q.stokKarti && q.stokKarti.stokKodu) code = q.stokKarti.stokKodu;
                         }
                         if (!name) name = 'Ürün Kalemi';
                       %>
