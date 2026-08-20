@@ -845,7 +845,7 @@
       const taxInput = tr.querySelector('.item-tax');
       const currSelect = tr.querySelector('.item-currency');
 
-      const st = (stockCatalog || []).find(s => s.id === parseInt(stockId, 10));
+      const st = (stockCatalog || []).find(s => String(s.id) === String(stockId));
       const defaultPrice = st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0;
       const tax = st ? (st.kdvOrani || st.taxRate || 20) : 20;
 
@@ -1215,7 +1215,8 @@
         return;
       }
 
-      const existingRows = tbody.querySelectorAll('tr:not(#emptyItemsPlaceholder)');
+      const tbody = document.getElementById('itemsTbody');
+      const existingRows = tbody ? tbody.querySelectorAll('tr:not(#emptyItemsPlaceholder)') : [];
       if (existingRows.length === 1) {
         const firstStockInput = existingRows[0].querySelector('.item-stock-id');
         if (firstStockInput && (!firstStockInput.value || firstStockInput.value === 'null' || firstStockInput.value === 'NaN')) {
