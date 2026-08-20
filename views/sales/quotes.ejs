@@ -10,6 +10,7 @@
 </head>
 <body class="module-body">
 
+  <!-- Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
       <a href="/" class="msb-logo">
@@ -43,6 +44,7 @@
       </div>
     </div>
 
+    <!-- Sidebar User -->
     <div class="module-sidebar-user">
       <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
       <div class="msu-meta">
@@ -52,6 +54,7 @@
     </div>
   </aside>
 
+  <!-- Main Area -->
   <div class="module-main">
     <header class="module-topbar">
       <div class="mt-left">
@@ -107,33 +110,40 @@
                 </td>
               </tr>
             <% } else { %>
-              <% quotations.forEach(q => { 
-                const qNo = q.teklifNo || q.quotationNo || 'TEKLIF-000';
-                const cName = q.musteriAdi || q.customerName || (q.musteri ? (q.musteri.firmaAdi || q.musteri.companyName) : 'Müşteri');
-                const tTotal = parseFloat(q.toplamTutar !== undefined ? q.toplamTutar : (q.totalAmount !== undefined ? q.totalAmount : 0)) || 0;
-                const dAmount = parseFloat(q.iskontoTutari !== undefined ? q.iskontoTutari : (q.discountAmount !== undefined ? q.discountAmount : 0)) || 0;
-                const curr = q.paraBirimi || q.currency || 'TRY';
-                const vUntil = q.gecerlilikBitis || q.validUntil;
-                const st = q.durum || q.status || 'Draft';
+              <% 
+                const safeFloat = (val, defaultVal = 0) => {
+                  if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+                  const n = parseFloat(val);
+                  return Number.isNaN(n) ? defaultVal : n;
+                };
 
-                let itemsList = [];
-                const rawJson = q.kalemlerJson || q.itemsJson;
-                if (rawJson) {
-                  try { itemsList = JSON.parse(rawJson); } catch (e) { itemsList = []; }
-                }
-                if (!Array.isArray(itemsList) || itemsList.length === 0) {
-                  const sObj = q.stokKarti || q.stockItem;
-                  itemsList = [{
-                    stockCode: sObj ? (sObj.stokKodu || sObj.stockCode || '-') : '-',
-                    name: sObj ? (sObj.ad || sObj.name || 'Ürün Kalemi') : 'Ürün Kalemi',
-                    quantity: q.miktar || q.quantity || 1,
-                    unitPrice: q.birimFiyat || q.unitPrice || 0,
-                    discountRate: q.iskontoOrani || q.discountRate || 0,
-                    taxRate: q.kdvOrani || q.taxRate || 20,
-                    subtotal: q.araToplam || q.subtotal || 0,
-                    totalAmount: tTotal
-                  }];
-                }
+                quotations.forEach(q => { 
+                  const qNo = q.teklifNo || q.quotationNo || 'TEKLIF-000';
+                  const cName = q.musteriAdi || q.customerName || (q.musteri ? (q.musteri.firmaAdi || q.musteri.companyName) : 'Müşteri');
+                  const tTotal = safeFloat(q.toplamTutar !== undefined ? q.toplamTutar : q.totalAmount, 0);
+                  const dAmount = safeFloat(q.iskontoTutari !== undefined ? q.iskontoTutari : q.discountAmount, 0);
+                  const curr = q.paraBirimi || q.currency || 'TRY';
+                  const vUntil = q.gecerlilikBitis || q.validUntil;
+                  const st = q.durum || q.status || 'Draft';
+
+                  let itemsList = [];
+                  const rawJson = q.kalemlerJson || q.itemsJson;
+                  if (rawJson) {
+                    try { itemsList = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson; } catch (e) { itemsList = []; }
+                  }
+                  if (!Array.isArray(itemsList) || itemsList.length === 0) {
+                    const sObj = q.stokKarti || q.stockItem;
+                    itemsList = [{
+                      stockCode: sObj ? (sObj.stokKodu || sObj.stockCode || '-') : '-',
+                      name: sObj ? (sObj.ad || sObj.name || 'Ürün Kalemi') : 'Ürün Kalemi',
+                      quantity: q.miktar || q.quantity || 1,
+                      unitPrice: q.birimFiyat || q.unitPrice || 0,
+                      discountRate: q.iskontoOrani || q.discountRate || 0,
+                      taxRate: q.kdvOrani || q.taxRate || 20,
+                      subtotal: q.araToplam || q.subtotal || 0,
+                      totalAmount: tTotal
+                    }];
+                  }
               %>
                 <tr>
                   <td><strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= qNo %></strong></td>
@@ -141,48 +151,59 @@
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                       <% itemsList.forEach(it => { %>
-                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;"><%= it.name || it.ad %></div>
+                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;"><%= it.name || it.ad || 'Ürün Kalemi' %></div>
                       <% }); %>
                     </div>
                   </td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: var(--text-secondary);">
                       <% itemsList.forEach(it => { %>
-                        <div><%= parseFloat(it.quantity || it.miktar || 1).toLocaleString('tr-TR') %> Adet</div>
+                        <div><%= safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1).toLocaleString('tr-TR') %> Adet</div>
                       <% }); %>
                     </div>
                   </td>
                   <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fb7185; font-weight: 600;">
-                    <%= dAmount.toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= curr %>
+                    <%= dAmount.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2}) %> <%= curr %>
                   </td>
-                  <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= tTotal.toLocaleString('tr-TR', {minimumFractionDigits:2}) %> <%= curr %></strong></td>
+                  <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= tTotal.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2}) %> <%= curr %></strong></td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= vUntil ? new Date(vUntil).toLocaleDateString('tr-TR') : 'Süresiz' %></td>
                   <td>
                     <% if (st === 'Converted' || st === 'Siparişe Dönüştü') { %>
                       <span class="status-pill status-active">● Siparişe Dönüştü</span>
-                    <% } else if (st === 'Approved' || st === 'Active' || st === 'Aktif') { %>
-                      <span class="status-pill status-approved">● Onaylandı</span>
+                    <% } else if (st === 'Approved') { %>
+                      <span class="status-pill status-approved">● Yönetsel Onaylı</span>
                     <% } else if (st === 'Pending_Approval' || st === 'Onay Bekliyor') { %>
-                      <span class="status-pill status-pending">● Yönetsel Onay Bekliyor</span>
+                      <span class="status-pill status-pending" title="<%= q.onayNedeni || 'İskonto veya tutar limiti nedeniyle onay bekliyor' %>">
+                        ● Yönetsel Onay Bekliyor
+                      </span>
                     <% } else if (st === 'Rejected' || st === 'Reddedildi') { %>
                       <span class="status-pill status-rejected">● Reddedildi</span>
                     <% } else { %>
-                      <span class="status-pill status-approved">● Aktif</span>
+                      <span class="status-pill status-approved">● Onaylı</span>
                     <% } %>
                   </td>
                   <td>
                     <div style="display:flex; gap: 4px; align-items: center;">
                       <a href="/sales/quotes/<%= q.id %>" class="btn btn-sm btn-outline-info" style="font-size: 0.75rem;">👁️ Gör</a>
-                      <% if (st === 'Approved' || st === 'Draft' || st === 'Active' || st === 'Aktif') { %>
+
+                      <% if (st === 'Approved') { %>
+                        <!-- ACTIVE & CLICKABLE DISPATCH BUTTON ONLY IF APPROVED -->
                         <form action="/sales/quotes/<%= q.id %>/convert" method="POST" style="display:inline;">
-                          <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.75rem;">🛍️ Dönüştür</button>
+                          <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.75rem; font-weight: 700;">🛍️ Siparişe Dönüştür</button>
                         </form>
                       <% } else if (st === 'Pending_Approval' || st === 'Onay Bekliyor') { %>
-                        <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;" title="Yönetsel Onay Ekranından Onay Verilmelidir">
-                          ⏳ Onay Bekliyor
-                        </span>
+                        <!-- DISABLED / NON-CLICKABLE IF PENDING APPROVAL (e.g. Discount > 20%) -->
+                        <button type="button" class="btn btn-sm" disabled style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 0.75rem; font-weight: 600; cursor: not-allowed; opacity: 0.7;" title="İskonto oranı %20'den yüksek olduğu için Yönetsel Onaylar ekranından onaylanmadan siparişe dönüştürülemez!">
+                          ⏳ Onay Bekliyor (%20+ İskonto)
+                        </button>
                       <% } else if (st === 'Converted' || st === 'Siparişe Dönüştü') { %>
-                        <span style="font-size: 0.75rem; color: var(--emerald); font-weight: 600;">✓ Siparişte</span>
+                        <span style="font-size: 0.75rem; color: var(--emerald); font-weight: 600; padding: 4px 8px; background: rgba(16, 185, 129, 0.1); border-radius: 6px;">
+                          ✓ Siparişte
+                        </span>
+                      <% } else { %>
+                        <form action="/sales/quotes/<%= q.id %>/convert" method="POST" style="display:inline;">
+                          <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.75rem; font-weight: 700;">🛍️ Siparişe Dönüştür</button>
+                        </form>
                       <% } %>
                     </div>
                   </td>

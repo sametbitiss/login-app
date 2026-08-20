@@ -119,7 +119,7 @@
           <div class="kpi-chip-icon kpi-chip--cyan">💵</div>
           <div class="kpi-chip-data">
             <span class="kpi-chip-label">Toplam Satış Ciro</span>
-            <span class="kpi-chip-value"><%= parseFloat(stats.totalRevenue).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> ₺</span>
+            <span class="kpi-chip-value"><%= (parseFloat(stats.totalRevenue) || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %> ₺</span>
           </div>
         </div>
       </div>
@@ -184,88 +184,106 @@
                 </td>
               </tr>
             <% } else { %>
-              <% orders.forEach(order => { 
-                let itemsList = [];
-                if (order.itemsJson) {
-                  try { itemsList = JSON.parse(order.itemsJson); } catch (e) { itemsList = []; }
-                }
-                if (!Array.isArray(itemsList) || itemsList.length === 0) {
-                  itemsList = [{
-                    stockCode: order.stockItem ? order.stockItem.stockCode : '-',
-                    name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
-                    quantity: order.quantity,
-                    unitPrice: order.unitPrice,
-                    discountRate: order.discountRate,
-                    taxRate: order.taxRate,
-                    subtotal: order.subtotal,
-                    totalAmount: order.totalAmount
-                  }];
-                }
+              <% 
+                const safeFloat = (val, defaultVal = 0) => {
+                  if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+                  const n = parseFloat(val);
+                  return Number.isNaN(n) ? defaultVal : n;
+                };
+
+                orders.forEach(order => { 
+                  const orderNo = order.orderNo || order.siparisNo || 'SAT-000';
+                  const custName = order.customerName || order.musteriAdi || (order.musteri ? order.musteri.firmaAdi : 'Müşteri');
+                  const custTax = order.customerTaxNo || order.musteriVergiNo || '';
+                  const orderCurr = order.currency || order.paraBirimi || 'TRY';
+                  const orderDate = order.orderDate || order.siparisTarihi || new Date();
+                  const pTerm = order.paymentTerm || order.odemeVadesi || 'Vadeli_30';
+                  const orderStatus = order.status || order.durum || 'Preparing';
+
+                  let itemsList = [];
+                  const rawJson = order.itemsJson || order.kalemlerJson;
+                  if (rawJson) {
+                    try { itemsList = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson; } catch (e) { itemsList = []; }
+                  }
+                  if (!Array.isArray(itemsList) || itemsList.length === 0) {
+                    const sObj = order.stockItem || order.stokKarti;
+                    itemsList = [{
+                      stockCode: sObj ? (sObj.stockCode || sObj.stokKodu || '-') : '-',
+                      name: sObj ? (sObj.name || sObj.ad || 'Ürün Kalemi') : 'Ürün Kalemi',
+                      quantity: safeFloat(order.quantity !== undefined ? order.quantity : order.miktar, 1),
+                      unitPrice: safeFloat(order.unitPrice !== undefined ? order.unitPrice : order.birimFiyat, 0),
+                      discountRate: safeFloat(order.discountRate !== undefined ? order.discountRate : order.iskontoOrani, 0),
+                      taxRate: safeFloat(order.taxRate !== undefined ? order.taxRate : order.kdvOrani, 20),
+                      subtotal: safeFloat(order.subtotal !== undefined ? order.subtotal : order.araToplam, 0),
+                      totalAmount: safeFloat(order.totalAmount !== undefined ? order.totalAmount : order.toplamTutar, 0)
+                    }];
+                  }
+
+                  let totalDiscountVal = safeFloat(order.discountAmount !== undefined ? order.discountAmount : order.iskontoTutari, 0);
+                  if (totalDiscountVal === 0 && itemsList.length > 0) {
+                    itemsList.forEach(it => {
+                      const q = safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1);
+                      const p = safeFloat(it.unitPrice !== undefined ? it.unitPrice : it.birimFiyat, 0);
+                      const d = safeFloat(it.discountRate !== undefined ? it.discountRate : it.iskontoOrani, 0);
+                      totalDiscountVal += (q * p) * (d / 100);
+                    });
+                  }
+
+                  const grandTotalVal = safeFloat(order.totalAmount !== undefined ? order.totalAmount : order.toplamTutar, 0);
               %>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= order.orderNo %></strong></td>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= orderNo %></strong></td>
                   <td>
-                    <div style="font-weight: 600;"><%= order.customerName %></div>
-                    <% if (order.customerTaxNo) { %>
-                      <div style="font-size: 0.75rem; color: var(--text-muted);">VN: <%= order.customerTaxNo %></div>
+                    <div style="font-weight: 600;"><%= custName %></div>
+                    <% if (custTax) { %>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);">VN: <%= custTax %></div>
                     <% } %>
                   </td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                       <% itemsList.forEach(it => { %>
-                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;"><%= it.name %></div>
+                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;"><%= it.name || it.ad || 'Ürün Kalemi' %></div>
                       <% }); %>
                     </div>
                   </td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: var(--text-secondary);">
                       <% itemsList.forEach(it => { %>
-                        <div><%= parseFloat(it.quantity).toLocaleString('tr-TR') %> Adet</div>
+                        <div><%= safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1).toLocaleString('tr-TR') %> Adet</div>
                       <% }); %>
                     </div>
                   </td>
-                  <% 
-                    let totalDiscountVal = parseFloat(order.discountAmount) || 0;
-                    if (totalDiscountVal === 0 && itemsList.length > 0) {
-                      itemsList.forEach(it => {
-                        const q = parseFloat(it.quantity) || 1;
-                        const p = parseFloat(it.unitPrice) || 0;
-                        const d = parseFloat(it.discountRate) || 0;
-                        totalDiscountVal += (q * p) * (d / 100);
-                      });
-                    }
-                  %>
                   <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fb7185; font-weight: 600;">
                     <% if (totalDiscountVal > 0) { %>
-                      - <%= totalDiscountVal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %> <%= order.currency %>
+                      - <%= totalDiscountVal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %> <%= orderCurr %>
                     <% } else { %>
                       <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
                     <% } %>
                   </td>
-                  <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(order.totalAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= order.currency %></strong></td>
+                  <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= grandTotalVal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %> <%= orderCurr %></strong></td>
                   <td style="font-size: 0.8rem;">
-                    <%= order.paymentTerm === 'Pesin' ? 'Peşin' : order.paymentTerm === 'Vadeli_30' ? '30 Gün Vadeli' : order.paymentTerm === 'Vadeli_60' ? '60 Gün Vadeli' : order.paymentTerm === 'Vadeli_90' ? '90 Gün Vadeli' : 'Kredi Kartı' %>
+                    <%= pTerm === 'Pesin' ? 'Peşin' : pTerm === 'Vadeli_30' ? '30 Gün Vadeli' : pTerm === 'Vadeli_60' ? '60 Gün Vadeli' : pTerm === 'Vadeli_90' ? '90 Gün Vadeli' : 'Kredi Kartı' %>
                   </td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(order.orderDate).toLocaleDateString('tr-TR') %></td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(orderDate).toLocaleDateString('tr-TR') %></td>
                   <td>
-                    <% if (order.status === 'Pending_Approval') { %>
+                    <% if (orderStatus === 'Pending_Approval') { %>
                       <span class="status-pill status-pending">● Onay Bekliyor</span>
-                    <% } else if (order.status === 'Approved') { %>
+                    <% } else if (orderStatus === 'Approved') { %>
                       <span class="status-pill status-approved">● Onaylandı</span>
-                    <% } else if (order.status === 'Hazırlanıyor' || order.status === 'Preparing') { %>
+                    <% } else if (orderStatus === 'Hazırlanıyor' || orderStatus === 'Preparing') { %>
                       <span class="status-pill status-approved" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
                         ● Hazırlanıyor
                       </span>
-                    <% } else if (order.status === 'Shipped') { %>
+                    <% } else if (orderStatus === 'Shipped') { %>
                       <span class="status-pill status-onleave">● Sevk Edildi</span>
-                    <% } else if (order.status === 'Completed') { %>
+                    <% } else if (orderStatus === 'Completed') { %>
                       <span class="status-pill status-active">● Tamamlandı</span>
-                    <% } else if (order.status === 'Rejected') { %>
+                    <% } else if (orderStatus === 'Rejected') { %>
                       <span class="status-pill" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3);">
                         ✕ Reddedildi
                       </span>
                     <% } else { %>
-                      <span class="status-pill status-pending">● <%= order.status %></span>
+                      <span class="status-pill status-pending">● <%= orderStatus %></span>
                     <% } %>
                   </td>
                   <td>
