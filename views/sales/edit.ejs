@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -115,50 +116,88 @@
       overflow: hidden;
     }
 
-    .tab-step-content {
-      display: none;
-      animation: fadeInStep 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    .step-progress-item.active .spi-text span {
+      color: #f472b6;
     }
 
-    .tab-step-content.active {
+    .tab-content-panel {
+      display: none;
+      animation: fadeInTab 0.35s ease-in-out;
+    }
+
+    .tab-content-panel.active {
       display: block;
     }
 
-    @keyframes fadeInStep {
-      from { opacity: 0; transform: translateY(8px); }
+    @keyframes fadeInTab {
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-    .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-    .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-
-    @media (max-width: 992px) {
-      .form-grid-3, .form-grid-4, .form-grid-2 { grid-template-columns: 1fr; }
+    @media (max-width: 768px) {
       .step-progress-bar { grid-template-columns: 1fr; }
     }
 
-    .item-row {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      padding: 1rem;
-      margin-bottom: 0.75rem;
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
-      gap: 0.75rem;
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(6, 8, 15, 0.8);
+      backdrop-filter: blur(12px);
+      z-index: 9999;
+      display: none;
       align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-card {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 850px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(19, 26, 43, 0.8);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex-grow: 1;
     }
   </style>
   <script src="/sidebar.js" defer></script>
 </head>
+
 <body class="module-body">
 
   <!-- Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
       <a href="/" class="msb-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="url(#bGrad)" />
+          <path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" />
+          <defs>
+            <linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0%" stop-color="#6366f1" />
+              <stop offset="100%" stop-color="#8b5cf6" />
+            </linearGradient>
+          </defs>
+        </svg>
         <span>Enterprise ERP</span>
       </a>
     </div>
@@ -204,12 +243,7 @@
         <% if (user.role === 'Admin') { %>
           <a href="/admin" class="mt-link">Sistem Yönetimi</a>
         <% } %>
-        <a href="/stock" class="mt-link">Stok & Depo</a>
         <a href="/sales" class="mt-link active">Satış Yönetimi</a>
-        <a href="/purchase" class="mt-link">Satın Alma</a>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
-          <a href="/production" class="mt-link">Üretim Planlama</a><a href="/quality" class="mt-link">Kalite Kontrol</a>
-        <% } %>
       </div>
       <div class="mt-right">
         <span class="mt-time" id="liveTime"></span>
@@ -229,6 +263,7 @@
         };
 
         const orderNo = order.orderNo || order.siparisNo || 'SAT-000';
+        const custId = order.musteriId || order.customerId;
         const custName = order.customerName || order.musteriAdi || '';
         const custTax = order.customerTaxNo || order.musteriVergiNo || '';
         const custEmail = order.customerEmail || order.musteriEposta || '';
@@ -248,6 +283,7 @@
         }
         if (!Array.isArray(existingItems) || existingItems.length === 0) {
           existingItems = [{
+            stockItemId: order.stockItemId || order.stokId,
             stokId: order.stockItemId || order.stokId,
             stockCode: order.stockItem ? order.stockItem.stockCode : '',
             name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
@@ -259,91 +295,145 @@
         }
       %>
 
-      <div class="page-header">
+      <div class="page-header" style="margin-bottom: 1.5rem;">
         <div>
-          <h1>Satış Siparişi Düzenle & Güncelle</h1>
+          <h1 style="font-weight: 900; letter-spacing: -0.02em;">Satış Siparişi Düzenle & Güncelle</h1>
           <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
-            [<strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= orderNo %></strong>] siparişinin müşteri, teslimat ve kalem detaylarını güncelleyebilirsiniz.
+            [<strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= orderNo %></strong>] siparişinin müşteri, teslimat ve ürün kalemi detaylarını sekmeli sihirbazdan güncelleyin.
           </p>
         </div>
-        <a href="/sales/orders" class="btn btn-secondary">◀ Sipariş Listesine Dön</a>
+        <a href="/sales/orders" class="btn btn-secondary" style="border-radius: 12px;">◀ Sipariş Listesine Dön</a>
       </div>
 
       <% if (error) { %>
         <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
       <% } %>
 
+      <!-- GLASSFORM CARD WIZARD -->
       <div class="glass-form-card">
-        
-        <!-- Step Progress Navigation Bar (Tabs) -->
+        <h3 style="color: #ec4899; font-size: 1.15rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          📋 Satış Siparişi Düzenleme Sihirbazı
+        </h3>
+
+        <!-- STEP PROGRESS TIMELINE BAR -->
         <div class="step-progress-bar">
-          <div class="step-progress-item active" id="tab-btn-1" onclick="switchStep(1)">
-            <div class="spi-badge" id="spi-badge-1">1</div>
+          <div class="step-progress-item active" onclick="switchOrderTab(1)" id="tab-pill-1">
+            <div class="spi-badge">1</div>
             <div class="spi-text">
-              <strong>1. Müşteri & Sipariş Şartları</strong>
-              <span>Müşteri unvanı, fatura adresi, vade</span>
+              <strong>Cari & Genel</strong>
+              <span>Sipariş No & Müşteri Seçimi</span>
             </div>
           </div>
-
-          <div class="step-progress-item" id="tab-btn-2" onclick="switchStep(2)">
-            <div class="spi-badge" id="spi-badge-2">2</div>
+          <div class="step-progress-item" onclick="switchOrderTab(2)" id="tab-pill-2">
+            <div class="spi-badge">2</div>
             <div class="spi-text">
-              <strong>2. Ürün Kalemleri & İskonto</strong>
-              <span>Satılan ürünler, miktar, birim fiyat</span>
+              <strong>Ürün Kalemleri</strong>
+              <span>Fiyatlandırma & İskonto</span>
             </div>
           </div>
-
-          <div class="step-progress-item" id="tab-btn-3" onclick="switchStep(3)">
-            <div class="spi-badge" id="spi-badge-3">3</div>
+          <div class="step-progress-item" onclick="switchOrderTab(3)" id="tab-pill-3">
+            <div class="spi-badge">3</div>
             <div class="spi-text">
-              <strong>3. Teslimat & Notlar</strong>
-              <span>Termin tarihi, sevk adresi, notlar</span>
+              <strong>Sipariş Şartları</strong>
+              <span>Ödeme, Teslimat & Notlar</span>
             </div>
           </div>
         </div>
 
-        <form action="/sales/orders/<%= order.id %>/edit" method="POST" id="editOrderForm" onsubmit="prepareFormSubmit(event)">
-          <input type="hidden" name="itemsJson" id="itemsJsonInput">
+        <form action="/sales/orders/<%= order.id %>/edit" method="POST" id="editOrderForm">
+          <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
+          <input type="hidden" name="currency" id="currency" value="<%= currency %>">
 
-          <!-- TAB STEP 1: MÜŞTERİ BİLGİLERİ -->
-          <div class="tab-step-content active" id="tab-step-1">
-            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-              <span>👤</span> Müşteri Kartı ve Sipariş Bilgileri
-            </h3>
+          <!-- TAB CONTENT 1: CARİ MÜŞTERİ VE GENEL BİLGİLER -->
+          <div class="tab-content-panel active" id="order-tab-1">
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: #ec4899; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <span>📋</span> 1. Sipariş ve Cari Müşteri Bilgileri
+            </h4>
 
-            <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+            <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
               <div class="input-group">
                 <label for="orderNo">Sipariş No <span class="req-star">*</span></label>
-                <input type="text" id="orderNo" name="orderNo" value="<%= orderNo %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(255,255,255,0.05);">
+                <input type="text" id="orderNo" name="orderNo" value="<%= orderNo %>" required readonly
+                  style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(236, 72, 153, 0.1); color: #ec4899; border-color: rgba(236, 72, 153, 0.3);">
               </div>
 
               <div class="input-group">
-                <label for="customerName">Müşteri / Kurum Adı <span class="req-star">*</span></label>
-                <input type="text" id="customerName" name="customerName" value="<%= custName %>" required placeholder="Firma / Müşteri unvanı">
+                <label for="customerId">Cari Müşteri Seçimi</label>
+                <select id="customerId" name="customerId" onchange="fillCustomerName(this)">
+                  <option value="">-- Genel / Kayıtsız Müşteri --</option>
+                  <% (customers || []).forEach(c => {
+                    const isSel = (c.id == custId) ? 'selected' : '';
+                    const score = c.customerScore !== undefined ? c.customerScore : (c.musteriSkoru !== undefined ? c.musteriSkoru : 85);
+                    const isBlocked = score < 50 || c.riskLevel==='High' || c.riskLevel==='Blocked' || c.riskLevel==='Critical' || c.riskSeviyesi==='Yuksek' || c.riskSeviyesi==='Kritik';
+                    const cLimit = parseFloat(c.creditLimit || c.krediLimiti) || 100000;
+                    const cBal = parseFloat(c.currentBalance || c.guncelBakiye) || 0;
+                    const cPerson = c.contactPerson || c.ilgiliKisi || '';
+                    const cPhone = c.phone || c.telefon || '';
+                    const cEmail = c.email || c.eposta || '';
+                    const cAddress = c.address || c.adres || '';
+                    const cTax = c.taxNumber || c.vergiNo || '';
+                  %>
+                    <option value="<%= c.id %>" data-name="<%= c.companyName || c.firmaAdi %>" data-creditlimit="<%= cLimit %>"
+                      data-currentbalance="<%= cBal %>" data-blocked="<%= isBlocked %>"
+                      data-contactperson="<%= cPerson %>" data-phone="<%= cPhone %>" data-email="<%= cEmail %>" data-address="<%= cAddress %>" data-tax="<%= cTax %>"
+                      <%= isSel %>>
+                      [<%= c.customerCode || c.musteriKodu %>] <%= c.companyName || c.firmaAdi %>
+                    </option>
+                  <% }); %>
+                </select>
+
+                <!-- Dynamic Customer Risk Card -->
+                <div id="customerRiskCard"
+                  style="display: none; margin-top: 10px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; font-size: 0.8rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div><span style="color: var(--text-muted);">Toplam Risk Limiti:</span> <strong id="cardCreditLimit" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+                    <div><span style="color: var(--text-muted);">Güncel Borç:</span> <strong id="cardCurrentBalance" style="color: #fbbf24; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+                    <div><span style="color: var(--text-muted);">Kullanılabilir Limit:</span> <strong id="cardAvailableCredit" style="color: #34d399; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
+                  </div>
+                </div>
               </div>
 
+              <div class="input-group">
+                <label for="customerName">Müşteri / Kurum Unvanı <span class="req-star">*</span></label>
+                <input type="text" id="customerName" name="customerName" value="<%= custName %>" required placeholder="Müşteri adını girin">
+              </div>
+            </div>
+
+            <!-- Readonly Contact & Tax Info Grid -->
+            <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
               <div class="input-group">
                 <label for="customerTaxNo">Vergi / Sicil Numarası</label>
                 <input type="text" id="customerTaxNo" name="customerTaxNo" value="<%= custTax %>" placeholder="10 haneli vergi no" oninput="this.value = this.value.replace(/\D/g, '')">
               </div>
-
               <div class="input-group">
-                <label for="customerEmail">Kurumsal E-Posta</label>
-                <input type="email" id="customerEmail" name="customerEmail" value="<%= custEmail %>" placeholder="siparis@firma.com">
+                <label for="contactPerson">İlgili Kişi <small style="color: var(--text-muted);">(Cari Karttan Otomatik)</small></label>
+                <input type="text" id="contactPerson" name="contactPerson" placeholder="— Cari seçildiğinde otomatik gelir —" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
               </div>
-
               <div class="input-group">
-                <label for="customerPhone">İletişim Telefonu</label>
-                <input type="text" id="customerPhone" name="customerPhone" value="<%= custPhone %>" placeholder="05XXXXXXXXX" oninput="this.value = this.value.replace(/\D/g, '')">
-              </div>
-
-              <div class="input-group">
-                <label for="salesRep">Satış Temsilcisi</label>
-                <input type="text" id="salesRep" name="salesRep" value="<%= salesRep %>" placeholder="Sorumlu Temsilci">
+                <label for="contactInfo">İletişim Bilgileri (Tel / E-Posta) <small style="color: var(--text-muted);">(Otomatik)</small></label>
+                <input type="text" id="contactInfo" name="contactInfo" value="<%= custPhone || custEmail ? custPhone + ' / ' + custEmail : '' %>" placeholder="— Cari seçildiğinde otomatik gelir —" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
               </div>
             </div>
 
-            <div class="form-grid-4">
+            <!-- Address Inputs Grid -->
+            <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
+              <div class="input-group">
+                <label for="billingAddress">Fatura Adresi</label>
+                <textarea id="billingAddress" name="billingAddress" rows="2" placeholder="Fatura adresi..." style="width:100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 10px; font-size: 0.875rem;"><%= order.billingAddress || order.faturaAdresi || '' %></textarea>
+              </div>
+              <div class="input-group">
+                <label for="shippingAddress">Sevk Adresi</label>
+                <textarea id="shippingAddress" name="shippingAddress" rows="2" placeholder="Sevkiyat adresi..." style="width:100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 10px; font-size: 0.875rem;"><%= order.shippingAddress || order.teslimatAdresi || '' %></textarea>
+              </div>
+            </div>
+
+            <div class="form-grid form-grid--4">
               <div class="input-group">
                 <label for="status">Sipariş Durumu <span class="req-star">*</span></label>
                 <select id="status" name="status" required>
@@ -366,118 +456,153 @@
               </div>
 
               <div class="input-group">
+                <label for="orderDate">Sipariş Tarihi</label>
+                <input type="date" id="orderDate" name="orderDate" value="<%= new Date(orderDate).toISOString().split('T')[0] %>" required>
+              </div>
+
+              <div class="input-group">
+                <label for="requestedDeliveryDate">İstenen Termin Tarihi</label>
+                <input type="date" id="requestedDeliveryDate" name="requestedDeliveryDate" value="<%= deliveryDate ? new Date(deliveryDate).toISOString().split('T')[0] : '' %>">
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 2: ÜRÜN KALEMLERİ VE FİYATLANDIRMA -->
+          <div class="tab-content-panel" id="order-tab-2">
+            <!-- Warning Alert for Min 1 Product Rule -->
+            <div id="minItemWarningAlert"
+              style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>⚠️ Siparişte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin: 0;">
+                  <span style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;" id="itemCountBadge">1</span>
+                  2. Sipariş Edilen Ürün Kalemleri (Mamuller)
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Siparişteki tüm ürün kalemlerini stok kataloğundan seçebilir, miktar ve satır bazlı iskontoları düzenleyebilirsiniz.</p>
+              </div>
+
+              <div>
+                <button type="button" onclick="openProductSelectModal()" class="btn btn-sm"
+                  style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); gap: 8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  📦 Stok Kartından Ürün Seç (Modal)
+                </button>
+              </div>
+            </div>
+
+            <!-- Table Container -->
+            <div style="overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8); margin-bottom: 1.5rem;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="itemsTable">
+                <thead>
+                  <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
+                    <th style="padding: 14px 16px; width: 45px; text-align: center;">#</th>
+                    <th style="padding: 14px 16px; min-width: 240px;">Ürün / Mamul Kalemi</th>
+                    <th style="padding: 14px 16px; width: 100px;">Miktar</th>
+                    <th style="padding: 14px 16px; width: 140px;">Birim Fiyat</th>
+                    <th style="padding: 14px 16px; width: 120px;">Para Birimi</th>
+                    <th style="padding: 14px 16px; width: 110px;">İskonto (%)</th>
+                    <th style="padding: 14px 16px; width: 90px;">KDV (%)</th>
+                    <th style="padding: 14px 16px; width: 150px; text-align: right;">Satır Toplamı</th>
+                    <th style="padding: 14px 16px; width: 60px; text-align: center;">Sil</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTbody">
+                  <tr id="emptyItemsPlaceholder">
+                    <td colspan="9" style="padding: 35px; text-align: center; color: var(--text-muted);">
+                      📦 Henüz sipariş kalemi eklenmedi.<br>
+                      <span style="font-size: 0.8rem; margin-top: 6px; display: inline-block; color: #818cf8;">Yukarıdaki <strong>'📦 Stok Kartından Ürün Seç (Modal)'</strong> butonuna tıklayarak siparişe mamul ürünler ekleyebilirsiniz.</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Live Summary Card -->
+            <div style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; text-align: center;">
+                <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                  <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Ara Toplam (Brüt)</span>
+                  <strong id="displaySubtotal" style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                  <span style="font-size: 0.75rem; font-weight: 600; color: #fb7185; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Toplam İskonto</span>
+                  <strong id="displayDiscount" style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0.00 ₺</strong>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                  <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Hesaplanan KDV</span>
+                  <strong id="displayTax" style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); padding: 16px; border-radius: 12px; border: 1px solid rgba(236, 72, 153, 0.3);">
+                  <span style="font-size: 0.75rem; font-weight: 700; color: #f472b6; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">GENEL SİPARİŞ TOPLAMI</span>
+                  <strong id="displayGrandTotal" style="font-size: 1.35rem; color: #ec4899; font-family: 'JetBrains Mono', monospace;">0.00 ₺</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 3: SİPARİŞ ŞARTLARI VE NOTLAR -->
+          <div class="tab-content-panel" id="order-tab-3">
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: #10b981; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <span>📝</span> 3. Sipariş Koşulları, Teslimat Şartları ve Özel Notlar
+            </h4>
+
+            <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
+              <div class="input-group">
                 <label for="paymentTerm">Ödeme Koşulu</label>
                 <select id="paymentTerm" name="paymentTerm">
-                  <option value="Pesin" <%= paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin</option>
+                  <option value="Pesin" <%= paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin (Ön Ödeme)</option>
                   <option value="Vadeli_30" <%= paymentTerm === 'Vadeli_30' ? 'selected' : '' %>>30 Gün Vadeli</option>
                   <option value="Vadeli_60" <%= paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
                   <option value="Vadeli_90" <%= paymentTerm === 'Vadeli_90' ? 'selected' : '' %>>90 Gün Vadeli</option>
                   <option value="Kredi_Karti" <%= paymentTerm === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı</option>
                 </select>
               </div>
-
               <div class="input-group">
-                <label for="currency">Para Birimi</label>
-                <select id="currency" name="currency" onchange="calcTotals()">
-                  <option value="TRY" <%= currency === 'TRY' ? 'selected' : '' %>>TRY (₺)</option>
-                  <option value="USD" <%= currency === 'USD' ? 'selected' : '' %>>USD ($)</option>
-                  <option value="EUR" <%= currency === 'EUR' ? 'selected' : '' %>>EUR (€)</option>
-                </select>
+                <label for="salesRep">Satış Temsilcisi</label>
+                <input type="text" id="salesRep" name="salesRep" value="<%= salesRep %>" placeholder="Sorumlu Temsilci">
+              </div>
+              <div class="input-group">
+                <label for="deliveryTerms">Teslimat Şekli</label>
+                <input type="text" id="deliveryTerms" name="deliveryTerms"
+                  placeholder="Örn: Fabrika Teslim (EXW) veya Adrese Teslim (DDP)"
+                  value="Fabrika Teslim (EXW)">
               </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
-              <button type="button" class="btn btn-primary" onclick="switchStep(2)">
-                İleri: Ürün Kalemleri ➔
-              </button>
+            <div class="input-group">
+              <label for="notes">Sipariş Notları & Müşteriye Özel Şartlar</label>
+              <textarea id="notes" name="notes" rows="4"
+                placeholder="Siparişe eklemek istediğiniz özel imalat şartları, kargo bilgileri veya banka IBAN detaylarını buraya yazabilirsiniz..."><%= order.notes || order.notlar || '' %></textarea>
             </div>
           </div>
 
-          <!-- TAB STEP 2: ÜRÜN KALEMLERİ VE FİYATLANDIRMA -->
-          <div class="tab-step-content" id="tab-step-2">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-              <h3 style="color: #ec4899; font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 8px;">
-                <span>📦</span> Satılan Ürün Kalemleri ve İskonto Oranları
-              </h3>
-              <button type="button" class="btn btn-sm btn-outline-success" onclick="addRow()">
-                ➕ Yeni Ürün Satırı Ekle
+          <!-- BOTTOM TAB NAVIGATION BAR -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);">
+            <button type="button" class="btn btn-outline-secondary" id="btnPrevStep" onclick="navigateOrderStep(-1)"
+              style="display: none; font-weight: 600; padding: 10px 22px; border-radius: 10px;">
+              ← Önceki Adım
+            </button>
+            <div id="stepCounterBadge" style="font-size: 0.825rem; color: var(--text-muted); font-weight: 600;">
+              Adım 1 / 3
+            </div>
+            <div>
+              <button type="button" class="btn btn-primary" id="btnNextStep" onclick="navigateOrderStep(1)"
+                style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 10px 24px; border-radius: 10px;">
+                Sonraki Adım →
               </button>
-            </div>
-
-            <div id="itemsContainer">
-              <!-- Item rows populated via JS -->
-            </div>
-
-            <!-- Financial Calculation Summary Card -->
-            <div style="background: rgba(15, 23, 42, 0.6); padding: 1.5rem; border-radius: 14px; border: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; margin-top: 1.5rem;">
-              <div>
-                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; text-transform: uppercase; font-weight: 700;">Ara Toplam (Brüt)</span>
-                <strong id="displaySubtotal" style="font-size: 1.2rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0,00 TL</strong>
-              </div>
-              <div>
-                <span style="font-size: 0.8rem; color: #f43f5e; display: block; text-transform: uppercase; font-weight: 700;">Toplam İskonto</span>
-                <strong id="displayDiscount" style="font-size: 1.2rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0,00 TL</strong>
-              </div>
-              <div>
-                <span style="font-size: 0.8rem; color: #818cf8; display: block; text-transform: uppercase; font-weight: 700;">Toplam KDV Tutarı</span>
-                <strong id="displayTax" style="font-size: 1.2rem; color: #a5b4fc; font-family: 'JetBrains Mono', monospace;">+ 0,00 TL</strong>
-              </div>
-              <div style="background: rgba(16, 185, 129, 0.1); border-radius: 10px; padding: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
-                <span style="font-size: 0.8rem; color: #34d399; display: block; text-transform: uppercase; font-weight: 800;">GENEL SİPARİŞ TOPLAMI</span>
-                <strong id="displayTotal" style="font-size: 1.35rem; color: #10b981; font-family: 'JetBrains Mono', monospace;">0,00 TL</strong>
-              </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
-              <button type="button" class="btn btn-secondary" onclick="switchStep(1)">
-                ⬅️ Önceki Adım
-              </button>
-              <button type="button" class="btn btn-primary" onclick="switchStep(3)">
-                İleri: Adres & Notlar ➔
-              </button>
-            </div>
-          </div>
-
-          <!-- TAB STEP 3: TESLİMAT, ADRESLER & NOTLAR -->
-          <div class="tab-step-content" id="tab-step-3">
-            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-              <span>📍</span> Adres, Termin Tarihi ve Satış Dipnotları
-            </h3>
-
-            <div class="form-grid-2" style="margin-bottom: 1.25rem;">
-              <div class="input-group">
-                <label for="orderDate">Sipariş Kayıt Tarihi <span class="req-star">*</span></label>
-                <input type="date" id="orderDate" name="orderDate" value="<%= orderDate %>" required>
-              </div>
-
-              <div class="input-group">
-                <label for="deliveryDate">İstenen Termin / Teslim Tarihi</label>
-                <input type="date" id="deliveryDate" name="deliveryDate" value="<%= deliveryDate %>">
-              </div>
-            </div>
-
-            <div class="form-grid-2" style="margin-bottom: 1.25rem;">
-              <div class="input-group">
-                <label for="billingAddress">Fatura Adresi</label>
-                <textarea id="billingAddress" name="billingAddress" rows="3" placeholder="Fatura adresi..."><%= order.billingAddress || order.faturaAdresi || '' %></textarea>
-              </div>
-
-              <div class="input-group">
-                <label for="shippingAddress">Teslimat & Sevk Adresi</label>
-                <textarea id="shippingAddress" name="shippingAddress" rows="3" placeholder="Teslimat adresi..."><%= order.shippingAddress || order.teslimatAdresi || '' %></textarea>
-              </div>
-            </div>
-
-            <div class="input-group" style="margin-bottom: 2rem;">
-              <label for="notes">Sipariş & Teklif Dipnotları</label>
-              <textarea id="notes" name="notes" rows="2" placeholder="Sipariş için özel notlar ve teklif şartları..."><%= order.notes || order.notlar || '' %></textarea>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-              <button type="button" class="btn btn-secondary" onclick="switchStep(2)">
-                ⬅️ Önceki Adım
-              </button>
-              <button type="submit" class="btn" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; font-weight: 800; font-size: 1rem; padding: 12px 32px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);">
+              <button type="submit" class="btn btn-lg" id="btnSubmitOrder"
+                style="display: none; background: linear-gradient(135deg, #ec4899 0%, #10b981 100%); color: #fff; border: none; font-weight: 700; padding: 12px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35); gap: 10px;">
                 💾 Siparişi Güncelle & Kaydet
               </button>
             </div>
@@ -488,213 +613,354 @@
     </main>
   </div>
 
+  <!-- PRODUCT SELECT CATALOG MODAL -->
+  <div class="modal-overlay" id="productModalOverlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>📦</span> Stok Kartlarından Ürün Seç
+        </h3>
+        <button type="button" onclick="closeProductSelectModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="margin-bottom: 1.25rem;">
+          <input type="text" id="modalStockSearch" placeholder="Stok kodu, ürün adı veya kategori ile ara..."
+            oninput="filterStockCatalogModal(this.value)"
+            style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem;">
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+            <thead>
+              <tr style="background: rgba(19, 26, 43, 0.9); color: var(--text-secondary); text-transform: uppercase; font-size: 0.75rem; border-bottom: 1px solid var(--border);">
+                <th style="padding: 10px 14px; text-align: left;">Stok Kodu</th>
+                <th style="padding: 10px 14px; text-align: left;">Ürün / Mamul Adı</th>
+                <th style="padding: 10px 14px; text-align: left;">Kategori</th>
+                <th style="padding: 10px 14px; text-align: center;">Mevcut Stok</th>
+                <th style="padding: 10px 14px; text-align: right;">Birim Fiyat</th>
+                <th style="padding: 10px 14px; text-align: center;">Ekle</th>
+              </tr>
+            </thead>
+            <tbody id="modalStockTbody">
+              <% (stockItems || []).forEach(st => { %>
+                <tr class="modal-stock-row" style="border-bottom: 1px solid rgba(255,255,255,0.05);"
+                  data-search="<%= (st.stokKodu || st.stockCode || '') + ' ' + (st.ad || st.name || '') + ' ' + (st.kategori || '') %>">
+                  <td style="padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #ec4899;"><%= st.stokKodu || st.stockCode %></td>
+                  <td style="padding: 12px 14px;"><strong style="color: #fff;"><%= st.ad || st.name %></strong></td>
+                  <td style="padding: 12px 14px;"><span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.75rem;"><%= st.kategori || 'Mamul' %></span></td>
+                  <td style="padding: 12px 14px; text-align: center; font-family: 'JetBrains Mono', monospace;"><%= (parseFloat(st.mevcutStok) || 0).toLocaleString('tr-TR') %> <%= st.birim || 'Adet' %></td>
+                  <td style="padding: 12px 14px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399;">
+                    <%= (parseFloat(st.satisFiyati || st.salePrice) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= st.paraBirimi || 'TRY' %>
+                  </td>
+                  <td style="padding: 12px 14px; text-align: center;">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addSelectedProductFromModal('<%= st.id %>')" style="font-size: 0.75rem; font-weight: 700; background: #ec4899; border-color: #ec4899;">
+                      ➕ Ekle
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Item Master Catalog JSON Data -->
+  <script id="stockCatalogData" type="application/json">
+    <%- JSON.stringify(stockItems || []) %>
+  </script>
+  <!-- Initial Items JSON Data -->
+  <script id="initialItemsData" type="application/json">
+    <%- JSON.stringify(existingItems || []) %>
+  </script>
+
   <script>
-    // Available stock items for dropdown
-    const stockItemsData = <%- JSON.stringify(stockItems || []) %>;
-    const initialItems = <%- JSON.stringify(existingItems || []) %>;
+    const stockCatalog = JSON.parse(document.getElementById('stockCatalogData').textContent || '[]');
+    const initialItems = JSON.parse(document.getElementById('initialItemsData').textContent || '[]');
 
     let currentStep = 1;
+    const totalSteps = 3;
 
-    function switchStep(stepNum) {
+    function switchOrderTab(stepNum) {
+      if (stepNum < 1 || stepNum > totalSteps) return;
       currentStep = stepNum;
-      for (let i = 1; i <= 3; i++) {
-        const btn = document.getElementById(`tab-btn-${i}`);
-        const badge = document.getElementById(`spi-badge-${i}`);
-        const content = document.getElementById(`tab-step-${i}`);
 
-        if (i === stepNum) {
-          btn.classList.add('active');
-          btn.classList.remove('completed');
-          content.classList.add('active');
-        } else if (i < stepNum) {
-          btn.classList.remove('active');
-          btn.classList.add('completed');
-          badge.textContent = '✓';
-          content.classList.remove('active');
-        } else {
-          btn.classList.remove('active');
-          btn.classList.remove('completed');
-          badge.textContent = i;
-          content.classList.remove('active');
+      for (let i = 1; i <= totalSteps; i++) {
+        const panel = document.getElementById(`order-tab-${i}`);
+        const pill = document.getElementById(`tab-pill-${i}`);
+        if (panel) {
+          if (i === stepNum) panel.classList.add('active');
+          else panel.classList.remove('active');
+        }
+        if (pill) {
+          if (i === stepNum) {
+            pill.classList.add('active');
+          } else {
+            pill.classList.remove('active');
+            if (i < stepNum) pill.classList.add('completed');
+          }
         }
       }
-    }
 
-    function addRow(itemData = null) {
-      const container = document.getElementById('itemsContainer');
-      const rowId = 'row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      const btnPrev = document.getElementById('btnPrevStep');
+      const btnNext = document.getElementById('btnNextStep');
+      const btnSubmit = document.getElementById('btnSubmitOrder');
+      const counterBadge = document.getElementById('stepCounterBadge');
 
-      let selectedStockId = itemData ? (itemData.stokId || itemData.stockItemId) : (stockItemsData[0] ? stockItemsData[0].id : '');
-      let qty = itemData ? parseFloat(itemData.quantity || itemData.miktar || 1) : 1;
-      let price = itemData ? parseFloat(itemData.unitPrice || itemData.birimFiyat || 0) : 0;
-      let disc = itemData ? parseFloat(itemData.discountRate || itemData.iskontoOrani || 0) : 0;
-      let tax = itemData ? parseFloat(itemData.taxRate || itemData.kdvOrani || 20) : 20;
+      if (btnPrev) btnPrev.style.display = currentStep > 1 ? 'inline-flex' : 'none';
 
-      if (!itemData && stockItemsData[0]) {
-        price = parseFloat(stockItemsData[0].satisFiyati || stockItemsData[0].salePrice || 0);
+      if (currentStep === totalSteps) {
+        if (btnNext) btnNext.style.display = 'none';
+        if (btnSubmit) btnSubmit.style.display = 'inline-flex';
+      } else {
+        if (btnNext) btnNext.style.display = 'inline-flex';
+        if (btnSubmit) btnSubmit.style.display = 'none';
       }
 
-      let optionsHtml = '';
-      stockItemsData.forEach(st => {
-        const isSel = (st.id == selectedStockId) ? 'selected' : '';
-        const priceVal = parseFloat(st.satisFiyati || st.salePrice || 0);
-        optionsHtml += `<option value="${st.id}" data-price="${priceVal}" ${isSel}>[${st.stokKodu || st.stockCode}] ${st.ad || st.name}</option>`;
-      });
+      if (counterBadge) counterBadge.textContent = `Adım ${currentStep} / ${totalSteps}`;
+    }
 
-      const rowHtml = `
-        <div class="item-row" id="${rowId}">
-          <div class="input-group" style="margin: 0;">
-            <label style="font-size: 0.75rem;">Satılan Ürün (Mamul)</label>
-            <select class="item-stock" onchange="onStockChange(this)">${optionsHtml}</select>
+    function navigateOrderStep(direction) {
+      if (direction === 1) {
+        if (currentStep === 1) {
+          const custNameInput = document.getElementById('customerName');
+          if (!custNameInput || !custNameInput.value.trim()) {
+            alert('⚠️ Lütfen önce Müşteri Unvanını giriniz veya Cari seçiniz.');
+            if (custNameInput) custNameInput.focus();
+            return;
+          }
+        }
+      }
+      switchOrderTab(currentStep + direction);
+    }
+
+    function openProductSelectModal() {
+      document.getElementById('productModalOverlay').style.display = 'flex';
+    }
+
+    function closeProductSelectModal() {
+      document.getElementById('productModalOverlay').style.display = 'none';
+    }
+
+    function filterStockCatalogModal(query) {
+      const q = query.toLowerCase().trim();
+      const rows = document.querySelectorAll('.modal-stock-row');
+      rows.forEach(r => {
+        const text = r.getAttribute('data-search').toLowerCase();
+        if (text.includes(q)) r.style.display = '';
+        else r.style.display = 'none';
+      });
+    }
+
+    function addSelectedProductFromModal(stockId) {
+      addNewRow({ stockItemId: stockId });
+      closeProductSelectModal();
+    }
+
+    function fillCustomerName(selectEl) {
+      const selectedOption = selectEl.options[selectEl.selectedIndex];
+      if (!selectedOption.value) return;
+
+      const name = selectedOption.getAttribute('data-name') || '';
+      const contactPerson = selectedOption.getAttribute('data-contactperson') || '—';
+      const phone = selectedOption.getAttribute('data-phone') || '';
+      const email = selectedOption.getAttribute('data-email') || '';
+      const address = selectedOption.getAttribute('data-address') || '';
+      const taxNo = selectedOption.getAttribute('data-tax') || '';
+
+      let contactInfoStr = '—';
+      if (phone && email) contactInfoStr = `${phone} / ${email}`;
+      else if (phone) contactInfoStr = phone;
+      else if (email) contactInfoStr = email;
+
+      document.getElementById('customerName').value = name;
+      document.getElementById('customerTaxNo').value = taxNo;
+      document.getElementById('contactPerson').value = contactPerson;
+      document.getElementById('contactInfo').value = contactInfoStr;
+      document.getElementById('billingAddress').value = address;
+      document.getElementById('shippingAddress').value = address;
+
+      recalculate();
+    }
+
+    // Multi-Item Row Logic
+    let rowIdCounter = 0;
+
+    function addNewRow(initialData = null) {
+      rowIdCounter++;
+      const tbody = document.getElementById('itemsTbody');
+      const placeholder = document.getElementById('emptyItemsPlaceholder');
+      if (placeholder) {
+        placeholder.remove();
+      }
+
+      const tr = document.createElement('tr');
+      tr.id = `row-${rowIdCounter}`;
+
+      const stockId = initialData ? (initialData.stockItemId || initialData.stokId) : null;
+      const st = (stockCatalog || []).find(s => s.id === parseInt(stockId, 10));
+      const code = initialData ? (initialData.stockCode || initialData.stokKodu || (st ? st.stokKodu : '')) : (st ? st.stokKodu : '');
+      const name = initialData ? (initialData.name || initialData.ad || (st ? st.ad : '')) : (st ? st.ad : '');
+
+      const qty = initialData ? parseFloat(initialData.quantity || initialData.miktar || 1) : 1;
+      const price = initialData ? parseFloat(initialData.unitPrice || initialData.birimFiyat || 0) : (st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0);
+      const itemCurr = initialData ? (initialData.currency || initialData.paraBirimi || 'TRY') : (st ? (st.paraBirimi || st.currency || 'TRY') : 'TRY');
+      const discount = initialData ? parseFloat(initialData.discountRate || initialData.iskontoOrani || 0) : 0;
+      const tax = initialData ? parseFloat(initialData.taxRate || initialData.kdvOrani || 20) : (st ? parseFloat(st.kdvOrani || st.taxRate || 20) : 20);
+
+      tr.innerHTML = `
+        <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">1</td>
+        <td style="padding: 12px 14px;">
+          <input type="hidden" class="item-stock-id" value="${stockId || ''}" data-code="${code}" data-name="${name}">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.775rem; color: #ec4899; background: rgba(236, 72, 153, 0.12); border: 1px solid rgba(236, 72, 153, 0.25); padding: 4px 10px; border-radius: 8px; font-weight: 700; flex-shrink: 0;">
+              ${code || 'STOK-N/A'}
+            </span>
+            <strong style="color: #fff; font-size: 0.925rem; font-weight: 600; line-height: 1.3;">${name || 'Seçilen Ürün'}</strong>
           </div>
-          <div class="input-group" style="margin: 0;">
-            <label style="font-size: 0.75rem;">Miktar</label>
-            <input type="number" step="0.01" class="item-qty" value="${qty}" min="0.01" oninput="calcTotals()">
-          </div>
-          <div class="input-group" style="margin: 0;">
-            <label style="font-size: 0.75rem;">Birim Fiyat</label>
-            <input type="number" step="0.01" class="item-price" value="${price}" oninput="calcTotals()">
-          </div>
-          <div class="input-group" style="margin: 0;">
-            <label style="font-size: 0.75rem;">İskonto (%)</label>
-            <input type="number" step="0.01" class="item-disc" value="${disc}" oninput="calcTotals()">
-          </div>
-          <div class="input-group" style="margin: 0;">
-            <label style="font-size: 0.75rem;">KDV (%)</label>
-            <input type="number" step="0.01" class="item-tax" value="${tax}" oninput="calcTotals()">
-          </div>
-          <div>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow('${rowId}')" title="Satırı Sil" style="margin-top: 1.25rem;">
-              🗑️
-            </button>
-          </div>
-        </div>
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.01" min="0.01" value="${qty}" class="item-qty" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; text-align: center; font-weight: 600;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.01" min="0" value="${price}" class="item-price" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; text-align: right; font-weight: 600;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <select class="item-currency" onchange="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #ec4899; padding: 8px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+            <option value="TRY" ${itemCurr === 'TRY' ? 'selected' : ''}>TRY (₺)</option>
+            <option value="USD" ${itemCurr === 'USD' ? 'selected' : ''}>USD ($)</option>
+            <option value="EUR" ${itemCurr === 'EUR' ? 'selected' : ''}>EUR (€)</option>
+          </select>
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.01" min="0" max="100" value="${discount}" class="item-discount" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fb7185; padding: 8px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; text-align: center; font-weight: 600;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <input type="number" step="0.01" min="0" max="100" value="${tax}" class="item-tax" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; text-align: center;">
+        </td>
+        <td style="padding: 12px 14px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;" class="item-linetotal">
+          0.00 ₺
+        </td>
+        <td style="padding: 12px 14px; text-align: center;">
+          <button type="button" onclick="removeRow('${tr.id}')" style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); color: #f43f5e; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">✕</button>
+        </td>
       `;
 
-      container.insertAdjacentHTML('beforeend', rowHtml);
-      calcTotals();
+      tbody.appendChild(tr);
+      updateRowIndices();
+      recalculate();
     }
 
-    function removeRow(rowId) {
-      const container = document.getElementById('itemsContainer');
-      if (container.children.length <= 1) {
-        alert('Siparişte en az 1 ürün kalemi bulunmalıdır.');
+    function removeRow(trId) {
+      const tbody = document.getElementById('itemsTbody');
+      const rows = tbody.querySelectorAll('tr:not(#emptyItemsPlaceholder)');
+      if (rows.length <= 1) {
+        const warn = document.getElementById('minItemWarningAlert');
+        if (warn) warn.style.display = 'flex';
         return;
       }
-      const el = document.getElementById(rowId);
-      if (el) el.remove();
-      calcTotals();
+
+      const tr = document.getElementById(trId);
+      if (tr) tr.remove();
+      updateRowIndices();
+      recalculate();
     }
 
-    function onStockChange(selectEl) {
-      const selectedOption = selectEl.options[selectEl.selectedIndex];
-      const defaultPrice = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-      const row = selectEl.closest('.item-row');
-      if (row) {
-        const priceInput = row.querySelector('.item-price');
-        if (priceInput && defaultPrice > 0) {
-          priceInput.value = defaultPrice;
-        }
-      }
-      calcTotals();
+    function updateRowIndices() {
+      const rows = document.querySelectorAll('#itemsTbody tr:not(#emptyItemsPlaceholder)');
+      rows.forEach((tr, index) => {
+        const idxTd = tr.querySelector('.row-index');
+        if (idxTd) idxTd.textContent = index + 1;
+      });
+      const badge = document.getElementById('itemCountBadge');
+      if (badge) badge.textContent = rows.length;
     }
 
-    function calcTotals() {
-      const curr = document.getElementById('currency').value || 'TRY';
-      const rows = document.querySelectorAll('.item-row');
-
-      let subtotal = 0;
-      let discountAmount = 0;
-      let taxAmount = 0;
+    function recalculate() {
+      const rows = document.querySelectorAll('#itemsTbody tr:not(#emptyItemsPlaceholder)');
+      let grandSubtotal = 0;
+      let grandDiscount = 0;
+      let grandTax = 0;
       let grandTotal = 0;
 
-      rows.forEach(r => {
-        const q = parseFloat(r.querySelector('.item-qty').value) || 0;
-        const p = parseFloat(r.querySelector('.item-price').value) || 0;
-        const d = parseFloat(r.querySelector('.item-disc').value) || 0;
-        const t = parseFloat(r.querySelector('.item-tax').value) || 20;
+      const itemsData = [];
 
-        const sub = q * p;
-        const disc = sub * (d / 100);
-        const afterDisc = sub - disc;
-        const tax = afterDisc * (t / 100);
-        const tot = afterDisc + tax;
+      rows.forEach(tr => {
+        const stockIdInput = tr.querySelector('.item-stock-id');
+        const stockItemId = parseInt(stockIdInput.value, 10);
+        const stockCode = stockIdInput.getAttribute('data-code') || '';
+        const stockName = stockIdInput.getAttribute('data-name') || '';
 
-        subtotal += sub;
-        discountAmount += disc;
-        taxAmount += tax;
-        grandTotal += tot;
-      });
+        const qtyInput = tr.querySelector('.item-qty');
+        const priceInput = tr.querySelector('.item-price');
+        const currSelect = tr.querySelector('.item-currency');
+        const discInput = tr.querySelector('.item-discount');
+        const taxInput = tr.querySelector('.item-tax');
+        const linetotalTd = tr.querySelector('.item-linetotal');
 
-      document.getElementById('displaySubtotal').textContent = subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
-      document.getElementById('displayDiscount').textContent = '- ' + discountAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
-      document.getElementById('displayTax').textContent = '+ ' + taxAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
-      document.getElementById('displayTotal').textContent = grandTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
-    }
+        const qty = parseFloat(qtyInput.value) || 1;
+        const price = parseFloat(priceInput.value) || 0;
+        const currencyVal = currSelect ? currSelect.value : 'TRY';
+        const discRate = parseFloat(discInput.value) || 0;
+        const taxRate = parseFloat(taxInput.value) || 20;
 
-    function prepareFormSubmit(e) {
-      const rows = document.querySelectorAll('.item-row');
-      const items = [];
+        const subtotal = qty * price;
+        const discAmount = subtotal * (discRate / 100);
+        const afterDisc = subtotal - discAmount;
+        const taxAmount = afterDisc * (taxRate / 100);
+        const total = afterDisc + taxAmount;
 
-      rows.forEach(r => {
-        const stockSelect = r.querySelector('.item-stock');
-        const selectedOption = stockSelect.options[stockSelect.selectedIndex];
-        const stockId = parseInt(stockSelect.value, 10);
-        const stockText = selectedOption.text;
-        
-        let stockCode = '';
-        let name = stockText;
-        if (stockText.includes('[') && stockText.includes(']')) {
-          stockCode = stockText.split(']')[0].replace('[', '').trim();
-          name = stockText.split(']').slice(1).join(']').trim();
-        }
+        grandSubtotal += subtotal;
+        grandDiscount += discAmount;
+        grandTax += taxAmount;
+        grandTotal += total;
 
-        const q = parseFloat(r.querySelector('.item-qty').value) || 1;
-        const p = parseFloat(r.querySelector('.item-price').value) || 0;
-        const d = parseFloat(r.querySelector('.item-disc').value) || 0;
-        const t = parseFloat(r.querySelector('.item-tax').value) || 20;
+        linetotalTd.textContent = total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currencyVal;
 
-        const sub = q * p;
-        const disc = sub * (d / 100);
-        const afterDisc = sub - disc;
-        const tax = afterDisc * (t / 100);
-        const tot = afterDisc + tax;
-
-        items.push({
-          stokId: stockId,
-          stockItemId: stockId,
+        itemsData.push({
+          stokId: stockItemId,
+          stockItemId: stockItemId,
           stockCode,
           stokKodu: stockCode,
-          name,
-          ad: name,
-          quantity: q,
-          miktar: q,
-          unitPrice: p,
-          birimFiyat: p,
-          discountRate: d,
-          iskontoOrani: d,
-          taxRate: t,
-          kdvOrani: t,
-          subtotal: sub,
-          araToplam: sub,
-          discountAmount: disc,
-          iskontoTutari: disc,
-          taxAmount: tax,
-          kdvTutari: tax,
-          totalAmount: tot,
-          toplamTutar: tot
+          name: stockName,
+          ad: stockName,
+          quantity: qty,
+          miktar: qty,
+          unitPrice: price,
+          birimFiyat: price,
+          currency: currencyVal,
+          paraBirimi: currencyVal,
+          discountRate: discRate,
+          iskontoOrani: discRate,
+          taxRate: taxRate,
+          kdvOrani: taxRate,
+          subtotal: subtotal,
+          araToplam: subtotal,
+          discountAmount: discAmount,
+          iskontoTutari: discAmount,
+          taxAmount: taxAmount,
+          kdvTutari: taxAmount,
+          totalAmount: total,
+          toplamTutar: total
         });
       });
 
-      document.getElementById('itemsJsonInput').value = JSON.stringify(items);
+      document.getElementById('displaySubtotal').textContent = grandSubtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
+      document.getElementById('displayDiscount').textContent = '- ' + grandDiscount.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
+      document.getElementById('displayTax').textContent = grandTax.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
+      document.getElementById('displayGrandTotal').textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
+
+      document.getElementById('itemsJsonInput').value = JSON.stringify(itemsData);
     }
 
-    // Populate initial items
+    // Populate initial items on load
     window.addEventListener('DOMContentLoaded', () => {
       if (initialItems && initialItems.length > 0) {
-        initialItems.forEach(it => addRow(it));
+        initialItems.forEach(it => addNewRow(it));
       } else {
-        addRow();
+        addNewRow();
       }
     });
 

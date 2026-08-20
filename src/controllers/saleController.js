@@ -306,12 +306,16 @@ class SaleController {
       order: [['ad', 'ASC']]
     });
     const customers = await customerRepository.findAll({ status: 'Active' });
+    const exchangeRates = await exchangeRateRepository.getLatestRates();
+    const priceLists = await MusteriFiyatListesi.findAll({ where: { durum: 'Active' } });
 
     res.render('sales/edit', {
       user: req.user,
       order,
       stockItems,
       customers,
+      exchangeRates,
+      priceLists,
       error: null
     });
   });
