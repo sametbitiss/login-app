@@ -432,6 +432,32 @@
               <span>⚠️ Siparişte en az 1 ürün bulunmalıdır. Son ürün kalemi silinemez.</span>
             </div>
 
+            <!-- Risk Limit Exceeded Alert Banner -->
+            <div id="riskLimitExceededAlert"
+              style="display: none; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(244, 63, 94, 0.5); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 700; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span id="riskLimitExceededText">⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti sipariş tutarından azdır.</span>
+            </div>
+
+            <!-- Special Price Violation Alert Banner -->
+            <div id="specialPriceViolationAlert" style="display: none; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(244, 63, 94, 0.5); padding: 14px 20px; border-radius: 12px; color: #f43f5e; font-size: 0.875rem; font-weight: 700; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span id="specialPriceViolationText">⚠️ Müşteriye özel tanımlanmış birim fiyat arttırılamaz, özel iskonto oranı da düşürülemez!</span>
+            </div>
+
+            <!-- Approval Warning Alert -->
+            <div id="approvalWarningAlert"
+              style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px 18px; border-radius: 10px; color: #fbbf24; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span>⚡ Bu sipariş yüksek iskonto (>%20) veya yüksek toplam tutar (>100.000 TL) içerdiği için yönetsel onay gerektirecektir.</span>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
               <div>
                 <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin: 0;">
@@ -638,10 +664,12 @@
 
   <!-- Master JSON Data -->
   <script id="stockCatalogData" type="application/json"><%- JSON.stringify(stockItems || []) %></script>
+  <script id="priceListsData" type="application/json"><%- JSON.stringify(priceLists || []) %></script>
   <script id="initialItemsData" type="application/json"><%- JSON.stringify(existingItems || []) %></script>
 
   <script>
     const stockCatalog = JSON.parse(document.getElementById('stockCatalogData').textContent || '[]');
+    const priceListsCatalog = JSON.parse(document.getElementById('priceListsData')?.textContent || '[]');
     const initialItems = JSON.parse(document.getElementById('initialItemsData').textContent || '[]');
 
     let currentStep = 1;
@@ -697,6 +725,20 @@
         }
       }
       switchOrderTab(currentStep + direction);
+    }
+
+    function getCustomerSpecialPrice(customerId, stockItemId) {
+      if (!stockItemId) return null;
+      const cId = parseInt(customerId, 10);
+      const sId = parseInt(stockItemId, 10);
+
+      if (cId) {
+        const match = priceListsCatalog.find(p => p.customerId === cId && p.stockItemId === sId && p.status === 'Active');
+        if (match) return match;
+      }
+
+      const globalMatch = priceListsCatalog.find(p => (!p.customerId || p.customerId === 0) && p.stockItemId === sId && p.status === 'Active');
+      return globalMatch || null;
     }
 
     function openProductSelectModal() {
@@ -909,6 +951,64 @@
 
       tbody.appendChild(tr);
       updateRowIndices();
+
+      if (stockId) {
+        applyStockItemValues(tr, stockId, initialData);
+      } else {
+        recalculate();
+      }
+    }
+
+    function applyStockItemValues(tr, stockId, initialData) {
+      if (!tr || !stockId) return;
+
+      const priceInput = tr.querySelector('.item-price');
+      const discInput = tr.querySelector('.item-discount');
+      const taxInput = tr.querySelector('.item-tax');
+      const currSelect = tr.querySelector('.item-currency');
+
+      const st = (stockCatalog || []).find(s => String(s.id) === String(stockId));
+      const defaultPrice = st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0;
+      const tax = st ? (st.kdvOrani || st.taxRate || 20) : 20;
+
+      if (taxInput && (!initialData || initialData.taxRate === undefined)) {
+        taxInput.value = tax;
+      }
+
+      if (currSelect && st && st.paraBirimi && (!initialData || !initialData.currency)) {
+        const pStr = st.paraBirimi.toUpperCase();
+        if (pStr.includes('USD')) currSelect.value = 'USD';
+        else if (pStr.includes('EUR')) currSelect.value = 'EUR';
+        else currSelect.value = 'TRY';
+      }
+
+      const custId = '<%= order.musteriId || "" %>';
+      const sp = getCustomerSpecialPrice(custId, stockId);
+
+      if (sp) {
+        const specPrice = parseFloat(sp.specialPrice);
+        const customDisc = parseFloat(sp.customDiscountRate);
+
+        if (priceInput) {
+          priceInput.value = specPrice;
+          priceInput.dataset.specialMax = specPrice;
+        }
+        if (discInput) {
+          discInput.value = customDisc;
+          discInput.dataset.specialMin = customDisc;
+        }
+      } else {
+        if (priceInput && (!initialData || initialData.unitPrice === undefined)) {
+          priceInput.value = defaultPrice;
+        }
+        if (discInput && initialData && initialData.discountRate !== undefined) {
+          discInput.value = initialData.discountRate;
+        } else if (discInput) {
+          discInput.value = 0;
+        }
+        if (priceInput) delete priceInput.dataset.specialMax;
+        if (discInput) delete discInput.dataset.specialMin;
+      }
       recalculate();
     }
 
@@ -937,6 +1037,8 @@
       if (badge) badge.textContent = rows.length;
     }
 
+    let globalSpecialPriceViolation = null;
+
     function recalculate() {
       const rows = document.querySelectorAll('#itemsTbody tr:not(#emptyItemsPlaceholder)');
       let grandSubtotal = 0;
@@ -944,7 +1046,9 @@
       let grandTax = 0;
       let grandTotal = 0;
 
+      let maxDiscountRate = 0;
       const itemsData = [];
+      globalSpecialPriceViolation = null;
 
       rows.forEach(tr => {
         const stockIdInput = tr.querySelector('.item-stock-id');
@@ -975,8 +1079,35 @@
         const qty = parseFloat(qtyInput.value) || 1;
         const price = parseFloat(priceInput.value) || 0;
         const currencyVal = currSelect ? currSelect.value : 'TRY';
+        const itemSymbol = currencyVal === 'USD' ? '$' : (currencyVal === 'EUR' ? '€' : '₺');
         const discRate = parseFloat(discInput.value) || 0;
         const taxRate = parseFloat(taxInput.value) || 20;
+
+        // Special Price Mutation Check
+        const maxPrice = priceInput && priceInput.dataset.specialMax !== undefined ? parseFloat(priceInput.dataset.specialMax) : null;
+        const minDisc = discInput && discInput.dataset.specialMin !== undefined ? parseFloat(discInput.dataset.specialMin) : null;
+
+        if (maxPrice !== null && !isNaN(maxPrice) && price > maxPrice) {
+          priceInput.style.borderColor = '#f43f5e';
+          priceInput.style.color = '#f43f5e';
+          globalSpecialPriceViolation = `⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış birim fiyat (${maxPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL) daha yüksek bir tutara arttırılamaz!`;
+        } else if (priceInput) {
+          priceInput.style.borderColor = 'var(--border)';
+          priceInput.style.color = '#fff';
+        }
+
+        if (minDisc !== null && !isNaN(minDisc) && discRate < minDisc) {
+          discInput.style.borderColor = '#f43f5e';
+          discInput.style.color = '#f43f5e';
+          if (!globalSpecialPriceViolation) {
+            globalSpecialPriceViolation = `⚠️ [${stockCode}] ürünü için müşteriye özel tanımlanmış iskonto oranı (%${minDisc}) daha düşük bir orana düşürülemez!`;
+          }
+        } else if (discInput) {
+          discInput.style.borderColor = 'var(--border)';
+          discInput.style.color = '#fb7185';
+        }
+
+        if (discRate > maxDiscountRate) maxDiscountRate = discRate;
 
         const subtotal = qty * price;
         const discAmount = subtotal * (discRate / 100);
@@ -989,7 +1120,9 @@
         grandTax += taxAmount;
         grandTotal += total;
 
-        linetotalTd.textContent = total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currencyVal;
+        if (linetotalTd) {
+          linetotalTd.textContent = total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + itemSymbol;
+        }
 
         itemsData.push({
           stokId: stockItemId,
@@ -1025,12 +1158,36 @@
       document.getElementById('displayGrandTotal').textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
 
       document.getElementById('itemsJsonInput').value = JSON.stringify(itemsData);
+
+      const spAlert = document.getElementById('specialPriceViolationAlert');
+      const spText = document.getElementById('specialPriceViolationText');
+      if (globalSpecialPriceViolation) {
+        if (spText) spText.textContent = globalSpecialPriceViolation;
+        if (spAlert) spAlert.style.display = 'flex';
+      } else {
+        if (spAlert) spAlert.style.display = 'none';
+      }
+
+      const approvalAlert = document.getElementById('approvalWarningAlert');
+      if (approvalAlert) {
+        if (maxDiscountRate > 20 || grandTotal > 100000) {
+          approvalAlert.style.display = 'flex';
+        } else {
+          approvalAlert.style.display = 'none';
+        }
+      }
     }
 
     const orderForm = document.getElementById('orderForm');
     if (orderForm) {
       orderForm.addEventListener('submit', function(e) {
         recalculate();
+        if (globalSpecialPriceViolation) {
+          e.preventDefault();
+          alert(globalSpecialPriceViolation);
+          return false;
+        }
+
         const payload = document.getElementById('itemsJsonInput').value;
         let arr = [];
         try { arr = JSON.parse(payload); } catch(err) { arr = []; }
