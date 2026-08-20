@@ -470,8 +470,20 @@
             </thead>
             <tbody>
               <% itemsList.forEach((it, idx) => { 
-                const sCode = (it.stokKodu || it.stockCode || '').trim() || (order.stokKarti ? order.stokKarti.stokKodu : '—');
-                const iName = (it.ad || it.name || '').trim() || (order.stokKarti ? order.stokKarti.ad : 'Ürün Kalemi');
+                let sCode = (it.stokKodu || it.stockCode || '').trim();
+                let iName = (it.ad || it.name || '').trim();
+
+                if (!iName || iName === 'Ürün Kalemi' || iName === 'Seçilen Ürün') {
+                  if (it.stokKarti && it.stokKarti.ad) iName = it.stokKarti.ad;
+                  else if (order.stokKarti && order.stokKarti.ad) iName = order.stokKarti.ad;
+                }
+                if (!sCode || sCode === '—' || sCode === 'STOK-N/A') {
+                  if (it.stokKarti && it.stokKarti.stokKodu) sCode = it.stokKarti.stokKodu;
+                  else if (order.stokKarti && order.stokKarti.stokKodu) sCode = order.stokKarti.stokKodu;
+                }
+                if (!iName) iName = 'Ürün Kalemi';
+                if (!sCode) sCode = '—';
+
                 const unit = it.birim || it.unit || (order.stokKarti ? order.stokKarti.birim : 'Adet');
                 const q = safeFloat(it.quantity !== undefined ? it.quantity : it.miktar, 1);
                 const p = safeFloat(it.unitPrice !== undefined ? it.unitPrice : it.birimFiyat, 0);

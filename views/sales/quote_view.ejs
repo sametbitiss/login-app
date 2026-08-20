@@ -469,8 +469,20 @@
             <tbody>
               <% if (itemsList && itemsList.length > 0) { %>
                 <% itemsList.forEach((it, idx) => { 
-                  const stCode = (it.stokKodu || it.stockCode || '').trim() || (quote.stokKarti ? quote.stokKarti.stokKodu : 'STK');
-                  const stName = (it.ad || it.name || '').trim() || (quote.stokKarti ? quote.stokKarti.ad : 'Ürün Kalemi');
+                  let stCode = (it.stokKodu || it.stockCode || '').trim();
+                  let stName = (it.ad || it.name || '').trim();
+
+                  if (!stName || stName === 'Ürün Kalemi' || stName === 'Seçilen Ürün') {
+                    if (it.stokKarti && it.stokKarti.ad) stName = it.stokKarti.ad;
+                    else if (quote.stokKarti && quote.stokKarti.ad) stName = quote.stokKarti.ad;
+                  }
+                  if (!stCode || stCode === '—' || stCode === 'STOK-N/A' || stCode === 'STK') {
+                    if (it.stokKarti && it.stokKarti.stokKodu) stCode = it.stokKarti.stokKodu;
+                    else if (quote.stokKarti && quote.stokKarti.stokKodu) stCode = quote.stokKarti.stokKodu;
+                  }
+                  if (!stName) stName = 'Ürün Kalemi';
+                  if (!stCode) stCode = '—';
+
                   const uName = it.birim || it.unit || (quote.stokKarti ? quote.stokKarti.birim : 'Adet');
                   const qty = parseFloat(it.quantity !== undefined ? it.quantity : (it.miktar !== undefined ? it.miktar : 1)) || 1;
                   const price = parseFloat(it.unitPrice !== undefined ? it.unitPrice : (it.birimFiyat !== undefined ? it.birimFiyat : 0)) || 0;

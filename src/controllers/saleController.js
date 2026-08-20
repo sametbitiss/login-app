@@ -150,6 +150,13 @@ class SaleController {
       let stockCode = (item.stokKodu || item.stockCode || '').trim();
       let unit = (item.birim || item.unit || 'Adet').trim();
 
+      if (!itemName || itemName === 'Ürün Kalemi' || itemName === 'Seçilen Ürün') {
+        itemName = '';
+      }
+      if (!stockCode || stockCode === '—' || stockCode === 'STOK-N/A') {
+        stockCode = '';
+      }
+
       if (itemId && itemId > 0) {
         const st = await StokKarti.findByPk(itemId);
         if (st) {

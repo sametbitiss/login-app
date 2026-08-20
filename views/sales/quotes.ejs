@@ -160,8 +160,18 @@
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                       <% itemsList.forEach(it => { 
-                        const name = (it.ad || it.name || '').trim() || (q.stokKarti ? q.stokKarti.ad : 'Ürün Kalemi');
-                        const code = (it.stokKodu || it.stockCode || '').trim() || (q.stokKarti ? q.stokKarti.stokKodu : '');
+                        let name = (it.ad || it.name || '').trim();
+                        let code = (it.stokKodu || it.stockCode || '').trim();
+
+                        if (!name || name === 'Ürün Kalemi' || name === 'Seçilen Ürün') {
+                          if (it.stokKarti && it.stokKarti.ad) name = it.stokKarti.ad;
+                          else if (q.stokKarti && q.stokKarti.ad) name = q.stokKarti.ad;
+                        }
+                        if (!code || code === '—' || code === 'STOK-N/A') {
+                          if (it.stokKarti && it.stokKarti.stokKodu) code = it.stokKarti.stokKodu;
+                          else if (q.stokKarti && q.stokKarti.stokKodu) code = q.stokKarti.stokKodu;
+                        }
+                        if (!name) name = 'Ürün Kalemi';
                       %>
                         <div style="font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">
                           <% if (code) { %><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #f472b6; font-weight: 700;">[<%= code %>]</span> <% } %>

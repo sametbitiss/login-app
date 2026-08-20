@@ -776,10 +776,10 @@
       const tr = document.createElement('tr');
       tr.id = `row-${rowIdCounter}`;
 
-      const stockId = initialData ? initialData.stockItemId : null;
-      const st = (stockCatalog || []).find(s => s.id === parseInt(stockId, 10));
-      const code = st ? (st.stokKodu || st.stockCode || '') : '';
-      const name = st ? (st.ad || st.name || '') : '';
+      const stockId = initialData ? (initialData.stockItemId || initialData.stokId) : null;
+      const st = (stockCatalog || []).find(s => String(s.id) === String(stockId));
+      const code = initialData ? (initialData.stockCode || initialData.stokKodu || (st ? (st.stokKodu || st.stockCode || '') : '')) : (st ? (st.stokKodu || st.stockCode || '') : '');
+      const name = initialData ? (initialData.name || initialData.ad || (st ? (st.ad || st.name || '') : '')) : (st ? (st.ad || st.name || '') : '');
 
       const qty = initialData ? initialData.quantity : 1;
       const price = initialData ? initialData.unitPrice : (st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0);
@@ -944,8 +944,18 @@
         const stockInput = tr.querySelector('.item-stock-id');
         if (!stockInput) return;
         const stockItemId = stockInput.value;
-        const stockCode = stockInput.getAttribute('data-code') || '';
-        const name = stockInput.getAttribute('data-name') || '';
+        let stockCode = stockInput.getAttribute('data-code') || '';
+        let name = stockInput.getAttribute('data-name') || '';
+
+        if (!name || name === 'Seçilen Ürün' || name === 'Ürün Kalemi') {
+          const st = (stockCatalog || []).find(s => String(s.id) === String(stockItemId));
+          if (st) {
+            name = st.ad || st.name || '';
+            stockCode = st.stokKodu || st.stockCode || '';
+            stockInput.setAttribute('data-name', name);
+            stockInput.setAttribute('data-code', stockCode);
+          }
+        }
 
         const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
         const priceInput = tr.querySelector('.item-price');
@@ -1226,6 +1236,11 @@
 
         addNewRow({
           stockItemId: item.id,
+          stokId: item.id,
+          stockCode: item.stokKodu || item.stockCode || '',
+          stokKodu: item.stokKodu || item.stockCode || '',
+          name: item.ad || item.name || '',
+          ad: item.ad || item.name || '',
           quantity: qty,
           unitPrice: unitPrice,
           discountRate: 0,

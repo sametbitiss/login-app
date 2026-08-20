@@ -823,6 +823,11 @@
 
         addNewRow({
           stockItemId: item.id,
+          stokId: item.id,
+          stockCode: item.stokKodu || item.stockCode || '',
+          stokKodu: item.stokKodu || item.stockCode || '',
+          name: item.ad || item.name || '',
+          ad: item.ad || item.name || '',
           quantity: qty,
           unitPrice: unitPrice,
           discountRate: 0,
@@ -846,9 +851,9 @@
       tr.id = `row-${rowIdCounter}`;
 
       const stockId = initialData ? (initialData.stockItemId || initialData.stokId) : null;
-      const st = (stockCatalog || []).find(s => s.id === parseInt(stockId, 10));
-      const code = initialData ? (initialData.stockCode || initialData.stokKodu || (st ? st.stokKodu : '')) : (st ? st.stokKodu : '');
-      const name = initialData ? (initialData.name || initialData.ad || (st ? st.ad : '')) : (st ? st.ad : '');
+      const st = (stockCatalog || []).find(s => String(s.id) === String(stockId));
+      const code = initialData ? (initialData.stockCode || initialData.stokKodu || (st ? (st.stokKodu || st.stockCode || '') : '')) : (st ? (st.stokKodu || st.stockCode || '') : '');
+      const name = initialData ? (initialData.name || initialData.ad || (st ? (st.ad || st.name || '') : '')) : (st ? (st.ad || st.name || '') : '');
 
       const qty = initialData ? parseFloat(initialData.quantity || initialData.miktar || 1) : 1;
       const price = initialData ? parseFloat(initialData.unitPrice || initialData.birimFiyat || 0) : (st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0);
@@ -937,8 +942,18 @@
         const stockIdInput = tr.querySelector('.item-stock-id');
         if (!stockIdInput) return;
         const stockItemId = parseInt(stockIdInput.value, 10);
-        const stockCode = stockIdInput.getAttribute('data-code') || '';
-        const stockName = stockIdInput.getAttribute('data-name') || '';
+        let stockCode = stockIdInput.getAttribute('data-code') || '';
+        let stockName = stockIdInput.getAttribute('data-name') || '';
+
+        if (!stockName || stockName === 'Seçilen Ürün' || stockName === 'Ürün Kalemi') {
+          const st = (stockCatalog || []).find(s => String(s.id) === String(stockItemId));
+          if (st) {
+            stockName = st.ad || st.name || '';
+            stockCode = st.stokKodu || st.stockCode || '';
+            stockIdInput.setAttribute('data-name', stockName);
+            stockIdInput.setAttribute('data-code', stockCode);
+          }
+        }
 
         const qtyInput = tr.querySelector('.item-qty');
         const priceInput = tr.querySelector('.item-price');
