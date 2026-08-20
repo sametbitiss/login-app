@@ -53,6 +53,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('Active', 'Inactive', 'Suspended'),
       allowNull: false,
       defaultValue: 'Active'
+    },
+    dogrulamaKodu: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    dogrulamaKoduSonKullanma: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     sequelize,

@@ -7,8 +7,7 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="/sidebar.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="login-body">
 
@@ -21,13 +20,13 @@
   </div>
 
   <div class="login-wrapper">
-    <div class="login-card">
+    <div class="login-card" style="max-width: 440px;">
 
       <!-- Header -->
       <div class="login-header">
-        <div class="login-brand-icon">
-          <svg width="40" height="40" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="url(#brandGrad)"/>
+        <div class="login-brand-icon" style="box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);">
+          <svg width="44" height="44" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="10" fill="url(#brandGrad)"/>
             <path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
             <defs>
               <linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32">
@@ -37,14 +36,20 @@
             </defs>
           </svg>
         </div>
-        <h1 class="login-title">Enterprise ERP</h1>
-        <p class="login-subtitle">Kurumsal Yönetim & Operasyon Portalı</p>
+        <h1 class="login-title" style="letter-spacing: -0.5px;">Enterprise ERP</h1>
+        <p class="login-subtitle">Güvenli E-Posta OTP Kimlik Doğrulama</p>
+      </div>
+
+      <!-- Info Alert Banner -->
+      <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 12px; font-size: 0.825rem; color: #c7d2fe; line-height: 1.45;">
+        <span style="font-size: 1.1rem; line-height: 1;">✉️</span>
+        <div>Kullanıcı adınızı girdikten sonra sistemde kayıtlı e-posta adresinize <strong>1 dakika</strong> geçerli <strong>6 haneli doğrulama kodu</strong> gönderilecektir.</div>
       </div>
 
       <!-- Error Alert -->
       <% if (error) { %>
-        <div class="error" style="margin-bottom: 1.25rem;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="error" style="margin-bottom: 1.5rem; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <%= error %>
         </div>
       <% } %>
@@ -52,44 +57,55 @@
       <!-- Form -->
       <form action="/login" method="POST" class="login-form">
         <div class="input-group">
-          <label for="username">Kullanıcı Adı</label>
+          <label for="username" style="font-size: 0.85rem; font-weight: 600; color: #e2e8f0; margin-bottom: 8px;">Kullanıcı Adı</label>
           <div class="input-with-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <input type="text" id="username" name="username" placeholder="Kullanıcı adınızı girin" required autofocus>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="username" name="username" value="<%= typeof prevUsername !== 'undefined' ? prevUsername : '' %>" placeholder="Örn: sametbitis veya admin" required autofocus autocomplete="username" style="font-size: 0.95rem; font-weight: 600; padding: 12px 14px 12px 42px; border-radius: 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff;">
           </div>
         </div>
 
-        <div class="input-group">
-          <label for="password">Şifre</label>
-          <div class="input-with-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <input type="password" id="password" name="password" placeholder="••••••••" required>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-lg" style="width: 100%; margin-top: 0.5rem; gap: 8px;">
-          Sisteme Giriş Yap
+        <button type="submit" id="btnSendCode" class="btn btn-lg" style="width: 100%; margin-top: 1rem; padding: 13px; font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35); gap: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+          <span>Doğrulama Kodu Gönder</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </form>
 
-      <!-- Default Accounts Hint -->
-      <div class="login-hints">
-        <div class="hints-label">Varsayılan Hesaplar</div>
-        <div class="hints-grid">
-          <div class="hint-chip">
-            <span class="hint-role">Admin</span>
-            <code>admin / admin123</code>
-          </div>
-          <div class="hint-chip">
-            <span class="hint-role">Stok</span>
-            <code>stok_yoneticisi / stok123456</code>
-          </div>
+      <!-- Quick Fill User Accounts Hint -->
+      <div class="login-hints" style="margin-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem;">
+        <div class="hints-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 10px; font-weight: 700;">Hızlı Seçim (Sistemdeki Hesaplar)</div>
+        <div class="hints-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <% if (typeof accounts !== 'undefined' && accounts && accounts.length > 0) { %>
+            <% accounts.forEach(acc => { %>
+              <div class="hint-chip" onclick="fillUsername('<%= acc.kullaniciAdi %>')" style="cursor: pointer; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 2px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(99,102,241,0.12)'; this.style.borderColor='rgba(99,102,241,0.3)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                <span class="hint-role" style="font-size: 0.7rem; color: #818cf8; font-weight: 700;"><%= acc.rol %></span>
+                <code style="font-size: 0.78rem; color: #fff; font-family: 'JetBrains Mono', monospace;"><%= acc.kullaniciAdi %></code>
+                <span style="font-size: 0.68rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= acc.eposta || '—' %></span>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <div class="hint-chip" onclick="fillUsername('sametbitis')" style="cursor: pointer;">
+              <span class="hint-role">Admin</span>
+              <code>sametbitis</code>
+            </div>
+            <div class="hint-chip" onclick="fillUsername('admin')" style="cursor: pointer;">
+              <span class="hint-role">Yönetici</span>
+              <code>admin</code>
+            </div>
+          <% } %>
         </div>
       </div>
 
     </div>
   </div>
 
+  <script>
+    function fillUsername(uName) {
+      const inp = document.getElementById('username');
+      if (inp) {
+        inp.value = uName;
+        inp.focus();
+      }
+    }
+  </script>
 </body>
 </html>

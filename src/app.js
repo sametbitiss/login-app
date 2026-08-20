@@ -70,6 +70,8 @@ app.use(errorHandler);
     await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "sevkAdresi" TEXT;`);
     await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "istenenTerminTarihi" DATE;`);
     await sequelize.query(`ALTER TABLE "SatisTeklifleri" ADD COLUMN IF NOT EXISTS "teslimatSekli" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "Kullanicilar" ADD COLUMN IF NOT EXISTS "dogrulamaKodu" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "Kullanicilar" ADD COLUMN IF NOT EXISTS "dogrulamaKoduSonKullanma" TIMESTAMP WITH TIME ZONE;`);
   } catch (e) {
     console.log('Pre-sync alter table warning:', e.message);
   }
