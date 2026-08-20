@@ -709,12 +709,11 @@
       }
 
       // Re-trigger special price evaluation for all existing rows that have a selected product
-      const rows = document.querySelectorAll('#itemsTbody tr');
+      const rows = document.querySelectorAll('#itemsTbody tr:not(#emptyItemsPlaceholder)');
       rows.forEach(tr => {
-        const stockSelect = tr.querySelector('.item-stock-id');
-        if (stockSelect && stockSelect.value) {
-          const rowId = tr.id.replace('row-', '');
-          onStockSelect(stockSelect, rowId);
+        const stockInput = tr.querySelector('.item-stock-id');
+        if (stockInput && stockInput.value) {
+          applyStockItemValues(tr, stockInput.value, null);
         }
       });
 
@@ -748,24 +747,26 @@
       const tr = document.createElement('tr');
       tr.id = `row-${rowIdCounter}`;
 
-      const stockItemsList = stockCatalog || [];
-      const stockOptionsHtml = `<option value="">-- Ürün / Stok Kalemi Seçiniz --</option>` + stockItemsList.map(st => `
-        <option value="${st.id}" data-code="${st.stokKodu || st.stockCode}" data-price="${st.satisFiyati || st.salePrice}" data-tax="${st.kdvOrani || st.taxRate || 20}">
-          [${st.stokKodu || st.stockCode}] ${st.ad || st.name} (${parseFloat(st.satisFiyati || st.salePrice || 0).toLocaleString('tr-TR')} ₺)
-        </option>
-      `).join('');
+      const stockId = initialData ? initialData.stockItemId : null;
+      const st = (stockCatalog || []).find(s => s.id === parseInt(stockId, 10));
+      const code = st ? (st.stokKodu || st.stockCode || '') : '';
+      const name = st ? (st.ad || st.name || '') : '';
 
       const qty = initialData ? initialData.quantity : 1;
-      const price = initialData ? initialData.unitPrice : 0;
+      const price = initialData ? initialData.unitPrice : (st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0);
       const discount = initialData ? initialData.discountRate : 0;
-      const tax = initialData ? initialData.taxRate : 20;
+      const tax = initialData ? initialData.taxRate : (st ? (st.kdvOrani || st.taxRate || 20) : 20);
 
       tr.innerHTML = `
         <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: var(--text-muted);" class="row-index">1</td>
         <td style="padding: 12px 14px;">
-          <select class="item-stock-id" disabled style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; font-weight: 600; opacity: 0.9; pointer-events: none;">
-            ${stockOptionsHtml}
-          </select>
+          <input type="hidden" class="item-stock-id" value="${stockId || ''}" data-code="${code}" data-name="${name}">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.775rem; color: #818cf8; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25); padding: 4px 10px; border-radius: 8px; font-weight: 700; flex-shrink: 0;">
+              ${code || 'STOK-N/A'}
+            </span>
+            <strong style="color: #fff; font-size: 0.925rem; font-weight: 600; line-height: 1.3;">${name || 'Seçilen Ürün'}</strong>
+          </div>
         </td>
         <td style="padding: 12px 14px;">
           <input type="number" step="0.01" min="0.01" value="${qty}" class="item-qty" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
@@ -783,7 +784,7 @@
           <strong class="item-total" style="font-family: 'JetBrains Mono', monospace; color: #fff; font-size: 0.95rem;">0.00 ₺</strong>
         </td>
         <td style="padding: 12px 14px; text-align: center;">
-          <button type="button" onclick="removeRow(${rowIdCounter})" class="btn-delete-row" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #f43f5e; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
+          <button type="button" onclick="removeRow(${rowIdCounter})" class="btn-delete-row" title="Ürünü Tekliften Çıkar" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #f43f5e; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
             ✕
           </button>
         </td>
@@ -792,15 +793,58 @@
       tbody.appendChild(tr);
       updateRowIndices();
 
-      const selectEl = tr.querySelector('.item-stock-id');
-      if (initialData && initialData.stockItemId) {
-        if (selectEl) {
-          selectEl.value = initialData.stockItemId;
-          onStockSelect(selectEl, rowIdCounter);
+      if (stockId) {
+        applyStockItemValues(tr, stockId, initialData);
+      } else {
+        recalculate();
+      }
+    }
+
+    function applyStockItemValues(tr, stockId, initialData) {
+      if (!tr || !stockId) return;
+
+      const priceInput = tr.querySelector('.item-price');
+      const discInput = tr.querySelector('.item-discount');
+      const taxInput = tr.querySelector('.item-tax');
+
+      const st = (stockCatalog || []).find(s => s.id === parseInt(stockId, 10));
+      const defaultPrice = st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0;
+      const tax = st ? (st.kdvOrani || st.taxRate || 20) : 20;
+
+      if (taxInput && (!initialData || initialData.taxRate === undefined)) {
+        taxInput.value = tax;
+      }
+
+      const custSelect = document.getElementById('customerId');
+      const custId = custSelect ? custSelect.value : '';
+
+      const sp = getCustomerSpecialPrice(custId, stockId);
+
+      if (sp) {
+        const specPrice = parseFloat(sp.specialPrice);
+        const customDisc = parseFloat(sp.customDiscountRate);
+
+        if (priceInput) {
+          priceInput.value = specPrice;
+          priceInput.dataset.specialMax = specPrice;
+        }
+        if (discInput) {
+          discInput.value = customDisc;
+          discInput.dataset.specialMin = customDisc;
         }
       } else {
-        if (selectEl) selectEl.value = '';
-        recalculate();
+        if (priceInput && initialData && initialData.unitPrice !== undefined) {
+          priceInput.value = initialData.unitPrice;
+        } else if (priceInput) {
+          priceInput.value = defaultPrice;
+        }
+        if (discInput && initialData && initialData.discountRate !== undefined) {
+          discInput.value = initialData.discountRate;
+        } else if (discInput) {
+          discInput.value = 0;
+        }
+        if (priceInput) delete priceInput.dataset.specialMax;
+        if (discInput) delete discInput.dataset.specialMin;
       }
     }
 
@@ -838,58 +882,10 @@
       if (badge) badge.textContent = rows.length;
     }
 
-    function onStockSelect(selectEl, rowId) {
-      const tr = document.getElementById(`row-${rowId}`);
-      if (!tr) return;
-
-      const priceInput = tr.querySelector('.item-price');
-      const discInput = tr.querySelector('.item-discount');
-      const taxInput = tr.querySelector('.item-tax');
-
-      if (!selectEl.value) {
-        if (priceInput) priceInput.value = 0;
-        if (discInput) discInput.value = 0;
-        if (taxInput) taxInput.value = 20;
-        if (priceInput) delete priceInput.dataset.specialMax;
-        if (discInput) delete discInput.dataset.specialMin;
-        recalculate();
-        return;
-      }
-
-      const option = selectEl.options[selectEl.selectedIndex];
-      const defaultPrice = parseFloat(option.getAttribute('data-price')) || 0;
-      const tax = option.getAttribute('data-tax');
-
-      if (tax !== null && taxInput) taxInput.value = tax;
-
-      const custSelect = document.getElementById('customerId');
-      const custId = custSelect ? custSelect.value : '';
-      const stockItemId = selectEl.value;
-
-      const sp = getCustomerSpecialPrice(custId, stockItemId);
-
-      if (sp) {
-        const specPrice = parseFloat(sp.specialPrice);
-        const customDisc = parseFloat(sp.customDiscountRate);
-
-        priceInput.value = specPrice;
-        discInput.value = customDisc;
-        priceInput.dataset.specialMax = specPrice;
-        discInput.dataset.specialMin = customDisc;
-      } else {
-        priceInput.value = defaultPrice;
-        discInput.value = 0;
-        delete priceInput.dataset.specialMax;
-        delete discInput.dataset.specialMin;
-      }
-
-      recalculate();
-    }
-
     let globalSpecialPriceViolation = null;
 
     function recalculate() {
-      const rows = document.querySelectorAll('#itemsTbody tr');
+      const rows = document.querySelectorAll('#itemsTbody tr:not(#emptyItemsPlaceholder)');
       const currency = document.getElementById('currency').value || 'TRY';
       let symbol = '₺';
       if (currency === 'USD') symbol = '$';
@@ -905,11 +901,11 @@
       globalSpecialPriceViolation = null;
 
       rows.forEach(tr => {
-        const stockSelect = tr.querySelector('.item-stock-id');
-        const stockItemId = stockSelect ? stockSelect.value : '';
-        const selectedOpt = stockSelect ? stockSelect.options[stockSelect.selectedIndex] : null;
-        const stockCode = selectedOpt ? (selectedOpt.getAttribute('data-code') || '') : '';
-        const name = selectedOpt ? selectedOpt.text.split('] ')[1]?.split(' (')[0] || '' : '';
+        const stockInput = tr.querySelector('.item-stock-id');
+        if (!stockInput) return;
+        const stockItemId = stockInput.value;
+        const stockCode = stockInput.getAttribute('data-code') || '';
+        const name = stockInput.getAttribute('data-name') || '';
 
         const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
         const priceInput = tr.querySelector('.item-price');
