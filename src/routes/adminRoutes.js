@@ -35,4 +35,8 @@ router.post('/roles/permissions', adminController.updateRolePermissions);
 // Audit Logs
 router.get('/logs', adminController.renderLogs);
 
+// Company & Firm Settings
+router.get('/company-settings', adminController.renderCompanySettings);
+router.post('/company-settings', adminController.updateCompanySettings);
+
 module.exports = router;

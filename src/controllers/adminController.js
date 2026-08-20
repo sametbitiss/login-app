@@ -461,6 +461,80 @@ class AdminController {
     await userRepository.savePermissionMatrix(matrix, req.user, req.ip);
     res.redirect('/admin/roles?success=Tüm+rol+ve+yetkiler+başarıyla+güncellendi.');
   });
+
+  renderCompanySettings = asyncHandler(async (req, res) => {
+    const { SirketProfili } = require('../../models');
+    let profile = null;
+    try {
+      await SirketProfili.sync();
+      profile = await SirketProfili.findOne({ order: [['id', 'ASC']] });
+    } catch (e) {
+      profile = null;
+    }
+
+    if (!profile) {
+      profile = {
+        unvan: 'ENTERPRISE ERP A.Ş.',
+        markaAdi: 'ENTERPRISE ERP',
+        vergiDairesi: '',
+        vergiNo: '',
+        mersisNo: '',
+        ticaretSicilNo: '',
+        telefon: '',
+        eposta: '',
+        webSitesi: '',
+        adres: '',
+        bankaBilgileri: '',
+        notlar: ''
+      };
+    }
+
+    res.render('admin/company_settings', {
+      user: req.user,
+      profile,
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  });
+
+  updateCompanySettings = asyncHandler(async (req, res) => {
+    const { SirketProfili } = require('../../models');
+    await SirketProfili.sync();
+    let profile = await SirketProfili.findOne({ order: [['id', 'ASC']] });
+
+    const updateData = {
+      unvan: (req.body.unvan || '').trim() || 'ENTERPRISE ERP A.Ş.',
+      markaAdi: (req.body.markaAdi || '').trim(),
+      vergiDairesi: (req.body.vergiDairesi || '').trim(),
+      vergiNo: (req.body.vergiNo || '').trim(),
+      mersisNo: (req.body.mersisNo || '').trim(),
+      ticaretSicilNo: (req.body.ticaretSicilNo || '').trim(),
+      telefon: (req.body.telefon || '').trim(),
+      eposta: (req.body.eposta || '').trim(),
+      webSitesi: (req.body.webSitesi || '').trim(),
+      adres: (req.body.adres || '').trim(),
+      bankaBilgileri: (req.body.bankaBilgileri || '').trim(),
+      notlar: (req.body.notlar || '').trim()
+    };
+
+    if (profile) {
+      await profile.update(updateData);
+    } else {
+      profile = await SirketProfili.create(updateData);
+    }
+
+    await logService.logCrud({
+      kullaniciId: req.user ? req.user.id : null,
+      kullaniciAdi: req.user ? req.user.kullaniciAdi : 'Admin',
+      islem: 'UPDATE',
+      varlik: 'SirketProfili',
+      varlikId: profile.id,
+      detaylar: { unvan: profile.unvan },
+      ipAdresi: req.ip
+    });
+
+    res.redirect('/admin/company-settings?success=Firma+ve+şirket+profil+bilgileri+başarıyla+güncellendi.');
+  });
 }
 
 const adminControllerInstance = new AdminController();

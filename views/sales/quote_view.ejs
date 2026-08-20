@@ -355,6 +355,8 @@
         }
 
         const creatorName = quote.olusturan ? (quote.olusturan.ad ? `${quote.olusturan.ad} ${quote.olusturan.soyad}` : quote.olusturan.kullaniciAdi) : (user ? (user.firstName ? `${user.firstName} ${user.lastName}` : user.username) : 'Satış Temsilcisi');
+        const cProf = (typeof companyProfile !== 'undefined' && companyProfile) ? companyProfile : {};
+        const compTitle = cProf.unvan || cProf.markaAdi || 'ENTERPRISE ERP';
       %>
         <!-- A4 OFFICIAL PDF OFFER SHEET -->
         <div class="pdf-paper">
@@ -364,10 +366,15 @@
             <div>
               <div class="company-brand">
                 <svg width="34" height="34" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0f172a"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-                <h1 class="company-title">ENTERPRISE ERP</h1>
+                <h1 class="company-title"><%= compTitle %></h1>
               </div>
               <div class="company-details">
-                Satış & Pazarlama Departmanı | Kurumsal Satış Teklif Belgesi
+                <% if (cProf.adres) { %><div><%= cProf.adres %></div><% } %>
+                <% if (cProf.telefon || cProf.eposta) { %><div>Tel: <%= cProf.telefon || '—' %> | E-Posta: <%= cProf.eposta || '—' %> <%= cProf.webSitesi ? `| Web: ${cProf.webSitesi}` : '' %></div><% } %>
+                <% if (cProf.vergiDairesi || cProf.vergiNo || cProf.mersisNo) { %><div>Vergi Dairesi/No: <%= cProf.vergiDairesi || '—' %> <%= cProf.vergiNo ? `V.N: ${cProf.vergiNo}` : '' %> <%= cProf.mersisNo ? `| Mersis No: ${cProf.mersisNo}` : '' %></div><% } %>
+                <% if (!cProf.adres && !cProf.telefon && !cProf.eposta && !cProf.vergiNo) { %>
+                  Satış & Pazarlama Departmanı | Kurumsal Satış Teklif Belgesi
+                <% } %>
               </div>
             </div>
 
@@ -483,6 +490,11 @@
                 <% if (quoteNotes !== '—') { %>
                   <div style="margin-top: 8px; border-top: 1px solid #e2e8f0; padding-top: 6px; font-style: italic; color: #475569;">
                     "<%= quoteNotes %>"
+                  </div>
+                <% } %>
+                <% if (cProf.bankaBilgileri) { %>
+                  <div style="margin-top: 8px; border-top: 1px solid #cbd5e1; padding-top: 6px; font-size: 0.775rem; color: #475569;">
+                    <strong>🏦 Kurumsal Banka & IBAN:</strong> <%= cProf.bankaBilgileri %>
                   </div>
                 <% } %>
               </div>

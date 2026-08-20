@@ -704,10 +704,22 @@ class SaleController {
       }];
     }
 
+    const { SirketProfili } = require('../../models');
+    let companyProfile = null;
+    try {
+      if (SirketProfili) {
+        await SirketProfili.sync();
+        companyProfile = await SirketProfili.findOne({ order: [['id', 'ASC']] });
+      }
+    } catch (e) {
+      companyProfile = null;
+    }
+
     res.render('sales/quote_view', {
       user: req.user,
       quote,
-      items: parsedItems
+      items: parsedItems,
+      companyProfile
     });
   });
 
