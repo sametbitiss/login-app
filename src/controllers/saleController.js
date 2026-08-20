@@ -305,11 +305,13 @@ class SaleController {
       where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
       order: [['ad', 'ASC']]
     });
+    const customers = await customerRepository.findAll({ status: 'Active' });
 
     res.render('sales/edit', {
       user: req.user,
       order,
       stockItems,
+      customers,
       error: null
     });
   });
@@ -328,18 +330,104 @@ class SaleController {
         return Number.isNaN(n) ? defaultVal : n;
       };
 
-      const quantity = safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1);
-      const unitPrice = safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0);
-      const discountRate = safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0);
-      const taxRate = safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20);
+      let items = [];
+      const itemsJson = req.body.itemsJson || req.body.kalemlerJson;
+      if (itemsJson) {
+        try {
+          items = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
+        } catch (e) {
+          items = [];
+        }
+      }
 
-      const subtotal = quantity * unitPrice;
-      const discountAmount = subtotal * (discountRate / 100);
-      const afterDiscount = subtotal - discountAmount;
-      const taxAmount = afterDiscount * (taxRate / 100);
-      const totalAmount = afterDiscount + taxAmount;
+      if (!Array.isArray(items) || items.length === 0) {
+        const stockItemId = safeInt(req.body.stokId || req.body.stockItemId);
+        const quantity = safeFloat(req.body.miktar !== undefined ? req.body.miktar : req.body.quantity, 1);
+        const unitPrice = safeFloat(req.body.birimFiyat !== undefined ? req.body.birimFiyat : req.body.unitPrice, 0);
+        const discountRate = safeFloat(req.body.iskontoOrani !== undefined ? req.body.iskontoOrani : req.body.discountRate, 0);
+        const taxRate = safeFloat(req.body.kdvOrani !== undefined ? req.body.kdvOrani : req.body.taxRate, 20);
 
-      let stockItemId = safeInt(req.body.stokId || req.body.stockItemId);
+        const subtotal = quantity * unitPrice;
+        const discountAmount = subtotal * (discountRate / 100);
+        const afterDiscount = subtotal - discountAmount;
+        const taxAmount = afterDiscount * (taxRate / 100);
+        const totalAmount = afterDiscount + taxAmount;
+
+        items = [{
+          stokId: stockItemId,
+          miktar: quantity,
+          birimFiyat: unitPrice,
+          iskontoOrani: discountRate,
+          kdvOrani: taxRate,
+          araToplam: subtotal,
+          iskontoTutari: discountAmount,
+          kdvTutari: taxAmount,
+          toplamTutar: totalAmount
+        }];
+      }
+
+      let grandSubtotal = 0;
+      let grandDiscountAmount = 0;
+      let grandTaxAmount = 0;
+      let grandTotalAmount = 0;
+
+      const processedItems = [];
+      for (const item of items) {
+        const itemId = safeInt(item.stokId || item.stockItemId);
+        const q = safeFloat(item.miktar !== undefined ? item.miktar : item.quantity, 1);
+        const p = safeFloat(item.birimFiyat !== undefined ? item.birimFiyat : item.unitPrice, 0);
+        const d = safeFloat(item.iskontoOrani !== undefined ? item.iskontoOrani : item.discountRate, 0);
+        const t = safeFloat(item.kdvOrani !== undefined ? item.kdvOrani : item.taxRate, 20);
+
+        const sub = q * p;
+        const disc = sub * (d / 100);
+        const afterDisc = sub - disc;
+        const tax = afterDisc * (t / 100);
+        const tot = afterDisc + tax;
+
+        grandSubtotal += sub;
+        grandDiscountAmount += disc;
+        grandTaxAmount += tax;
+        grandTotalAmount += tot;
+
+        let itemName = item.ad || item.name || '';
+        let stockCode = item.stokKodu || item.stockCode || '';
+        if (itemId) {
+          const st = await StokKarti.findByPk(itemId);
+          if (st) {
+            itemName = st.ad;
+            stockCode = st.stokKodu;
+          }
+        }
+
+        processedItems.push({
+          stokId: itemId,
+          stockItemId: itemId,
+          stokKodu: stockCode,
+          stockCode: stockCode,
+          name: itemName,
+          ad: itemName,
+          quantity: q,
+          miktar: q,
+          unitPrice: p,
+          birimFiyat: p,
+          discountRate: d,
+          iskontoOrani: d,
+          taxRate: t,
+          kdvOrani: t,
+          subtotal: sub,
+          araToplam: sub,
+          discountAmount: disc,
+          iskontoTutari: disc,
+          taxAmount: tax,
+          kdvTutari: tax,
+          totalAmount: tot,
+          toplamTutar: tot
+        });
+      }
+
+      const primaryItem = processedItems[0] || {};
+      let stockItemId = safeInt(primaryItem.stokId);
       if (!stockItemId || stockItemId <= 0) {
         const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } } });
         stockItemId = defaultStock ? defaultStock.id : 1;
@@ -351,21 +439,24 @@ class SaleController {
         musteriEposta: req.body.musteriEposta || req.body.customerEmail || null,
         musteriTelefon: req.body.musteriTelefon || req.body.customerPhone || null,
         siparisTarihi: req.body.siparisTarihi || req.body.orderDate,
+        teslimTarihi: req.body.teslimTarihi || req.body.deliveryDate || null,
         odemeVadesi: req.body.odemeVadesi || req.body.paymentTerm,
         durum: req.body.durum || req.body.status,
         oncelik: req.body.oncelik || req.body.priority,
         stokId: stockItemId,
-        miktar: quantity,
-        birimFiyat: unitPrice,
-        iskontoOrani: discountRate,
-        kdvOrani: taxRate,
-        araToplam: subtotal,
-        iskontoTutari: discountAmount,
-        kdvTutari: taxAmount,
-        toplamTutar: totalAmount,
+        miktar: safeFloat(primaryItem.miktar, 1),
+        birimFiyat: safeFloat(primaryItem.birimFiyat, 0),
+        iskontoOrani: safeFloat(primaryItem.iskontoOrani, 0),
+        kdvOrani: safeFloat(primaryItem.kdvOrani, 20),
+        araToplam: grandSubtotal,
+        iskontoTutari: grandDiscountAmount,
+        kdvTutari: grandTaxAmount,
+        toplamTutar: grandTotalAmount,
         paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY',
         teslimatAdresi: req.body.teslimatAdresi || req.body.shippingAddress || null,
         faturaAdresi: req.body.faturaAdresi || req.body.billingAddress || null,
+        kalemlerJson: JSON.stringify(processedItems),
+        satisTemsilcisi: req.body.satisTemsilcisi || req.body.salesRep || null,
         notlar: req.body.notlar || req.body.notes || null
       }, req.user, req.ip);
 
@@ -375,11 +466,13 @@ class SaleController {
       const stockItems = await StokKarti.findAll({
         where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }
       });
+      const customers = await customerRepository.findAll({ status: 'Active' });
 
       res.render('sales/edit', {
         user: req.user,
         order,
         stockItems,
+        customers,
         error: err.message || 'Sipariş güncellenirken hata oluştu.'
       });
     }

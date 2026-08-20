@@ -5,11 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Satış Siparişi Düzenle — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .glass-form-card {
+      background: rgba(12, 17, 28, 0.85);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 2.5rem;
+    }
+
+    .glass-form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 50%, #10b981 100%);
+    }
+
+    /* Tab Timeline / Step Progress Styling */
+    .step-progress-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .step-progress-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .step-progress-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .step-progress-item.active {
+      background: rgba(236, 72, 153, 0.12);
+      border-color: #ec4899;
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.25);
+    }
+
+    .step-progress-item.completed {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .spi-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+
+    .step-progress-item.active .spi-badge {
+      background: #ec4899;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+    }
+
+    .step-progress-item.completed .spi-badge {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .spi-text {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .spi-text strong {
+      font-size: 0.85rem;
+      color: #fff;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .spi-text span {
+      font-size: 0.725rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .tab-step-content {
+      display: none;
+      animation: fadeInStep 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .tab-step-content.active {
+      display: block;
+    }
+
+    @keyframes fadeInStep {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+    @media (max-width: 992px) {
+      .form-grid-3, .form-grid-4, .form-grid-2 { grid-template-columns: 1fr; }
+      .step-progress-bar { grid-template-columns: 1fr; }
+    }
+
+    .item-row {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+      gap: 0.75rem;
+      align-items: center;
+    }
+  </style>
   <script src="/sidebar.js" defer></script>
 </head>
 <body class="module-body">
 
+  <!-- Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
       <a href="/" class="msb-logo">
@@ -51,6 +196,7 @@
     </div>
   </aside>
 
+  <!-- Main Area -->
   <div class="module-main">
     <header class="module-topbar">
       <div class="mt-left">
@@ -58,15 +204,9 @@
         <% if (user.role === 'Admin') { %>
           <a href="/admin" class="mt-link">Sistem Yönetimi</a>
         <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Stock_Manager' || user.role === 'Sales_Manager' || user.role === 'Purchase_Manager' || user.role === 'Production_Manager' || user.role === 'Quality_Manager' || user.role === 'Employee') { %>
-          <a href="/stock" class="mt-link">Stok & Depo</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Sales_Manager') { %>
-          <a href="/sales" class="mt-link active">Satış Yönetimi</a>
-        <% } %>
-        <% if (user.role === 'Admin' || user.role === 'Purchase_Manager') { %>
-          <a href="/purchase" class="mt-link">Satın Alma</a>
-        <% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link active">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
         <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
           <a href="/production" class="mt-link">Üretim Planlama</a><a href="/quality" class="mt-link">Kalite Kontrol</a>
         <% } %>
@@ -80,10 +220,51 @@
     </header>
 
     <main class="module-content">
+
+      <% 
+        const safeFloat = (val, defaultVal = 0) => {
+          if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+          const n = parseFloat(val);
+          return Number.isNaN(n) ? defaultVal : n;
+        };
+
+        const orderNo = order.orderNo || order.siparisNo || 'SAT-000';
+        const custName = order.customerName || order.musteriAdi || '';
+        const custTax = order.customerTaxNo || order.musteriVergiNo || '';
+        const custEmail = order.customerEmail || order.musteriEposta || '';
+        const custPhone = order.customerPhone || order.musteriTelefon || '';
+        const salesRep = order.salesRep || order.satisTemsilcisi || '';
+        const status = order.status || order.durum || 'Preparing';
+        const priority = order.priority || order.oncelik || 'Normal';
+        const paymentTerm = order.paymentTerm || order.odemeVadesi || 'Vadeli_30';
+        const orderDate = order.orderDate || order.siparisTarihi || new Date().toISOString().split('T')[0];
+        const deliveryDate = order.deliveryDate || order.teslimTarihi || '';
+        const currency = order.currency || order.paraBirimi || 'TRY';
+
+        let existingItems = [];
+        const rawJson = order.itemsJson || order.kalemlerJson;
+        if (rawJson) {
+          try { existingItems = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson; } catch (e) { existingItems = []; }
+        }
+        if (!Array.isArray(existingItems) || existingItems.length === 0) {
+          existingItems = [{
+            stokId: order.stockItemId || order.stokId,
+            stockCode: order.stockItem ? order.stockItem.stockCode : '',
+            name: order.stockItem ? order.stockItem.name : 'Ürün Kalemi',
+            quantity: safeFloat(order.quantity, 1),
+            unitPrice: safeFloat(order.unitPrice, 0),
+            discountRate: safeFloat(order.discountRate, 0),
+            taxRate: safeFloat(order.taxRate, 20)
+          }];
+        }
+      %>
+
       <div class="page-header">
         <div>
-          <h1>Satış Siparişi Düzenle & Detaylar</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">[<%= order.orderNo %>] siparişinin müşteri, teslimat ve fiyat detaylarını güncelleyin.</p>
+          <h1>Satış Siparişi Düzenle & Güncelle</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+            [<strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= orderNo %></strong>] siparişinin müşteri, teslimat ve kalem detaylarını güncelleyebilirsiniz.
+          </p>
         </div>
         <a href="/sales/orders" class="btn btn-secondary">◀ Sipariş Listesine Dön</a>
       </div>
@@ -92,183 +273,430 @@
         <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
       <% } %>
 
-      <div class="form-panel">
-        <form action="/sales/orders/<%= order.id %>/edit" method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
-          
-          <!-- Müşteri Bilgileri -->
-          <div>
-            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1rem;">👤 Müşteri & İletişim Detayları</h3>
-            <div class="form-grid form-grid--3">
-              <div class="input-group">
-                <label for="orderNo">Sipariş No <span class="req-star">*</span></label>
-                <input type="text" id="orderNo" name="orderNo" value="<%= order.orderNo %>" required readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(255,255,255,0.05);">
-              </div>
-              <div class="input-group">
-                <label for="customerName">Müşteri / Kurum Adı <span class="req-star">*</span></label>
-                <input type="text" id="customerName" name="customerName" value="<%= order.customerName %>" required>
-              </div>
-              <div class="input-group">
-                <label for="customerTaxNo">Müşteri Vergi No</label>
-                <input type="text" id="customerTaxNo" name="customerTaxNo" value="<%= order.customerTaxNo || '' %>">
-              </div>
-              <div class="input-group">
-                <label for="customerEmail">E-Posta</label>
-                <input type="email" id="customerEmail" name="customerEmail" value="<%= order.customerEmail || '' %>">
-              </div>
-              <div class="input-group">
-                <label for="customerPhone">Telefon</label>
-                <input type="text" id="customerPhone" name="customerPhone" value="<%= order.customerPhone || '' %>">
-              </div>
-              <div class="input-group">
-                <label for="salesRep">Satış Temsilcisi</label>
-                <input type="text" id="salesRep" name="salesRep" value="<%= order.salesRep || '' %>">
-              </div>
+      <div class="glass-form-card">
+        
+        <!-- Step Progress Navigation Bar (Tabs) -->
+        <div class="step-progress-bar">
+          <div class="step-progress-item active" id="tab-btn-1" onclick="switchStep(1)">
+            <div class="spi-badge" id="spi-badge-1">1</div>
+            <div class="spi-text">
+              <strong>1. Müşteri & Sipariş Şartları</strong>
+              <span>Müşteri unvanı, fatura adresi, vade</span>
             </div>
           </div>
 
-          <!-- Sipariş Şartları ve Tarihler -->
-          <div>
-            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1rem;">📅 Durum, Tarihler ve Ödeme Şartı</h3>
-            <div class="form-grid form-grid--4">
+          <div class="step-progress-item" id="tab-btn-2" onclick="switchStep(2)">
+            <div class="spi-badge" id="spi-badge-2">2</div>
+            <div class="spi-text">
+              <strong>2. Ürün Kalemleri & İskonto</strong>
+              <span>Satılan ürünler, miktar, birim fiyat</span>
+            </div>
+          </div>
+
+          <div class="step-progress-item" id="tab-btn-3" onclick="switchStep(3)">
+            <div class="spi-badge" id="spi-badge-3">3</div>
+            <div class="spi-text">
+              <strong>3. Teslimat & Notlar</strong>
+              <span>Termin tarihi, sevk adresi, notlar</span>
+            </div>
+          </div>
+        </div>
+
+        <form action="/sales/orders/<%= order.id %>/edit" method="POST" id="editOrderForm" onsubmit="prepareFormSubmit(event)">
+          <input type="hidden" name="itemsJson" id="itemsJsonInput">
+
+          <!-- TAB STEP 1: MÜŞTERİ BİLGİLERİ -->
+          <div class="tab-step-content active" id="tab-step-1">
+            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <span>👤</span> Müşteri Kartı ve Sipariş Bilgileri
+            </h3>
+
+            <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+              <div class="input-group">
+                <label for="orderNo">Sipariş No <span class="req-star">*</span></label>
+                <input type="text" id="orderNo" name="orderNo" value="<%= orderNo %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(255,255,255,0.05);">
+              </div>
+
+              <div class="input-group">
+                <label for="customerName">Müşteri / Kurum Adı <span class="req-star">*</span></label>
+                <input type="text" id="customerName" name="customerName" value="<%= custName %>" required placeholder="Firma / Müşteri unvanı">
+              </div>
+
+              <div class="input-group">
+                <label for="customerTaxNo">Vergi / Sicil Numarası</label>
+                <input type="text" id="customerTaxNo" name="customerTaxNo" value="<%= custTax %>" placeholder="10 haneli vergi no" oninput="this.value = this.value.replace(/\D/g, '')">
+              </div>
+
+              <div class="input-group">
+                <label for="customerEmail">Kurumsal E-Posta</label>
+                <input type="email" id="customerEmail" name="customerEmail" value="<%= custEmail %>" placeholder="siparis@firma.com">
+              </div>
+
+              <div class="input-group">
+                <label for="customerPhone">İletişim Telefonu</label>
+                <input type="text" id="customerPhone" name="customerPhone" value="<%= custPhone %>" placeholder="05XXXXXXXXX" oninput="this.value = this.value.replace(/\D/g, '')">
+              </div>
+
+              <div class="input-group">
+                <label for="salesRep">Satış Temsilcisi</label>
+                <input type="text" id="salesRep" name="salesRep" value="<%= salesRep %>" placeholder="Sorumlu Temsilci">
+              </div>
+            </div>
+
+            <div class="form-grid-4">
               <div class="input-group">
                 <label for="status">Sipariş Durumu <span class="req-star">*</span></label>
                 <select id="status" name="status" required>
-                  <option value="Pending_Approval" <%= order.status === 'Pending_Approval' ? 'selected' : '' %>>Onay Bekliyor</option>
-                  <option value="Approved" <%= order.status === 'Approved' ? 'selected' : '' %>>Onaylandı</option>
-                  <option value="Preparing" <%= (order.status === 'Preparing' || order.status === 'Hazırlanıyor') ? 'selected' : '' %>>Hazırlanıyor</option>
-                  <option value="Shipped" <%= (order.status === 'Shipped' || order.status === 'Sevk Edildi') ? 'selected' : '' %>>Sevk Edildi</option>
-                  <option value="Completed" <%= order.status === 'Completed' ? 'selected' : '' %>>Tamamlandı</option>
-                  <option value="Rejected" <%= order.status === 'Rejected' ? 'selected' : '' %>>Reddedildi</option>
+                  <option value="Pending_Approval" <%= status === 'Pending_Approval' ? 'selected' : '' %>>Onay Bekliyor</option>
+                  <option value="Approved" <%= status === 'Approved' ? 'selected' : '' %>>Onaylandı</option>
+                  <option value="Preparing" <%= (status === 'Preparing' || status === 'Hazırlanıyor') ? 'selected' : '' %>>Hazırlanıyor</option>
+                  <option value="Shipped" <%= (status === 'Shipped' || status === 'Sevk Edildi') ? 'selected' : '' %>>Sevk Edildi</option>
+                  <option value="Completed" <%= status === 'Completed' ? 'selected' : '' %>>Tamamlandı</option>
+                  <option value="Rejected" <%= status === 'Rejected' ? 'selected' : '' %>>Reddedildi</option>
                 </select>
               </div>
-              <div class="input-group">
-                <label for="priority">Aciliyet</label>
-                <select id="priority" name="priority">
-                  <option value="Normal" <%= order.priority === 'Normal' ? 'selected' : '' %>>Normal</option>
-                  <option value="High" <%= order.priority === 'High' ? 'selected' : '' %>>Yüksek</option>
-                  <option value="Urgent" <%= order.priority === 'Urgent' ? 'selected' : '' %>>Acil</option>
-                </select>
-              </div>
-              <div class="input-group">
-                <label for="paymentTerm">Ödeme Şartı</label>
-                <select id="paymentTerm" name="paymentTerm">
-                  <option value="Pesin" <%= order.paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin</option>
-                  <option value="Vadeli_30" <%= order.paymentTerm === 'Vadeli_30' ? 'selected' : '' %>>30 Gün Vadeli</option>
-                  <option value="Vadeli_60" <%= order.paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
-                  <option value="Kredi_Karti" <%= order.paymentTerm === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı</option>
-                </select>
-              </div>
-              <div class="input-group">
-                <label for="orderDate">Sipariş Tarihi</label>
-                <input type="date" id="orderDate" name="orderDate" value="<%= order.orderDate %>" required>
-              </div>
-            </div>
-          </div>
 
-          <!-- Satılan Ürün ve Fiyatlar -->
-          <div>
-            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1rem;">📦 Satılan Ürün (Mamul), Miktar ve Tutar</h3>
-            <div class="form-grid form-grid--3">
               <div class="input-group">
-                <label for="stockItemId">Satılan Ürün (Mamul / Ticari Mal) <span class="req-star">*</span></label>
-                <select id="stockItemId" name="stockItemId" required>
-                  <% stockItems.forEach(item => { %>
-                    <option value="<%= item.id %>" <%= order.stockItemId == item.id ? 'selected' : '' %>>
-                      [<%= item.stockCode %>] <%= item.name %> (<%= item.category %>)
-                    </option>
-                  <% }) %>
+                <label for="priority">Aciliyet Seviyesi</label>
+                <select id="priority" name="priority">
+                  <option value="Normal" <%= priority === 'Normal' ? 'selected' : '' %>>Normal</option>
+                  <option value="High" <%= priority === 'High' ? 'selected' : '' %>>Yüksek</option>
+                  <option value="Urgent" <%= priority === 'Urgent' ? 'selected' : '' %>>Acil</option>
                 </select>
               </div>
+
               <div class="input-group">
-                <label for="quantity">Satış Miktarı <span class="req-star">*</span></label>
-                <input type="number" step="0.01" id="quantity" name="quantity" value="<%= order.quantity %>" required oninput="calcTotals()">
+                <label for="paymentTerm">Ödeme Koşulu</label>
+                <select id="paymentTerm" name="paymentTerm">
+                  <option value="Pesin" <%= paymentTerm === 'Pesin' ? 'selected' : '' %>>Peşin</option>
+                  <option value="Vadeli_30" <%= paymentTerm === 'Vadeli_30' ? 'selected' : '' %>>30 Gün Vadeli</option>
+                  <option value="Vadeli_60" <%= paymentTerm === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
+                  <option value="Vadeli_90" <%= paymentTerm === 'Vadeli_90' ? 'selected' : '' %>>90 Gün Vadeli</option>
+                  <option value="Kredi_Karti" <%= paymentTerm === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı</option>
+                </select>
               </div>
-              <div class="input-group">
-                <label for="unitPrice">Birim Satış Fiyatı <span class="req-star">*</span></label>
-                <input type="number" step="0.01" id="unitPrice" name="unitPrice" value="<%= order.unitPrice %>" required oninput="calcTotals()">
-              </div>
-              <div class="input-group">
-                <label for="discountRate">Müşteri İskontosu (%)</label>
-                <input type="number" step="0.01" id="discountRate" name="discountRate" value="<%= order.discountRate %>" oninput="calcTotals()">
-              </div>
-              <div class="input-group">
-                <label for="taxRate">KDV Oranı (%)</label>
-                <input type="number" step="0.01" id="taxRate" name="taxRate" value="<%= order.taxRate %>" oninput="calcTotals()">
-              </div>
+
               <div class="input-group">
                 <label for="currency">Para Birimi</label>
-                <select id="currency" name="currency">
-                  <option value="TRY" <%= order.currency === 'TRY' ? 'selected' : '' %>>TRY (₺)</option>
-                  <option value="USD" <%= order.currency === 'USD' ? 'selected' : '' %>>USD ($)</option>
-                  <option value="EUR" <%= order.currency === 'EUR' ? 'selected' : '' %>>EUR (€)</option>
+                <select id="currency" name="currency" onchange="calcTotals()">
+                  <option value="TRY" <%= currency === 'TRY' ? 'selected' : '' %>>TRY (₺)</option>
+                  <option value="USD" <%= currency === 'USD' ? 'selected' : '' %>>USD ($)</option>
+                  <option value="EUR" <%= currency === 'EUR' ? 'selected' : '' %>>EUR (€)</option>
                 </select>
               </div>
             </div>
-          </div>
 
-          <!-- Hesaplanan Tutar Kartı -->
-          <div style="background: rgba(15, 23, 42, 0.6); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center;">
-            <div>
-              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Ara Toplam</span>
-              <strong id="displaySubtotal" style="font-size: 1.1rem; color: #fff;"><%= order.subtotal %> TL</strong>
-            </div>
-            <div>
-              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">İskonto Tutar</span>
-              <strong id="displayDiscount" style="font-size: 1.1rem; color: #ec4899;"><%= order.discountAmount %> TL</strong>
-            </div>
-            <div>
-              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">KDV Tutarı</span>
-              <strong id="displayTax" style="font-size: 1.1rem; color: var(--indigo);"><%= order.taxAmount %> TL</strong>
-            </div>
-            <div>
-              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Genel Toplam</span>
-              <strong id="displayTotal" style="font-size: 1.3rem; color: var(--emerald);"><%= order.totalAmount %> TL</strong>
+            <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+              <button type="button" class="btn btn-primary" onclick="switchStep(2)">
+                İleri: Ürün Kalemleri ➔
+              </button>
             </div>
           </div>
 
-          <div class="form-grid form-grid--2">
-            <div class="input-group">
-              <label for="shippingAddress">Sevkiyat Adresi</label>
-              <textarea id="shippingAddress" name="shippingAddress" rows="2"><%= order.shippingAddress || '' %></textarea>
+          <!-- TAB STEP 2: ÜRÜN KALEMLERİ VE FİYATLANDIRMA -->
+          <div class="tab-step-content" id="tab-step-2">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+              <h3 style="color: #ec4899; font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span>📦</span> Satılan Ürün Kalemleri ve İskonto Oranları
+              </h3>
+              <button type="button" class="btn btn-sm btn-outline-success" onclick="addRow()">
+                ➕ Yeni Ürün Satırı Ekle
+              </button>
             </div>
-            <div class="input-group">
-              <label for="billingAddress">Fatura Adresi</label>
-              <textarea id="billingAddress" name="billingAddress" rows="2"><%= order.billingAddress || '' %></textarea>
+
+            <div id="itemsContainer">
+              <!-- Item rows populated via JS -->
+            </div>
+
+            <!-- Financial Calculation Summary Card -->
+            <div style="background: rgba(15, 23, 42, 0.6); padding: 1.5rem; border-radius: 14px; border: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; margin-top: 1.5rem;">
+              <div>
+                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; text-transform: uppercase; font-weight: 700;">Ara Toplam (Brüt)</span>
+                <strong id="displaySubtotal" style="font-size: 1.2rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0,00 TL</strong>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; color: #f43f5e; display: block; text-transform: uppercase; font-weight: 700;">Toplam İskonto</span>
+                <strong id="displayDiscount" style="font-size: 1.2rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">- 0,00 TL</strong>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; color: #818cf8; display: block; text-transform: uppercase; font-weight: 700;">Toplam KDV Tutarı</span>
+                <strong id="displayTax" style="font-size: 1.2rem; color: #a5b4fc; font-family: 'JetBrains Mono', monospace;">+ 0,00 TL</strong>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.1); border-radius: 10px; padding: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                <span style="font-size: 0.8rem; color: #34d399; display: block; text-transform: uppercase; font-weight: 800;">GENEL SİPARİŞ TOPLAMI</span>
+                <strong id="displayTotal" style="font-size: 1.35rem; color: #10b981; font-family: 'JetBrains Mono', monospace;">0,00 TL</strong>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+              <button type="button" class="btn btn-secondary" onclick="switchStep(1)">
+                ⬅️ Önceki Adım
+              </button>
+              <button type="button" class="btn btn-primary" onclick="switchStep(3)">
+                İleri: Adres & Notlar ➔
+              </button>
             </div>
           </div>
 
-          <div class="input-group">
-            <label for="notes">Satış Notları</label>
-            <input type="text" id="notes" name="notes" value="<%= order.notes || '' %>">
+          <!-- TAB STEP 3: TESLİMAT, ADRESLER & NOTLAR -->
+          <div class="tab-step-content" id="tab-step-3">
+            <h3 style="color: #ec4899; font-size: 1.05rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <span>📍</span> Adres, Termin Tarihi ve Satış Dipnotları
+            </h3>
+
+            <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+              <div class="input-group">
+                <label for="orderDate">Sipariş Kayıt Tarihi <span class="req-star">*</span></label>
+                <input type="date" id="orderDate" name="orderDate" value="<%= orderDate %>" required>
+              </div>
+
+              <div class="input-group">
+                <label for="deliveryDate">İstenen Termin / Teslim Tarihi</label>
+                <input type="date" id="deliveryDate" name="deliveryDate" value="<%= deliveryDate %>">
+              </div>
+            </div>
+
+            <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+              <div class="input-group">
+                <label for="billingAddress">Fatura Adresi</label>
+                <textarea id="billingAddress" name="billingAddress" rows="3" placeholder="Fatura adresi..."><%= order.billingAddress || order.faturaAdresi || '' %></textarea>
+              </div>
+
+              <div class="input-group">
+                <label for="shippingAddress">Teslimat & Sevk Adresi</label>
+                <textarea id="shippingAddress" name="shippingAddress" rows="3" placeholder="Teslimat adresi..."><%= order.shippingAddress || order.teslimatAdresi || '' %></textarea>
+              </div>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 2rem;">
+              <label for="notes">Sipariş & Teklif Dipnotları</label>
+              <textarea id="notes" name="notes" rows="2" placeholder="Sipariş için özel notlar ve teklif şartları..."><%= order.notes || order.notlar || '' %></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+              <button type="button" class="btn btn-secondary" onclick="switchStep(2)">
+                ⬅️ Önceki Adım
+              </button>
+              <button type="submit" class="btn" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; font-weight: 800; font-size: 1rem; padding: 12px 32px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);">
+                💾 Siparişi Güncelle & Kaydet
+              </button>
+            </div>
           </div>
 
-          <div style="display: flex; gap: 1rem;">
-            <button type="submit" class="btn" style="background: var(--pink); border-color: var(--pink);">💾 Değişiklikleri Kaydet</button>
-            <a href="/sales/orders" class="btn btn-secondary">İptal</a>
-          </div>
         </form>
       </div>
     </main>
   </div>
 
   <script>
-    function calcTotals() {
-      const q = parseFloat(document.getElementById('quantity').value) || 0;
-      const p = parseFloat(document.getElementById('unitPrice').value) || 0;
-      const d = parseFloat(document.getElementById('discountRate').value) || 0;
-      const t = parseFloat(document.getElementById('taxRate').value) || 20;
+    // Available stock items for dropdown
+    const stockItemsData = <%- JSON.stringify(stockItems || []) %>;
+    const initialItems = <%- JSON.stringify(existingItems || []) %>;
 
-      const sub = q * p;
-      const disc = sub * (d / 100);
-      const afterDisc = sub - disc;
-      const tax = afterDisc * (t / 100);
-      const tot = afterDisc + tax;
+    let currentStep = 1;
 
-      document.getElementById('displaySubtotal').textContent = sub.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
-      document.getElementById('displayDiscount').textContent = disc.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
-      document.getElementById('displayTax').textContent = tax.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
-      document.getElementById('displayTotal').textContent = tot.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' TL';
+    function switchStep(stepNum) {
+      currentStep = stepNum;
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById(`tab-btn-${i}`);
+        const badge = document.getElementById(`spi-badge-${i}`);
+        const content = document.getElementById(`tab-step-${i}`);
+
+        if (i === stepNum) {
+          btn.classList.add('active');
+          btn.classList.remove('completed');
+          content.classList.add('active');
+        } else if (i < stepNum) {
+          btn.classList.remove('active');
+          btn.classList.add('completed');
+          badge.textContent = '✓';
+          content.classList.remove('active');
+        } else {
+          btn.classList.remove('active');
+          btn.classList.remove('completed');
+          badge.textContent = i;
+          content.classList.remove('active');
+        }
+      }
     }
+
+    function addRow(itemData = null) {
+      const container = document.getElementById('itemsContainer');
+      const rowId = 'row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+      let selectedStockId = itemData ? (itemData.stokId || itemData.stockItemId) : (stockItemsData[0] ? stockItemsData[0].id : '');
+      let qty = itemData ? parseFloat(itemData.quantity || itemData.miktar || 1) : 1;
+      let price = itemData ? parseFloat(itemData.unitPrice || itemData.birimFiyat || 0) : 0;
+      let disc = itemData ? parseFloat(itemData.discountRate || itemData.iskontoOrani || 0) : 0;
+      let tax = itemData ? parseFloat(itemData.taxRate || itemData.kdvOrani || 20) : 20;
+
+      if (!itemData && stockItemsData[0]) {
+        price = parseFloat(stockItemsData[0].satisFiyati || stockItemsData[0].salePrice || 0);
+      }
+
+      let optionsHtml = '';
+      stockItemsData.forEach(st => {
+        const isSel = (st.id == selectedStockId) ? 'selected' : '';
+        const priceVal = parseFloat(st.satisFiyati || st.salePrice || 0);
+        optionsHtml += `<option value="${st.id}" data-price="${priceVal}" ${isSel}>[${st.stokKodu || st.stockCode}] ${st.ad || st.name}</option>`;
+      });
+
+      const rowHtml = `
+        <div class="item-row" id="${rowId}">
+          <div class="input-group" style="margin: 0;">
+            <label style="font-size: 0.75rem;">Satılan Ürün (Mamul)</label>
+            <select class="item-stock" onchange="onStockChange(this)">${optionsHtml}</select>
+          </div>
+          <div class="input-group" style="margin: 0;">
+            <label style="font-size: 0.75rem;">Miktar</label>
+            <input type="number" step="0.01" class="item-qty" value="${qty}" min="0.01" oninput="calcTotals()">
+          </div>
+          <div class="input-group" style="margin: 0;">
+            <label style="font-size: 0.75rem;">Birim Fiyat</label>
+            <input type="number" step="0.01" class="item-price" value="${price}" oninput="calcTotals()">
+          </div>
+          <div class="input-group" style="margin: 0;">
+            <label style="font-size: 0.75rem;">İskonto (%)</label>
+            <input type="number" step="0.01" class="item-disc" value="${disc}" oninput="calcTotals()">
+          </div>
+          <div class="input-group" style="margin: 0;">
+            <label style="font-size: 0.75rem;">KDV (%)</label>
+            <input type="number" step="0.01" class="item-tax" value="${tax}" oninput="calcTotals()">
+          </div>
+          <div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow('${rowId}')" title="Satırı Sil" style="margin-top: 1.25rem;">
+              🗑️
+            </button>
+          </div>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', rowHtml);
+      calcTotals();
+    }
+
+    function removeRow(rowId) {
+      const container = document.getElementById('itemsContainer');
+      if (container.children.length <= 1) {
+        alert('Siparişte en az 1 ürün kalemi bulunmalıdır.');
+        return;
+      }
+      const el = document.getElementById(rowId);
+      if (el) el.remove();
+      calcTotals();
+    }
+
+    function onStockChange(selectEl) {
+      const selectedOption = selectEl.options[selectEl.selectedIndex];
+      const defaultPrice = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+      const row = selectEl.closest('.item-row');
+      if (row) {
+        const priceInput = row.querySelector('.item-price');
+        if (priceInput && defaultPrice > 0) {
+          priceInput.value = defaultPrice;
+        }
+      }
+      calcTotals();
+    }
+
+    function calcTotals() {
+      const curr = document.getElementById('currency').value || 'TRY';
+      const rows = document.querySelectorAll('.item-row');
+
+      let subtotal = 0;
+      let discountAmount = 0;
+      let taxAmount = 0;
+      let grandTotal = 0;
+
+      rows.forEach(r => {
+        const q = parseFloat(r.querySelector('.item-qty').value) || 0;
+        const p = parseFloat(r.querySelector('.item-price').value) || 0;
+        const d = parseFloat(r.querySelector('.item-disc').value) || 0;
+        const t = parseFloat(r.querySelector('.item-tax').value) || 20;
+
+        const sub = q * p;
+        const disc = sub * (d / 100);
+        const afterDisc = sub - disc;
+        const tax = afterDisc * (t / 100);
+        const tot = afterDisc + tax;
+
+        subtotal += sub;
+        discountAmount += disc;
+        taxAmount += tax;
+        grandTotal += tot;
+      });
+
+      document.getElementById('displaySubtotal').textContent = subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
+      document.getElementById('displayDiscount').textContent = '- ' + discountAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
+      document.getElementById('displayTax').textContent = '+ ' + taxAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
+      document.getElementById('displayTotal').textContent = grandTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + curr;
+    }
+
+    function prepareFormSubmit(e) {
+      const rows = document.querySelectorAll('.item-row');
+      const items = [];
+
+      rows.forEach(r => {
+        const stockSelect = r.querySelector('.item-stock');
+        const selectedOption = stockSelect.options[stockSelect.selectedIndex];
+        const stockId = parseInt(stockSelect.value, 10);
+        const stockText = selectedOption.text;
+        
+        let stockCode = '';
+        let name = stockText;
+        if (stockText.includes('[') && stockText.includes(']')) {
+          stockCode = stockText.split(']')[0].replace('[', '').trim();
+          name = stockText.split(']').slice(1).join(']').trim();
+        }
+
+        const q = parseFloat(r.querySelector('.item-qty').value) || 1;
+        const p = parseFloat(r.querySelector('.item-price').value) || 0;
+        const d = parseFloat(r.querySelector('.item-disc').value) || 0;
+        const t = parseFloat(r.querySelector('.item-tax').value) || 20;
+
+        const sub = q * p;
+        const disc = sub * (d / 100);
+        const afterDisc = sub - disc;
+        const tax = afterDisc * (t / 100);
+        const tot = afterDisc + tax;
+
+        items.push({
+          stokId: stockId,
+          stockItemId: stockId,
+          stockCode,
+          stokKodu: stockCode,
+          name,
+          ad: name,
+          quantity: q,
+          miktar: q,
+          unitPrice: p,
+          birimFiyat: p,
+          discountRate: d,
+          iskontoOrani: d,
+          taxRate: t,
+          kdvOrani: t,
+          subtotal: sub,
+          araToplam: sub,
+          discountAmount: disc,
+          iskontoTutari: disc,
+          taxAmount: tax,
+          kdvTutari: tax,
+          totalAmount: tot,
+          toplamTutar: tot
+        });
+      });
+
+      document.getElementById('itemsJsonInput').value = JSON.stringify(items);
+    }
+
+    // Populate initial items
+    window.addEventListener('DOMContentLoaded', () => {
+      if (initialItems && initialItems.length > 0) {
+        initialItems.forEach(it => addRow(it));
+      } else {
+        addRow();
+      }
+    });
 
     function updateClock() {
       const now = new Date();
