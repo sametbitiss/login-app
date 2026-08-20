@@ -148,6 +148,102 @@ module.exports = (sequelize, DataTypes) => {
     olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    orderNo: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('siparisNo'); }
+    },
+    customerName: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('musteriAdi') || (this.musteri ? (this.musteri.firmaAdi || this.musteri.companyName) : ''); }
+    },
+    customerId: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('musteriId'); }
+    },
+    orderDate: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('siparisTarihi'); }
+    },
+    deliveryDate: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('teslimTarihi'); }
+    },
+    paymentTerm: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('odemeVadesi'); }
+    },
+    itemsJson: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('kalemlerJson'); }
+    },
+    quantity: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('miktar'); }
+    },
+    unitPrice: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('birimFiyat'); }
+    },
+    discountRate: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('iskontoOrani'); }
+    },
+    taxRate: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('kdvOrani'); }
+    },
+    subtotal: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('araToplam'); }
+    },
+    discountAmount: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('iskontoTutari'); }
+    },
+    taxAmount: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('kdvTutari'); }
+    },
+    totalAmount: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('toplamTutar'); }
+    },
+    currency: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('paraBirimi'); }
+    },
+    status: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('durum'); }
+    },
+    fulfillmentStatus: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('karsilanmaDurumu'); }
+    },
+    requiresApproval: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('onayGerekli'); }
+    },
+    approvalReason: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('onayNedeni'); }
+    },
+    managerNotes: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('yoneticiNotlari'); }
+    },
+    notes: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('notlar'); }
+    },
+    stockItem: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.stokKarti; }
+    },
+    customer: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.musteri; }
     }
   }, {
     sequelize,
