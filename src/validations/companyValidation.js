@@ -1,5 +1,5 @@
 /**
- * Refined & Robust Validation Rules for Company & Firm Profile Settings
+ * Strict & Pure Numeric Validation Rules for Company & Firm Profile Settings
  */
 
 const validateCompanyProfile = (req) => {
@@ -24,56 +24,52 @@ const validateCompanyProfile = (req) => {
   eposta = (eposta || '').trim();
   webSitesi = (webSitesi || '').trim();
 
-  // 1. Unvan Validation (Required)
+  // 1. Unvan Validation (Required, at least 3 chars)
   if (!unvan || unvan.length < 3) {
     errors.push('Resmi Şirket Unvanı zorunludur ve en az 3 karakter olmalıdır.');
   }
 
-  // 2. Kurumsal Web Sitesi Validation
+  // 2. Kurumsal Web Sitesi Validation (Multi-level TLD support: .com, .com.tr, .co.uk)
   if (webSitesi !== '') {
-    // Matches example.com, www.example.com, https://www.example.com.tr, etc.
-    const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}(\/.*)?$/;
+    const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/;
     if (!domainRegex.test(webSitesi)) {
-      errors.push('Kurumsal Web Sitesi geçerli bir alan adı veya URL formatında olmalıdır (Örn: www.enterprise-erp.com.tr veya enterprise-erp.com).');
+      errors.push('Kurumsal Web Sitesi geçerli bir web sitesi veya domain adresi olmalıdır (Örn: www.enterprise-erp.com.tr veya enterprise-erp.com).');
     }
   }
 
-  // 3. Vergi Numarası Validation (10 Digits)
+  // 3. Vergi Numarası Validation (Strictly 10 Numeric Digits Only)
   if (vergiNo !== '') {
     if (!/^\d{10}$/.test(vergiNo)) {
-      errors.push('Vergi Numarası tam olarak 10 haneli rakamlardan oluşmalıdır (Örn: 1234567890).');
+      errors.push('Vergi Numarası sadece rakamlardan oluşmalı ve tam 10 haneli olmalıdır (Örn: 1234567890).');
     }
   }
 
-  // 4. Mersis Numarası Validation (16 Digits)
+  // 4. Mersis Numarası Validation (Strictly 16 Numeric Digits Only)
   if (mersisNo !== '') {
     if (!/^\d{16}$/.test(mersisNo)) {
-      errors.push('Mersis Numarası tam olarak 16 haneli rakamlardan oluşmalıdır (Örn: 0123456789000015).');
+      errors.push('Mersis Numarası sadece rakamlardan oluşmalı ve tam 16 haneli olmalıdır (Örn: 0123456789000015).');
     }
   }
 
-  // 5. Ticaret Sicil No Validation (4-20 Alphanumeric/Hyphen + Turkish Chars)
+  // 5. Ticaret Sicil No Validation (Strictly 4-12 Numeric Digits Only)
   if (ticaretSicilNo !== '') {
-    if (!/^[a-zA-Z0-9çğıöşüÇĞİÖŞÜ\s\.\-\/]{4,20}$/u.test(ticaretSicilNo)) {
-      errors.push('Ticaret Sicil Numarası en az 4 karakterden ve geçerli sicil karakterlerinden oluşmalıdır (Örn: 123456 veya 345678-0).');
+    if (!/^\d{4,12}$/.test(ticaretSicilNo)) {
+      errors.push('Ticaret Sicil Numarası sadece rakamlardan oluşmalı ve 4 ile 12 haneli olmalıdır (Örn: 123456).');
     }
   }
 
-  // 6. Kurumsal Telefon Numarası Validation (Türkiye ve Uluslararası Formatlar + 444 / 0850 Santral)
+  // 6. Telefon Numarası Validation (Strictly 7-11 Numeric Digits Only, NO letters, NO symbols!)
   if (telefon !== '') {
-    const cleanTel = telefon.replace(/[\s\(\)\-\.]/g, '');
-    const phoneRegex = /^(\+?90|0)?(444\d{4}|850\d{7}|[1-9]\d{9})$/;
-    
-    if (!phoneRegex.test(cleanTel)) {
-      errors.push('Telefon numarası geçerli bir Türkiye kurumsal veya uluslararası formatta olmalıdır (Örn: +90 (224) 444 0 377, 0850 123 45 67 veya 444 0 377).');
+    if (!/^\d{7,11}$/.test(telefon)) {
+      errors.push('Telefon numarası alanına kesinlikle sadece rakam girilmelidir (7 ile 11 haneli rakam. Örn: 02244440377 veya 4440377).');
     }
   }
 
-  // 7. Kurumsal E-Posta Adresi Validation (Strict Email Rules)
+  // 7. Kurumsal E-Posta Adresi Validation (Strict Email Pattern)
   if (eposta !== '') {
     const strictEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!strictEmailRegex.test(eposta)) {
-      errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz bir e-posta formatında olmalıdır (Örn: satis@enterprise-erp.com.tr).');
+      errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz olmalıdır (Örn: satis@enterprise-erp.com.tr).');
     }
   }
 

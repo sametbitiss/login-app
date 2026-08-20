@@ -190,8 +190,8 @@
 
             <div class="input-group" style="margin-bottom: 1.5rem;">
               <label for="webSitesi">Kurumsal Web Sitesi</label>
-              <input type="text" id="webSitesi" name="webSitesi" value="<%= profile.webSitesi || '' %>" placeholder="Örn: www.enterprise-erp.com.tr veya https://example.com">
-              <span class="field-hint">Geçerli bir web sitesi veya alan adı giriniz.</span>
+              <input type="text" id="webSitesi" name="webSitesi" value="<%= profile.webSitesi || '' %>" placeholder="Örn: www.enterprise-erp.com.tr veya enterprise-erp.com">
+              <span class="field-hint">Geçerli bir web sitesi veya domain adresi giriniz.</span>
             </div>
           </div>
 
@@ -207,22 +207,22 @@
                 <input type="text" id="vergiDairesi" name="vergiDairesi" value="<%= profile.vergiDairesi || '' %>" placeholder="Örn: Nilüfer Vergi Dairesi">
               </div>
               <div class="input-group">
-                <label for="vergiNo">Vergi Numarası</label>
-                <input type="text" id="vergiNo" name="vergiNo" value="<%= profile.vergiNo || '' %>" maxlength="10" placeholder="10 Haneli Vergi No (Örn: 1234567890)" style="font-family: 'JetBrains Mono', monospace;">
-                <span class="field-hint">Tam olarak 10 rakamdan oluşmalıdır.</span>
+                <label for="vergiNo">Vergi Numarası <small style="color: var(--text-muted);">(Sadece Rakam)</small></label>
+                <input type="text" id="vergiNo" name="vergiNo" value="<%= profile.vergiNo || '' %>" maxlength="10" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="10 Haneli Vergi No (Örn: 1234567890)" style="font-family: 'JetBrains Mono', monospace;">
+                <span class="field-hint">Sadece 10 haneli rakam girilebilir.</span>
               </div>
             </div>
 
             <div class="form-grid form-grid--2" style="margin-bottom: 1.5rem;">
               <div class="input-group">
-                <label for="mersisNo">Mersis Numarası</label>
-                <input type="text" id="mersisNo" name="mersisNo" value="<%= profile.mersisNo || '' %>" maxlength="16" placeholder="16 Haneli Mersis No (Örn: 0123456789000015)" style="font-family: 'JetBrains Mono', monospace;">
-                <span class="field-hint">Tam olarak 16 rakamdan oluşmalıdır.</span>
+                <label for="mersisNo">Mersis Numarası <small style="color: var(--text-muted);">(Sadece Rakam)</small></label>
+                <input type="text" id="mersisNo" name="mersisNo" value="<%= profile.mersisNo || '' %>" maxlength="16" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="16 Haneli Mersis No (Örn: 0123456789000015)" style="font-family: 'JetBrains Mono', monospace;">
+                <span class="field-hint">Sadece 16 haneli rakam girilebilir.</span>
               </div>
               <div class="input-group">
-                <label for="ticaretSicilNo">Ticaret Sicil No</label>
-                <input type="text" id="ticaretSicilNo" name="ticaretSicilNo" value="<%= profile.ticaretSicilNo || '' %>" maxlength="15" placeholder="Ticaret Sicil No (Örn: 987654)" style="font-family: 'JetBrains Mono', monospace;">
-                <span class="field-hint">3 ile 15 karakter arasında olmalıdır.</span>
+                <label for="ticaretSicilNo">Ticaret Sicil No <small style="color: var(--text-muted);">(Sadece Rakam)</small></label>
+                <input type="text" id="ticaretSicilNo" name="ticaretSicilNo" value="<%= profile.ticaretSicilNo || '' %>" maxlength="12" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="Sicil No (Sadece Rakam: 123456)" style="font-family: 'JetBrains Mono', monospace;">
+                <span class="field-hint">Sadece 4 ile 12 haneli rakam girilebilir.</span>
               </div>
             </div>
           </div>
@@ -235,14 +235,14 @@
 
             <div class="form-grid form-grid--2" style="margin-bottom: 1.5rem;">
               <div class="input-group">
-                <label for="telefon">Telefon Numarası</label>
-                <input type="text" id="telefon" name="telefon" value="<%= profile.telefon || '' %>" placeholder="Örn: +90 (224) 444 0 377" style="font-family: 'JetBrains Mono', monospace;">
-                <span class="field-hint">En az 10 rakamlı geçerli telefon formatı olmalıdır.</span>
+                <label for="telefon">Telefon Numarası <small style="color: var(--text-muted);">(Kesinlikle Sadece Rakam)</small></label>
+                <input type="text" id="telefon" name="telefon" value="<%= profile.telefon || '' %>" maxlength="11" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="Örn: 02244440377 veya 4440377 (Sadece Rakam)" style="font-family: 'JetBrains Mono', monospace;">
+                <span class="field-hint">Sadece rakam girilebilir (7-11 haneli. Örn: 02244440377 veya 4440377).</span>
               </div>
               <div class="input-group">
                 <label for="eposta">Kurumsal E-Posta Adresi</label>
                 <input type="email" id="eposta" name="eposta" value="<%= profile.eposta || '' %>" placeholder="Örn: satis@enterprise-erp.com.tr">
-                <span class="field-hint">Geçerli e-posta formatı (user@domain.com).</span>
+                <span class="field-hint">Geçerli ve eksiksiz e-posta formatı (satis@domain.com).</span>
               </div>
             </div>
 
@@ -311,9 +311,9 @@
       // 2. Web Sitesi
       const webEl = document.getElementById('webSitesi');
       if (webEl.value && webEl.value.trim() !== '') {
-        const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}(\/.*)?$/;
+        const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/;
         if (!domainRegex.test(webEl.value.trim())) {
-          errors.push('Kurumsal Web Sitesi geçerli bir alan adı veya URL formatında olmalıdır (Örn: www.enterprise-erp.com.tr veya enterprise-erp.com).');
+          errors.push('Kurumsal Web Sitesi geçerli bir web sitesi veya domain adresi olmalıdır (Örn: www.enterprise-erp.com.tr veya enterprise-erp.com).');
           webEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-1';
         } else {
@@ -321,11 +321,11 @@
         }
       }
 
-      // 3. Vergi No
+      // 3. Vergi No (Strict 10 Digits)
       const vNoEl = document.getElementById('vergiNo');
       if (vNoEl.value && vNoEl.value.trim() !== '') {
         if (!/^\d{10}$/.test(vNoEl.value.trim())) {
-          errors.push('Vergi Numarası tam olarak 10 haneli rakamlardan oluşmalıdır (Örn: 1234567890).');
+          errors.push('Vergi Numarası sadece rakamlardan oluşmalı ve tam 10 haneli olmalıdır (Örn: 1234567890).');
           vNoEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-2';
         } else {
@@ -333,11 +333,11 @@
         }
       }
 
-      // 4. Mersis No
+      // 4. Mersis No (Strict 16 Digits)
       const mersisEl = document.getElementById('mersisNo');
       if (mersisEl.value && mersisEl.value.trim() !== '') {
         if (!/^\d{16}$/.test(mersisEl.value.trim())) {
-          errors.push('Mersis Numarası tam olarak 16 haneli rakamlardan oluşmalıdır (Örn: 0123456789000015).');
+          errors.push('Mersis Numarası sadece rakamlardan oluşmalı ve tam 16 haneli olmalıdır (Örn: 0123456789000015).');
           mersisEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-2';
         } else {
@@ -345,11 +345,11 @@
         }
       }
 
-      // 5. Ticaret Sicil No
+      // 5. Ticaret Sicil No (Strict 4-12 Digits)
       const sicilEl = document.getElementById('ticaretSicilNo');
       if (sicilEl.value && sicilEl.value.trim() !== '') {
-        if (!/^[a-zA-Z0-9çğıöşüÇĞİÖŞÜ\s\.\-\/]{4,20}$/u.test(sicilEl.value.trim())) {
-          errors.push('Ticaret Sicil Numarası en az 4 karakterden ve geçerli sicil karakterlerinden oluşmalıdır (Örn: 123456 veya 345678-0).');
+        if (!/^\d{4,12}$/.test(sicilEl.value.trim())) {
+          errors.push('Ticaret Sicil Numarası sadece rakamlardan oluşmalı ve 4 ile 12 haneli olmalıdır (Örn: 123456).');
           sicilEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-2';
         } else {
@@ -357,13 +357,11 @@
         }
       }
 
-      // 6. Telefon
+      // 6. Telefon (Strict 7-11 Digits, Pure Numeric)
       const telEl = document.getElementById('telefon');
       if (telEl.value && telEl.value.trim() !== '') {
-        const cleanTel = telEl.value.trim().replace(/[\s\(\)\-\.]/g, '');
-        const phoneRegex = /^(\+?90|0)?(444\d{4}|850\d{7}|[1-9]\d{9})$/;
-        if (!phoneRegex.test(cleanTel)) {
-          errors.push('Telefon numarası geçerli bir Türkiye kurumsal veya uluslararası formatta olmalıdır (Örn: +90 (224) 444 0 377, 0850 123 45 67 veya 444 0 377).');
+        if (!/^\d{7,11}$/.test(telEl.value.trim())) {
+          errors.push('Telefon numarası alanına kesinlikle sadece rakam girilmelidir (7 ile 11 haneli rakam. Örn: 02244440377 veya 4440377).');
           telEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-3';
         } else {
@@ -376,7 +374,7 @@
       if (emailEl.value && emailEl.value.trim() !== '') {
         const strictEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!strictEmailRegex.test(emailEl.value.trim())) {
-          errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz bir e-posta formatında olmalıdır (Örn: satis@enterprise-erp.com.tr).');
+          errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz olmalıdır (Örn: satis@enterprise-erp.com.tr).');
           emailEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-3';
         } else {
