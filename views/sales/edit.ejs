@@ -23,9 +23,7 @@
     .glass-form-card::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 3px;
       background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 50%, #10b981 100%);
     }
@@ -116,10 +114,6 @@
       overflow: hidden;
     }
 
-    .step-progress-item.active .spi-text span {
-      color: #f472b6;
-    }
-
     .tab-content-panel {
       display: none;
       animation: fadeInTab 0.35s ease-in-out;
@@ -137,54 +131,12 @@
     @media (max-width: 768px) {
       .step-progress-bar { grid-template-columns: 1fr; }
     }
-
-    /* Modal Styling */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(6, 8, 15, 0.8);
-      backdrop-filter: blur(12px);
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-
-    .modal-card {
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 850px;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
-      overflow: hidden;
-    }
-
-    .modal-header {
-      padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(19, 26, 43, 0.8);
-    }
-
-    .modal-body {
-      padding: 1.5rem;
-      overflow-y: auto;
-      flex-grow: 1;
-    }
   </style>
   <script src="/sidebar.js" defer></script>
 </head>
 
 <body class="module-body">
 
-  <!-- Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
       <a href="/" class="msb-logo">
@@ -235,7 +187,6 @@
     </div>
   </aside>
 
-  <!-- Main Area -->
   <div class="module-main">
     <header class="module-topbar">
       <div class="mt-left">
@@ -276,6 +227,20 @@
         const deliveryDate = order.deliveryDate || order.teslimTarihi || '';
         const currency = order.currency || order.paraBirimi || 'TRY';
 
+        // Find customer details from customers catalog if matched
+        const currentCustomerObj = (customers || []).find(c => c.id == custId);
+        const contactPersonVal = currentCustomerObj ? (currentCustomerObj.contactPerson || currentCustomerObj.ilgiliKisi || '—') : '—';
+        let contactInfoVal = '—';
+        if (custPhone && custEmail) contactInfoVal = `${custPhone} / ${custEmail}`;
+        else if (custPhone) contactInfoVal = custPhone;
+        else if (custEmail) contactInfoVal = custEmail;
+        else if (currentCustomerObj) {
+          const cp = currentCustomerObj.phone || currentCustomerObj.telefon || '';
+          const ce = currentCustomerObj.email || currentCustomerObj.eposta || '';
+          if (cp && ce) contactInfoVal = `${cp} / ${ce}`;
+          else contactInfoVal = cp || ce || '—';
+        }
+
         let existingItems = [];
         const rawJson = order.itemsJson || order.kalemlerJson;
         if (rawJson) {
@@ -299,7 +264,7 @@
         <div>
           <h1 style="font-weight: 900; letter-spacing: -0.02em;">Satış Siparişi Düzenle & Güncelle</h1>
           <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
-            [<strong style="color: var(--pink); font-family: 'JetBrains Mono', monospace;"><%= orderNo %></strong>] siparişinin müşteri, teslimat ve ürün kalemi detaylarını sekmeli sihirbazdan güncelleyin.
+            [<strong style="color: #ec4899; font-family: 'JetBrains Mono', monospace;"><%= orderNo %></strong>] siparişinin ürün kalemlerini, teslimat tarihlerini ve şartlarını düzenleyin.
           </p>
         </div>
         <a href="/sales/orders" class="btn btn-secondary" style="border-radius: 12px;">◀ Sipariş Listesine Dön</a>
@@ -308,6 +273,15 @@
       <% if (error) { %>
         <div class="error" style="margin-bottom: 1.5rem;"><%= error %></div>
       <% } %>
+
+      <!-- LOCKED CUSTOMER BANNER -->
+      <div style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); padding: 12px 18px; border-radius: 12px; color: #818cf8; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span>🔒 <strong>Sipariş Düzenleme Güvenlik Kilidi:</strong> Oluşturulmuş siparişlerin cari müşteri seçimi ve müşteri iletişim detayları sistem bütünlüğü için değiştirilemez.</span>
+      </div>
 
       <!-- GLASSFORM CARD WIZARD -->
       <div class="glass-form-card">
@@ -327,7 +301,7 @@
             <div class="spi-badge">1</div>
             <div class="spi-text">
               <strong>Cari & Genel</strong>
-              <span>Sipariş No & Müşteri Seçimi</span>
+              <span>Sipariş No & Cari (Kilitli)</span>
             </div>
           </div>
           <div class="step-progress-item" onclick="switchOrderTab(2)" id="tab-pill-2">
@@ -349,75 +323,53 @@
         <form action="/sales/orders/<%= order.id %>/edit" method="POST" id="editOrderForm">
           <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
           <input type="hidden" name="currency" id="currency" value="<%= currency %>">
+          <input type="hidden" name="customerId" value="<%= custId %>">
 
           <!-- TAB CONTENT 1: CARİ MÜŞTERİ VE GENEL BİLGİLER -->
           <div class="tab-content-panel active" id="order-tab-1">
             <h4 style="font-size: 0.95rem; font-weight: 800; color: #ec4899; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-              <span>📋</span> 1. Sipariş ve Cari Müşteri Bilgileri
+              <span>📋</span> 1. Sipariş ve Cari Müşteri Bilgileri (Kilitli Cari)
             </h4>
 
             <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
               <div class="input-group">
                 <label for="orderNo">Sipariş No <span class="req-star">*</span></label>
                 <input type="text" id="orderNo" name="orderNo" value="<%= orderNo %>" required readonly
-                  style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(236, 72, 153, 0.1); color: #ec4899; border-color: rgba(236, 72, 153, 0.3);">
+                  style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(236, 72, 153, 0.1); color: #ec4899; border-color: rgba(236, 72, 153, 0.3); cursor: not-allowed;">
               </div>
 
               <div class="input-group">
-                <label for="customerId">Cari Müşteri Seçimi</label>
-                <select id="customerId" name="customerId" onchange="fillCustomerName(this)">
-                  <option value="">-- Genel / Kayıtsız Müşteri --</option>
+                <label for="customerIdDisplay">Cari Müşteri Seçimi <small style="color: #f43f5e; font-weight: 700;">(Kilitli 🔒)</small></label>
+                <select id="customerIdDisplay" disabled style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; border-color: rgba(255,255,255,0.1);">
                   <% (customers || []).forEach(c => {
                     const isSel = (c.id == custId) ? 'selected' : '';
-                    const score = c.customerScore !== undefined ? c.customerScore : (c.musteriSkoru !== undefined ? c.musteriSkoru : 85);
-                    const isBlocked = score < 50 || c.riskLevel==='High' || c.riskLevel==='Blocked' || c.riskLevel==='Critical' || c.riskSeviyesi==='Yuksek' || c.riskSeviyesi==='Kritik';
-                    const cLimit = parseFloat(c.creditLimit || c.krediLimiti) || 100000;
-                    const cBal = parseFloat(c.currentBalance || c.guncelBakiye) || 0;
-                    const cPerson = c.contactPerson || c.ilgiliKisi || '';
-                    const cPhone = c.phone || c.telefon || '';
-                    const cEmail = c.email || c.eposta || '';
-                    const cAddress = c.address || c.adres || '';
-                    const cTax = c.taxNumber || c.vergiNo || '';
                   %>
-                    <option value="<%= c.id %>" data-name="<%= c.companyName || c.firmaAdi %>" data-creditlimit="<%= cLimit %>"
-                      data-currentbalance="<%= cBal %>" data-blocked="<%= isBlocked %>"
-                      data-contactperson="<%= cPerson %>" data-phone="<%= cPhone %>" data-email="<%= cEmail %>" data-address="<%= cAddress %>" data-tax="<%= cTax %>"
-                      <%= isSel %>>
+                    <option value="<%= c.id %>" <%= isSel %>>
                       [<%= c.customerCode || c.musteriKodu %>] <%= c.companyName || c.firmaAdi %>
                     </option>
                   <% }); %>
                 </select>
-
-                <!-- Dynamic Customer Risk Card -->
-                <div id="customerRiskCard"
-                  style="display: none; margin-top: 10px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; font-size: 0.8rem;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div><span style="color: var(--text-muted);">Toplam Risk Limiti:</span> <strong id="cardCreditLimit" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
-                    <div><span style="color: var(--text-muted);">Güncel Borç:</span> <strong id="cardCurrentBalance" style="color: #fbbf24; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
-                    <div><span style="color: var(--text-muted);">Kullanılabilir Limit:</span> <strong id="cardAvailableCredit" style="color: #34d399; font-family: 'JetBrains Mono', monospace;">0.00 TL</strong></div>
-                  </div>
-                </div>
               </div>
 
               <div class="input-group">
-                <label for="customerName">Müşteri / Kurum Unvanı <span class="req-star">*</span></label>
-                <input type="text" id="customerName" name="customerName" value="<%= custName %>" required placeholder="Müşteri adını girin">
+                <label for="customerName">Müşteri / Kurum Unvanı <small style="color: #f43f5e; font-weight: 700;">(Kilitli 🔒)</small></label>
+                <input type="text" id="customerName" name="customerName" value="<%= custName %>" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
               </div>
             </div>
 
-            <!-- Readonly Contact & Tax Info Grid -->
+            <!-- Readonly Customer Contact Info Grid -->
             <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
               <div class="input-group">
-                <label for="customerTaxNo">Vergi / Sicil Numarası</label>
-                <input type="text" id="customerTaxNo" name="customerTaxNo" value="<%= custTax %>" placeholder="10 haneli vergi no" oninput="this.value = this.value.replace(/\D/g, '')">
+                <label for="customerTaxNo">Müşteriye Ait Vergi / Sicil No <small style="color: #f43f5e; font-weight: 700;">(Kilitli 🔒)</small></label>
+                <input type="text" id="customerTaxNo" name="customerTaxNo" value="<%= custTax %>" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
               </div>
               <div class="input-group">
-                <label for="contactPerson">İlgili Kişi <small style="color: var(--text-muted);">(Cari Karttan Otomatik)</small></label>
-                <input type="text" id="contactPerson" name="contactPerson" placeholder="— Cari seçildiğinde otomatik gelir —" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
+                <label for="contactPerson">Müşteriye Ait İlgili Kişi <small style="color: #f43f5e; font-weight: 700;">(Kilitli 🔒)</small></label>
+                <input type="text" id="contactPerson" name="contactPerson" value="<%= contactPersonVal %>" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
               </div>
               <div class="input-group">
-                <label for="contactInfo">İletişim Bilgileri (Tel / E-Posta) <small style="color: var(--text-muted);">(Otomatik)</small></label>
-                <input type="text" id="contactInfo" name="contactInfo" value="<%= custPhone || custEmail ? custPhone + ' / ' + custEmail : '' %>" placeholder="— Cari seçildiğinde otomatik gelir —" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
+                <label for="contactInfo">Müşteriye Ait İletişim (Tel / E-Posta) <small style="color: #f43f5e; font-weight: 700;">(Kilitli 🔒)</small></label>
+                <input type="text" id="contactInfo" name="contactInfo" value="<%= contactInfoVal %>" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; font-weight: 600;">
               </div>
             </div>
 
@@ -425,11 +377,11 @@
             <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
               <div class="input-group">
                 <label for="billingAddress">Fatura Adresi</label>
-                <textarea id="billingAddress" name="billingAddress" rows="2" placeholder="Fatura adresi..." style="width:100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 10px; font-size: 0.875rem;"><%= order.billingAddress || order.faturaAdresi || '' %></textarea>
+                <textarea id="billingAddress" name="billingAddress" rows="2" style="width:100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 10px; font-size: 0.875rem;"><%= order.billingAddress || order.faturaAdresi || '' %></textarea>
               </div>
               <div class="input-group">
                 <label for="shippingAddress">Sevk Adresi</label>
-                <textarea id="shippingAddress" name="shippingAddress" rows="2" placeholder="Sevkiyat adresi..." style="width:100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 10px; font-size: 0.875rem;"><%= order.shippingAddress || order.teslimatAdresi || '' %></textarea>
+                <textarea id="shippingAddress" name="shippingAddress" rows="2" style="width:100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 10px; font-size: 0.875rem;"><%= order.shippingAddress || order.teslimatAdresi || '' %></textarea>
               </div>
             </div>
 
@@ -483,10 +435,10 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
               <div>
                 <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin: 0;">
-                  <span style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;" id="itemCountBadge">1</span>
+                  <span style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;" id="itemCountBadge">0</span>
                   2. Sipariş Edilen Ürün Kalemleri (Mamuller)
                 </h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Siparişteki tüm ürün kalemlerini stok kataloğundan seçebilir, miktar ve satır bazlı iskontoları düzenleyebilirsiniz.</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Siparişteki ürün kalemlerini çoklu seçim modalı ile yönetebilir, miktar ve fiyatları güncelleyebilirsiniz.</p>
               </div>
 
               <div>
@@ -521,7 +473,7 @@
                   <tr id="emptyItemsPlaceholder">
                     <td colspan="9" style="padding: 35px; text-align: center; color: var(--text-muted);">
                       📦 Henüz sipariş kalemi eklenmedi.<br>
-                      <span style="font-size: 0.8rem; margin-top: 6px; display: inline-block; color: #818cf8;">Yukarıdaki <strong>'📦 Stok Kartından Ürün Seç (Modal)'</strong> butonuna tıklayarak siparişe mamul ürünler ekleyebilirsiniz.</span>
+                      <span style="font-size: 0.8rem; margin-top: 6px; display: inline-block; color: #818cf8;">Yukarıdaki <strong>'📦 Stok Kartından Ürün Seç (Modal)'</strong> butonuna tıklayarak yeni ürün ekleyebilirsiniz.</span>
                     </td>
                   </tr>
                 </tbody>
@@ -613,68 +565,80 @@
     </main>
   </div>
 
-  <!-- PRODUCT SELECT CATALOG MODAL -->
-  <div class="modal-overlay" id="productModalOverlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
-          <span>📦</span> Stok Kartlarından Ürün Seç
-        </h3>
-        <button type="button" onclick="closeProductSelectModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+  <!-- PRODUCT SELECTION MODAL (CHECKBOX PARITY WITH QUOTES_ADD & DUPLICATE PROTECTION) -->
+  <div id="productSelectModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; width: 100%; max-width: 950px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); position: relative;">
+      
+      <!-- Modal Header -->
+      <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.95);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.5rem; background: rgba(236, 72, 153, 0.15); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(236, 72, 153, 0.3);">📦</span>
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Stok Kartlarından Mamul Ürün Seçimi</h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Siparişe yeni ürün eklemek için çoklu seçim kutularını kullanın. Zaten siparişte ekli olan ürünler kilitlidir.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeProductSelectModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
       </div>
 
-      <div class="modal-body">
-        <div style="margin-bottom: 1.25rem;">
-          <input type="text" id="modalStockSearch" placeholder="Stok kodu, ürün adı veya kategori ile ara..."
-            oninput="filterStockCatalogModal(this.value)"
-            style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem;">
+      <!-- Modal Search & Filter Controls -->
+      <div style="padding: 16px 24px; background: rgba(30, 41, 59, 0.5); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+        <div style="flex: 1; min-width: 250px; position: relative;">
+          <input type="text" id="modalProductSearch" oninput="renderModalProducts()" placeholder="🔍 Ürün adı veya stok numarası ile arayın..." style="width: 100%; padding: 10px 14px 10px 38px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: #fff; font-size: 0.875rem; outline: none;">
+          <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;">🔍</span>
         </div>
 
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
-            <thead>
-              <tr style="background: rgba(19, 26, 43, 0.9); color: var(--text-secondary); text-transform: uppercase; font-size: 0.75rem; border-bottom: 1px solid var(--border);">
-                <th style="padding: 10px 14px; text-align: left;">Stok Kodu</th>
-                <th style="padding: 10px 14px; text-align: left;">Ürün / Mamul Adı</th>
-                <th style="padding: 10px 14px; text-align: left;">Kategori</th>
-                <th style="padding: 10px 14px; text-align: center;">Mevcut Stok</th>
-                <th style="padding: 10px 14px; text-align: right;">Birim Fiyat</th>
-                <th style="padding: 10px 14px; text-align: center;">Ekle</th>
-              </tr>
-            </thead>
-            <tbody id="modalStockTbody">
-              <% (stockItems || []).forEach(st => { %>
-                <tr class="modal-stock-row" style="border-bottom: 1px solid rgba(255,255,255,0.05);"
-                  data-search="<%= (st.stokKodu || st.stockCode || '') + ' ' + (st.ad || st.name || '') + ' ' + (st.kategori || '') %>">
-                  <td style="padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #ec4899;"><%= st.stokKodu || st.stockCode %></td>
-                  <td style="padding: 12px 14px;"><strong style="color: #fff;"><%= st.ad || st.name %></strong></td>
-                  <td style="padding: 12px 14px;"><span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.75rem;"><%= st.kategori || 'Mamul' %></span></td>
-                  <td style="padding: 12px 14px; text-align: center; font-family: 'JetBrains Mono', monospace;"><%= (parseFloat(st.mevcutStok) || 0).toLocaleString('tr-TR') %> <%= st.birim || 'Adet' %></td>
-                  <td style="padding: 12px 14px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399;">
-                    <%= (parseFloat(st.satisFiyati || st.salePrice) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= st.paraBirimi || 'TRY' %>
-                  </td>
-                  <td style="padding: 12px 14px; text-align: center;">
-                    <button type="button" class="btn btn-sm btn-primary" onclick="addSelectedProductFromModal('<%= st.id %>')" style="font-size: 0.75rem; font-weight: 700; background: #ec4899; border-color: #ec4899;">
-                      ➕ Ekle
-                    </button>
-                  </td>
-                </tr>
-              <% }); %>
-            </tbody>
-          </table>
+        <div style="width: 320px;">
+          <select id="modalProductSort" onchange="renderModalProducts()" style="width: 100%; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: #fff; font-size: 0.85rem; outline: none; font-weight: 600;">
+            <option value="ad_asc" selected>🔤 Ürün İsmine Göre: A'dan Z'ye</option>
+            <option value="ad_desc">🔤 Ürün İsmine Göre: Z'den A'ya</option>
+            <option value="stokKodu_asc">🔢 Stok Numarasına Göre: Küçükten Büyüğe</option>
+            <option value="stokKodu_desc">🔢 Stok Numarasına Göre: Büyükten Küçüğe</option>
+          </select>
         </div>
       </div>
+
+      <!-- Modal Product List Table -->
+      <div style="flex: 1; overflow-y: auto; padding: 16px 24px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="modalProductsTable">
+          <thead>
+            <tr style="background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; position: sticky; top: 0; z-index: 10;">
+              <th style="padding: 12px 14px; width: 45px; text-align: center;">
+                <input type="checkbox" id="modalSelectAllChk" onchange="toggleSelectAllModalProducts(this)" style="cursor: pointer; width: 16px; height: 16px; accent-color: #ec4899;">
+              </th>
+              <th style="padding: 12px 14px; width: 150px;">Stok Kodu</th>
+              <th style="padding: 12px 14px;">Ürün / Mamul Adı</th>
+              <th style="padding: 12px 14px; width: 110px;">Kategori</th>
+              <th style="padding: 12px 14px; width: 120px; text-align: right;">Birim Fiyat</th>
+              <th style="padding: 12px 14px; width: 110px; text-align: center;">Stok</th>
+              <th style="padding: 12px 14px; width: 110px; text-align: center;">Eklenecek Miktar</th>
+            </tr>
+          </thead>
+          <tbody id="modalProductsTbody">
+            <!-- Rendered dynamically by renderModalProducts() -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding: 16px 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;" id="modalSelectedCountBadge">
+          0 Ürün Seçildi
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button type="button" class="btn btn-secondary" onclick="closeProductSelectModal()" style="padding: 10px 20px; border-radius: 10px;">İptal</button>
+          <button type="button" class="btn btn-primary" onclick="addSelectedProductsToOrder()" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; border: none; font-weight: 700; padding: 10px 24px; border-radius: 10px; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.35);">
+            ✅ Seçilen Ürünleri Siparişe Ekle
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- Stock Item Master Catalog JSON Data -->
-  <script id="stockCatalogData" type="application/json">
-    <%- JSON.stringify(stockItems || []) %>
-  </script>
-  <!-- Initial Items JSON Data -->
-  <script id="initialItemsData" type="application/json">
-    <%- JSON.stringify(existingItems || []) %>
-  </script>
+  <!-- Master JSON Data -->
+  <script id="stockCatalogData" type="application/json"><%- JSON.stringify(stockItems || []) %></script>
+  <script id="initialItemsData" type="application/json"><%- JSON.stringify(existingItems || []) %></script>
 
   <script>
     const stockCatalog = JSON.parse(document.getElementById('stockCatalogData').textContent || '[]');
@@ -695,9 +659,8 @@
           else panel.classList.remove('active');
         }
         if (pill) {
-          if (i === stepNum) {
-            pill.classList.add('active');
-          } else {
+          if (i === stepNum) pill.classList.add('active');
+          else {
             pill.classList.remove('active');
             if (i < stepNum) pill.classList.add('completed');
           }
@@ -727,7 +690,7 @@
         if (currentStep === 1) {
           const custNameInput = document.getElementById('customerName');
           if (!custNameInput || !custNameInput.value.trim()) {
-            alert('⚠️ Lütfen önce Müşteri Unvanını giriniz veya Cari seçiniz.');
+            alert('⚠️ Lütfen önce Müşteri Unvanını kontrol ediniz.');
             if (custNameInput) custNameInput.focus();
             return;
           }
@@ -737,64 +700,147 @@
     }
 
     function openProductSelectModal() {
-      document.getElementById('productModalOverlay').style.display = 'flex';
+      const modal = document.getElementById('productSelectModal');
+      if (!modal) return;
+      document.getElementById('modalProductSearch').value = '';
+      document.getElementById('modalProductSort').value = 'ad_asc';
+      document.getElementById('modalSelectAllChk').checked = false;
+      modal.style.display = 'flex';
+      renderModalProducts();
     }
 
     function closeProductSelectModal() {
-      document.getElementById('productModalOverlay').style.display = 'none';
+      const modal = document.getElementById('productSelectModal');
+      if (modal) modal.style.display = 'none';
     }
 
-    function filterStockCatalogModal(query) {
-      const q = query.toLowerCase().trim();
-      const rows = document.querySelectorAll('.modal-stock-row');
-      rows.forEach(r => {
-        const text = r.getAttribute('data-search').toLowerCase();
-        if (text.includes(q)) r.style.display = '';
-        else r.style.display = 'none';
+    function getAlreadyAddedStockIds() {
+      const rows = document.querySelectorAll('#itemsTbody .item-stock-id');
+      const ids = [];
+      rows.forEach(inp => {
+        const val = parseInt(inp.value, 10);
+        if (val && !isNaN(val)) ids.push(val);
       });
+      return ids;
     }
 
-    function addSelectedProductFromModal(stockId) {
-      addNewRow({ stockItemId: stockId });
+    function renderModalProducts() {
+      const tbody = document.getElementById('modalProductsTbody');
+      if (!tbody) return;
+
+      const alreadyAddedIds = getAlreadyAddedStockIds();
+      const searchVal = (document.getElementById('modalProductSearch')?.value || '').toLowerCase().trim();
+      const sortVal = document.getElementById('modalProductSort')?.value || 'ad_asc';
+
+      let items = (stockCatalog || []).filter(item => {
+        const code = (item.stokKodu || item.stockCode || '').toLowerCase();
+        const name = (item.ad || item.name || '').toLowerCase();
+        return code.includes(searchVal) || name.includes(searchVal);
+      });
+
+      items.sort((a, b) => {
+        const codeA = (a.stokKodu || a.stockCode || '').toLowerCase();
+        const codeB = (b.stokKodu || b.stockCode || '').toLowerCase();
+        const nameA = (a.ad || a.name || '').toLowerCase();
+        const nameB = (b.ad || b.name || '').toLowerCase();
+
+        if (sortVal === 'stokKodu_asc') return codeA.localeCompare(codeB, 'tr', { numeric: true });
+        if (sortVal === 'stokKodu_desc') return codeB.localeCompare(codeA, 'tr', { numeric: true });
+        if (sortVal === 'ad_desc') return nameB.localeCompare(nameA, 'tr');
+        return nameA.localeCompare(nameB, 'tr');
+      });
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">🔍 Kriterlere uygun mamul ürün bulunamadı.</td></tr>`;
+        updateModalSelectedCount();
+        return;
+      }
+
+      tbody.innerHTML = items.map(st => {
+        const code = st.stokKodu || st.stockCode || '';
+        const name = st.ad || st.name || '';
+        const category = st.kategori || 'Mamul';
+        const price = parseFloat(st.satisFiyati || st.salePrice || 0);
+        const stock = parseFloat(st.mevcutStok || st.currentStock || 0);
+        const unit = st.birim || 'Adet';
+        const isAdded = alreadyAddedIds.includes(st.id);
+
+        return `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); opacity: ${isAdded ? '0.6' : '1'};">
+            <td style="padding: 10px 14px; text-align: center;">
+              <input type="checkbox" class="modal-product-chk" data-id="${st.id}" ${isAdded ? 'disabled checked' : ''} onchange="updateModalSelectedCount()" style="cursor: pointer; width: 16px; height: 16px; accent-color: #ec4899;">
+            </td>
+            <td style="padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: #ec4899; font-weight: 600;">${code}</td>
+            <td style="padding: 10px 14px; font-weight: 600; color: #fff;">
+              ${name}
+              ${isAdded ? '<span style="margin-left: 8px; font-size: 0.725rem; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 2px 6px; border-radius: 4px;">✓ Zaten Ekli</span>' : ''}
+            </td>
+            <td style="padding: 10px 14px;"><span style="background: rgba(236, 72, 153, 0.12); color: #ec4899; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">${category}</span></td>
+            <td style="padding: 10px 14px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff;">${price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</td>
+            <td style="padding: 10px 14px; text-align: center; font-size: 0.8rem; color: ${stock > 0 ? '#34d399' : '#fb7185'}; font-weight: 600;">${stock} ${unit}</td>
+            <td style="padding: 10px 14px; text-align: center;">
+              <input type="number" min="0.01" step="1" value="1" class="modal-product-qty" data-id="${st.id}" ${isAdded ? 'disabled' : ''} style="width: 75px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 4px 8px; border-radius: 6px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      updateModalSelectedCount();
+    }
+
+    function toggleSelectAllModalProducts(mainChk) {
+      const checkboxes = document.querySelectorAll('.modal-product-chk:not([disabled])');
+      checkboxes.forEach(chk => chk.checked = mainChk.checked);
+      updateModalSelectedCount();
+    }
+
+    function updateModalSelectedCount() {
+      const checkedCount = document.querySelectorAll('.modal-product-chk:checked:not([disabled])').length;
+      const badge = document.getElementById('modalSelectedCountBadge');
+      if (badge) badge.textContent = `${checkedCount} Yeni Ürün Seçildi`;
+    }
+
+    function addSelectedProductsToOrder() {
+      const checkedChks = document.querySelectorAll('.modal-product-chk:checked:not([disabled])');
+      if (checkedChks.length === 0) {
+        alert('⚠️ Lütfen siparişe eklemek istediğiniz en az 1 yeni ürün işaretleyiniz.');
+        return;
+      }
+
+      const tbody = document.getElementById('itemsTbody');
+      const placeholder = document.getElementById('emptyItemsPlaceholder');
+      if (placeholder) placeholder.remove();
+
+      checkedChks.forEach(chk => {
+        const stockId = parseInt(chk.getAttribute('data-id'), 10);
+        const item = (stockCatalog || []).find(s => s.id === stockId);
+        if (!item) return;
+
+        const qtyInput = document.querySelector(`.modal-product-qty[data-id="${stockId}"]`);
+        const qty = qtyInput ? (parseFloat(qtyInput.value) || 1) : 1;
+        const unitPrice = parseFloat(item.satisFiyati || item.salePrice || 0);
+        const taxRate = parseFloat(item.kdvOrani || item.taxRate || 20);
+
+        addNewRow({
+          stockItemId: item.id,
+          quantity: qty,
+          unitPrice: unitPrice,
+          discountRate: 0,
+          taxRate: taxRate
+        });
+      });
+
       closeProductSelectModal();
-    }
-
-    function fillCustomerName(selectEl) {
-      const selectedOption = selectEl.options[selectEl.selectedIndex];
-      if (!selectedOption.value) return;
-
-      const name = selectedOption.getAttribute('data-name') || '';
-      const contactPerson = selectedOption.getAttribute('data-contactperson') || '—';
-      const phone = selectedOption.getAttribute('data-phone') || '';
-      const email = selectedOption.getAttribute('data-email') || '';
-      const address = selectedOption.getAttribute('data-address') || '';
-      const taxNo = selectedOption.getAttribute('data-tax') || '';
-
-      let contactInfoStr = '—';
-      if (phone && email) contactInfoStr = `${phone} / ${email}`;
-      else if (phone) contactInfoStr = phone;
-      else if (email) contactInfoStr = email;
-
-      document.getElementById('customerName').value = name;
-      document.getElementById('customerTaxNo').value = taxNo;
-      document.getElementById('contactPerson').value = contactPerson;
-      document.getElementById('contactInfo').value = contactInfoStr;
-      document.getElementById('billingAddress').value = address;
-      document.getElementById('shippingAddress').value = address;
-
       recalculate();
     }
 
-    // Multi-Item Row Logic
     let rowIdCounter = 0;
 
     function addNewRow(initialData = null) {
       rowIdCounter++;
       const tbody = document.getElementById('itemsTbody');
       const placeholder = document.getElementById('emptyItemsPlaceholder');
-      if (placeholder) {
-        placeholder.remove();
-      }
+      if (placeholder) placeholder.remove();
 
       const tr = document.createElement('tr');
       tr.id = `row-${rowIdCounter}`;
@@ -889,6 +935,7 @@
 
       rows.forEach(tr => {
         const stockIdInput = tr.querySelector('.item-stock-id');
+        if (!stockIdInput) return;
         const stockItemId = parseInt(stockIdInput.value, 10);
         const stockCode = stockIdInput.getAttribute('data-code') || '';
         const stockName = stockIdInput.getAttribute('data-name') || '';
