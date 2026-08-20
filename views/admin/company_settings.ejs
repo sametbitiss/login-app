@@ -301,7 +301,7 @@
       // 1. Unvan
       const unvanEl = document.getElementById('unvan');
       if (!unvanEl.value || unvanEl.value.trim().length < 3) {
-        errors.push('Resmi Şirket Unvanı en az 3 karakter olmalıdır.');
+        errors.push('Resmi Şirket Unvanı zorunludur ve en az 3 karakter olmalıdır.');
         unvanEl.classList.add('invalid-input');
         if (!targetTabId) targetTabId = 'comp-tab-1';
       } else {
@@ -311,9 +311,9 @@
       // 2. Web Sitesi
       const webEl = document.getElementById('webSitesi');
       if (webEl.value && webEl.value.trim() !== '') {
-        const urlRegex = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/.*)?$/i;
-        if (!urlRegex.test(webEl.value.trim())) {
-          errors.push('Lütfen geçerli bir web sitesi adresi giriniz (Örn: www.enterprise-erp.com.tr).');
+        const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}(\/.*)?$/;
+        if (!domainRegex.test(webEl.value.trim())) {
+          errors.push('Kurumsal Web Sitesi geçerli bir alan adı veya URL formatında olmalıdır (Örn: www.enterprise-erp.com.tr veya enterprise-erp.com).');
           webEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-1';
         } else {
@@ -325,7 +325,7 @@
       const vNoEl = document.getElementById('vergiNo');
       if (vNoEl.value && vNoEl.value.trim() !== '') {
         if (!/^\d{10}$/.test(vNoEl.value.trim())) {
-          errors.push('Vergi Numarası tam olarak 10 haneli rakamlardan oluşmalıdır.');
+          errors.push('Vergi Numarası tam olarak 10 haneli rakamlardan oluşmalıdır (Örn: 1234567890).');
           vNoEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-2';
         } else {
@@ -337,7 +337,7 @@
       const mersisEl = document.getElementById('mersisNo');
       if (mersisEl.value && mersisEl.value.trim() !== '') {
         if (!/^\d{16}$/.test(mersisEl.value.trim())) {
-          errors.push('Mersis Numarası tam olarak 16 haneli rakamlardan oluşmalıdır.');
+          errors.push('Mersis Numarası tam olarak 16 haneli rakamlardan oluşmalıdır (Örn: 0123456789000015).');
           mersisEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-2';
         } else {
@@ -348,8 +348,8 @@
       // 5. Ticaret Sicil No
       const sicilEl = document.getElementById('ticaretSicilNo');
       if (sicilEl.value && sicilEl.value.trim() !== '') {
-        if (!/^[a-zA-Z0-9\s\.\-\/]{3,15}$/.test(sicilEl.value.trim())) {
-          errors.push('Ticaret Sicil No 3 ile 15 karakter arasında olmalıdır.');
+        if (!/^[a-zA-Z0-9çğıöşüÇĞİÖŞÜ\s\.\-\/]{4,20}$/u.test(sicilEl.value.trim())) {
+          errors.push('Ticaret Sicil Numarası en az 4 karakterden ve geçerli sicil karakterlerinden oluşmalıdır (Örn: 123456 veya 345678-0).');
           sicilEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-2';
         } else {
@@ -360,9 +360,10 @@
       // 6. Telefon
       const telEl = document.getElementById('telefon');
       if (telEl.value && telEl.value.trim() !== '') {
-        const digits = telEl.value.trim().replace(/\D/g, '').length;
-        if (digits < 10 || digits > 15 || !/^\+?[\d\s\(\)\-]{10,20}$/.test(telEl.value.trim())) {
-          errors.push('Telefon numarası alanına geçerli bir telefon formatı giriniz (Örn: +90 (224) 444 0 377).');
+        const cleanTel = telEl.value.trim().replace(/[\s\(\)\-\.]/g, '');
+        const phoneRegex = /^(\+?90|0)?(444\d{4}|850\d{7}|[1-9]\d{9})$/;
+        if (!phoneRegex.test(cleanTel)) {
+          errors.push('Telefon numarası geçerli bir Türkiye kurumsal veya uluslararası formatta olmalıdır (Örn: +90 (224) 444 0 377, 0850 123 45 67 veya 444 0 377).');
           telEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-3';
         } else {
@@ -373,9 +374,9 @@
       // 7. E-Posta
       const emailEl = document.getElementById('eposta');
       if (emailEl.value && emailEl.value.trim() !== '') {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(emailEl.value.trim())) {
-          errors.push('Lütfen geçerli bir e-posta adresi giriniz (Örn: satis@enterprise-erp.com.tr).');
+        const strictEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!strictEmailRegex.test(emailEl.value.trim())) {
+          errors.push('Kurumsal E-Posta adresi geçerli ve eksiksiz bir e-posta formatında olmalıdır (Örn: satis@enterprise-erp.com.tr).');
           emailEl.classList.add('invalid-input');
           if (!targetTabId) targetTabId = 'comp-tab-3';
         } else {
