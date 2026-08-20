@@ -813,6 +813,22 @@ class SaleController {
     });
   });
 
+  renderAddPriceList = asyncHandler(async (req, res) => {
+    const customers = await customerRepository.findAll({ status: 'Active' });
+    const stockItems = await StokKarti.findAll({
+      where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } },
+      order: [['ad', 'ASC']]
+    });
+
+    res.render('sales/price_lists_add', {
+      user: req.user,
+      customers,
+      stockItems,
+      error: req.query.error || null,
+      success: null
+    });
+  });
+
   addPriceList = asyncHandler(async (req, res) => {
     try {
       const listName = req.body.listeAdi || req.body.listName || 'Müşteri Özel Fiyat Listesi';
@@ -902,37 +918,7 @@ class SaleController {
 
       res.redirect('/sales/price-lists?success=' + encodeURIComponent('✅ Müşteri özel fiyat listesi başarıyla kaydedildi.'));
     } catch (err) {
-      const rawPriceLists = await priceListRepository.findAll();
-      const customers = await customerRepository.findAll({ status: 'Active' });
-      const stockItems = await StokKarti.findAll({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Ticari_Mal'] } }, order: [['ad', 'ASC']] });
-
-      const groupsMap = new Map();
-      rawPriceLists.forEach(item => {
-        const custId = item.musteriId || 0;
-        if (!groupsMap.has(custId)) {
-          groupsMap.set(custId, {
-            customerId: item.musteriId,
-            customerName: item.musteri ? item.musteri.firmaAdi : 'Tüm Müşteriler (Genel İskonto)',
-            customerCode: item.musteri ? item.musteri.musteriKodu : 'GENEL-000',
-            customer: item.musteri,
-            listName: item.listeAdi || 'Özel Fiyat Listesi',
-            validFrom: item.gecerlilikBaslangic,
-            validUntil: item.gecerlilikBitis,
-            items: []
-          });
-        }
-        groupsMap.get(custId).items.push(item);
-      });
-
-      res.render('sales/price_lists', {
-        user: req.user,
-        priceLists: rawPriceLists,
-        groupedPriceLists: Array.from(groupsMap.values()),
-        customers,
-        stockItems,
-        error: err.message || 'Fiyat listesi kaydı oluşturulurken hata oluştu.',
-        success: null
-      });
+      res.redirect('/sales/price-lists/add?error=' + encodeURIComponent(err.message || 'Fiyat listesi kaydı oluşturulurken hata oluştu.'));
     }
   });
 
