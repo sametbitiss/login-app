@@ -962,6 +962,9 @@
         const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
         const priceInput = tr.querySelector('.item-price');
         const discInput = tr.querySelector('.item-discount');
+        const currSelect = tr.querySelector('.item-currency');
+        const itemCurr = currSelect ? currSelect.value : 'TRY';
+        const itemSymbol = itemCurr === 'USD' ? '$' : (itemCurr === 'EUR' ? '€' : '₺');
 
         const price = parseFloat(priceInput.value) || 0;
         const discountRate = parseFloat(discInput.value) || 0;
@@ -1005,28 +1008,44 @@
         grandTotal += lineTotal;
 
         const lineTotalEl = tr.querySelector('.item-total');
-        if (lineTotalEl) lineTotalEl.textContent = lineTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
+        if (lineTotalEl) lineTotalEl.textContent = lineTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + itemSymbol;
 
         if (stockItemId) {
           itemsPayload.push({
             stockItemId,
+            stokId: stockItemId,
             stockCode,
+            stokKodu: stockCode,
             name,
+            ad: name,
             quantity: qty,
+            miktar: qty,
             unitPrice: price,
+            birimFiyat: price,
+            currency: itemCurr,
+            paraBirimi: itemCurr,
             discountRate,
+            iskontoOrani: discountRate,
             taxRate,
-            totalAmount: lineTotal
+            kdvOrani: taxRate,
+            subtotal,
+            araToplam: subtotal,
+            discountAmount,
+            iskontoTutari: discountAmount,
+            taxAmount,
+            kdvTutari: taxAmount,
+            totalAmount: lineTotal,
+            toplamTutar: lineTotal
           });
         }
       });
 
       document.getElementById('itemsJsonInput').value = JSON.stringify(itemsPayload);
 
-      document.getElementById('displaySubtotal').textContent = grandSubtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
-      document.getElementById('displayDiscount').textContent = '- ' + grandDiscount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
-      document.getElementById('displayTax').textContent = grandTax.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
-      document.getElementById('displayGrandTotal').textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + symbol;
+      document.getElementById('displaySubtotal').textContent = grandSubtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+      document.getElementById('displayDiscount').textContent = '- ' + grandDiscount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+      document.getElementById('displayTax').textContent = grandTax.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+      document.getElementById('displayGrandTotal').textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
 
       const spAlert = document.getElementById('specialPriceViolationAlert');
       const spText = document.getElementById('specialPriceViolationText');
@@ -1052,7 +1071,7 @@
       if (selectedCustomerCreditLimit > 0 && grandTotal > availableCredit) {
         if (riskAlert) {
           const warnText = document.getElementById('riskLimitExceededText');
-          if (warnText) warnText.textContent = `⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL), teklif tutarından (${grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${symbol}) azdır. Risk limiti aşılacağı için teklif oluşturulamaz.`;
+          if (warnText) warnText.textContent = `⚠️ Risk Limiti Aşımı! Müşterinin kalan kullanılabilir risk limiti (${availableCredit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL), teklif tutarından (${grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL) azdır. Risk limiti aşılacağı için teklif oluşturulamaz.`;
           riskAlert.style.display = 'flex';
         }
       } else {
