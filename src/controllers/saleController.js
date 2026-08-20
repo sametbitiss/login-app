@@ -659,12 +659,6 @@ class SaleController {
           discountAmount: disc,
           kdvTutari: tax,
           taxAmount: tax,
-          toplamTutar: tot,
-          totalAmount: tot
-        });
-          iskontoTutari: disc,
-          kdvTutari: tax,
-          toplamTutar: tot
         });
       }
 
