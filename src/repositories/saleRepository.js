@@ -128,6 +128,54 @@ class SaleRepository {
         if (item) {
           item.rezerveStok = parseFloat(item.rezerveStok || 0) + qty;
           await item.save();
+
+          // Otomatik Üretim Talebi (Production Requisition) Oluşturma
+          try {
+            const { UretimEmri } = require('../../models');
+            const year = new Date().getFullYear();
+            const prefix = `URETIM-${year}-`;
+            const lastOrder = await UretimEmri.findOne({
+              where: { isEmriNo: { [Op.like]: `${prefix}%` } },
+              order: [['id', 'DESC']]
+            });
+            let nextSeq = 1;
+            if (lastOrder) {
+              const lastNoStr = lastOrder.isEmriNo.replace(prefix, '');
+              nextSeq = (parseInt(lastNoStr, 10) || 0) + 1;
+            }
+            const reqWorkOrderNo = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            let deliveryDateStr = order.teslimTarihi ? new Date(order.teslimTarihi).toISOString().split('T')[0] : null;
+            if (!deliveryDateStr) {
+              const d = new Date();
+              d.setDate(d.getDate() + 7);
+              deliveryDateStr = d.toISOString().split('T')[0];
+            }
+
+            const isUrgent = order.oncelik === 'Urgent' || order.oncelik === 'High' || order.oncelik === 'Acil';
+
+            await UretimEmri.create({
+              isEmriNo: reqWorkOrderNo,
+              uretimBasligi: `🏭 [Sipariş: ${order.siparisNo}] ${item.ad} Üretim Talebi`,
+              stokId: item.id,
+              planlananMiktar: qty,
+              tamamlananMiktar: 0,
+              fireMiktari: 0,
+              birim: item.birim || 'Adet',
+              durum: 'Planned',
+              oncelik: isUrgent ? 'Urgent' : 'Normal',
+              isMerkezi: 'İstasyon-1 (Kesim & Büküm)',
+              planlananBaslangicTarihi: todayStr,
+              planlananBitisTarihi: deliveryDateStr,
+              tahminiSaat: Math.max(1, Math.round(qty * 1.5)),
+              receteNotlari: `Müşteri: ${order.musteriAdi || '—'} | Satış Sipariş No: ${order.siparisNo}`,
+              notlar: `[Satış Siparişi Otomasyonu] ${order.siparisNo} numaralı satış siparişi (${order.musteriAdi || 'Müşteri'}) için sistem tarafından otomatik oluşturulan üretim talebidir.`,
+              olusturanId: currentUser ? currentUser.id : null
+            });
+          } catch (reqErr) {
+            console.error('Error creating automatic production requisition from sales order:', reqErr);
+          }
         }
       }
     }
