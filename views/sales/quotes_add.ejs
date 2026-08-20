@@ -291,6 +291,7 @@
 
             <form action="/sales/quotes/add" method="POST" id="quotationForm">
               <input type="hidden" name="itemsJson" id="itemsJsonInput" value="[]">
+              <input type="hidden" name="currency" id="currency" value="TRY">
 
               <!-- TAB CONTENT 1: CARİ MÜŞTERİ VE GENEL BİLGİLER -->
               <div class="tab-content-panel active" id="quote-tab-1">
@@ -465,19 +466,8 @@
                         <th style="padding: 14px 16px; width: 45px; text-align: center;">#</th>
                         <th style="padding: 14px 16px; min-width: 240px;">Ürün / Mamul Kalemi</th>
                         <th style="padding: 14px 16px; width: 100px;">Miktar</th>
-                        <th style="padding: 14px 16px; width: 170px;">
-                          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-                            <span>Birim Fiyat</span>
-                            <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 6px; border-radius: 6px;">
-                              <span style="font-size: 0.7rem; color: #818cf8;">💱</span>
-                              <select id="currency" name="currency" onchange="recalculate()" style="background: transparent; border: none; color: #fff; font-size: 0.75rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; outline: none; cursor: pointer; text-transform: uppercase;">
-                                <option value="TRY" style="background: #0f172a; color: #fff;">TRY (₺)</option>
-                                <option value="USD" style="background: #0f172a; color: #fff;">USD ($)</option>
-                                <option value="EUR" style="background: #0f172a; color: #fff;">EUR (€)</option>
-                              </select>
-                            </div>
-                          </div>
-                        </th>
+                        <th style="padding: 14px 16px; width: 140px;">Birim Fiyat</th>
+                        <th style="padding: 14px 16px; width: 120px;">Para Birimi</th>
                         <th style="padding: 14px 16px; width: 110px;">İskonto (%)</th>
                         <th style="padding: 14px 16px; width: 90px;">KDV (%)</th>
                         <th style="padding: 14px 16px; width: 150px; text-align: right;">Satır Toplamı</th>
@@ -486,7 +476,7 @@
                     </thead>
                     <tbody id="itemsTbody">
                       <tr id="emptyItemsPlaceholder">
-                        <td colspan="8" style="padding: 35px; text-align: center; color: var(--text-muted);">
+                        <td colspan="9" style="padding: 35px; text-align: center; color: var(--text-muted);">
                           📦 Henüz teklif kalemi eklenmedi.<br>
                           <span style="font-size: 0.8rem; margin-top: 6px; display: inline-block; color: #818cf8;">Yukarıdaki <strong>'📦 Stok Kartından Ürün Seç (Modal)'</strong> butonuna tıklayarak teklife mamul ürünler ekleyebilirsiniz.</span>
                         </td>
@@ -793,6 +783,7 @@
 
       const qty = initialData ? initialData.quantity : 1;
       const price = initialData ? initialData.unitPrice : (st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0);
+      const itemCurr = initialData ? (initialData.currency || initialData.paraBirimi || 'TRY') : (st ? (st.paraBirimi || st.currency || 'TRY') : 'TRY');
       const discount = initialData ? initialData.discountRate : 0;
       const tax = initialData ? initialData.taxRate : (st ? (st.kdvOrani || st.taxRate || 20) : 20);
 
@@ -812,6 +803,13 @@
         </td>
         <td style="padding: 12px 14px;">
           <input type="number" step="0.01" min="0" value="${price}" class="item-price" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; text-align: right; font-family: 'JetBrains Mono', monospace;">
+        </td>
+        <td style="padding: 12px 14px;">
+          <select class="item-currency" onchange="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #818cf8; padding: 8px 10px; border-radius: 8px; font-weight: 700; font-family: 'JetBrains Mono', monospace; outline: none; cursor: pointer;">
+            <option value="TRY" ${itemCurr === 'TRY' ? 'selected' : ''}>TRY (₺)</option>
+            <option value="USD" ${itemCurr === 'USD' ? 'selected' : ''}>USD ($)</option>
+            <option value="EUR" ${itemCurr === 'EUR' ? 'selected' : ''}>EUR (€)</option>
+          </select>
         </td>
         <td style="padding: 12px 14px;">
           <input type="number" step="0.1" min="0" max="100" value="${discount}" class="item-discount" oninput="recalculate()" style="width: 100%; background: rgba(6, 8, 15, 0.9); border: 1px solid var(--border); color: #fb7185; padding: 8px 10px; border-radius: 8px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
@@ -845,6 +843,7 @@
       const priceInput = tr.querySelector('.item-price');
       const discInput = tr.querySelector('.item-discount');
       const taxInput = tr.querySelector('.item-tax');
+      const currSelect = tr.querySelector('.item-currency');
 
       const st = (stockCatalog || []).find(s => s.id === parseInt(stockId, 10));
       const defaultPrice = st ? parseFloat(st.satisFiyati || st.salePrice || 0) : 0;
@@ -852,6 +851,13 @@
 
       if (taxInput && (!initialData || initialData.taxRate === undefined)) {
         taxInput.value = tax;
+      }
+
+      if (currSelect && st && st.paraBirimi && (!initialData || !initialData.currency)) {
+        const pStr = st.paraBirimi.toUpperCase();
+        if (pStr.includes('USD')) currSelect.value = 'USD';
+        else if (pStr.includes('EUR')) currSelect.value = 'EUR';
+        else currSelect.value = 'TRY';
       }
 
       const custSelect = document.getElementById('customerId');
@@ -872,9 +878,7 @@
           discInput.dataset.specialMin = customDisc;
         }
       } else {
-        if (priceInput && initialData && initialData.unitPrice !== undefined) {
-          priceInput.value = initialData.unitPrice;
-        } else if (priceInput) {
+        if (priceInput && (!initialData || initialData.unitPrice === undefined)) {
           priceInput.value = defaultPrice;
         }
         if (discInput && initialData && initialData.discountRate !== undefined) {
@@ -898,7 +902,7 @@
       if (remainingRows.length === 0) {
         tbody.innerHTML = `
           <tr id="emptyItemsPlaceholder">
-            <td colspan="8" style="padding: 35px; text-align: center; color: var(--text-muted);">
+            <td colspan="9" style="padding: 35px; text-align: center; color: var(--text-muted);">
               📦 Henüz teklif kalemi eklenmedi.<br>
               <span style="font-size: 0.8rem; margin-top: 6px; display: inline-block; color: #818cf8;">Yukarıdaki <strong>'📦 Stok Kartından Ürün Seç (Modal)'</strong> butonuna tıklayarak teklife mamul ürünler ekleyebilirsiniz.</span>
             </td>
@@ -925,10 +929,7 @@
 
     function recalculate() {
       const rows = document.querySelectorAll('#itemsTbody tr:not(#emptyItemsPlaceholder)');
-      const currency = document.getElementById('currency').value || 'TRY';
-      let symbol = '₺';
-      if (currency === 'USD') symbol = '$';
-      if (currency === 'EUR (€)') symbol = '€';
+      let primaryCurrency = 'TRY';
 
       let grandSubtotal = 0;
       let grandDiscount = 0;
