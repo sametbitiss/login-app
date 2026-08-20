@@ -80,7 +80,7 @@
             </a>
           <% } %>
 
-          <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+          <% if (user.role === 'Admin' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Sales_Manager' || user.role === 'Purchase_Manager' || user.role === 'Quality_Manager' || user.role === 'Employee' || user.role === 'Ozel_Saha_Uzmani') { %>
             <a href="/production" class="nlink" id="nav-production">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V10l4-4 4 4v10"/><path d="M13 20V4l6 6v10"/></svg>
               Üretim Planlama
@@ -356,7 +356,7 @@
       <% } %>
 
       <!-- 5. Üretim Planlama (AKTİF) -->
-      <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %>
+      <% if (user.role === 'Admin' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Sales_Manager' || user.role === 'Purchase_Manager' || user.role === 'Quality_Manager' || user.role === 'Employee' || user.role === 'Ozel_Saha_Uzmani') { %>
         <a href="/production" class="mod-card mod-card--active" data-status="active" id="card-production">
           <div class="mod-card-glow mod-card-glow--emerald"></div>
           <div class="mod-card-header">

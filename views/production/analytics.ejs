@@ -192,7 +192,7 @@
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.workOrderNo %></strong></td>
                   <td><%= o.productionTitle %></td>
                   <td><strong><%= o.plannedQuantity %> <%= o.unit %></strong></td>
-                  <td style="font-size: 0.75rem; color: var(--text-muted);"><%= o.workCenter.split(' ')[0] %></td>
+                  <td style="font-size: 0.75rem; color: var(--text-muted);"><%= (o.workCenter && typeof o.workCenter === 'string') ? o.workCenter.split(' ')[0] : (o.workCenter || 'İstasyon') %></td>
                   <td>
                     <% if (o.status === 'Completed') { %>
                       <span class="status-pill status-active">● Tamamlandı</span>
@@ -220,7 +220,7 @@
     new Chart(document.getElementById('capacityChart'), {
       type: 'bar',
       data: {
-        labels: capacityData.map(c => c.workCenterName.split(' ')[0]),
+        labels: capacityData.map(c => (c.workCenterName && typeof c.workCenterName === 'string') ? c.workCenterName.split(' ')[0] : (c.workCenterName || 'İstasyon')),
         datasets: [{
           label: 'Kapasite Yük Oranı (%)',
           data: capacityData.map(c => c.loadPercentage),
