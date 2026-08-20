@@ -738,9 +738,21 @@ class SaleController {
       });
     }
 
+    let custTaxNo = null;
+    let custEmail = quote.iletisimBilgisi || null;
+    let custPhone = quote.iletisimBilgisi || null;
+    let custPaymentTerm = quote.odemeVadesi || quote.paymentTerm || 'Vadeli_30';
+
     if (quote.musteriId) {
       const cust = await customerRepository.findById(quote.musteriId);
       if (cust) {
+        custTaxNo = cust.vergiNo || cust.taxNumber || custTaxNo;
+        custEmail = cust.eposta || cust.email || custEmail;
+        custPhone = cust.telefon || cust.phone || custPhone;
+        if (cust.odemeVadesi || cust.paymentTerm) {
+          custPaymentTerm = cust.odemeVadesi || cust.paymentTerm;
+        }
+
         const score = cust.musteriSkoru !== undefined ? cust.musteriSkoru : 85;
         const riskLvl = cust.riskSeviyesi || cust.riskLevel;
         const isBlocked = score < 50 || riskLvl === 'High' || riskLvl === 'Blocked' || riskLvl === 'Critical';
@@ -765,13 +777,46 @@ class SaleController {
       }
     }
 
+    // Sanitize payment terms to match SatisSiparisleri ENUM
+    const validPaymentTerms = ['Pesin', 'Vadeli_30', 'Vadeli_60', 'Vadeli_90', 'Kredi_Karti'];
+    let finalPaymentTerm = quote.odemeVadesi || quote.paymentTerm || custPaymentTerm;
+    if (!validPaymentTerms.includes(finalPaymentTerm)) {
+      if (finalPaymentTerm === 'Cash' || finalPaymentTerm === 'Peşin') finalPaymentTerm = 'Pesin';
+      else if (finalPaymentTerm === '30_Days' || finalPaymentTerm === 'Vadeli 30 Gün') finalPaymentTerm = 'Vadeli_30';
+      else if (finalPaymentTerm === '60_Days' || finalPaymentTerm === 'Vadeli 60 Gün') finalPaymentTerm = 'Vadeli_60';
+      else if (finalPaymentTerm === '90_Days' || finalPaymentTerm === 'Vadeli 90 Gün') finalPaymentTerm = 'Vadeli_90';
+      else finalPaymentTerm = 'Vadeli_30';
+    }
+
+    // Currency normalization ('TRY', 'USD', 'EUR')
+    let finalCurrency = (quote.paraBirimi || 'TRY').toUpperCase();
+    if (!['TRY', 'USD', 'EUR'].includes(finalCurrency)) {
+      if (finalCurrency === 'TL' || finalCurrency === '₺') finalCurrency = 'TRY';
+      else if (finalCurrency === '$') finalCurrency = 'USD';
+      else if (finalCurrency === '€') finalCurrency = 'EUR';
+      else finalCurrency = 'TRY';
+    }
+
+    const teslimatAdresi = quote.sevkAdresi || quote.shippingAddress || null;
+    const faturaAdresi = quote.faturaAdresi || quote.billingAddress || null;
+    const teslimTarihi = quote.istenenTerminTarihi || quote.requestedDeliveryDate || null;
+
+    const notesCombined = [
+      `[Teklif No: ${quote.teklifNo}] Teklif onaylanarak siparişe dönüştürüldü.`,
+      quote.notlar || quote.notes || ''
+    ].filter(Boolean).join(' • ');
+
     const nextOrderNo = await saleService.getNextOrderNo();
     await saleService.createOrder({
       siparisNo: nextOrderNo,
       musteriId: quote.musteriId,
       musteriAdi: quote.musteriAdi,
+      musteriVergiNo: custTaxNo,
+      musteriEposta: custEmail,
+      musteriTelefon: custPhone,
       siparisTarihi: new Date().toISOString().split('T')[0],
-      odemeVadesi: 'Vadeli_30',
+      teslimTarihi: teslimTarihi,
+      odemeVadesi: finalPaymentTerm,
       durum: 'Preparing',
       oncelik: 'Normal',
       stokId: quote.stokId,
@@ -783,10 +828,12 @@ class SaleController {
       iskontoTutari: quote.iskontoTutari,
       kdvTutari: quote.kdvTutari,
       toplamTutar: quote.toplamTutar,
-      paraBirimi: quote.paraBirimi,
+      paraBirimi: finalCurrency,
+      faturaAdresi: faturaAdresi,
+      teslimatAdresi: teslimatAdresi,
       kalemlerJson: quote.kalemlerJson,
       satisTemsilcisi: req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi,
-      notlar: `[Teklif No: ${quote.teklifNo}] Teklif onaylanarak siparişe dönüştürüldü.`
+      notlar: notesCombined
     }, req.user, req.ip);
 
     await quotationRepository.updateStatus(id, 'Converted', 'Siparişe dönüştürüldü', req.user, req.ip);

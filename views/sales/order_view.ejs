@@ -173,7 +173,7 @@
           </div>
 
           <!-- Quick Info Grid -->
-          <div class="grid-4">
+          <div class="grid-4" style="margin-bottom: 20px;">
             <div class="info-tile">
               <span>Cari Müşteri Unvanı</span>
               <strong><%= order.customerName %></strong>
@@ -182,16 +182,31 @@
               <% } %>
             </div>
             <div class="info-tile">
+              <span>İletişim & E-Posta</span>
+              <strong style="font-size: 0.95rem; color: #a5b4fc;"><%= order.customerEmail || order.customerPhone || '—' %></strong>
+              <% if (order.customerPhone) { %>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Tel: <%= order.customerPhone %></div>
+              <% } %>
+            </div>
+            <div class="info-tile">
+              <span>İstenen Termin / Teslim Tarihi</span>
+              <strong style="color: #38bdf8;"><%= order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString('tr-TR') : '—' %></strong>
+            </div>
+            <div class="info-tile">
               <span>Ödeme Vadesi / Şekli</span>
               <strong><%= order.paymentTerm === 'Pesin' ? 'Peşin Ödeme' : order.paymentTerm === 'Vadeli_30' ? '30 Gün Vadeli' : order.paymentTerm === 'Vadeli_60' ? '60 Gün Vadeli' : order.paymentTerm === 'Vadeli_90' ? '90 Gün Vadeli' : 'Kredi Kartı' %></strong>
             </div>
-            <div class="info-tile" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
-              <span style="color: #34d399;">Genel Sipariş Tutarı</span>
-              <strong style="color: #10b981; font-family: 'JetBrains Mono', monospace;"><%= calculatedTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
+          </div>
+
+          <!-- Billing & Shipping Address Strip -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #818cf8; text-transform: uppercase; display: block; margin-bottom: 6px;">📄 Fatura Adresi</span>
+              <div style="font-size: 0.875rem; color: var(--text-primary); line-height: 1.5;"><%= order.billingAddress || '—' %></div>
             </div>
-            <div class="info-tile" style="background: rgba(244, 63, 94, 0.05); border-color: rgba(244, 63, 94, 0.2);">
-              <span style="color: #f43f5e;">Toplam İskonto Tutarı</span>
-              <strong style="color: #fb7185; font-family: 'JetBrains Mono', monospace;">- <%= calculatedDiscount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= order.currency %></strong>
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; display: block; margin-bottom: 6px;">🚚 Teslimat & Sevk Adresi</span>
+              <div style="font-size: 0.875rem; color: var(--text-primary); line-height: 1.5;"><%= order.shippingAddress || '—' %></div>
             </div>
           </div>
 
@@ -327,6 +342,15 @@
               <% } %>
             </div>
           </div>
+
+          <% if (order.notes || order.notlar) { %>
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-top: 24px;">
+              <h4 style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                <span>📝</span> Sipariş & Teklif Notları
+              </h4>
+              <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; white-space: pre-line;"><%= order.notes || order.notlar %></div>
+            </div>
+          <% } %>
         </div>
       <% } %>
     </main>
