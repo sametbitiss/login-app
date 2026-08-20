@@ -7,7 +7,8 @@ const validate = require('../validations/validator');
 const { validateProductionOrderCreate } = require('../validations/productionValidation');
 
 // Protect all production routes with JWT verification & RBAC
-router.use(verifyToken, authorizeRoles('Admin', 'Production_Manager'));
+router.use(verifyToken);
+router.use(authorizeRoles('Admin', 'Production_Manager', 'Stock_Manager', 'Sales_Manager', 'Purchase_Manager', 'Quality_Manager', 'Employee', 'Ozel_Saha_Uzmani'));
 
 // 0. Dashboard & Analytics
 router.get('/', (req, res) => res.redirect('/production/analytics'));
