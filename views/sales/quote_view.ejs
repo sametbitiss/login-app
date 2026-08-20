@@ -12,7 +12,7 @@
       .module-sidebar, .module-topbar, .no-print { display: none !important; }
       .module-main { margin-left: 0 !important; width: 100% !important; padding: 0 !important; background: transparent !important; }
       .pdf-paper { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; background: #fff !important; }
-      .data-table th { background: #f1f5f9 !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .pdf-table th { background: #f1f5f9 !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
 
     .pdf-paper {
@@ -40,7 +40,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
 
     .company-title {
@@ -55,7 +55,7 @@
       font-size: 0.8rem;
       color: #475569;
       line-height: 1.5;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .pdf-doc-info {
@@ -316,24 +316,28 @@
           ⚠️ Teklif kaydı bulunamadı veya silinmiş.
         </div>
       <% } else { 
-        const qNo = quote.teklifNo || quote.quotationNo || 'TEK-2026-0000';
-        const cName = quote.musteriAdi || quote.customerName || (quote.musteri ? (quote.musteri.firmaAdi || quote.musteri.companyName) : 'Genel Müşteri');
-        const cCode = quote.musteri ? (quote.musteri.musteriKodu || quote.musteri.customerCode) : 'GENEL-000';
-        const cTaxNo = quote.musteri ? (quote.musteri.vergiNo || quote.musteri.taxNo || '—') : '—';
-        const cTaxOffice = quote.musteri ? (quote.musteri.vergiDairesi || quote.musteri.taxOffice || '—') : '—';
+        const qNo = quote.teklifNo || quote.quotationNo || '—';
+        const cName = quote.musteriAdi || quote.customerName || (quote.musteri ? (quote.musteri.firmaAdi || quote.musteri.companyName) : '—');
+        const cCode = quote.musteri ? (quote.musteri.musteriKodu || quote.musteri.customerCode || '—') : '—';
+        const cTaxNo = quote.musteri ? (quote.musteri.vergiNo || quote.musteri.taxNo || '') : '';
+        const cTaxOffice = quote.musteri ? (quote.musteri.vergiDairesi || quote.musteri.taxOffice || '') : '';
 
-        const contactPerson = quote.ilgiliKisi || quote.contactPerson || (quote.musteri ? (quote.musteri.ilgiliKisi || quote.musteri.contactPerson) : '—') || '—';
-        const contactInfo = quote.iletisimBilgisi || quote.contactInfo || (quote.musteri ? `${quote.musteri.telefon || quote.musteri.phone || ''} ${quote.musteri.eposta || quote.musteri.email || ''}`.trim() : '—') || '—';
-        const billingAddr = quote.faturaAdresi || quote.billingAddress || (quote.musteri ? (quote.musteri.adres || quote.musteri.address) : '—') || '—';
-        const shippingAddr = quote.sevkAdresi || quote.shippingAddress || (quote.musteri ? (quote.musteri.adres || quote.musteri.address) : '—') || '—';
+        const contactPerson = quote.ilgiliKisi || quote.contactPerson || (quote.musteri ? (quote.musteri.ilgiliKisi || quote.musteri.contactPerson) : '') || '—';
+        const contactInfo = quote.iletisimBilgisi || quote.contactInfo || (quote.musteri ? `${quote.musteri.telefon || quote.musteri.phone || ''} ${quote.musteri.eposta || quote.musteri.email || ''}`.trim() : '') || '—';
+        const billingAddr = quote.faturaAdresi || quote.billingAddress || (quote.musteri ? (quote.musteri.adres || quote.musteri.address) : '') || '—';
+        const shippingAddr = quote.sevkAdresi || quote.shippingAddress || (quote.musteri ? (quote.musteri.adres || quote.musteri.address) : '') || '—';
 
-        const qDate = quote.teklifTarihi || quote.quotationDate || new Date().toISOString().split('T')[0];
+        const qDate = quote.teklifTarihi || quote.quotationDate || '—';
         const vUntil = quote.gecerlilikBitis || quote.validUntil || '—';
         const reqDelivery = quote.istenenTerminTarihi || quote.requestedDeliveryDate || '—';
-        const delTerms = quote.teslimatSekli || quote.deliveryTerms || 'Fabrika Teslim (EXW)';
 
-        const currency = quote.paraBirimi || quote.currency || 'TRY';
-        const currSign = currency === 'USD' ? '$' : (currency === 'EUR' ? '€' : '₺');
+        const paymentTerm = quote.paymentTerm || quote.odemeVadesi || '—';
+        const deliveryTerm = quote.deliveryTerm || quote.teslimatSuresi || '—';
+        const delTerms = quote.teslimatSekli || quote.deliveryTerms || '—';
+        const quoteNotes = quote.notes || quote.notlar || '—';
+
+        const mainCurrency = quote.paraBirimi || quote.currency || 'TRY';
+        const mainCurrSign = mainCurrency === 'USD' ? '$' : (mainCurrency === 'EUR' ? '€' : '₺');
 
         const subtotal = parseFloat(quote.araToplam !== undefined ? quote.araToplam : (quote.subtotal !== undefined ? quote.subtotal : 0)) || 0;
         const discountAmount = parseFloat(quote.iskontoTutari !== undefined ? quote.iskontoTutari : (quote.discountAmount !== undefined ? quote.discountAmount : 0)) || 0;
@@ -349,6 +353,8 @@
         } else if (statusStr === 'Rejected' || statusStr === 'Reddedildi') {
           statusBadge = `<span style="background: #ef4444; color: #fff; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.775rem;">✕ Reddedildi</span>`;
         }
+
+        const creatorName = quote.olusturan ? (quote.olusturan.ad ? `${quote.olusturan.ad} ${quote.olusturan.soyad}` : quote.olusturan.kullaniciAdi) : (user ? (user.firstName ? `${user.firstName} ${user.lastName}` : user.username) : 'Satış Temsilcisi');
       %>
         <!-- A4 OFFICIAL PDF OFFER SHEET -->
         <div class="pdf-paper">
@@ -358,12 +364,10 @@
             <div>
               <div class="company-brand">
                 <svg width="34" height="34" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0f172a"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-                <h1 class="company-title">ENTERPRISE ERP A.Ş.</h1>
+                <h1 class="company-title">ENTERPRISE ERP</h1>
               </div>
               <div class="company-details">
-                Organize Sanayi Bölgesi 1. Cadde No:42 Nilüfer / BURSA<br>
-                Tel: +90 (224) 444 0 377 | E-Posta: satis@enterprise-erp.com.tr<br>
-                Mersis No: 0388012345600017 | Vergi Dairesi: Nilüfer V.D. 3880123456
+                Satış & Pazarlama Departmanı | Kurumsal Satış Teklif Belgesi
               </div>
             </div>
 
@@ -388,7 +392,9 @@
               <div class="pdf-card-body">
                 <strong style="font-size: 1rem; color: #0f172a; display: block; margin-bottom: 4px;"><%= cName %></strong>
                 <div><strong>Müşteri Kodu:</strong> <span style="font-family: 'JetBrains Mono', monospace; color: #4338ca;"><%= cCode %></span></div>
-                <div><strong>Vergi Dairesi / No:</strong> <%= cTaxOffice %> / <%= cTaxNo %></div>
+                <% if (cTaxOffice || cTaxNo) { %>
+                  <div><strong>Vergi Dairesi / No:</strong> <%= cTaxOffice || '—' %> / <%= cTaxNo || '—' %></div>
+                <% } %>
                 <div><strong>İlgili Kişi:</strong> <%= contactPerson %></div>
                 <div><strong>İletişim Bilgisi:</strong> <%= contactInfo %></div>
               </div>
@@ -411,18 +417,19 @@
             </div>
           </div>
 
-          <!-- Products Table -->
+          <!-- Products Table with Dedicated Para Birimi Column -->
           <table class="pdf-table">
             <thead>
               <tr>
                 <th style="width: 35px; text-align: center;">#</th>
-                <th style="width: 120px;">Stok Kodu</th>
+                <th style="width: 110px;">Stok Kodu</th>
                 <th>Ürün / Mamul Kalemi Açıklaması</th>
-                <th style="width: 90px; text-align: center;">Miktar</th>
+                <th style="width: 80px; text-align: center;">Miktar</th>
                 <th style="width: 110px; text-align: right;">Birim Fiyat</th>
-                <th style="width: 80px; text-align: center;">İsk. %</th>
-                <th style="width: 75px; text-align: center;">KDV %</th>
-                <th style="width: 130px; text-align: right;">Satır Toplamı</th>
+                <th style="width: 90px; text-align: center;">Para Birimi</th>
+                <th style="width: 75px; text-align: center;">İsk. %</th>
+                <th style="width: 70px; text-align: center;">KDV %</th>
+                <th style="width: 125px; text-align: right;">Satır Toplamı</th>
               </tr>
             </thead>
             <tbody>
@@ -432,6 +439,8 @@
                   const stName = it.name || it.ad || (quote.stokKarti ? quote.stokKarti.ad : 'Ürün Kalemi');
                   const qty = parseFloat(it.quantity !== undefined ? it.quantity : (it.miktar !== undefined ? it.miktar : 1)) || 1;
                   const price = parseFloat(it.unitPrice !== undefined ? it.unitPrice : (it.birimFiyat !== undefined ? it.birimFiyat : 0)) || 0;
+                  const itemCurr = it.currency || it.paraBirimi || mainCurrency;
+                  const itemSign = itemCurr === 'USD' ? '$' : (itemCurr === 'EUR' ? '€' : '₺');
                   const disc = parseFloat(it.discountRate !== undefined ? it.discountRate : (it.iskontoOrani !== undefined ? it.iskontoOrani : 0)) || 0;
                   const tax = parseFloat(it.taxRate !== undefined ? it.taxRate : (it.kdvOrani !== undefined ? it.kdvOrani : 20)) || 20;
 
@@ -446,16 +455,17 @@
                     <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700; color: #4338ca;"><%= stCode %></td>
                     <td><strong style="color: #0f172a;"><%= stName %></strong></td>
                     <td style="text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;"><%= qty.toLocaleString('tr-TR') %> Adet</td>
-                    <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></td>
+                    <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= itemSign %></td>
+                    <td style="text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #4338ca;"><%= itemCurr %></td>
                     <td style="text-align: center; font-weight: 700; color: <%= disc > 0 ? '#ef4444' : '#64748b' %>;">%<%= disc %></td>
                     <td style="text-align: center; color: #475569;">%<%= tax %></td>
-                    <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #0f172a;"><%= lineTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></td>
+                    <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #0f172a;"><%= lineTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= itemSign %></td>
                   </tr>
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">
-                    Bu teklife henüz ürün kalemi eklenmemiştir.
+                  <td colspan="9" style="text-align: center; padding: 20px; color: #64748b;">
+                    Bu teklife henüz ürün kalemi eklenmedi.
                   </td>
                 </tr>
               <% } %>
@@ -467,12 +477,12 @@
             <div class="notes-box">
               <strong style="font-size: 0.85rem; color: #0f172a; display: block; margin-bottom: 8px;">📝 Teklif Şartları, Teslimat & Özel Notlar:</strong>
               <div style="line-height: 1.6; color: #334155;">
-                <div>• <strong>Ödeme Koşulu:</strong> <%= quote.paymentTerm || quote.odemeVadesi || '30 Gün Vadeli' %></div>
-                <div>• <strong>Sevkiyat Süresi:</strong> <%= quote.deliveryTerm || 'Sipariş onayından sonra 7 iş günü içinde teslim.' %></div>
+                <div>• <strong>Ödeme Koşulu:</strong> <%= paymentTerm %></div>
+                <div>• <strong>Sevkiyat Süresi:</strong> <%= deliveryTerm %></div>
                 <div>• <strong>Teslimat Şekli:</strong> <%= delTerms %></div>
-                <% if (quote.notes || quote.notlar) { %>
+                <% if (quoteNotes !== '—') { %>
                   <div style="margin-top: 8px; border-top: 1px solid #e2e8f0; padding-top: 6px; font-style: italic; color: #475569;">
-                    "<%= quote.notes || quote.notlar %>"
+                    "<%= quoteNotes %>"
                   </div>
                 <% } %>
               </div>
@@ -481,19 +491,19 @@
             <div class="totals-box">
               <div class="tot-row">
                 <span>Ara Toplam (Brüt):</span>
-                <strong><%= subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></strong>
+                <strong><%= subtotal.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= mainCurrSign %></strong>
               </div>
               <div class="tot-row">
                 <span>Toplam İskonto:</span>
-                <strong style="color: #ef4444;">- <%= discountAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></strong>
+                <strong style="color: #ef4444;">- <%= discountAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= mainCurrSign %></strong>
               </div>
               <div class="tot-row">
                 <span>Hesaplanan KDV:</span>
-                <strong><%= taxAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></strong>
+                <strong><%= taxAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= mainCurrSign %></strong>
               </div>
               <div class="tot-row grand">
                 <span>GENEL TOPLAM:</span>
-                <span><%= totalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSign %></span>
+                <span><%= totalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= mainCurrSign %></span>
               </div>
             </div>
           </div>
@@ -504,8 +514,8 @@
               <div class="sig-title">Teklifi Hazırlayan & Satan</div>
               <div class="sig-line"></div>
               <div class="sig-sub">
-                <strong><%= quote.olusturan ? (quote.olusturan.ad ? `${quote.olusturan.ad} ${quote.olusturan.soyad}` : quote.olusturan.kullaniciAdi) : 'Satış Departmanı' %></strong><br>
-                Enterprise ERP A.Ş. Satış Temsilcisi
+                <strong><%= creatorName %></strong><br>
+                Satış Temsilcisi
               </div>
             </div>
 
@@ -523,15 +533,5 @@
       <% } %>
     </main>
   </div>
-
-  <script>
-    function updateClock() {
-      const now = new Date();
-      const el = document.getElementById('liveTime');
-      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-  </script>
 </body>
 </html>
