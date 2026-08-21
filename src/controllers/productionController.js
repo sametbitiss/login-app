@@ -278,48 +278,33 @@ class ProductionController {
 
   // 3. BOM (BILL OF MATERIALS)
   listBOM = asyncHandler(async (req, res) => {
-    const { StokKarti } = require('../../models');
-    const { Op } = require('sequelize');
-
     const productBOMList = await productionRepository.findAllBOMGroupedByProduct();
 
-    const finishedStockItems = await StokKarti.findAll({
-      where: {
-        durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] }
-      },
-      order: [['ad', 'ASC']]
-    });
-
-    const componentStockItems = await StokKarti.findAll({
-      where: { 
-        durum: 'Active',
-        kategori: { [Op.in]: ['Hammadde', 'Yarı_Mamul', 'Yari_Mamul', 'Ticari_Mal'] }
-      },
-      order: [['ad', 'ASC']]
-    });
+    const withBOMList = productBOMList.filter(p => p.hasBOM);
+    const withoutBOMList = productBOMList.filter(p => !p.hasBOM);
 
     const totalProducts = productBOMList.length;
-    const withBOM = productBOMList.filter(p => p.hasBOM).length;
-    const withoutBOM = totalProducts - withBOM;
+    const withBOM = withBOMList.length;
+    const withoutBOM = withoutBOMList.length;
 
     res.render('production/bom', {
       user: req.user,
       productBOMList,
-      finishedStockItems,
-      componentStockItems,
-      WORK_CENTERS,
+      withBOMList,
+      withoutBOMList,
       stats: { totalProducts, withBOM, withoutBOM },
-      ALL_ROLES,
       activeSubTab: 'bom'
     });
   });
 
   renderBOMForm = asyncHandler(async (req, res) => {
-    const { StokKarti, UrunRecetesi } = require('../../models');
+    const { StokKarti, UrunRecetesi, RotaOperasyon } = require('../../models');
     const { Op } = require('sequelize');
 
     const finishedStockItemId = req.params.finishedStockItemId || req.query.productId || null;
+
+    const existingRoutings = await RotaOperasyon.findAll({ attributes: ['stokId'], group: ['stokId'] });
+    const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stokId));
 
     const existingBOMs = await UrunRecetesi.findAll({
       attributes: ['mamulStokId'],
@@ -327,26 +312,19 @@ class ProductionController {
     });
     const productsWithBOMSet = new Set(existingBOMs.map(b => b.mamulStokId));
 
-    const finishedStockItems = await StokKarti.findAll({
+    const candidateProducts = await StokKarti.findAll({
       where: {
         durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] }
+        kategori: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] }
       },
-      order: [['ad', 'ASC']]
+      order: [['kategori', 'ASC'], ['ad', 'ASC']]
     });
 
-    const processedFinishedItems = finishedStockItems.map(item => {
-      const itemPlain = item.get({ plain: true });
-      itemPlain.hasBOM = productsWithBOMSet.has(item.id);
-      return itemPlain;
-    });
-
-    const componentStockItems = await StokKarti.findAll({
-      where: { 
-        durum: 'Active',
-        kategori: { [Op.in]: ['Hammadde', 'Yarı_Mamul', 'Yari_Mamul', 'Ticari_Mal'] }
-      },
-      order: [['ad', 'ASC']]
+    const processedCandidates = candidateProducts.map(p => {
+      const plain = p.get({ plain: true });
+      plain.hasRouting = productsWithRoutingSet.has(p.id);
+      plain.hasBOM = productsWithBOMSet.has(p.id);
+      return plain;
     });
 
     let targetProduct = null;
@@ -354,44 +332,54 @@ class ProductionController {
     let isEditMode = false;
     let currentRecipeNo = '';
     let currentVersion = '1';
-    let previousVersion = null;
+    let targetRoutingOperations = [];
 
     const nextGeneratedRecipeNo = await productionRepository.generateRecipeNo();
 
     if (finishedStockItemId) {
       targetProduct = await StokKarti.findByPk(finishedStockItemId);
-      existingBOMItems = await UrunRecetesi.findAll({
-        where: { mamulStokId: finishedStockItemId },
-        include: [
-          { model: StokKarti, as: 'bilesenUrun' },
-          { model: StokKarti, as: 'alternatifBilesenUrun' }
-        ],
-        order: [['seviye', 'ASC'], ['id', 'ASC']]
-      });
+      if (targetProduct) {
+        if (targetProduct.kategori === 'Hammadde') {
+          throw new ValidationError('Hammadde kategorisindeki ürünler için üretim reçetesi oluşturulamaz.');
+        }
 
-      if (existingBOMItems && existingBOMItems.length > 0) {
-        isEditMode = true;
-        const oldVer = existingBOMItems[0].versiyon || '1';
-        previousVersion = oldVer;
-        const oldVerNum = parseInt(String(oldVer).replace(/[^0-9]/g, ''), 10) || 1;
-        currentVersion = String(oldVerNum + 1);
-        currentRecipeNo = nextGeneratedRecipeNo;
-      } else {
-        currentRecipeNo = nextGeneratedRecipeNo;
-        currentVersion = '1';
+        targetRoutingOperations = await RotaOperasyon.findAll({
+          where: { stokId: finishedStockItemId },
+          order: [['operasyonSira', 'ASC']]
+        });
+
+        existingBOMItems = await UrunRecetesi.findAll({
+          where: { mamulStokId: finishedStockItemId },
+          include: [
+            { model: StokKarti, as: 'bilesenUrun' }
+          ],
+          order: [['seviye', 'ASC'], ['id', 'ASC']]
+        });
+
+        if (existingBOMItems && existingBOMItems.length > 0) {
+          isEditMode = true;
+          const oldVer = existingBOMItems[0].versiyon || '1';
+          const oldVerNum = parseInt(String(oldVer).replace(/[^0-9]/g, ''), 10) || 1;
+          currentVersion = String(oldVerNum + 1);
+          currentRecipeNo = existingBOMItems[0].receteKodu || nextGeneratedRecipeNo;
+        } else {
+          currentRecipeNo = nextGeneratedRecipeNo;
+          currentVersion = '1';
+        }
       }
     } else {
       currentRecipeNo = nextGeneratedRecipeNo;
       currentVersion = '1';
     }
 
-    const { RotaOperasyon } = require('../../models');
-    const existingRoutings = await RotaOperasyon.findAll({ attributes: ['stokId'], group: ['stokId'] });
-    const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stokId));
-    const routingOperations = await RotaOperasyon.findAll({ order: [['operasyonSira', 'ASC']] });
-
-    // Only products that have routing and do not have BOM yet are eligible
-    const unassignedFinishedItems = processedFinishedItems.filter(item => !item.hasBOM && productsWithRoutingSet.has(item.id));
+    // Components catalog for modal: Exclude target product itself!
+    const allComponentStockItems = await StokKarti.findAll({
+      where: {
+        durum: 'Active',
+        id: { [Op.ne]: targetProduct ? targetProduct.id : 0 }
+      },
+      order: [['kategori', 'ASC'], ['ad', 'ASC']]
+    });
 
     res.render('production/bom_form', {
       user: req.user,
@@ -400,12 +388,9 @@ class ProductionController {
       isEditMode,
       currentRecipeNo,
       currentVersion,
-      previousVersion,
-      finishedStockItems: unassignedFinishedItems,
-      componentStockItems,
-      routingOperations,
-      WORK_CENTERS,
-      ALL_ROLES,
+      targetRoutingOperations,
+      allComponentStockItems,
+      candidateProducts: processedCandidates,
       activeSubTab: 'bom'
     });
   });
@@ -423,14 +408,7 @@ class ProductionController {
       durum,
       notlar,
       notes,
-      componentsJson,
-      componentStockItemId,
-      quantityRequired,
-      unit,
-      scrapPercentage,
-      operationCode,
-      alternativeComponentItemId,
-      alternativeNotes
+      componentsJson
     } = req.body;
 
     const targetMamulId = finishedStockItemId || req.body.mamulStokId;
@@ -438,63 +416,31 @@ class ProductionController {
       throw new ValidationError('Lütfen reçetesi yazılacak ürünü seçiniz.');
     }
 
-    const { UrunRecetesi, RotaOperasyon } = require('../../models');
+    const { RotaOperasyon } = require('../../models');
 
     // Rule: "Rota olmadan reçete olamaz"
     const hasRouting = await RotaOperasyon.findOne({ where: { stokId: targetMamulId } });
     if (!hasRouting) {
       throw new ValidationError('Bir ürünün reçetesi (BOM) oluşturulabilmesi için önce üretim rotasının ve operasyon adımlarının tanımlanmış olması gerekmektedir.');
     }
-    const prevBoms = await UrunRecetesi.findAll({ where: { mamulStokId: targetMamulId } });
-    
-    let autoVersion = '1';
-    if (prevBoms && prevBoms.length > 0) {
-      const oldVer = prevBoms[0].versiyon || '1';
-      const oldVerNum = parseInt(String(oldVer).replace(/[^0-9]/g, ''), 10) || 1;
-      autoVersion = String(oldVerNum + 1);
-    }
-    const autoRecipeNo = await productionRepository.generateRecipeNo();
 
     let components = [];
-
     if (componentsJson) {
       try {
         components = JSON.parse(componentsJson);
       } catch (err) {
         throw new ValidationError('Bileşen verileri geçersiz formatta.');
       }
-    } else if (Array.isArray(componentStockItemId)) {
-      components = componentStockItemId.map((compItemId, idx) => ({
-        bilesenStokId: compItemId,
-        gerekliMiktar: Array.isArray(quantityRequired) ? quantityRequired[idx] : quantityRequired,
-        birim: Array.isArray(unit) ? unit[idx] : unit,
-        fireOrani: Array.isArray(scrapPercentage) ? scrapPercentage[idx] : scrapPercentage,
-        operasyonKodu: Array.isArray(operationCode) ? operationCode[idx] : operationCode,
-        alternatifBilesenStokId: Array.isArray(alternativeComponentItemId) ? alternativeComponentItemId[idx] : alternativeComponentItemId,
-        alternatifNotlar: Array.isArray(alternativeNotes) ? alternativeNotes[idx] : alternativeNotes,
-        notlar: Array.isArray(notes) ? notes[idx] : (Array.isArray(notlar) ? notlar[idx] : (notes || notlar))
-      }));
-    } else if (componentStockItemId) {
-      components = [{
-        bilesenStokId: componentStockItemId,
-        gerekliMiktar: quantityRequired,
-        birim: unit,
-        fireOrani: scrapPercentage,
-        operasyonKodu: operationCode,
-        alternatifBilesenStokId: alternativeComponentItemId,
-        alternatifNotlar: alternativeNotes,
-        notlar: notes || notlar
-      }];
     }
 
     await productionRepository.saveProductBOM(
       targetMamulId,
       {
-        receteKodu: autoRecipeNo,
-        version: autoVersion,
+        receteKodu,
+        version,
         baseQuantity: parseFloat(baseQuantity || bazMiktar) || 1.0,
-        gecerlilikBaslangic: gecerlilikBaslangic || null,
-        gecerlilikBitis: gecerlilikBitis || null,
+        gecerlilikBaslangic,
+        gecerlilikBitis,
         durum: durum || 'Active',
         notlar: notlar || notes || null,
         components

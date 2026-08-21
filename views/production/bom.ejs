@@ -5,195 +5,188 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Üretim Reçeteleri (BOM) — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bom-card-bg: rgba(15, 23, 42, 0.75);
-      --bom-glass-border: rgba(99, 102, 241, 0.2);
-    }
-
-    .kpi-grid {
+    /* KPI Summary Grid */
+    .bom-kpi-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
       margin-bottom: 24px;
     }
-
-    .kpi-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
+    .bom-kpi-card {
+      background: rgba(30, 41, 59, 0.5);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 16px;
       padding: 18px 20px;
       display: flex;
       align-items: center;
       gap: 16px;
-      box-shadow: var(--shadow-sm);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
       transition: all 0.2s ease;
     }
-    .kpi-card:hover {
+    .bom-kpi-card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      border-color: rgba(99, 102, 241, 0.4);
     }
-    .kpi-icon-box {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
+    .bom-kpi-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.4rem;
       flex-shrink: 0;
     }
-    .kpi-title { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin-top: 2px; }
 
     /* Filter Bar */
-    .filter-bar {
+    .filter-bar-container {
+      background: rgba(30, 41, 59, 0.45);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 20px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px 20px;
+      flex-wrap: wrap;
     }
-    .filter-tabs {
+    .custom-filter-tabs {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
-    .filter-tab {
-      background: var(--bg-elevated);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-      border-radius: 10px;
+    .custom-filter-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.84rem;
       padding: 8px 16px;
-      font-weight: 600;
-      font-size: 0.85rem;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
     }
-    .filter-tab.active, .filter-tab:hover {
-      background: rgba(99, 102, 241, 0.15);
-      color: #818cf8;
-      border-color: rgba(99, 102, 241, 0.4);
+    .custom-filter-tab:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .custom-filter-tab.active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(79, 70, 229, 0.9));
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+    }
+    .filter-pill-badge {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 20px;
+    }
+    .custom-filter-tab.active .filter-pill-badge {
+      background: rgba(255, 255, 255, 0.25);
     }
 
-    .search-box {
+    .custom-search-wrap {
       position: relative;
-      width: 320px;
+      flex: 1;
+      min-width: 260px;
+      max-width: 380px;
     }
-    .search-input {
+    .custom-search-input {
       width: 100%;
-      background: var(--bg-elevated);
-      border: 1.5px solid var(--border);
-      color: var(--text-primary);
-      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
       padding: 9px 14px 9px 38px;
-      font-size: 0.88rem;
+      color: #ffffff;
+      font-size: 0.86rem;
       outline: none;
-      transition: border-color 0.2s;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
     }
-    .search-input:focus {
-      border-color: var(--indigo);
-      box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+    .custom-search-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
+      background: rgba(15, 23, 42, 0.95);
     }
-    .search-icon {
+    .custom-search-icon {
       position: absolute;
       left: 12px;
       top: 50%;
       transform: translateY(-50%);
       color: var(--text-muted);
+      font-size: 0.9rem;
+      pointer-events: none;
     }
 
-    /* Badges */
-    .badge-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.78rem;
-      font-weight: 700;
-    }
-    .badge-has-bom { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .badge-no-bom { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
-    .badge-cat-mamul { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
-    .badge-cat-yarimamul { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-
-    .btn-indigo-gradient {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 0.95rem;
-      padding: 12px 24px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(99, 102, 241, 0.6); color: #fff; }
-
-    .btn-action-create {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.82rem;
-      padding: 7px 14px;
-      border-radius: 8px;
-      border: none;
-      text-decoration: none;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-action-create:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5); color: #fff; }
-
-    .btn-action-edit {
-      background: rgba(99, 102, 241, 0.15);
+    .badge-cat-mamul { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.76rem; }
+    .badge-cat-yarimamul { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.76rem; }
+    
+    .btn-action-view-edit {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.25));
       color: #818cf8;
       border: 1px solid rgba(99, 102, 241, 0.4);
-      font-weight: 700;
-      font-size: 0.82rem;
       padding: 7px 14px;
-      border-radius: 8px;
+      border-radius: 9px;
+      font-size: 0.82rem;
+      font-weight: 700;
       text-decoration: none;
-      cursor: pointer;
-      transition: all 0.2s;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      transition: all 0.2s ease;
     }
-    .btn-action-edit:hover { background: rgba(99, 102, 241, 0.3); color: #fff; transform: translateY(-1px); }
+    .btn-action-view-edit:hover {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+      transform: translateY(-1px);
+    }
 
-    .btn-action-delete {
-      background: rgba(239, 68, 68, 0.1);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      font-weight: 700;
+    .btn-action-create-bom {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.25));
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 7px 14px;
+      border-radius: 9px;
       font-size: 0.82rem;
-      padding: 7px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
     }
-    .btn-action-delete:hover { background: rgba(239, 68, 68, 0.25); color: #fff; }
+    .btn-action-create-bom:hover {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+      transform: translateY(-1px);
+    }
   </style>
   <script src="/sidebar.js" defer></script>
 </head>
 <body class="module-body">
   <aside class="module-sidebar">
-    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
     <div class="module-sidebar-section">
       <div class="mss-label">🏭 ÜRETİM & İMALAT YÖNETİMİ</div>
       <div class="mss-group-title">📊 DASHBOARD & PERFORMANS</div>
@@ -202,7 +195,7 @@
       </div>
       <div class="mss-group-title">⚙️ İMALAT & SİPARİŞ KONTROLÜ</div>
       <div class="mss-sub">
-        <a href="/production/requisitions" class="mss-sub-link">📩 Talepler</a>
+        <a href="/production/requisitions" class="mss-sub-link">📩 Üretim Talepleri</a>
         <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
         <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
         <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
@@ -220,7 +213,13 @@
         <a href="/production/mes" class="mss-sub-link">📱 MES Saha Terminali</a>
       </div>
     </div>
-    <div class="module-sidebar-user"><div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div><div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div></div>
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
   </aside>
 
   <div class="module-main">
@@ -228,182 +227,294 @@
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
         <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
-        <a href="/stock" class="mt-link">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link">Satın Alma</a><a href="/production" class="mt-link active">Üretim Planlama</a><a href="/quality" class="mt-link">Kalite Kontrol</a>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <a href="/production" class="mt-link active">Üretim Planlama</a>
+        <a href="/quality" class="mt-link">Kalite Kontrol</a>
       </div>
-      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
     </header>
 
     <main class="module-content">
 
-      <!-- Page Header with prominent Navigation link to dedicated BOM preparation page -->
-      <div class="page-header" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-        <div>
-          <h1>Üretim Reçeteleri ve Ürün Ağacı Yönetimi (Bill of Materials)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Stok & Depo modülündeki Mamul ve Yarı Mamul ürünler için hiyerarşik reçete tanımı ve operasyon planlaması.</p>
-        </div>
-        <a href="/production/bom/add" class="btn-indigo-gradient">
-          <span>➕ Yeni Reçete Ekle</span>
-        </a>
+      <!-- Header (Top-right button removed per user request) -->
+      <div class="page-header" style="margin-bottom: 20px;">
+        <h1 style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px;">📜 Üretim Reçeteleri (Bill of Materials — BOM)</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Mamul ve Yarı Mamul ürünlerin reçeteleri, hammadde ve bileşen ihtiyaçları, fire oranları ve rota adımı eşleştirmeleri.</p>
       </div>
 
-      <% 
-        const safeProductBOMList = (typeof productBOMList !== 'undefined' && productBOMList) ? productBOMList : [];
-        const bomListOnly = safeProductBOMList.filter(p => p.hasBOM);
-        const safeStats = (typeof stats !== 'undefined' && stats) ? stats : {
-          totalProducts: safeProductBOMList.length,
-          withBOM: bomListOnly.length,
-          withoutBOM: safeProductBOMList.length - bomListOnly.length
-        };
-      %>
-
       <!-- KPI Summary Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-icon-box" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">📦</div>
+      <div class="bom-kpi-grid">
+        <div class="bom-kpi-card">
+          <div class="bom-kpi-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">📦</div>
           <div>
-            <div class="kpi-title">Toplam İmalat Ürün Sayısı</div>
-            <div class="kpi-value"><%= safeStats.totalProducts %></div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Toplam Mamul & Yarı Mamul</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #fff; margin-top: 2px;"><%= stats.totalProducts %></div>
           </div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">📜</div>
+        <div class="bom-kpi-card">
+          <div class="bom-kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">✓</div>
           <div>
-            <div class="kpi-title">Reçetesi Olan Ürünler</div>
-            <div class="kpi-value" style="color: #34d399;"><%= safeStats.withBOM %></div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Reçetesi Tanımlı Ürünler</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #34d399; margin-top: 2px;"><%= stats.withBOM %></div>
           </div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-icon-box" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⚠️</div>
+        <div class="bom-kpi-card">
+          <div class="bom-kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⚠️</div>
           <div>
-            <div class="kpi-title">Reçetesi Eksik Ürünler</div>
-            <div class="kpi-value" style="color: #fbbf24;"><%= safeStats.withoutBOM %></div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Reçetesi Eksik Ürünler</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #fbbf24; margin-top: 2px;"><%= stats.withoutBOM %></div>
           </div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-icon-box" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">⚡</div>
+        <div class="bom-kpi-card">
+          <div class="bom-kpi-icon" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">⚡</div>
           <div>
-            <div class="kpi-title">Reçete Tamamlanma Oranı</div>
-            <div class="kpi-value" style="color: #c084fc;">
-              <%= safeStats.totalProducts > 0 ? Math.round((safeStats.withBOM / safeStats.totalProducts) * 100) : 0 %>%
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Reçete Tamamlanma</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #c084fc; margin-top: 2px;">
+              <%= stats.totalProducts > 0 ? Math.round((stats.withBOM / stats.totalProducts) * 100) : 0 %>%
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Filter Bar -->
-      <div class="filter-bar">
-        <div class="filter-tabs">
-          <button class="filter-tab active" onclick="filterCategory('all', this)">Tüm Reçeteler (<%= bomListOnly.length %>)</button>
-          <button class="filter-tab" onclick="filterCategory('Mamul', this)">Mamuller</button>
-          <button class="filter-tab" onclick="filterCategory('Yarı_Mamul', this)">Yarı Mamuller</button>
+      <!-- Modern Filter Bar (2 Tabs & Search Input) -->
+      <div class="filter-bar-container">
+        <div class="custom-filter-tabs">
+          <button type="button" class="custom-filter-tab active" onclick="switchBOMSection('with', this)">
+            <span>✓ Reçeteleri Tanımlanmış Ürünler</span>
+            <span class="filter-pill-badge" style="background: rgba(16, 185, 129, 0.3);"><%= stats.withBOM %></span>
+          </button>
+          <button type="button" class="custom-filter-tab" onclick="switchBOMSection('without', this)">
+            <span>⚠️ Reçetesi Tanımlanmamış Ürünler</span>
+            <span class="filter-pill-badge" style="background: rgba(245, 158, 11, 0.3);"><%= stats.withoutBOM %></span>
+          </button>
         </div>
-        <div class="search-box">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="searchInput" class="search-input" placeholder="Ürün Kodu veya Adı ile Ara..." onkeyup="filterTable()">
+
+        <div class="custom-search-wrap">
+          <span class="custom-search-icon">🔍</span>
+          <input type="text" id="bomSearchInput" class="custom-search-input" placeholder="Ürün Kodu, Adı veya Reçete No Ara..." oninput="filterBOMTable()">
         </div>
       </div>
 
-      <!-- Main Products & BOM Table -->
-      <div class="table-wrapper">
-        <table class="data-table" id="bomProductTable">
-          <thead>
-            <tr>
-              <th>Ürün Kodu</th>
-              <th>Ürün Adı</th>
-              <th>Ürün Türü (Kategori)</th>
-              <th>Mevcut Stok</th>
-              <th>Reçete Durumu</th>
-              <th>Revizyon / Versiyon</th>
-              <th>Bileşen Sayısı</th>
-              <th>Birim Hammadde Maliyeti</th>
-              <th style="text-align: right;">İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (bomListOnly.length === 0) { %>
-              <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem;">Henüz tanımlanmış bir ürün reçetesi bulunamadı. Ekranın sağ üstündeki <strong>'➕ Yeni Reçete Ekle'</strong> butonunu kullanarak yeni bir reçete tanımlayabilirsiniz.</td></tr>
-            <% } else { %>
-              <% bomListOnly.forEach(item => { %>
-                <tr data-cat="<%= item.product.category %>" data-status="has_bom">
-                  <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= item.product.stockCode %></strong></td>
-                  <td><strong style="color: var(--text-primary);"><%= item.product.name %></strong></td>
-                  <td>
-                    <% if (item.product.category === 'Mamul') { %>
-                      <span class="badge-status badge-cat-mamul">🏭 Mamul</span>
-                    <% } else { %>
-                      <span class="badge-status badge-cat-yarimamul">⚙️ Yarı Mamul</span>
-                    <% } %>
-                  </td>
-                  <td><strong><%= item.product.currentStock %> <%= item.product.unit %></strong></td>
-                  <td>
-                    <span class="badge-status badge-has-bom">✓ Reçetesi Var</span>
-                  </td>
-                  <td>
-                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #cbd5e1;"><%= item.version %></span>
-                  </td>
-                  <td><strong><%= item.componentCount %> Kalem</strong></td>
-                  <td>
-                    <strong style="color: #34d399; font-size: 0.95rem;">
-                      <%= item.totalUnitCost.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %> TL
-                    </strong>
-                  </td>
-                  <td style="text-align: right; white-space: nowrap;">
-                    <a href="/production/bom/edit/<%= item.product.id %>" class="btn-action-edit">
-                      ✏️ Reçeteyi Düzenle
-                    </a>
-                    <form action="/production/bom/delete/<%= item.product.id %>" method="POST" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('Bu ürünün tüm reçete bileşenlerini silmek istediğinize emin misiniz?');">
-                      <button type="submit" class="btn-action-delete" title="Reçeteyi Sil">🗑️</button>
-                    </form>
+      <!-- SECTION 1: REÇETESİ OLAN ÜRÜNLER TABLOSU -->
+      <div id="sectionWithBOM" class="bom-section" style="margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <h2 style="font-size: 1.05rem; font-weight: 800; color: #34d399; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span>✓</span> Reçetesi Oluşturulmuş Ürünler Listesi (<%= withBOMList.length %> Ürün)
+          </h2>
+        </div>
+
+        <div class="table-wrapper" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+          <table class="data-table" id="tableWithBOM" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: rgba(30, 41, 59, 0.85); border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                <th style="padding: 14px 16px; width: 130px;">Ürün Kodu</th>
+                <th style="padding: 14px 16px; min-width: 200px;">Ürün Adı</th>
+                <th style="padding: 14px 16px; width: 120px;">Kategori</th>
+                <th style="padding: 14px 16px; width: 150px;">Reçete Kodu</th>
+                <th style="padding: 14px 16px; width: 90px; text-align: center;">Revizyon</th>
+                <th style="padding: 14px 16px; width: 110px; text-align: center;">Bileşen Sayısı</th>
+                <th style="padding: 14px 16px; width: 130px; text-align: center;">Geçerlilik</th>
+                <th style="padding: 14px 16px; width: 110px; text-align: center;">Durum</th>
+                <th style="padding: 14px 16px; text-align: right; width: 180px;">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!withBOMList || withBOMList.length === 0) { %>
+                <tr class="empty-row">
+                  <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+                    <div style="font-size: 2rem; margin-bottom: 8px;">📜</div>
+                    <strong style="color: #fff; font-size: 0.95rem;">Henüz reçetesi tamamlanmış bir ürün bulunmamaktadır.</strong><br>
+                    <span style="font-size: 0.84rem; margin-top: 6px; display: inline-block; color: #818cf8;">
+                      Aşağıdaki 'Reçetesi Tanımlanmamış Ürünler' sekmesinden rotası hazır olan bir ürünü seçerek reçete oluşturabilirsiniz.
+                    </span>
                   </td>
                 </tr>
-              <% }); %>
-            <% } %>
-          </tbody>
-        </table>
+              <% } else { %>
+                <% withBOMList.forEach(item => { %>
+                  <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease;">
+                    <td style="padding: 12px 16px;">
+                      <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; background: rgba(99, 102, 241, 0.12); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.25);">
+                        <%= item.product.stockCode %>
+                      </strong>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      <strong style="color: #ffffff; font-size: 0.92rem;"><%= item.product.name %></strong>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      <% if (item.product.category === 'Mamul') { %>
+                        <span class="badge-cat-mamul">🏭 Mamul</span>
+                      <% } else { %>
+                        <span class="badge-cat-yarimamul">⚙️ Yarı Mamul</span>
+                      <% } %>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399; font-size: 0.85rem;">
+                        <%= item.receteKodu || '—' %>
+                      </span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                      <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; color: #fff;">
+                        v<%= item.version %>
+                      </span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                      <strong style="color: #fff;"><%= item.componentCount %> Kalem</strong>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">
+                      <%= item.gecerlilikBaslangic || '—' %>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                      <% if (item.durum === 'Active') { %>
+                        <span class="badge-status badge-has-bom" style="font-weight: 700;">🟢 Aktif</span>
+                      <% } else { %>
+                        <span style="color: var(--text-muted); background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 6px; font-size: 0.76rem; font-weight: 700;">⚪ Pasif</span>
+                      <% } %>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: right; white-space: nowrap;">
+                      <a href="/production/bom/edit/<%= item.product.id %>" class="btn-action-view-edit">
+                        🔍 Reçeteyi Gör / Düzenle
+                      </a>
+                      <form action="/production/bom/delete/<%= item.product.id %>" method="POST" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('Bu ürünün reçete bileşenlerini silmek istediğinize emin misiniz?');">
+                        <button type="submit" class="btn btn-danger btn-sm" style="padding: 6px 10px; border-radius: 8px; font-weight: 700;" title="Reçeteyi Sil">🗑️</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <!-- SECTION 2: REÇETESİ OLMAYAN ÜRÜNLER TABLOSU -->
+      <div id="sectionWithoutBOM" class="bom-section" style="margin-bottom: 24px; display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <h2 style="font-size: 1.05rem; font-weight: 800; color: #fbbf24; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span>⚠️</span> Henüz Reçetesi Oluşturulmamış Mamul & Yarı Mamuller (<%= withoutBOMList.length %> Ürün)
+          </h2>
+        </div>
+
+        <div class="table-wrapper" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+          <table class="data-table" id="tableWithoutBOM" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: rgba(30, 41, 59, 0.85); border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                <th style="padding: 14px 16px; width: 140px;">Ürün Kodu</th>
+                <th style="padding: 14px 16px; min-width: 220px;">Ürün Adı</th>
+                <th style="padding: 14px 16px; width: 120px;">Kategori</th>
+                <th style="padding: 14px 16px; width: 150px; text-align: center;">Rota Durumu</th>
+                <th style="padding: 14px 16px; width: 150px; text-align: center;">Reçete Durumu</th>
+                <th style="padding: 14px 16px; text-align: right; width: 220px;">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!withoutBOMList || withoutBOMList.length === 0) { %>
+                <tr class="empty-row">
+                  <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+                    <div style="font-size: 2rem; margin-bottom: 8px;">🎉</div>
+                    <strong style="color: #34d399; font-size: 0.95rem;">Tüm mamul ve yarı mamul ürünlerin imalat reçeteleri tanımlanmıştır!</strong>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% withoutBOMList.forEach(item => { %>
+                  <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease;">
+                    <td style="padding: 12px 16px;">
+                      <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; background: rgba(99, 102, 241, 0.12); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.25);">
+                        <%= item.product.stockCode %>
+                      </strong>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      <strong style="color: #ffffff; font-size: 0.92rem;"><%= item.product.name %></strong>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      <% if (item.product.category === 'Mamul') { %>
+                        <span class="badge-cat-mamul">🏭 Mamul</span>
+                      <% } else { %>
+                        <span class="badge-cat-yarimamul">⚙️ Yarı Mamul</span>
+                      <% } %>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                      <% if (item.hasRouting) { %>
+                        <span class="badge-status badge-has-bom" style="font-weight: 700;">✓ Rota Tanımlı</span>
+                      <% } else { %>
+                        <span class="badge-status badge-no-bom" style="font-weight: 700;">⚠️ Rota Tanımlanmamış</span>
+                      <% } %>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                      <span class="badge-status badge-no-bom" style="font-weight: 700;">⚠️ Reçete Yok</span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: right; white-space: nowrap;">
+                      <% if (item.hasRouting) { %>
+                        <a href="/production/bom/edit/<%= item.product.id %>" class="btn-action-create-bom">
+                          ➕ Yeni Reçete Ekle
+                        </a>
+                      <% } else { %>
+                        <a href="/production/routing/edit/<%= item.product.id %>" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; font-weight: 700;" title="Reçete eklemeden önce üretim rotası tanımlanmalıdır">
+                          🛠️ Önce Rota Tanımla
+                        </a>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </main>
   </div>
 
   <script>
-    /* Table Search & Filter Functions */
-    function filterTable() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      const rows = document.querySelectorAll('#bomProductTable tbody tr');
-      rows.forEach(tr => {
-        const text = tr.textContent.toLowerCase();
-        tr.style.display = text.includes(query) ? '' : 'none';
-      });
-    }
+    let currentBOMTab = 'with';
 
-    function filterCategory(cat, btn) {
-      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    function switchBOMSection(tab, btn) {
+      document.querySelectorAll('.custom-filter-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const rows = document.querySelectorAll('#bomProductTable tbody tr');
-      rows.forEach(tr => {
-        if (cat === 'all') tr.style.display = '';
-        else {
-          const rowCat = tr.getAttribute('data-cat');
-          tr.style.display = (rowCat === cat || (cat === 'Yarı_Mamul' && rowCat === 'Yari_Mamul')) ? '' : 'none';
-        }
-      });
+      currentBOMTab = tab;
+
+      const secWith = document.getElementById('sectionWithBOM');
+      const secWithout = document.getElementById('sectionWithoutBOM');
+
+      if (tab === 'with') {
+        secWith.style.display = 'block';
+        secWithout.style.display = 'none';
+      } else {
+        secWith.style.display = 'none';
+        secWithout.style.display = 'block';
+      }
+
+      filterBOMTable();
     }
 
-    function filterStatus(status, btn) {
-      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const rows = document.querySelectorAll('#bomProductTable tbody tr');
-      rows.forEach(tr => {
-        const rowStatus = tr.getAttribute('data-status');
-        tr.style.display = rowStatus === status ? '' : 'none';
-      });
+    function filterBOMTable() {
+      const query = (document.getElementById('bomSearchInput').value || '').toLowerCase().trim();
+
+      const filterTableRows = (tableId) => {
+        const rows = document.querySelectorAll(`#${tableId} tbody tr:not(.empty-row)`);
+        rows.forEach(tr => {
+          const text = tr.textContent.toLowerCase();
+          tr.style.display = text.includes(query) ? '' : 'none';
+        });
+      };
+
+      filterTableRows('tableWithBOM');
+      filterTableRows('tableWithoutBOM');
     }
 
-    function updateClock() {
-      const now = new Date();
-      const el = document.getElementById('liveTime');
-      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    function updateClock() { 
+      const now = new Date(); 
+      const el = document.getElementById('liveTime'); 
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); 
     }
-    updateClock(); setInterval(updateClock, 1000);
+    updateClock(); 
+    setInterval(updateClock, 1000);
   </script>
 </body>
 </html>

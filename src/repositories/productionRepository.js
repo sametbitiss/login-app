@@ -217,6 +217,8 @@ class ProductionRepository {
     });
 
     const allBOMItems = await this.findAllBOM();
+    const existingRoutings = await RotaOperasyon.findAll({ attributes: ['stokId'], group: ['stokId'] });
+    const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stokId));
 
     const bomMap = {};
     allBOMItems.forEach(item => {
@@ -229,7 +231,12 @@ class ProductionRepository {
     const productBOMList = targetProducts.map(product => {
       const items = bomMap[product.id] || [];
       const hasBOM = items.length > 0;
-      const version = hasBOM ? items[0].versiyon : 'Rev.01';
+      const receteKodu = hasBOM ? items[0].receteKodu : null;
+      const version = hasBOM ? items[0].versiyon : '1';
+      const durum = hasBOM ? items[0].durum : 'Active';
+      const gecerlilikBaslangic = hasBOM ? items[0].gecerlilikBaslangic : null;
+      const gecerlilikBitis = hasBOM ? items[0].gecerlilikBitis : null;
+      const hasRouting = productsWithRoutingSet.has(product.id);
       const baseQuantity = hasBOM ? parseFloat(items[0].bazMiktar || 1.0) : 1.0;
 
       let totalUnitCost = 0;
@@ -241,11 +248,16 @@ class ProductionRepository {
       });
 
       return {
-        product,
+        product: product.get({ plain: true }),
         hasBOM,
+        receteKodu,
         version,
+        durum,
+        gecerlilikBaslangic,
+        gecerlilikBitis,
+        hasRouting,
         baseQuantity,
-        bomItems: items,
+        bomItems: items.map(b => b.get({ plain: true })),
         componentCount: items.length,
         totalUnitCost
       };
@@ -259,7 +271,7 @@ class ProductionRepository {
       receteKodu: bomData.receteKodu || bomData.bomCode,
       mamulStokId: bomData.mamulStokId || bomData.finishedStockItemId,
       bilesenStokId: bomData.bilesenStokId || bomData.componentStockItemId,
-      versiyon: bomData.versiyon || bomData.version || 'Rev.01',
+      versiyon: bomData.versiyon || bomData.version || '1',
       bazMiktar: bomData.bazMiktar !== undefined ? bomData.bazMiktar : bomData.baseQuantity,
       gerekliMiktar: bomData.gerekliMiktar !== undefined ? bomData.gerekliMiktar : bomData.quantityRequired,
       birim: bomData.birim || bomData.unit || 'Adet',
@@ -298,46 +310,102 @@ class ProductionRepository {
     } = bomHeaderData;
     const targetMamulId = parseInt(mamulStokId, 10);
 
+    const targetProduct = await StokKarti.findByPk(targetMamulId);
+    if (!targetProduct) {
+      throw new Error('Geçersiz ürün kimliği.');
+    }
+    if (targetProduct.kategori === 'Hammadde') {
+      throw new Error('Hammadde kategorisindeki ürünler için üretim reçetesi oluşturulamaz.');
+    }
+
+    if (!gecerlilikBaslangic) {
+      throw new Error('Geçerlilik başlangıç tarihi zorunludur.');
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (gecerlilikBaslangic < todayStr) {
+      throw new Error('Geçerlilik başlangıç tarihi bugünden eski bir tarih olamaz.');
+    }
+
+    if (!Array.isArray(components) || components.length === 0) {
+      throw new Error('Lütfen reçeteye en az bir adet bileşen ekleyiniz.');
+    }
+
+    // Validate each component item
+    for (let i = 0; i < components.length; i++) {
+      const comp = components[i];
+      const compId = parseInt(comp.bilesenStokId || comp.componentStockItemId, 10);
+      if (!compId || isNaN(compId)) {
+        throw new Error(`Bileşen Kalemi #${i + 1}: Lütfen geçerli bir bileşen seçiniz.`);
+      }
+      if (compId === targetMamulId) {
+        throw new Error(`Bileşen Kalemi #${i + 1}: Ürünün kendisi kendi reçetesine bileşen olarak eklenemez.`);
+      }
+
+      const qty = parseFloat(comp.gerekliMiktar !== undefined ? comp.gerekliMiktar : comp.quantityRequired);
+      if (isNaN(qty) || qty <= 0) {
+        throw new Error(`Bileşen Kalemi #${i + 1}: Gerekli miktar 0'dan büyük pozitif bir sayı olmalıdır.`);
+      }
+
+      const unit = (comp.birim || comp.unit || '').trim();
+      if (!unit) {
+        throw new Error(`Bileşen Kalemi #${i + 1}: Bileşen birimi zorunludur.`);
+      }
+
+      const scrap = parseFloat(comp.fireOrani !== undefined ? comp.fireOrani : comp.scrapPercentage);
+      if (isNaN(scrap) || scrap < 0) {
+        throw new Error(`Bileşen Kalemi #${i + 1}: Fire oranı negatif (0'dan küçük) olamaz.`);
+      }
+
+      const opCode = (comp.operasyonKodu || comp.operationCode || '').trim();
+      if (!opCode) {
+        throw new Error(`Bileşen Kalemi #${i + 1}: İlgili bileşenin kullanılacağı Rota Adımı seçimi zorunludur.`);
+      }
+    }
+
     await UrunRecetesi.destroy({ where: { mamulStokId: targetMamulId } });
 
     const createdItems = [];
-    if (components && components.length > 0) {
-      const finalReceteKodu = receteKodu || (await this.generateRecipeNo());
-      const finalVersiyon = version ? String(version) : '1';
-      const finalDurum = durum || 'Active';
-      const finalBaslangic = gecerlilikBaslangic || null;
-      const finalBitis = gecerlilikBitis || null;
-      const finalGeneralNotes = notlar || generalNotes || null;
+    const finalReceteKodu = receteKodu || (await this.generateRecipeNo());
+    const finalVersiyon = version ? String(version) : '1';
+    const finalDurum = durum || 'Active';
+    const finalBaslangic = gecerlilikBaslangic;
+    const finalBitis = gecerlilikBitis || null;
+    const finalGeneralNotes = notlar || generalNotes || null;
 
-      for (const comp of components) {
-        const compId = comp.bilesenStokId || comp.componentStockItemId;
-        if (!compId) continue;
+    for (let i = 0; i < components.length; i++) {
+      const comp = components[i];
+      const compId = parseInt(comp.bilesenStokId || comp.componentStockItemId, 10);
+      const compItem = await StokKarti.findByPk(compId);
+      const isSemiFinished = compItem && (compItem.kategori === 'Yari_Mamul' || compItem.kategori === 'Yarı_Mamul');
+      const calcLevel = isSemiFinished ? 2 : 3;
 
-        const compItem = await StokKarti.findByPk(compId);
-        const isSemiFinished = compItem && (compItem.kategori === 'Yari_Mamul' || compItem.kategori === 'Yarı_Mamul');
-        const calcLevel = isSemiFinished ? 2 : 3;
+      const qty = parseFloat(comp.gerekliMiktar !== undefined ? comp.gerekliMiktar : comp.quantityRequired);
+      const scrap = parseFloat(comp.fireOrani !== undefined ? comp.fireOrani : comp.scrapPercentage) || 0;
+      const unit = comp.birim || comp.unit || (compItem ? compItem.birim : 'Adet');
+      const opCode = (comp.operasyonKodu || comp.operationCode || '').trim();
+      const lineNote = (comp.notlar || comp.notes || '').trim() || finalGeneralNotes;
 
-        const newBOM = await UrunRecetesi.create({
-          receteKodu: finalReceteKodu,
-          mamulStokId: targetMamulId,
-          bilesenStokId: parseInt(compId, 10),
-          versiyon: finalVersiyon,
-          bazMiktar: parseFloat(baseQuantity) || 1.0,
-          gerekliMiktar: parseFloat(comp.gerekliMiktar || comp.quantityRequired) || 1.0,
-          birim: comp.birim || comp.unit || (compItem ? compItem.birim : 'Adet'),
-          fireOrani: parseFloat(comp.fireOrani || comp.scrapPercentage) || 0.0,
-          seviye: calcLevel,
-          operasyonKodu: comp.operasyonKodu || comp.operationCode || null,
-          alternatifBilesenStokId: (comp.alternatifBilesenStokId || comp.alternativeComponentItemId) ? parseInt(comp.alternatifBilesenStokId || comp.alternativeComponentItemId, 10) : null,
-          alternatifNotlar: comp.alternatifNotlar || comp.alternativeNotes || null,
-          notlar: comp.notlar || comp.notes || finalGeneralNotes,
-          gecerlilikBaslangic: finalBaslangic,
-          gecerlilikBitis: finalBitis,
-          durum: finalDurum
-        });
+      const newBOM = await UrunRecetesi.create({
+        receteKodu: finalReceteKodu,
+        mamulStokId: targetMamulId,
+        bilesenStokId: compId,
+        versiyon: finalVersiyon,
+        bazMiktar: parseFloat(baseQuantity) || 1.0,
+        gerekliMiktar: qty,
+        birim: unit,
+        fireOrani: scrap,
+        seviye: calcLevel,
+        operasyonKodu: opCode,
+        alternatifBilesenStokId: (comp.alternatifBilesenStokId || comp.alternativeComponentItemId) ? parseInt(comp.alternatifBilesenStokId || comp.alternativeComponentItemId, 10) : null,
+        alternatifNotlar: comp.alternatifNotlar || comp.alternativeNotes || null,
+        notlar: lineNote,
+        gecerlilikBaslangic: finalBaslangic,
+        gecerlilikBitis: finalBitis,
+        durum: finalDurum
+      });
 
-        createdItems.push(newBOM);
-      }
+      createdItems.push(newBOM);
     }
 
     await logService.logCrud({
@@ -346,7 +414,7 @@ class ProductionRepository {
       islem: 'UPDATE',
       varlik: 'UrunRecetesi',
       varlikId: targetMamulId,
-      detaylar: { mamulStokId: targetMamulId, version, baseQuantity, count: createdItems.length },
+      detaylar: { mamulStokId: targetMamulId, version: finalVersiyon, count: createdItems.length },
       ipAdresi: ipAddress
     });
 

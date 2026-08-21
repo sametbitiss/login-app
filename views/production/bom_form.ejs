@@ -3,86 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Üretim Reçetesi (BOM) Hazırlama — Enterprise ERP</title>
+  <title>Üretim Reçetesi (BOM) — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="/sidebar.js" defer></script>
   <style>
-    .stepper-nav {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 4px;
+    .form-container-card {
+      background: rgba(30, 41, 59, 0.45);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      max-width: 1200px;
+      margin: 0 auto 40px auto;
     }
-    .step-tab-btn {
+
+    .form-section-header {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #818cf8;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    /* Dynamic Component Card / Box */
+    .comp-cards-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .comp-card-box {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .comp-card-box:hover {
+      border-color: rgba(99, 102, 241, 0.45);
+      box-shadow: 0 6px 25px rgba(99, 102, 241, 0.2);
+    }
+
+    .comp-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+      margin-bottom: 16px;
+    }
+
+    .btn-add-comp-action {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(5, 150, 105, 0.22));
+      color: #34d399;
+      border: 1.5px dashed rgba(16, 185, 129, 0.45);
+      padding: 14px 24px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+    .btn-add-comp-action:hover {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.35));
+      border-color: #34d399;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 18px rgba(16, 185, 129, 0.25);
+    }
+
+    /* Modal Styling */
+    .component-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 15, 30, 0.82);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .component-modal-box {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 850px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+    .component-modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(30, 41, 59, 0.5);
+    }
+    .component-modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .component-modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: rgba(30, 41, 59, 0.5);
+    }
+
+    .modal-filter-tab {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 0.95rem;
       font-weight: 700;
-      padding: 12px 20px;
+      font-size: 0.78rem;
+      padding: 6px 12px;
+      border-radius: 8px;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
+      transition: all 0.15s ease;
     }
-    .step-tab-btn:hover {
-      color: #fff;
-    }
-    .step-tab-btn.active {
+    .modal-filter-tab.active {
+      background: rgba(99, 102, 241, 0.25);
       color: #818cf8;
-      border-bottom-color: #6366f1;
+      border: 1px solid rgba(99, 102, 241, 0.4);
     }
-    .step-tab-badge {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 800;
+
+    .comp-table-row {
+      cursor: pointer;
+      transition: background 0.15s ease;
     }
-    .step-tab-btn.active .step-tab-badge {
-      background: #6366f1;
-      color: #fff;
+    .comp-table-row:hover {
+      background: rgba(99, 102, 241, 0.1);
     }
-    .tab-content-panel {
-      display: none;
-      animation: fadeIn 0.25s ease-in-out;
-    }
-    .tab-content-panel.active {
-      display: block;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .bom-table-input {
-      background: rgba(15, 23, 42, 0.8) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
-      color: #fff !important;
-      padding: 8px 10px !important;
-      border-radius: 8px !important;
-      font-size: 0.85rem !important;
-      width: 100%;
-      box-sizing: border-box;
-      outline: none;
-    }
-    .bom-table-input:focus {
-      border-color: #818cf8 !important;
-      box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+    .comp-table-row.selected {
+      background: rgba(99, 102, 241, 0.2);
     }
   </style>
 </head>
 <body class="module-body">
-
-  <!-- Sidebar -->
   <aside class="module-sidebar">
     <div class="module-sidebar-brand">
       <a href="/" class="msb-logo">
@@ -107,6 +190,8 @@
       <div class="mss-sub">
         <a href="/production/bom" class="mss-sub-link active">📜 Üretim Reçeteleri (BOM)</a>
         <a href="/production/routing" class="mss-sub-link">🛠️ Rotalama & Operasyonlar</a>
+        <a href="/production/workshops" class="mss-sub-link">🏢 Atölye Kartları</a>
+        <a href="/production/work-centers" class="mss-sub-link">⚙️ İş Merkezleri</a>
       </div>
       <div class="mss-group-title">🏭 KAPASİTE & SAHA TAKİBİ (MES)</div>
       <div class="mss-sub">
@@ -145,266 +230,139 @@
     <main class="module-content">
 
       <!-- Breadcrumb & Header -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px;">
         <div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-            <a href="/production/bom" style="color: var(--text-muted); text-decoration: none;">Üretim Reçeteleri</a>
+          <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <a href="/production/bom" style="color: var(--text-muted); text-decoration: none;">📜 Üretim Reçeteleri</a>
             <span>/</span>
-            <span style="color: #818cf8;"><%= targetProduct ? 'Reçeteyi Düzenle' : 'Yeni Reçete Oluştur' %></span>
+            <span style="color: #818cf8; font-weight: 600;"><%= targetProduct ? `[${targetProduct.stokKodu}] ${targetProduct.ad}` : 'Reçete Oluştur' %></span>
           </div>
-          <h1 style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px;">
-            📜 <%= targetProduct ? `[${targetProduct.stokKodu}] ${targetProduct.ad} Reçetesi` : 'Yeni Üretim Reçetesi (BOM) Hazırlama' %>
+          <h1 style="font-size: 1.65rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px;">
+            <%= isEditMode && targetProduct ? `📜 [${targetProduct.stokKodu}] Üretim Reçetesi Düzenleme` : (targetProduct ? `📜 [${targetProduct.stokKodu}] Yeni Üretim Reçetesi Tanımlama` : '📜 Yeni Üretim Reçetesi (BOM) Oluşturma') %>
           </h1>
-          <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
-            Üretilecek Mamul veya Yarı Mamul için teknik reçete parametreleri, hammadde sarfiyatları, fire oranları ve rota adımları.
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+            Ürünün imalatında kullanılacak hammadde, yarı mamul, ticari parça miktarları, fire oranları ve rota adım eşleştirmeleri.
           </p>
         </div>
-        <a href="/production/bom" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+        <a href="/production/bom" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; border-radius: 12px; padding: 10px 20px;">
           <span>←</span> Reçete Listesine Dön
         </a>
       </div>
 
       <!-- Main Form Container -->
-      <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; box-shadow: var(--shadow-md);">
+      <div class="form-container-card">
         
-        <!-- STEPPER TABS -->
-        <div class="stepper-nav">
-          <button type="button" class="step-tab-btn active" id="btnStep1" onclick="switchBomTab(1)">
-            <span class="step-tab-badge">1</span>
-            <span>📋 Genel Reçete & Ürün Bilgileri</span>
-          </button>
-          <button type="button" class="step-tab-btn" id="btnStep2" onclick="switchBomTab(2)">
-            <span class="step-tab-badge">2</span>
-            <span>⚙️ Reçete Bileşenleri & Hammaddeler</span>
-            <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 800;" id="tabComponentsCount">0 Kalem</span>
-          </button>
-        </div>
+        <form action="/production/bom/save" method="POST" id="bomForm">
+          <input type="hidden" name="componentsJson" id="componentsJson" value="">
 
-        <form action="/production/bom/save" method="POST" id="bomMainForm">
-          <input type="hidden" name="componentsJson" id="componentsJsonInput" value="">
-
-          <!-- ================================================================= -->
-          <!-- TAB 1: GENEL REÇETE VE ÜRÜN BİLGİLERİ -->
-          <!-- ================================================================= -->
-          <div class="tab-content-panel active" id="bom-tab-1">
-            <h4 style="font-size: 1rem; font-weight: 800; color: #818cf8; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
-              <span>📋</span> 1. Temel Ürün ve Reçete Başlık Bilgileri
-            </h4>
-
-            <!-- Grid 1: Product Selection & Recipe Codes -->
-            <div class="form-grid form-grid--3" style="margin-bottom: 1.25rem;">
-              <div class="input-group">
-                <label for="finishedStockItemId" style="font-weight: 700;">
-                  Reçetesi Yazılacak Ürün (Mamul / Yarı Mamul) <span style="color: #f43f5e;">*</span>
-                </label>
-                <% if (isEditMode && targetProduct) { %>
-                  <input type="hidden" name="finishedStockItemId" value="<%= targetProduct.id %>">
-                  <div style="background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(99, 102, 241, 0.35); border-radius: 10px; padding: 11px 14px; display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                      <strong style="color: #fff;">[<%= targetProduct.stokKodu %>] <%= targetProduct.ad %></strong>
-                      <span style="font-size: 0.75rem; color: #818cf8; margin-left: 6px;">(<%= targetProduct.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>)</span>
-                    </div>
-                    <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                      🔒 Sabit Ürün
-                    </span>
-                  </div>
-                <% } else { %>
-                  <select id="finishedStockItemId" name="finishedStockItemId" required onchange="handleProductSelect(this)" style="font-weight: 600;">
-                    <% if (!finishedStockItems || finishedStockItems.length === 0) { %>
-                      <option value="" disabled selected>— Reçetesiz ürün bulunamadı (Tüm mamullerin reçetesi tanımlı) —</option>
-                    <% } else { %>
-                      <option value="">— Reçetesi Olmayan Ürünü Seçiniz (<%= finishedStockItems.length %> Ürün) —</option>
-                      <% finishedStockItems.forEach(item => { %>
-                        <% const isSelected = targetProduct && targetProduct.id === item.id; %>
-                        <option value="<%= item.id %>" 
-                                data-code="<%= item.stokKodu %>" 
-                                data-name="<%= item.ad %>" 
-                                data-unit="<%= item.birim %>" 
-                                data-cat="<%= item.kategori %>"
-                                data-stock="<%= item.mevcutStok %>"
-                                <%= isSelected ? 'selected' : '' %>>
-                          [<%= item.stokKodu %>] <%= item.ad %> (<%= item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>)
-                        </option>
-                      <% }); %>
-                    <% } %>
-                  </select>
-                <% } %>
-              </div>
-
-              <div class="input-group">
-                <label for="receteKodu" style="font-weight: 700;">Reçete Kodu / Numarası</label>
-                <div style="position: relative;">
-                  <input type="text" id="receteKodu" name="receteKodu" value="<%= currentRecipeNo %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.3); cursor: not-allowed; padding-right: 40px;">
-                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Otomatik Sistem Numarası">🔒</span>
-                </div>
-              </div>
-
-              <div class="input-group">
-                <label for="versiyon" style="font-weight: 700;">Revizyon / Versiyon Numarası</label>
-                <div style="position: relative;">
-                  <input type="text" id="versiyon" name="versiyon" value="<%= currentVersion %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(99, 102, 241, 0.3); cursor: not-allowed; padding-right: 40px;">
-                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Otomatik Versiyon">🔒</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Grid 2: Lot Quantity, Dates & Status -->
-            <div class="form-grid form-grid--4" style="margin-bottom: 1.25rem;">
-              <div class="input-group">
-                <label for="bazMiktar" style="font-weight: 700;">Lot / Üretim Miktarı (Baz Miktar) <span style="color: #f43f5e;">*</span></label>
-                <% 
-                  let defaultBazMiktar = 1.0;
-                  if (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].bazMiktar) {
-                    defaultBazMiktar = existingBOMItems[0].bazMiktar;
-                  }
-                %>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <input type="number" step="0.0001" min="0.0001" id="bazMiktar" name="bazMiktar" value="<%= defaultBazMiktar %>" required style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">
-                  <span id="productUnitBadge" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; color: #818cf8; white-space: nowrap;">
-                    <%= targetProduct ? targetProduct.birim : 'Adet' %>
-                  </span>
-                </div>
-              </div>
-
-              <div class="input-group">
-                <label for="gecerlilikBaslangic" style="font-weight: 700;">Geçerlilik Başlangıç Tarihi</label>
-                <% 
-                  let defaultBaslangic = new Date().toISOString().split('T')[0];
-                  if (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].gecerlilikBaslangic) {
-                    defaultBaslangic = existingBOMItems[0].gecerlilikBaslangic;
-                  }
-                %>
-                <input type="date" id="gecerlilikBaslangic" name="gecerlilikBaslangic" value="<%= defaultBaslangic %>">
-              </div>
-
-              <div class="input-group">
-                <label for="gecerlilikBitis" style="font-weight: 700;">Geçerlilik Bitiş Tarihi</label>
-                <% 
-                  let defaultBitis = '';
-                  if (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].gecerlilikBitis) {
-                    defaultBitis = existingBOMItems[0].gecerlilikBitis;
-                  }
-                %>
-                <input type="date" id="gecerlilikBitis" name="gecerlilikBitis" value="<%= defaultBitis %>">
-              </div>
-
-              <div class="input-group">
-                <label for="durum" style="font-weight: 700;">Reçete Durumu</label>
-                <% 
-                  let defaultDurum = 'Active';
-                  if (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].durum) {
-                    defaultDurum = existingBOMItems[0].durum;
-                  }
-                %>
-                <select id="durum" name="durum" style="font-weight: 700;">
-                  <option value="Active" <%= defaultDurum === 'Active' ? 'selected' : '' %>>🟢 Aktif (Onaylı İmalat)</option>
-                  <option value="Draft" <%= defaultDurum === 'Draft' ? 'selected' : '' %>>🟡 Taslak (Mühendislik İncelemede)</option>
-                  <option value="Archived" <%= defaultDurum === 'Archived' ? 'selected' : '' %>>⚪ Arşivlenmiş (Eski Sürüm)</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Notes -->
-            <div class="input-group">
-              <label for="notlar" style="font-weight: 700;">Reçete Açıklaması & İmalat Notları</label>
-              <% 
-                let defaultNotlar = '';
-                if (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].notlar) {
-                  defaultNotlar = existingBOMItems[0].notlar;
-                }
-              %>
-              <textarea id="notlar" name="notlar" rows="3" placeholder="Reçeteye ait genel mühendislik şartları, teknik çizim referansı veya montaj talimatları..."><%= defaultNotlar %></textarea>
-            </div>
+          <!-- Section 1: Recipe Header (5 Mandatory Fields) -->
+          <div class="form-section-header">
+            <span>📋</span> 1. Reçete Başlık Bilgileri
           </div>
 
-          <!-- ================================================================= -->
-          <!-- TAB 2: REÇETE BİLEŞENLERİ VE HAMMADDELER (MODAL PARITY) -->
-          <!-- ================================================================= -->
-          <div class="tab-content-panel" id="bom-tab-2">
+          <div class="form-grid form-grid--3" style="margin-bottom: 1.5rem; gap: 16px;">
             
-            <!-- Top Action Header -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
-              <div>
-                <h4 style="font-size: 1rem; font-weight: 800; color: #10b981; margin: 0; display: flex; align-items: center; gap: 8px;">
-                  <span>⚙️</span> 2. Reçete Bileşenleri, Hammaddeler ve Sarfiyat Tablosu
-                </h4>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-                  Reçetenin imalatında tüketilecek tüm hammadde ve yarı mamul kalemlerini stok kartlarından çoklu seçimle ekleyin.
-                </p>
-              </div>
-
-              <div>
-                <button type="button" onclick="openComponentSelectModal()" class="btn btn-sm"
-                  style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); gap: 8px; display: inline-flex; align-items: center;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span>📦 Stok Kartından Hammadde Seç (Modal)</span>
-                </button>
-              </div>
+            <!-- 1. Ürün Kodu / Adı (Readonly) -->
+            <div class="input-group" style="grid-column: span 2;">
+              <label for="finishedStockItemId" style="font-weight: 700; font-size: 0.84rem;">
+                1. Ürün Kodu / Adı <span style="color: #818cf8; font-size: 0.72rem; font-weight: 600;">(Değiştirilemez)</span> <span style="color: #f43f5e;">*</span>
+              </label>
+              <% if (targetProduct) { %>
+                <input type="hidden" name="finishedStockItemId" id="finishedStockItemId" value="<%= targetProduct.id %>">
+                <input type="text" readonly value="[<%= targetProduct.stokKodu %>] <%= targetProduct.ad %> (<%= targetProduct.kategori %>)"
+                  style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.35); cursor: not-allowed;">
+              <% } else { %>
+                <select name="finishedStockItemId" id="finishedStockItemId" required onchange="onProductSelectChange(this.value)" style="font-weight: 700;">
+                  <option value="">— Lütfen Bir Ürün Seçiniz —</option>
+                  <% candidateProducts.forEach(p => { %>
+                    <option value="<%= p.id %>" <%= p.hasRouting ? '' : 'disabled' %>>
+                      [<%= p.stokKodu %>] <%= p.ad %> (<%= p.kategori %>) <%= p.hasRouting ? (p.hasBOM ? '— (✓ Reçete Var)' : '— (⚠️ Reçete Yok)') : '— (⚠️ Önce Rota Gerekli)' %>
+                    </option>
+                  <% }); %>
+                </select>
+              <% } %>
             </div>
 
-            <!-- Components Table -->
-            <div style="overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); background: rgba(6, 8, 15, 0.8); margin-bottom: 1.5rem;">
-              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;" id="componentsTable">
-                <thead>
-                  <tr style="background: rgba(19, 26, 43, 0.9); border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;">
-                    <th style="padding: 12px 14px; width: 40px; text-align: center;">#</th>
-                    <th style="padding: 12px 14px; min-width: 220px;">Bileşen / Hammadde Kalemi</th>
-                    <th style="padding: 12px 14px; width: 110px;">Miktar / Sarfiyat</th>
-                    <th style="padding: 12px 14px; width: 90px;">Birim</th>
-                    <th style="padding: 12px 14px; width: 95px;">Fire (%)</th>
-                    <th style="padding: 12px 14px; width: 170px;">Operasyon / Rota Adımı</th>
-                    <th style="padding: 12px 14px; width: 180px;">Alternatif Malzeme</th>
-                    <th style="padding: 12px 14px; min-width: 140px;">Satır Açıklaması / Not</th>
-                    <th style="padding: 12px 14px; width: 50px; text-align: center;">Sil</th>
-                  </tr>
-                </thead>
-                <tbody id="componentsTbody">
-                  <tr id="emptyComponentsPlaceholder">
-                    <td colspan="9" style="padding: 35px; text-align: center; color: var(--text-muted);">
-                      📦 Henüz reçete bileşeni eklenmedi.<br>
-                      <span style="font-size: 0.8rem; margin-top: 6px; display: inline-block; color: #818cf8;">Yukarıdaki <strong>'📦 Stok Kartından Hammadde Seç (Modal)'</strong> butonuna tıklayarak reçeteye çoklu hammadde seçebilirsiniz.</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Live BOM Summary Strip -->
-            <div style="background: linear-gradient(135deg, rgba(19, 26, 43, 0.8) 0%, rgba(12, 17, 28, 0.9) 100%); border-radius: 16px; border: 1px solid var(--border); padding: 1.25rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; text-align: center;">
-              <div style="background: rgba(255, 255, 255, 0.03); padding: 14px; border-radius: 12px; border: 1px solid var(--border);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Toplam Kalem Sayısı</span>
-                <strong id="summaryTotalItems" style="font-size: 1.25rem; color: #fff; font-family: 'JetBrains Mono', monospace;">0 Kalem</strong>
-              </div>
-              <div style="background: rgba(255, 255, 255, 0.03); padding: 14px; border-radius: 12px; border: 1px solid var(--border);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Toplam Sarfiyat Miktarı</span>
-                <strong id="summaryTotalQuantity" style="font-size: 1.25rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;">0.00</strong>
-              </div>
-              <div style="background: rgba(255, 255, 255, 0.03); padding: 14px; border-radius: 12px; border: 1px solid var(--border);">
-                <span style="font-size: 0.75rem; font-weight: 600; color: #fb7185; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Ortalama Fire Oranı</span>
-                <strong id="summaryAvgWaste" style="font-size: 1.25rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">% 0.00</strong>
-              </div>
+            <!-- 2. Reçete Kodu / Numarası (Otomatik / Readonly) -->
+            <div class="input-group">
+              <label for="receteKodu" style="font-weight: 700; font-size: 0.84rem;">
+                2. Reçete Kodu / No <span style="color: #818cf8; font-size: 0.72rem; font-weight: 600;">(Otomatik)</span> <span style="color: #f43f5e;">*</span>
+              </label>
+              <input type="text" id="receteKodu" name="receteKodu" value="<%= currentRecipeNo %>" readonly required
+                style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #818cf8; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(99, 102, 241, 0.35); cursor: not-allowed;">
             </div>
 
           </div>
 
-          <!-- ================================================================= -->
-          <!-- BOTTOM STEPPER NAVIGATION BAR -->
-          <!-- ================================================================= -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);">
-            <button type="button" class="btn btn-secondary" id="btnPrevStep" onclick="navigateBomStep(-1)" style="display: none; font-weight: 600; padding: 10px 22px; border-radius: 10px;">
-              ← Önceki Adım
+          <div class="form-grid form-grid--3" style="margin-bottom: 2rem; gap: 16px;">
+            
+            <!-- 3. Revizyon / Versiyon Numarası (Readonly / Otomatik) -->
+            <div class="input-group">
+              <label for="version" style="font-weight: 700; font-size: 0.84rem;">
+                3. Versiyon / Revizyon <span style="color: #818cf8; font-size: 0.72rem; font-weight: 600;">(Otomatik)</span> <span style="color: #f43f5e;">*</span>
+              </label>
+              <input type="text" id="version" name="version" value="<%= currentVersion %>" readonly required
+                style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #fbbf24; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(245, 158, 11, 0.35); cursor: not-allowed;">
+            </div>
+
+            <!-- 4. Geçerlilik Başlangıç Tarihi (Bugünden eski olamaz, Zorunlu) -->
+            <% 
+              const todayStr = new Date().toISOString().split('T')[0]; 
+              const existingBaslangic = (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].gecerlilikBaslangic) ? existingBOMItems[0].gecerlilikBaslangic : todayStr;
+            %>
+            <div class="input-group">
+              <label for="gecerlilikBaslangic" style="font-weight: 700; font-size: 0.84rem;">
+                4. Geçerlilik Başlangıç Tarihi <span style="color: #f43f5e;">*</span>
+              </label>
+              <input type="date" id="gecerlilikBaslangic" name="gecerlilikBaslangic" min="<%= todayStr %>" value="<%= existingBaslangic %>" required
+                style="font-weight: 600; color: #fff;">
+            </div>
+
+            <!-- 5. Durum (Aktif / Pasif, Zorunlu) -->
+            <% 
+              const existingDurum = (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].durum) ? existingBOMItems[0].durum : 'Active';
+            %>
+            <div class="input-group">
+              <label for="durum" style="font-weight: 700; font-size: 0.84rem;">
+                5. Durum <span style="color: #f43f5e;">*</span>
+              </label>
+              <select id="durum" name="durum" required style="font-weight: 700;">
+                <option value="Active" <%= existingDurum === 'Active' ? 'selected' : '' %>>🟢 Aktif</option>
+                <option value="Inactive" <%= existingDurum === 'Inactive' ? 'selected' : '' %>>⚪ Pasif</option>
+              </select>
+            </div>
+
+          </div>
+
+          <!-- Section 2: Component Items Builder -->
+          <div class="form-section-header">
+            <span>🧩</span> 2. Reçete Bileşenleri & Hammadde İhtiyaçları
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" id="compCountBadge">
+              <%= existingBOMItems ? existingBOMItems.length : 0 %> Bileşen Kalemi
+            </span>
+          </div>
+
+          <!-- Dynamic Component Cards Container -->
+          <div class="comp-cards-wrapper" id="compCardsContainer">
+            <!-- Injected via JavaScript -->
+          </div>
+
+          <!-- Add Component Button -->
+          <div style="margin-bottom: 2.5rem;">
+            <button type="button" class="btn-add-comp-action" onclick="addNewComponentRow()">
+              <span style="font-size: 1.2rem;">➕</span>
+              <span>Yeni Reçete Bileşeni Ekle</span>
             </button>
-            <div id="stepCounterBadge" style="font-size: 0.825rem; color: var(--text-muted); font-weight: 600;">
-              Adım 1 / 2 (Genel Bilgiler)
-            </div>
-            <div>
-              <button type="button" class="btn btn-primary" id="btnNextStep" onclick="navigateBomStep(1)" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; font-weight: 700; padding: 10px 24px; border-radius: 10px;">
-                Sonraki Adım (Hammaddeler) →
-              </button>
-              <button type="submit" class="btn btn-lg" id="btnSubmitBom" style="display: none; background: linear-gradient(135deg, #6366f1 0%, #10b981 100%); color: #fff; border: none; font-weight: 700; padding: 12px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35); gap: 10px;">
-                💾 Reçeteyi Kaydet & Onayla
-              </button>
-            </div>
+          </div>
+
+          <!-- Form Actions Bar -->
+          <div style="display: flex; justify-content: flex-end; gap: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px;">
+            <a href="/production/bom" class="btn btn-secondary" style="padding: 11px 24px; border-radius: 12px; font-weight: 700;">
+              Vazgeç
+            </a>
+            <button type="submit" class="btn btn-primary" id="btnSubmitBOM" style="background: linear-gradient(135deg, #6366f1 0%, #10b981 100%); color: #fff; border: none; font-weight: 800; font-size: 0.95rem; padding: 11px 34px; border-radius: 12px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); cursor: pointer;">
+              💾 Reçeteyi Kaydet
+            </button>
           </div>
 
         </form>
@@ -413,460 +371,485 @@
     </main>
   </div>
 
-  <!-- ======================================================================= -->
-  <!-- MULTI-SELECT COMPONENT SELECTION MODAL (PARITY WITH SALES MODAL) -->
-  <!-- ======================================================================= -->
-  <div id="componentSelectModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; width: 100%; max-width: 960px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); position: relative;">
+  <!-- COMPONENT SELECTION MODAL -->
+  <div class="component-modal-overlay" id="componentSelectModal">
+    <div class="component-modal-box">
       
-      <!-- Modal Header -->
-      <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.95);">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 1.5rem; background: rgba(16, 185, 129, 0.15); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(16, 185, 129, 0.3);">📦</span>
-          <div>
-            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Stok Kartlarından Hammadde & Bileşen Seçimi</h2>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Reçeteye eklemek istediğiniz hammadde ve yarı mamulleri filtreleyip çoklu seçim onay kutuları (checkbox) ile ekleyin.</p>
-          </div>
+      <div class="component-modal-header">
+        <div>
+          <h3 style="margin: 0; color: #fff; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <span>🔍</span> Reçete İçin Bileşen / Malzeme Seçimi
+          </h3>
+          <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; display: block;">
+            Listeden reçeteye eklenecek hammadde, yarı mamul veya ticari ürünü seçiniz.
+          </span>
         </div>
-        <button type="button" onclick="closeComponentSelectModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
+        <button type="button" onclick="closeComponentSelectModal()" style="background: rgba(255,255,255,0.08); border: none; color: #fff; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">
+          ✕
+        </button>
       </div>
 
-      <!-- Search & Category Filters -->
-      <div style="padding: 16px 24px; background: rgba(30, 41, 59, 0.4); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 240px; position: relative;">
-          <input type="text" id="modalSearchInput" oninput="filterModalComponents()" placeholder="🔍 Hammadde kodu veya adı ile anlık ara..." style="width: 100%; padding: 10px 14px 10px 38px; border-radius: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;">
-          <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-muted);">🔍</span>
+      <!-- Modal Filter Bar -->
+      <div style="padding: 14px 24px; background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+        
+        <div style="display: flex; gap: 6px; background: rgba(30, 41, 59, 0.6); padding: 3px; border-radius: 10px;">
+          <button type="button" class="modal-filter-tab active" onclick="filterModalCategory('all', this)">Tümü</button>
+          <button type="button" class="modal-filter-tab" onclick="filterModalCategory('Hammadde', this)">Hammadde</button>
+          <button type="button" class="modal-filter-tab" onclick="filterModalCategory('Yari_Mamul', this)">Yarı Mamul</button>
+          <button type="button" class="modal-filter-tab" onclick="filterModalCategory('Mamul', this)">Mamul</button>
         </div>
-        <div style="display: flex; gap: 6px;">
-          <button type="button" class="btn btn-sm" onclick="filterModalCategory('ALL', this)" style="background: #6366f1; color: #fff; padding: 7px 14px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; border: none;">Tümü</button>
-          <button type="button" class="btn btn-sm" onclick="filterModalCategory('Hammadde', this)" style="background: rgba(255,255,255,0.06); color: var(--text-secondary); padding: 7px 14px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.1);">Hammadde</button>
-          <button type="button" class="btn btn-sm" onclick="filterModalCategory('Yarı_Mamul', this)" style="background: rgba(255,255,255,0.06); color: var(--text-secondary); padding: 7px 14px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.1);">Yarı Mamul</button>
-          <button type="button" class="btn btn-sm" onclick="filterModalCategory('Ticari_Mal', this)" style="background: rgba(255,255,255,0.06); color: var(--text-secondary); padding: 7px 14px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.1);">Sarf Malzeme</button>
+
+        <div style="position: relative; flex: 1; min-width: 200px; max-width: 320px;">
+          <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: var(--text-muted);">🔍</span>
+          <input type="text" id="modalComponentSearch" placeholder="Bileşen Kodu veya Adı Ara..." oninput="renderModalComponents()"
+            style="width: 100%; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 7px 12px 7px 32px; font-size: 0.84rem; color: #fff; outline: none; box-sizing: border-box;">
         </div>
+
       </div>
 
       <!-- Modal Table Body -->
-      <div style="flex: 1; overflow-y: auto; padding: 0 24px;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;" id="modalComponentsTable">
+      <div class="component-modal-body">
+        <table style="width: 100%; border-collapse: collapse;">
           <thead>
-            <tr style="position: sticky; top: 0; background: #0f172a; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; z-index: 10;">
-              <th style="padding: 12px 8px; width: 45px; text-align: center;">
-                <input type="checkbox" id="modalSelectAllCheckbox" onchange="toggleSelectAllModal(this)" style="cursor: pointer; transform: scale(1.15);">
-              </th>
-              <th style="padding: 12px 14px;">Stok Kodu & Adı</th>
-              <th style="padding: 12px 14px; width: 140px;">Kategori</th>
-              <th style="padding: 12px 14px; width: 120px;">Mevcut Stok</th>
-              <th style="padding: 12px 14px; width: 100px;">Birim</th>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.76rem; text-transform: uppercase;">
+              <th style="padding: 10px 12px; width: 45px; text-align: center;">Seç</th>
+              <th style="padding: 10px 12px; width: 130px;">Ürün Kodu</th>
+              <th style="padding: 10px 12px;">Ürün Adı</th>
+              <th style="padding: 10px 12px; width: 110px;">Kategori</th>
+              <th style="padding: 10px 12px; width: 70px; text-align: center;">Birim</th>
+              <th style="padding: 10px 12px; width: 100px; text-align: right;">Mevcut Stok</th>
             </tr>
           </thead>
           <tbody id="modalComponentsTbody">
-            <% componentStockItems.forEach(item => { %>
-              <tr class="modal-comp-row" 
-                  data-id="<%= item.id %>" 
-                  data-code="<%= item.stokKodu %>" 
-                  data-name="<%= item.ad %>" 
-                  data-cat="<%= item.kategori %>" 
-                  data-unit="<%= item.birim || 'Adet' %>" 
-                  data-stock="<%= item.mevcutStok || 0 %>"
-                  style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease;">
-                <td style="padding: 12px 8px; text-align: center;">
-                  <input type="checkbox" class="modal-comp-cb" value="<%= item.id %>" onchange="updateModalSelectedCount()" style="cursor: pointer; transform: scale(1.15);">
-                </td>
-                <td style="padding: 12px 14px;">
-                  <div style="font-weight: 700; color: #fff;"><%= item.ad %></div>
-                  <div style="font-size: 0.75rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= item.stokKodu %></div>
-                </td>
-                <td style="padding: 12px 14px;">
-                  <% if (item.kategori === 'Hammadde') { %>
-                    <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">Hammadde</span>
-                  <% } else if (item.kategori === 'Yarı_Mamul' || item.kategori === 'Yari_Mamul') { %>
-                    <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">Yarı Mamul</span>
-                  <% } else { %>
-                    <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">Sarf / Diğer</span>
-                  <% } %>
-                </td>
-                <td style="padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #e2e8f0;">
-                  <%= item.mevcutStok || 0 %>
-                </td>
-                <td style="padding: 12px 14px; color: var(--text-muted); font-weight: 600;">
-                  <%= item.birim || 'Adet' %>
-                </td>
-              </tr>
-            <% }); %>
+            <!-- Injected via JS -->
           </tbody>
         </table>
       </div>
 
       <!-- Modal Footer -->
-      <div style="padding: 16px 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 23, 42, 0.95); display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size: 0.85rem; color: #818cf8; font-weight: 700;">
-          <span id="selectedModalCount">0</span> adet hammadde seçildi
-        </div>
-        <div style="display: flex; gap: 10px;">
-          <button type="button" onclick="closeComponentSelectModal()" class="btn btn-secondary btn-sm" style="padding: 9px 18px; border-radius: 8px;">Vazgeç</button>
-          <button type="button" onclick="confirmAddSelectedComponents()" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700; padding: 9px 22px; border-radius: 8px; border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
-            ✓ Seçilen Hammaddeleri Reçeteye Ekle
-          </button>
-        </div>
+      <div class="component-modal-footer">
+        <button type="button" onclick="closeComponentSelectModal()" class="btn btn-secondary" style="padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.85rem;">
+          Vazgeç
+        </button>
+        <button type="button" onclick="applyModalSelection()" class="btn btn-primary" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; padding: 8px 24px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; border: none; cursor: pointer;">
+          ✓ Seçimi Uygula
+        </button>
       </div>
 
     </div>
   </div>
 
+  <!-- Raw JSON Data Embeds -->
+  <script id="allComponentStockItemsData" type="application/json">
+    <%- JSON.stringify(allComponentStockItems || []) %>
+  </script>
+  <script id="targetRoutingOperationsData" type="application/json">
+    <%- JSON.stringify(targetRoutingOperations || []) %>
+  </script>
+  <script id="existingBOMItemsData" type="application/json">
+    <%- JSON.stringify(existingBOMItems || []) %>
+  </script>
+
   <script>
-    // 1. Initial Data from Backend
-    const existingItems = <%- JSON.stringify(existingBOMItems || []) %>;
-    const routingOperations = <%- JSON.stringify(routingOperations || []) %>;
-    const allComponentsCatalog = <%- JSON.stringify(componentStockItems || []) %>;
+    const componentsCatalog = JSON.parse(document.getElementById('allComponentStockItemsData').textContent || '[]');
+    const routingOperations = JSON.parse(document.getElementById('targetRoutingOperationsData').textContent || '[]');
+    const existingBOMList = JSON.parse(document.getElementById('existingBOMItemsData').textContent || '[]');
 
-    let currentStep = 1;
-    let selectedComponentsList = [];
+    let componentsData = [];
+    let activeModalTargetIndex = null;
+    let currentModalCategory = 'all';
+    let tempModalSelectedId = null;
 
-    // Prepopulate existing BOM items if editing
-    if (existingItems && existingItems.length > 0) {
-      selectedComponentsList = existingItems.map(item => ({
-        bilesenStokId: item.bilesenStokId,
-        stokKodu: item.bilesenUrun ? item.bilesenUrun.stokKodu : ('STK-' + item.bilesenStokId),
-        ad: item.bilesenUrun ? item.bilesenUrun.ad : 'Bileşen',
-        kategori: item.bilesenUrun ? item.bilesenUrun.kategori : 'Hammadde',
-        gerekliMiktar: parseFloat(item.gerekliMiktar) || 1,
-        birim: item.birim || (item.bilesenUrun ? item.bilesenUrun.birim : 'Adet'),
-        fireOrani: parseFloat(item.fireOrani) || 0,
-        operasyonKodu: item.operasyonKodu || '',
-        alternatifBilesenStokId: item.alternatifBilesenStokId || '',
-        notlar: item.notlar || ''
+    // Initialize Component Rows
+    if (existingBOMList && existingBOMList.length > 0) {
+      componentsData = existingBOMList.map(b => ({
+        bilesenStokId: b.bilesenStokId,
+        bilesenKodu: b.bilesenUrun ? b.bilesenUrun.stokKodu : '',
+        bilesenAdi: b.bilesenUrun ? b.bilesenUrun.ad : '',
+        gerekliMiktar: b.gerekliMiktar,
+        birim: b.birim || (b.bilesenUrun ? b.bilesenUrun.birim : 'Adet'),
+        fireOrani: b.fireOrani !== undefined ? b.fireOrani : 0.0,
+        operasyonKodu: b.operasyonKodu || (routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : ''),
+        notlar: b.notlar || ''
       }));
-    }
-
-    // 2. Tab & Stepper Navigation
-    function switchBomTab(stepNum) {
-      currentStep = stepNum;
-      document.querySelectorAll('.step-tab-btn').forEach((b, idx) => {
-        b.classList.toggle('active', (idx + 1) === stepNum);
-      });
-      document.querySelectorAll('.tab-content-panel').forEach((p, idx) => {
-        p.classList.toggle('active', (idx + 1) === stepNum);
-      });
-
-      const btnPrev = document.getElementById('btnPrevStep');
-      const btnNext = document.getElementById('btnNextStep');
-      const btnSubmit = document.getElementById('btnSubmitBom');
-      const stepBadge = document.getElementById('stepCounterBadge');
-
-      if (stepNum === 1) {
-        btnPrev.style.display = 'none';
-        btnNext.style.display = 'inline-flex';
-        btnSubmit.style.display = 'none';
-        stepBadge.textContent = 'Adım 1 / 2 (Genel Bilgiler)';
-      } else {
-        btnPrev.style.display = 'inline-flex';
-        btnNext.style.display = 'none';
-        btnSubmit.style.display = 'inline-flex';
-        stepBadge.textContent = 'Adım 2 / 2 (Hammaddeler & Sarfiyat)';
-      }
-    }
-
-    function navigateBomStep(dir) {
-      const target = currentStep + dir;
-      if (target === 2) {
-        const prodInput = document.querySelector('[name="finishedStockItemId"]');
-        if (!prodInput || !prodInput.value) {
-          alert('⚠️ Lütfen önce reçetesi yazılacak ürünü seçiniz.');
-          if (prodInput && prodInput.focus) prodInput.focus();
-          return;
+    } else {
+      // Initialize with 1 clean empty component row
+      componentsData = [
+        {
+          bilesenStokId: '',
+          bilesenKodu: '',
+          bilesenAdi: '',
+          gerekliMiktar: '',
+          birim: '',
+          fireOrani: '',
+          operasyonKodu: routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : '',
+          notlar: ''
         }
+      ];
+    }
+
+    function renderComponentCards() {
+      const container = document.getElementById('compCardsContainer');
+      if (!container) return;
+
+      document.getElementById('compCountBadge').textContent = `${componentsData.length} Bileşen Kalemi`;
+
+      if (componentsData.length === 0) {
+        container.innerHTML = `
+          <div style="background: rgba(15, 23, 42, 0.6); border: 2px dashed rgba(255,255,255,0.1); border-radius: 16px; padding: 40px; text-align: center; color: var(--text-muted);">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🧩</div>
+            <strong>Henüz bir reçete bileşeni eklenmedi.</strong><br>
+            <span style="font-size: 0.84rem; margin-top: 4px; display: inline-block;">Aşağıdaki 'Yeni Reçete Bileşeni Ekle' butonuna basarak hammadde ve parçaları tanımlayabilirsiniz.</span>
+          </div>
+        `;
+        return;
       }
-      if (target >= 1 && target <= 2) {
-        switchBomTab(target);
+
+      container.innerHTML = componentsData.map((comp, idx) => {
+        const hasSelection = comp.bilesenStokId && comp.bilesenKodu;
+        return `
+          <div class="comp-card-box" data-index="${idx}">
+            
+            <!-- Card Header -->
+            <div class="comp-card-header">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;">
+                  #${idx + 1}
+                </span>
+                <strong style="color: #fff; font-size: 0.95rem;">
+                  ${hasSelection ? `[${escapeHtml(comp.bilesenKodu)}] ${escapeHtml(comp.bilesenAdi)}` : 'Lütfen Bir Bileşen / Malzeme Seçiniz'}
+                </strong>
+              </div>
+              <div>
+                <button type="button" onclick="removeComponentRow(${idx})" class="btn btn-danger btn-sm" style="padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.78rem;" title="Bu Bileşeni Sil">
+                  🗑️ Kalemi Sil
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Inputs Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 12px;">
+              
+              <!-- 1. Bileşen Kodu / Adı & Modal Seç Butonu (Zorunlu) -->
+              <div class="input-group" style="grid-column: span 2;">
+                <label style="font-weight: 700; font-size: 0.82rem;">
+                  1. Bileşen Kodu / Adı <span style="color: #f43f5e;">*</span>
+                </label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" readonly value="${hasSelection ? `[${comp.bilesenKodu}] ${comp.bilesenAdi}` : ''}" placeholder="— Malzeme Listesinden Seçiniz —" required
+                    style="flex: 1; font-weight: 600; color: ${hasSelection ? '#818cf8' : 'var(--text-muted)'}; background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(255,255,255,0.1); cursor: pointer;"
+                    onclick="openComponentSelectModal(${idx})">
+                  <button type="button" class="btn btn-secondary" onclick="openComponentSelectModal(${idx})" style="padding: 0 14px; font-weight: 700; font-size: 0.82rem; border-radius: 10px; white-space: nowrap;">
+                    🔍 Seç
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Miktar (Zorunlu, > 0) -->
+              <div class="input-group">
+                <label style="font-weight: 700; font-size: 0.82rem;">
+                  2. Miktar <span style="color: #f43f5e;">*</span>
+                </label>
+                <input type="number" step="0.0001" min="0.0001" value="${comp.gerekliMiktar !== undefined && comp.gerekliMiktar !== null ? comp.gerekliMiktar : ''}" placeholder="Örn: 1.5" required
+                  class="comp-input-qty" data-index="${idx}" onchange="updateCompField(${idx}, 'gerekliMiktar', this.value)"
+                  style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399;">
+              </div>
+
+              <!-- 3. Birim (Readonly) -->
+              <div class="input-group">
+                <label style="font-weight: 700; font-size: 0.82rem;">
+                  3. Birim <span style="color: #818cf8; font-size: 0.72rem; font-weight: 600;">(Otomatik)</span> <span style="color: #f43f5e;">*</span>
+                </label>
+                <input type="text" readonly value="${comp.birim || ''}" placeholder="Birim" required
+                  class="comp-input-unit" data-index="${idx}"
+                  style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(255,255,255,0.1); color: #fff; cursor: not-allowed;">
+              </div>
+
+              <!-- 4. Fire Oranı (%) (Zorunlu, >= 0) -->
+              <div class="input-group">
+                <label style="font-weight: 700; font-size: 0.82rem;">
+                  4. Fire Oranı (%) <span style="color: #f43f5e;">*</span>
+                </label>
+                <div style="position: relative;">
+                  <input type="number" step="0.1" min="0" value="${comp.fireOrani !== undefined && comp.fireOrani !== null ? comp.fireOrani : ''}" placeholder="0.0" required
+                    class="comp-input-scrap" data-index="${idx}" onchange="updateCompField(${idx}, 'fireOrani', this.value)"
+                    style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fbbf24; padding-right: 40px;">
+                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
+                    %
+                  </span>
+                </div>
+              </div>
+
+              <!-- 5. Rota Adımı Numarası (Zorunlu) -->
+              <div class="input-group">
+                <label style="font-weight: 700; font-size: 0.82rem;">
+                  5. Kullanılacağı Rota Adımı <span style="color: #f43f5e;">*</span>
+                </label>
+                <select required class="comp-input-op" data-index="${idx}" onchange="updateCompField(${idx}, 'operasyonKodu', this.value)" style="font-weight: 700;">
+                  <option value="">— Rota Adımı Seçiniz —</option>
+                  ${routingOperations.map(r => {
+                    const isSelected = String(comp.operasyonKodu) === String(r.operasyonSira) || String(comp.operasyonKodu) === String(r.operasyonKodu);
+                    return `<option value="${r.operasyonSira}" ${isSelected ? 'selected' : ''}>[Adım #${r.operasyonSira}] ${escapeHtml(r.operasyonAdi)}</option>`;
+                  }).join('')}
+                </select>
+              </div>
+
+            </div>
+
+            <!-- 6. Satır Açıklaması / Notlar (Opsiyonel) -->
+            <div class="input-group">
+              <label style="font-weight: 700; font-size: 0.82rem;">
+                6. Satır Açıklaması / İmalat Notları <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: normal;">(Opsiyonel)</span>
+              </label>
+              <input type="text" value="${escapeHtml(comp.notlar || '')}" placeholder="Bileşen kullanımı veya montaj sırası ile ilgili ek açıklama girilebilir..."
+                class="comp-input-notes" data-index="${idx}" oninput="updateCompField(${idx}, 'notlar', this.value)"
+                style="font-size: 0.85rem;">
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    function addNewComponentRow() {
+      componentsData.push({
+        bilesenStokId: '',
+        bilesenKodu: '',
+        bilesenAdi: '',
+        gerekliMiktar: '',
+        birim: '',
+        fireOrani: '',
+        operasyonKodu: routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : '',
+        notlar: ''
+      });
+      renderComponentCards();
+    }
+
+    function removeComponentRow(index) {
+      if (componentsData.length <= 1) {
+        if (!confirm('Bu son bileşen kalemini silmek istediğinize emin misiniz? Reçetede en az 1 bileşen bulunmalıdır.')) return;
+      }
+      componentsData.splice(index, 1);
+      renderComponentCards();
+    }
+
+    function updateCompField(index, field, value) {
+      if (componentsData[index]) {
+        componentsData[index][field] = value;
       }
     }
 
-    // 3. Product Selection Handler
-    function handleProductSelect(selectEl) {
-      const selectedOpt = selectEl.options[selectEl.selectedIndex];
-      if (!selectedOpt || !selectedOpt.value) return;
+    function openComponentSelectModal(index) {
+      activeModalTargetIndex = index;
+      tempModalSelectedId = componentsData[index] ? componentsData[index].bilesenStokId : null;
+      document.getElementById('modalComponentSearch').value = '';
+      currentModalCategory = 'all';
+      document.querySelectorAll('.modal-filter-tab').forEach(b => b.classList.remove('active'));
+      document.querySelector('.modal-filter-tab')?.classList.add('active');
 
-      const unit = selectedOpt.dataset.unit || 'Adet';
-      const unitBadge = document.getElementById('productUnitBadge');
-      if (unitBadge) unitBadge.textContent = unit;
-    }
-
-    // 4. Modal Functions
-    function openComponentSelectModal() {
       const modal = document.getElementById('componentSelectModal');
-      if (modal) {
-        modal.style.display = 'flex';
-        // Reset checkboxes based on current selection
-        document.querySelectorAll('.modal-comp-cb').forEach(cb => {
-          const compId = parseInt(cb.value, 10);
-          cb.checked = selectedComponentsList.some(c => c.bilesenStokId === compId);
-        });
-        updateModalSelectedCount();
-        const searchInp = document.getElementById('modalSearchInput');
-        if (searchInp) {
-          searchInp.value = '';
-          filterModalComponents();
-          searchInp.focus();
-        }
-      }
+      if (modal) modal.style.display = 'flex';
+      renderModalComponents();
+      setTimeout(() => {
+        document.getElementById('modalComponentSearch')?.focus();
+      }, 100);
     }
 
     function closeComponentSelectModal() {
       const modal = document.getElementById('componentSelectModal');
       if (modal) modal.style.display = 'none';
+      activeModalTargetIndex = null;
     }
 
-    function filterModalComponents() {
-      const q = (document.getElementById('modalSearchInput').value || '').toLowerCase().trim();
-      document.querySelectorAll('.modal-comp-row').forEach(row => {
-        const name = (row.dataset.name || '').toLowerCase();
-        const code = (row.dataset.code || '').toLowerCase();
-        const match = name.includes(q) || code.includes(q);
-        row.style.display = match ? '' : 'none';
-      });
-    }
-
-    let currentCategoryFilter = 'ALL';
     function filterModalCategory(cat, btn) {
-      currentCategoryFilter = cat;
-      btn.parentElement.querySelectorAll('button').forEach(b => {
-        b.style.background = 'rgba(255,255,255,0.06)';
-        b.style.color = 'var(--text-secondary)';
-      });
-      btn.style.background = '#6366f1';
-      btn.style.color = '#fff';
-
-      document.querySelectorAll('.modal-comp-row').forEach(row => {
-        const rowCat = row.dataset.cat;
-        let match = true;
-        if (cat !== 'ALL') {
-          if (cat === 'Yarı_Mamul') {
-            match = (rowCat === 'Yarı_Mamul' || rowCat === 'Yari_Mamul');
-          } else {
-            match = (rowCat === cat);
-          }
-        }
-        row.style.display = match ? '' : 'none';
-      });
+      document.querySelectorAll('.modal-filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentModalCategory = cat;
+      renderModalComponents();
     }
 
-    function toggleSelectAllModal(masterCb) {
-      document.querySelectorAll('.modal-comp-row').forEach(row => {
-        if (row.style.display !== 'none') {
-          const cb = row.querySelector('.modal-comp-cb');
-          if (cb) cb.checked = masterCb.checked;
-        }
-      });
-      updateModalSelectedCount();
-    }
-
-    function updateModalSelectedCount() {
-      const checkedBoxes = document.querySelectorAll('.modal-comp-cb:checked');
-      const countEl = document.getElementById('selectedModalCount');
-      if (countEl) countEl.textContent = checkedBoxes.length;
-    }
-
-    function confirmAddSelectedComponents() {
-      const checkedBoxes = document.querySelectorAll('.modal-comp-cb:checked');
-      
-      const newItems = [];
-      checkedBoxes.forEach(cb => {
-        const row = cb.closest('.modal-comp-row');
-        const id = parseInt(cb.value, 10);
-        
-        // Find existing or create new
-        const existing = selectedComponentsList.find(c => c.bilesenStokId === id);
-        if (existing) {
-          newItems.push(existing);
-        } else {
-          newItems.push({
-            bilesenStokId: id,
-            stokKodu: row.dataset.code,
-            ad: row.dataset.name,
-            kategori: row.dataset.cat,
-            gerekliMiktar: 1,
-            birim: row.dataset.unit || 'Adet',
-            fireOrani: 0,
-            operasyonKodu: '',
-            alternatifBilesenStokId: '',
-            notlar: ''
-          });
-        }
-      });
-
-      selectedComponentsList = newItems;
-      renderComponentsTable();
-      closeComponentSelectModal();
-    }
-
-    // 5. Render Components Table & Calculate Summaries
-    function renderComponentsTable() {
-      const tbody = document.getElementById('componentsTbody');
-      const tabBadge = document.getElementById('tabComponentsCount');
-      const placeholder = document.getElementById('emptyComponentsPlaceholder');
-
+    function renderModalComponents() {
+      const tbody = document.getElementById('modalComponentsTbody');
       if (!tbody) return;
 
-      if (tabBadge) tabBadge.textContent = `${selectedComponentsList.length} Kalem`;
+      const query = (document.getElementById('modalComponentSearch')?.value || '').toLowerCase().trim();
 
-      if (selectedComponentsList.length === 0) {
+      let items = (componentsCatalog || []).filter(c => {
+        if (currentModalCategory !== 'all') {
+          if (currentModalCategory === 'Yari_Mamul') {
+            if (!['Yari_Mamul', 'Yarı_Mamul'].includes(c.kategori)) return false;
+          } else if (c.kategori !== currentModalCategory) {
+            return false;
+          }
+        }
+
+        const code = (c.stokKodu || '').toLowerCase();
+        const name = (c.ad || '').toLowerCase();
+        return code.includes(query) || name.includes(query);
+      });
+
+      if (items.length === 0) {
         tbody.innerHTML = `
-          <tr id="emptyComponentsPlaceholder">
-            <td colspan="9" style="padding: 35px; text-align: center; color: var(--text-muted);">
-              📦 Henüz reçete bileşeni eklenmedi.<br>
-              <span style="font-size: 0.8rem; margin-top: 6px; display: inline-block; color: #818cf8;">Yukarıdaki <strong>'📦 Stok Kartından Hammadde Seç (Modal)'</strong> butonuna tıklayarak reçeteye çoklu hammadde seçebilirsiniz.</span>
+          <tr>
+            <td colspan="6" style="padding: 30px; text-align: center; color: var(--text-muted);">
+              🔍 Kriterlere uygun bileşen bulunamadı.
             </td>
           </tr>
         `;
-        updateSummaryStrip();
         return;
       }
 
-      let html = '';
-      selectedComponentsList.forEach((comp, idx) => {
-        // Alternatives dropdown options
-        let altOptions = `<option value="">— Alternatif Yok —</option>`;
-        allComponentsCatalog.forEach(altItem => {
-          if (altItem.id !== comp.bilesenStokId) {
-            const isSel = comp.alternatifBilesenStokId == altItem.id ? 'selected' : '';
-            altOptions += `<option value="${altItem.id}" ${isSel}>[${altItem.stokKodu}] ${altItem.ad}</option>`;
-          }
-        });
-
-        // Routing operations dropdown options
-        let opOptions = `<option value="">— Rota Adımı Yok —</option>`;
-        if (routingOperations && routingOperations.length > 0) {
-          routingOperations.forEach(op => {
-            const opVal = op.operasyonKodu || `OP-${op.siraNo}`;
-            const isOpSel = comp.operasyonKodu === opVal ? 'selected' : '';
-            opOptions += `<option value="${opVal}" ${isOpSel}>${op.siraNo ? op.siraNo + '. ' : ''}${op.operasyonAdi || opVal}</option>`;
-          });
-        }
-
-        html += `
-          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-            <td style="padding: 10px 14px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted);">
-              ${idx + 1}
+      tbody.innerHTML = items.map(c => {
+        const isSelected = String(c.id) === String(tempModalSelectedId);
+        return `
+          <tr class="comp-table-row ${isSelected ? 'selected' : ''}" onclick="selectModalItem(${c.id})">
+            <td style="padding: 10px 12px; text-align: center;">
+              <input type="radio" name="modalCompRadio" value="${c.id}" ${isSelected ? 'checked' : ''}
+                style="cursor: pointer; accent-color: #6366f1;" onclick="event.stopPropagation(); selectModalItem(${c.id})">
             </td>
-            <td style="padding: 10px 14px;">
-              <div style="font-weight: 700; color: #fff;">${comp.ad}</div>
-              <div style="display: flex; gap: 6px; align-items: center; margin-top: 2px;">
-                <span style="font-size: 0.72rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;">${comp.stokKodu}</span>
-                <span style="font-size: 0.68rem; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; color: var(--text-muted);">${comp.kategori || 'Hammadde'}</span>
-              </div>
+            <td style="padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.84rem; font-weight: 700; color: #818cf8;">
+              ${escapeHtml(c.stokKodu)}
             </td>
-            <td style="padding: 10px 14px;">
-              <input type="number" step="0.0001" min="0.0001" class="bom-table-input" value="${comp.gerekliMiktar}" onchange="updateCompField(${idx}, 'gerekliMiktar', this.value)" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; text-align: right;">
+            <td style="padding: 10px 12px; font-weight: 600; color: #fff; font-size: 0.88rem;">
+              ${escapeHtml(c.ad)}
             </td>
-            <td style="padding: 10px 14px;">
-              <input type="text" class="bom-table-input" value="${comp.birim}" onchange="updateCompField(${idx}, 'birim', this.value)" style="text-align: center; font-weight: 600;">
+            <td style="padding: 10px 12px; font-size: 0.78rem;">
+              ${c.kategori === 'Hammadde' ? '<span style="color: #60a5fa; background: rgba(59,130,246,0.15); padding: 2px 8px; border-radius: 6px;">Hammadde</span>' : (['Yari_Mamul', 'Yarı_Mamul'].includes(c.kategori) ? '<span style="color: #fbbf24; background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 6px;">Yarı Mamul</span>' : '<span style="color: #818cf8; background: rgba(99,102,241,0.15); padding: 2px 8px; border-radius: 6px;">Mamul</span>')}
             </td>
-            <td style="padding: 10px 14px;">
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <input type="number" step="0.1" min="0" max="100" class="bom-table-input" value="${comp.fireOrani}" onchange="updateCompField(${idx}, 'fireOrani', this.value)" style="font-family: 'JetBrains Mono', monospace; text-align: right; color: #fb7185;">
-                <span style="font-size: 0.75rem; color: var(--text-muted);">%</span>
-              </div>
+            <td style="padding: 10px 12px; text-align: center; font-size: 0.82rem; color: var(--text-secondary);">
+              ${escapeHtml(c.birim || 'Adet')}
             </td>
-            <td style="padding: 10px 14px;">
-              <select class="bom-table-input" onchange="updateCompField(${idx}, 'operasyonKodu', this.value)">
-                ${opOptions}
-              </select>
-            </td>
-            <td style="padding: 10px 14px;">
-              <select class="bom-table-input" onchange="updateCompField(${idx}, 'alternatifBilesenStokId', this.value)">
-                ${altOptions}
-              </select>
-            </td>
-            <td style="padding: 10px 14px;">
-              <input type="text" class="bom-table-input" value="${comp.notlar || ''}" placeholder="Tolerans / Not..." onchange="updateCompField(${idx}, 'notlar', this.value)">
-            </td>
-            <td style="padding: 10px 14px; text-align: center;">
-              <button type="button" onclick="removeComponentRow(${idx})" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
+            <td style="padding: 10px 12px; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #34d399; font-weight: 700;">
+              ${c.mevcutStok || 0}
             </td>
           </tr>
         `;
-      });
-
-      tbody.innerHTML = html;
-      updateSummaryStrip();
+      }).join('');
     }
 
-    function updateCompField(index, field, value) {
-      if (selectedComponentsList[index]) {
-        if (field === 'gerekliMiktar' || field === 'fireOrani') {
-          selectedComponentsList[index][field] = parseFloat(value) || 0;
-        } else {
-          selectedComponentsList[index][field] = value;
-        }
+    function selectModalItem(id) {
+      tempModalSelectedId = id;
+      renderModalComponents();
+    }
+
+    function applyModalSelection() {
+      if (!tempModalSelectedId) {
+        alert('Lütfen listeden bir bileşen seçiniz.');
+        return;
       }
-      updateSummaryStrip();
-    }
 
-    function removeComponentRow(index) {
-      selectedComponentsList.splice(index, 1);
-      renderComponentsTable();
-    }
+      const match = (componentsCatalog || []).find(c => String(c.id) === String(tempModalSelectedId));
+      if (!match) return;
 
-    function updateSummaryStrip() {
-      const countEl = document.getElementById('summaryTotalItems');
-      const qtyEl = document.getElementById('summaryTotalQuantity');
-      const wasteEl = document.getElementById('summaryAvgWaste');
-
-      const count = selectedComponentsList.length;
-      let totalQty = 0;
-      let totalWaste = 0;
-
-      selectedComponentsList.forEach(c => {
-        totalQty += parseFloat(c.gerekliMiktar || 0);
-        totalWaste += parseFloat(c.fireOrani || 0);
-      });
-
-      const avgWaste = count > 0 ? (totalWaste / count).toFixed(2) : '0.00';
-
-      if (countEl) countEl.textContent = `${count} Kalem`;
-      if (qtyEl) qtyEl.textContent = totalQty.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-      if (wasteEl) wasteEl.textContent = `% ${avgWaste}`;
-
-      // Sync JSON to hidden input
-      const jsonInput = document.getElementById('componentsJsonInput');
-      if (jsonInput) {
-        jsonInput.value = JSON.stringify(selectedComponentsList);
+      if (activeModalTargetIndex !== null && componentsData[activeModalTargetIndex]) {
+        componentsData[activeModalTargetIndex].bilesenStokId = match.id;
+        componentsData[activeModalTargetIndex].bilesenKodu = match.stokKodu;
+        componentsData[activeModalTargetIndex].bilesenAdi = match.ad;
+        componentsData[activeModalTargetIndex].birim = match.birim || 'Adet';
       }
+
+      closeComponentSelectModal();
+      renderComponentCards();
     }
 
-    // 6. Form Submission Validation
-    const mainForm = document.getElementById('bomMainForm');
-    if (mainForm) {
-      mainForm.addEventListener('submit', (e) => {
-        const prodInput = document.querySelector('[name="finishedStockItemId"]');
-        if (!prodInput || !prodInput.value) {
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function onProductSelectChange(productId) {
+      if (!productId) return;
+      window.location.href = `/production/bom/edit/${productId}`;
+    }
+
+    // Strict Validation on Form Submission
+    const form = document.getElementById('bomForm');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const finishedStockItemId = document.getElementById('finishedStockItemId').value;
+        if (!finishedStockItemId) {
           e.preventDefault();
-          alert('⚠️ Lütfen reçetesi yazılacak ürünü seçiniz.');
-          switchBomTab(1);
-          if (prodInput && prodInput.focus) prodInput.focus();
+          alert('⚠️ Lütfen reçetesi oluşturulacak hedef mamul/yarı mamul ürünü seçiniz.');
           return false;
         }
 
-        if (selectedComponentsList.length === 0) {
+        const gecerlilikBaslangic = document.getElementById('gecerlilikBaslangic').value;
+        if (!gecerlilikBaslangic) {
           e.preventDefault();
-          alert('⚠️ Reçeteye en az 1 adet hammadde veya bileşen eklemelisiniz. Lütfen "📦 Stok Kartından Hammadde Seç (Modal)" butonuna tıklayarak malzeme ekleyiniz.');
-          switchBomTab(2);
+          alert('⚠️ Lütfen geçerlilik başlangıç tarihini giriniz.');
           return false;
         }
 
-        updateSummaryStrip();
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (gecerlilikBaslangic < todayStr) {
+          e.preventDefault();
+          alert('⚠️ Geçerlilik başlangıç tarihi bugünden eski bir tarih olamaz.');
+          return false;
+        }
+
+        if (!componentsData || componentsData.length === 0) {
+          e.preventDefault();
+          alert('⚠️ Lütfen en az 1 adet reçete bileşeni ekleyiniz.');
+          return false;
+        }
+
+        // Validate all 10 mandatory fields
+        for (let i = 0; i < componentsData.length; i++) {
+          const comp = componentsData[i];
+
+          if (!comp.bilesenStokId) {
+            e.preventDefault();
+            alert(`⚠️ Bileşen Kalemi #${i + 1}: Lütfen bir bileşen/hammadde seçiniz.`);
+            return false;
+          }
+
+          if (String(comp.bilesenStokId) === String(finishedStockItemId)) {
+            e.preventDefault();
+            alert(`⚠️ Bileşen Kalemi #${i + 1}: Ürünün kendisi kendi reçetesine bileşen olarak eklenemez.`);
+            return false;
+          }
+
+          const qty = parseFloat(comp.gerekliMiktar);
+          if (isNaN(qty) || qty <= 0) {
+            e.preventDefault();
+            alert(`⚠️ Bileşen Kalemi #${i + 1}: Miktar 0'dan büyük pozitif bir sayı olmalıdır.`);
+            return false;
+          }
+
+          if (!comp.birim || !comp.birim.trim()) {
+            e.preventDefault();
+            alert(`⚠️ Bileşen Kalemi #${i + 1}: Bileşen birimi gereklidir.`);
+            return false;
+          }
+
+          const scrap = parseFloat(comp.fireOrani);
+          if (isNaN(scrap) || scrap < 0) {
+            e.preventDefault();
+            alert(`⚠️ Bileşen Kalemi #${i + 1}: Fire oranı negatif olamaz (0 veya daha büyük girilmelidir).`);
+            return false;
+          }
+
+          if (!comp.operasyonKodu || !comp.operasyonKodu.trim()) {
+            e.preventDefault();
+            alert(`⚠️ Bileşen Kalemi #${i + 1}: Lütfen bu bileşenin kullanılacağı Rota Adımını seçiniz.`);
+            return false;
+          }
+        }
+
+        document.getElementById('componentsJson').value = JSON.stringify(componentsData);
       });
     }
 
-    // Initialize on page load
-    window.addEventListener('DOMContentLoaded', () => {
-      renderComponentsTable();
-    });
+    // Initial render
+    renderComponentCards();
 
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    function updateClock() { 
+      const now = new Date(); 
+      const el = document.getElementById('liveTime'); 
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); 
+    }
+    updateClock(); 
+    setInterval(updateClock, 1000);
   </script>
 </body>
 </html>
