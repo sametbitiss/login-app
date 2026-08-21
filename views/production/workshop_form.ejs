@@ -8,46 +8,71 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="/sidebar.js" defer></script>
   <style>
-    .selected-manager-card {
+    .form-container-card {
+      background: rgba(30, 41, 59, 0.45);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .form-section-header {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #818cf8;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    /* Selected Manager Profile Box */
+    .manager-profile-card {
       background: rgba(15, 23, 42, 0.85);
-      border: 1.5px solid rgba(99, 102, 241, 0.35);
-      border-radius: 14px;
-      padding: 14px 18px;
+      border: 1.5px solid rgba(99, 102, 241, 0.4);
+      border-radius: 16px;
+      padding: 16px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
       transition: all 0.2s ease;
     }
-    .selected-manager-card:hover {
-      border-color: rgba(99, 102, 241, 0.6);
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+    .manager-profile-card:hover {
+      border-color: rgba(99, 102, 241, 0.7);
+      box-shadow: 0 6px 25px rgba(99, 102, 241, 0.25);
     }
-    .user-avatar-lg {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff;
-      display: inline-flex;
+    .manager-avatar-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: #ffffff;
+      display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.15rem;
+      font-size: 1.25rem;
       font-weight: 800;
       flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
     }
-    .manager-modal-row {
+
+    /* Modal Table Rows */
+    .manager-table-row {
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       transition: background 0.15s ease;
       cursor: pointer;
     }
-    .manager-modal-row:hover {
+    .manager-table-row:hover {
       background: rgba(99, 102, 241, 0.08);
     }
-    .manager-modal-row.selected {
-      background: rgba(99, 102, 241, 0.18);
-      border-color: rgba(99, 102, 241, 0.4);
+    .manager-table-row.selected {
+      background: rgba(99, 102, 241, 0.18) !important;
     }
   </style>
 </head>
@@ -117,34 +142,34 @@
       <!-- Breadcrumb & Header -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px;">
         <div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-            <a href="/production/workshops" style="color: var(--text-muted); text-decoration: none;">Atölye Kartları</a>
+          <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <a href="/production/workshops" style="color: var(--text-muted); text-decoration: none;">🏢 Atölye Kartları</a>
             <span>/</span>
-            <span style="color: #818cf8;"><%= isEditMode ? 'Atölyeyi Düzenle' : 'Yeni Atölye Kartı Ekle' %></span>
+            <span style="color: #818cf8; font-weight: 600;"><%= isEditMode ? 'Atölyeyi Düzenle' : 'Yeni Atölye Kartı Ekle' %></span>
           </div>
-          <h1 style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px;">
-            🏢 <%= isEditMode ? `[${workshop.atolyeKodu}] ${workshop.atolyeAdi} Düzenleme` : 'Yeni Atölye Kartı Oluşturma' %>
+          <h1 style="font-size: 1.65rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px;">
+            <%= isEditMode ? `🏢 [${workshop.atolyeKodu}] ${workshop.atolyeAdi} Düzenleme` : '🏢 Yeni Atölye Kartı Oluşturma' %>
           </h1>
-          <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 4px;">
-            İmalat sahasında görev yapacak atölye kimliği, adı, genel personel rolündeki sorumlu ataması ve çalışma durumu.
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+            İmalat sahasında görev yapacak atölye kimliği, çalışma merkezi adı, sorumlu personel ataması ve durum yönetimi.
           </p>
         </div>
-        <a href="/production/workshops" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+        <a href="/production/workshops" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; border-radius: 12px; padding: 10px 20px;">
           <span>←</span> Atölye Listesine Dön
         </a>
       </div>
 
       <!-- Workshop Form Card -->
-      <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; box-shadow: var(--shadow-md); max-width: 900px; margin: 0 auto;">
+      <div class="form-container-card">
         
         <form action="/production/workshops/save" method="POST" id="workshopForm">
           <% if (isEditMode && workshop) { %>
             <input type="hidden" name="id" value="<%= workshop.id %>">
           <% } %>
 
-          <h4 style="font-size: 1rem; font-weight: 800; color: #818cf8; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
-            <span>🏢</span> Atölye Temel Bilgileri & Sorumlu Personel
-          </h4>
+          <div class="form-section-header">
+            <span>📋</span> Atölye Temel Bilgileri & Sorumlu Personel
+          </div>
 
           <!-- Row 1: Code & Name -->
           <div class="form-grid form-grid--2" style="margin-bottom: 1.5rem;">
@@ -156,8 +181,8 @@
               </label>
               <div style="position: relative;">
                 <input type="text" id="atolyeKodu" name="atolyeKodu" value="<%= nextCode %>" readonly 
-                  style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.3); cursor: not-allowed; padding-right: 40px;" required>
-                <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Sistem Tarafından Otomatik Üretilen Benzersiz Numara">🔒</span>
+                  style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.35); cursor: not-allowed; padding-right: 40px;" required>
+                <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.95rem;" title="Sistem Tarafından Otomatik Üretilen Benzersiz Numara">🔒</span>
               </div>
             </div>
 
@@ -178,7 +203,7 @@
           <div class="input-group" style="margin-bottom: 1.5rem;">
             <label style="font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
               <span>3. Atölye Sorumlusu (Genel Personel) <span style="color: #f43f5e;">*</span></span>
-              <span style="font-size: 0.75rem; color: #818cf8; font-weight: 600;">Sadece Genel Personel rolündeki çalışanlar atanabilir</span>
+              <span style="font-size: 0.76rem; color: #818cf8; font-weight: 600;">Sistemdeki personel çalışanları listelenir</span>
             </label>
             
             <% 
@@ -188,30 +213,34 @@
             <input type="hidden" name="sorumluId" id="sorumluId" value="<%= currentSorumluId %>" required>
 
             <!-- Sorumlu Display Container -->
-            <div id="selectedManagerDisplay" style="display: <%= currentSorumlu ? 'block' : 'none' %>; margin-bottom: 10px;">
-              <div class="selected-manager-card">
+            <div id="selectedManagerDisplay" style="display: <%= currentSorumlu ? 'block' : 'none' %>;">
+              <div class="manager-profile-card">
                 <div style="display: flex; align-items: center; gap: 14px;">
-                  <div class="user-avatar-lg" id="managerAvatar">
+                  <div class="manager-avatar-badge" id="managerAvatar">
                     <%= currentSorumlu ? (currentSorumlu.ad ? currentSorumlu.ad.charAt(0) : currentSorumlu.kullaniciAdi.charAt(0)).toUpperCase() : '?' %>
                   </div>
                   <div>
-                    <strong style="font-size: 1rem; color: #fff; display: block;" id="managerFullName">
+                    <strong style="font-size: 1.05rem; color: #fff; display: block;" id="managerFullName">
                       <%= currentSorumlu ? (currentSorumlu.ad ? `${currentSorumlu.ad} ${currentSorumlu.soyad || ''}` : currentSorumlu.kullaniciAdi) : '' %>
                     </strong>
-                    <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; margin-top: 2px;">
-                      <span id="managerUsername" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; margin-top: 3px; flex-wrap: wrap;">
+                      <span id="managerUsername" style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
                         @<%= currentSorumlu ? currentSorumlu.kullaniciAdi : '' %>
                       </span>
                       <span>•</span>
-                      <span id="managerDept" style="background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px;">
-                        <%= currentSorumlu ? (currentSorumlu.departman || 'Genel Personel') : '' %>
+                      <span id="managerDept" style="background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 6px; font-weight: 600;">
+                        🏢 <%= currentSorumlu ? (currentSorumlu.departman || 'Genel Personel') : '' %>
+                      </span>
+                      <span>•</span>
+                      <span id="managerTitle" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 2px 8px; border-radius: 6px; font-weight: 700;">
+                        👤 <%= currentSorumlu ? (currentSorumlu.unvan || 'Personel') : '' %>
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <button type="button" onclick="openManagerSelectModal()" class="btn btn-secondary btn-sm" style="font-weight: 700; border-radius: 8px;">
+                  <button type="button" onclick="openManagerSelectModal()" class="btn btn-secondary btn-sm" style="font-weight: 700; border-radius: 10px; padding: 8px 16px;">
                     🔄 Sorumluyu Değiştir
                   </button>
                 </div>
@@ -221,8 +250,10 @@
             <!-- Empty Manager Placeholder / Modal Trigger Button -->
             <div id="emptyManagerButtonWrap" style="display: <%= currentSorumlu ? 'none' : 'block' %>;">
               <button type="button" onclick="openManagerSelectModal()" class="btn" 
-                style="width: 100%; background: rgba(99, 102, 241, 0.12); border: 2px dashed rgba(99, 102, 241, 0.4); color: #818cf8; padding: 18px; border-radius: 14px; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s;">
-                <span style="font-size: 1.25rem;">👤</span>
+                style="width: 100%; background: rgba(99, 102, 241, 0.1); border: 2px dashed rgba(99, 102, 241, 0.45); color: #818cf8; padding: 20px; border-radius: 16px; font-weight: 800; font-size: 0.96rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.background='rgba(99, 102, 241, 0.18)'; this.style.borderColor='#818cf8';"
+                onmouseout="this.style.background='rgba(99, 102, 241, 0.1)'; this.style.borderColor='rgba(99, 102, 241, 0.45)';">
+                <span style="font-size: 1.3rem;">👤</span>
                 <span>Personel Listesinden Atölye Sorumlusu Seç (Modal)</span>
               </button>
             </div>
@@ -252,11 +283,11 @@
           </div>
 
           <!-- Form Actions -->
-          <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 18px;">
-            <a href="/production/workshops" class="btn btn-secondary" style="padding: 10px 22px; border-radius: 10px; font-weight: 600;">
+          <div style="display: flex; justify-content: flex-end; gap: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px;">
+            <a href="/production/workshops" class="btn btn-secondary" style="padding: 11px 24px; border-radius: 12px; font-weight: 700;">
               Vazgeç
             </a>
-            <button type="submit" class="btn btn-primary" id="btnSubmitWorkshop" style="background: linear-gradient(135deg, #6366f1 0%, #10b981 100%); color: #fff; border: none; font-weight: 700; padding: 11px 32px; border-radius: 10px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);">
+            <button type="submit" class="btn btn-primary" id="btnSubmitWorkshop" style="background: linear-gradient(135deg, #6366f1 0%, #10b981 100%); color: #fff; border: none; font-weight: 800; font-size: 0.95rem; padding: 11px 34px; border-radius: 12px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); cursor: pointer;">
               💾 <%= isEditMode ? 'Atölyeyi Güncelle' : 'Atölye Kartını Kaydet' %>
             </button>
           </div>
@@ -268,102 +299,71 @@
   </div>
 
   <!-- ======================================================================= -->
-  <!-- MODAL: ATÖLYE SORUMLUSU SEÇİMİ (GENEL PERSONEL FİLTRELİ) -->
+  <!-- PERSONNEL SELECTION MODAL (EXACT SALES QUOTE MODAL PARITY & DESIGN) -->
   <!-- ======================================================================= -->
-  <div id="managerSelectModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; width: 100%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); position: relative;">
+  <div id="managerSelectModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(14px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; width: 100%; max-width: 950px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); position: relative;">
       
       <!-- Modal Header -->
       <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.95);">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 1.5rem; background: rgba(99, 102, 241, 0.15); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(99, 102, 241, 0.3);">👤</span>
+          <span style="font-size: 1.5rem; background: rgba(99, 102, 241, 0.15); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(99, 102, 241, 0.3);">👤</span>
           <div>
-            <h2 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">Atölye Sorumlusu Seçimi</h2>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Sistemde 'Genel Personel' rolüne sahip çalışanlar listelenmektedir. Tek bir personel seçerek atayabilirsiniz.</p>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Personel Listesinden Atölye Sorumlusu Seçimi</h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">Atölye sorumlusu olarak atamak istediğiniz personeli arayabilir, sıralayabilir ve tekil seçim ile atayabilirsiniz.</p>
           </div>
         </div>
-        <button type="button" onclick="closeManagerSelectModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
+        <button type="button" onclick="closeManagerSelectModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">✕</button>
       </div>
 
-      <!-- Modal Search & Filters -->
-      <div style="padding: 16px 24px; background: rgba(30, 41, 59, 0.4); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 240px; position: relative;">
-          <input type="text" id="modalManagerSearchInput" oninput="filterModalManagers()" placeholder="🔍 Personel adı, soyadı veya kullanıcı adı ile ara..." style="width: 100%; padding: 10px 14px 10px 38px; border-radius: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;">
-          <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-muted);">🔍</span>
+      <!-- Modal Search & Filter Controls -->
+      <div style="padding: 16px 24px; background: rgba(30, 41, 59, 0.5); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+        <!-- Search Input -->
+        <div style="flex: 1; min-width: 260px; position: relative;">
+          <input type="text" id="modalManagerSearch" oninput="renderModalManagers()" placeholder="🔍 Personel adı, soyadı, kullanıcı adı veya departman ile arayın..." style="width: 100%; padding: 10px 14px 10px 38px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: #fff; font-size: 0.875rem; outline: none; box-sizing: border-box;">
+          <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;">🔍</span>
+        </div>
+
+        <!-- Sort Select Dropdown -->
+        <div style="width: 300px;">
+          <select id="modalManagerSort" onchange="renderModalManagers()" style="width: 100%; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: #fff; font-size: 0.85rem; outline: none; font-weight: 600;">
+            <option value="name_asc" selected>🔤 İsme Göre: A'dan Z'ye</option>
+            <option value="name_desc">🔤 İsme Göre: Z'den A'ya</option>
+            <option value="dept_asc">🏢 Departmana Göre: A-Z</option>
+            <option value="uname_asc">👤 Kullanıcı Adına Göre: A-Z</option>
+          </select>
         </div>
       </div>
 
-      <!-- Modal Body (Personnel List) -->
-      <div style="flex: 1; overflow-y: auto; padding: 0 24px;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;" id="modalManagersTable">
+      <!-- Modal Personnel List Table -->
+      <div style="flex: 1; overflow-y: auto; padding: 16px 24px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;" id="modalManagersTable">
           <thead>
-            <tr style="position: sticky; top: 0; background: #0f172a; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; z-index: 10;">
-              <th style="padding: 12px 10px; width: 45px; text-align: center;">Seç</th>
-              <th style="padding: 12px 14px;">Personel Bilgisi</th>
-              <th style="padding: 12px 14px; width: 180px;">Departman & Unvan</th>
-              <th style="padding: 12px 14px; width: 140px;">Rol</th>
+            <tr style="background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; position: sticky; top: 0; z-index: 10;">
+              <th style="padding: 12px 14px; width: 55px; text-align: center;">Seç</th>
+              <th style="padding: 12px 14px;">Personel / İsim Soyad</th>
+              <th style="padding: 12px 14px; width: 180px;">Kullanıcı Adı</th>
+              <th style="padding: 12px 14px; width: 200px;">Çalıştığı Departman</th>
+              <th style="padding: 12px 14px; width: 160px;">Unvan / Görev</th>
             </tr>
           </thead>
           <tbody id="modalManagersTbody">
-            <% if (!eligibleManagers || eligibleManagers.length === 0) { %>
-              <tr>
-                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
-                  ⚠️ Sistemde aktif 'Genel Personel' rolünde kullanıcı bulunamadı.
-                </td>
-              </tr>
-            <% } else { %>
-              <% eligibleManagers.forEach(emp => { %>
-                <% const fullName = emp.ad ? `${emp.ad} ${emp.soyad || ''}` : emp.kullaniciAdi; %>
-                <tr class="manager-modal-row" 
-                    data-id="<%= emp.id %>" 
-                    data-name="<%= fullName %>" 
-                    data-username="<%= emp.kullaniciAdi %>" 
-                    data-dept="<%= emp.departman || 'Genel Personel' %>" 
-                    data-title="<%= emp.unvan || 'Personel' %>"
-                    onclick="selectManagerRow(this)">
-                  <td style="padding: 12px 10px; text-align: center;">
-                    <input type="radio" name="modalSelectedManagerRadio" value="<%= emp.id %>" 
-                      style="cursor: pointer; transform: scale(1.2);"
-                      onclick="event.stopPropagation(); selectManagerRow(this.closest('tr'))">
-                  </td>
-                  <td style="padding: 12px 14px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-badge">
-                        <%= (emp.ad ? emp.ad.charAt(0) : emp.kullaniciAdi.charAt(0)).toUpperCase() %>
-                      </div>
-                      <div>
-                        <strong style="color: #fff; font-size: 0.88rem;"><%= fullName %></strong>
-                        <div style="font-size: 0.75rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;">@<%= emp.kullaniciAdi %></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style="padding: 12px 14px;">
-                    <div style="font-weight: 600; color: #e2e8f0;"><%= emp.departman || 'Genel' %></div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= emp.unvan || 'Personel' %></div>
-                  </td>
-                  <td style="padding: 12px 14px;">
-                    <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">
-                      Genel Personel
-                    </span>
-                  </td>
-                </tr>
-              <% }); %>
-            <% } %>
+            <!-- Rendered dynamically by renderModalManagers() -->
           </tbody>
         </table>
       </div>
 
       <!-- Modal Footer -->
-      <div style="padding: 16px 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 23, 42, 0.95); display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size: 0.85rem; color: #818cf8; font-weight: 700;" id="modalSelectedManagerNotice">
+      <div style="padding: 16px 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="font-size: 0.88rem; font-weight: 700;" id="modalSelectedManagerBadge">
           Lütfen listeden bir personel seçiniz
         </div>
-        <div style="display: flex; gap: 10px;">
-          <button type="button" onclick="closeManagerSelectModal()" class="btn btn-secondary btn-sm" style="padding: 9px 18px; border-radius: 8px;">
-            Vazgeç
+        <div style="display: flex; gap: 12px;">
+          <button type="button" class="btn btn-secondary" onclick="closeManagerSelectModal()" style="padding: 10px 20px; border-radius: 10px; font-weight: 600;">
+            İptal
           </button>
-          <button type="button" onclick="confirmAssignManager()" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700; padding: 9px 22px; border-radius: 8px; border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
-            ✓ Seçilen Personeli Sorumlu Olarak Ata
+          <button type="button" class="btn btn-primary" onclick="confirmAssignManager()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 800; padding: 10px 26px; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35); cursor: pointer;">
+            ✅ Seçilen Personeli Sorumlu Olarak Ata
           </button>
         </div>
       </div>
@@ -371,33 +371,37 @@
     </div>
   </div>
 
+  <!-- Personnel Master JSON Data -->
+  <script id="eligibleManagersData" type="application/json">
+    <%- JSON.stringify(eligibleManagers || []) %>
+  </script>
+
   <script>
-    let tempSelectedManager = null;
+    const personnelCatalog = JSON.parse(document.getElementById('eligibleManagersData').textContent || '[]');
+    let selectedManagerObj = null;
+
+    // Load initial selection if in edit mode
+    <% if (currentSorumlu) { %>
+      selectedManagerObj = {
+        id: <%= currentSorumlu.id %>,
+        name: "<%= (currentSorumlu.ad ? `${currentSorumlu.ad} ${currentSorumlu.soyad || ''}` : currentSorumlu.kullaniciAdi).replace(/"/g, '\\"') %>",
+        username: "<%= currentSorumlu.kullaniciAdi %>",
+        dept: "<%= currentSorumlu.departman || 'Genel Personel' %>",
+        title: "<%= currentSorumlu.unvan || 'Personel' %>"
+      };
+    <% } %>
 
     function openManagerSelectModal() {
       const modal = document.getElementById('managerSelectModal');
-      if (modal) {
-        modal.style.display = 'flex';
-        const currentId = document.getElementById('sorumluId').value;
-        document.querySelectorAll('.manager-modal-row').forEach(row => {
-          const radio = row.querySelector('input[type="radio"]');
-          if (row.dataset.id === currentId) {
-            row.classList.add('selected');
-            if (radio) radio.checked = true;
-            tempSelectedManager = { ...row.dataset };
-          } else {
-            row.classList.remove('selected');
-            if (radio) radio.checked = false;
-          }
-        });
-        updateModalNotice();
-        const searchInp = document.getElementById('modalManagerSearchInput');
-        if (searchInp) {
-          searchInp.value = '';
-          filterModalManagers();
-          searchInp.focus();
-        }
-      }
+      if (!modal) return;
+      document.getElementById('modalManagerSearch').value = '';
+      document.getElementById('modalManagerSort').value = 'name_asc';
+      modal.style.display = 'flex';
+      renderModalManagers();
+      setTimeout(() => {
+        const inp = document.getElementById('modalManagerSearch');
+        if (inp) inp.focus();
+      }, 100);
     }
 
     function closeManagerSelectModal() {
@@ -405,49 +409,145 @@
       if (modal) modal.style.display = 'none';
     }
 
-    function filterModalManagers() {
-      const q = (document.getElementById('modalManagerSearchInput').value || '').toLowerCase().trim();
-      document.querySelectorAll('.manager-modal-row').forEach(row => {
-        const name = (row.dataset.name || '').toLowerCase();
-        const uname = (row.dataset.username || '').toLowerCase();
-        const dept = (row.dataset.dept || '').toLowerCase();
-        const match = name.includes(q) || uname.includes(q) || dept.includes(q);
-        row.style.display = match ? '' : 'none';
+    function renderModalManagers() {
+      const tbody = document.getElementById('modalManagersTbody');
+      if (!tbody) return;
+
+      const searchVal = (document.getElementById('modalManagerSearch')?.value || '').toLowerCase().trim();
+      const sortVal = document.getElementById('modalManagerSort')?.value || 'name_asc';
+
+      let items = (personnelCatalog || []).filter(p => {
+        const fullName = (p.ad ? `${p.ad} ${p.soyad || ''}` : p.kullaniciAdi).toLowerCase();
+        const username = (p.kullaniciAdi || '').toLowerCase();
+        const dept = (p.departman || '').toLowerCase();
+        const title = (p.unvan || '').toLowerCase();
+
+        return fullName.includes(searchVal) || username.includes(searchVal) || dept.includes(searchVal) || title.includes(searchVal);
       });
+
+      items.sort((a, b) => {
+        const nameA = (a.ad ? `${a.ad} ${a.soyad || ''}` : a.kullaniciAdi).toLowerCase();
+        const nameB = (b.ad ? `${b.ad} ${b.soyad || ''}` : b.kullaniciAdi).toLowerCase();
+        const deptA = (a.departman || '').toLowerCase();
+        const deptB = (b.departman || '').toLowerCase();
+        const unameA = (a.kullaniciAdi || '').toLowerCase();
+        const unameB = (b.kullaniciAdi || '').toLowerCase();
+
+        if (sortVal === 'name_desc') return nameB.localeCompare(nameA, 'tr');
+        if (sortVal === 'dept_asc') return deptA.localeCompare(deptB, 'tr');
+        if (sortVal === 'uname_asc') return unameA.localeCompare(unameB, 'tr');
+        return nameA.localeCompare(nameB, 'tr');
+      });
+
+      if (items.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="padding: 40px; text-align: center; color: var(--text-muted);">
+              🔍 Arama kriterlerine uygun personel kaydı bulunamadı.
+            </td>
+          </tr>
+        `;
+        updateModalBadge();
+        return;
+      }
+
+      const currentSelectedId = selectedManagerObj ? String(selectedManagerObj.id) : document.getElementById('sorumluId').value;
+
+      tbody.innerHTML = items.map((p, idx) => {
+        const isSelected = String(p.id) === String(currentSelectedId);
+        const fullName = p.ad ? `${p.ad} ${p.soyad || ''}` : p.kullaniciAdi;
+        const initial = (p.ad ? p.ad.charAt(0) : p.kullaniciAdi.charAt(0)).toUpperCase();
+        const dept = p.departman || 'Genel Personel';
+        const title = p.unvan || 'Personel';
+
+        return `
+          <tr class="manager-table-row ${isSelected ? 'selected' : ''}" 
+              data-id="${p.id}" 
+              data-name="${fullName}" 
+              data-username="${p.kullaniciAdi}" 
+              data-dept="${dept}" 
+              data-title="${title}" 
+              onclick="selectManagerItem(${p.id})">
+            <td style="padding: 12px 14px; text-align: center;">
+              <input type="radio" name="modalSelectedManagerRadio" value="${p.id}" ${isSelected ? 'checked' : ''} 
+                style="cursor: pointer; width: 16px; height: 16px; accent-color: #6366f1;"
+                onclick="event.stopPropagation(); selectManagerItem(${p.id})">
+            </td>
+            <td style="padding: 12px 14px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-avatar-badge" style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 800;">
+                  ${initial}
+                </div>
+                <strong style="color: #fff; font-size: 0.9rem;">${fullName}</strong>
+              </div>
+            </td>
+            <td style="padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: #818cf8; font-weight: 600;">
+              @${p.kullaniciAdi}
+            </td>
+            <td style="padding: 12px 14px;">
+              <span style="background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.2); padding: 3px 9px; border-radius: 8px; font-size: 0.76rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                🏢 ${dept}
+              </span>
+            </td>
+            <td style="padding: 12px 14px; color: var(--text-secondary); font-size: 0.84rem; font-weight: 600;">
+              ${title}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      updateModalBadge();
     }
 
-    function selectManagerRow(row) {
-      document.querySelectorAll('.manager-modal-row').forEach(r => r.classList.remove('selected'));
-      row.classList.add('selected');
-      const radio = row.querySelector('input[type="radio"]');
-      if (radio) radio.checked = true;
-      tempSelectedManager = { ...row.dataset };
-      updateModalNotice();
+    function selectManagerItem(id) {
+      const match = (personnelCatalog || []).find(p => String(p.id) === String(id));
+      if (!match) return;
+
+      selectedManagerObj = {
+        id: match.id,
+        name: match.ad ? `${match.ad} ${match.soyad || ''}` : match.kullaniciAdi,
+        username: match.kullaniciAdi,
+        dept: match.departman || 'Genel Personel',
+        title: match.unvan || 'Personel'
+      };
+
+      document.querySelectorAll('.manager-table-row').forEach(row => {
+        const isTarget = String(row.dataset.id) === String(id);
+        if (isTarget) {
+          row.classList.add('selected');
+          const radio = row.querySelector('input[type="radio"]');
+          if (radio) radio.checked = true;
+        } else {
+          row.classList.remove('selected');
+        }
+      });
+
+      updateModalBadge();
     }
 
-    function updateModalNotice() {
-      const notice = document.getElementById('modalSelectedManagerNotice');
-      if (!notice) return;
-      if (tempSelectedManager) {
-        notice.textContent = `✓ Seçildi: ${tempSelectedManager.name} (@${tempSelectedManager.username})`;
-        notice.style.color = '#34d399';
+    function updateModalBadge() {
+      const badge = document.getElementById('modalSelectedManagerBadge');
+      if (!badge) return;
+
+      if (selectedManagerObj && selectedManagerObj.id) {
+        badge.innerHTML = `<span style="color: #34d399;">✓ Seçildi: <strong>${selectedManagerObj.name}</strong> (@${selectedManagerObj.username})</span>`;
       } else {
-        notice.textContent = 'Lütfen listeden bir personel seçiniz';
-        notice.style.color = '#818cf8';
+        badge.innerHTML = `<span style="color: var(--text-muted);">Lütfen listeden bir personel seçiniz</span>`;
       }
     }
 
     function confirmAssignManager() {
-      if (!tempSelectedManager || !tempSelectedManager.id) {
-        alert('⚠️ Lütfen sorumlu olarak atamak istediğiniz personeli seçiniz.');
+      if (!selectedManagerObj || !selectedManagerObj.id) {
+        alert('⚠️ Lütfen atölye sorumlusu olarak atamak istediğiniz personeli listeden seçiniz.');
         return;
       }
 
-      document.getElementById('sorumluId').value = tempSelectedManager.id;
-      document.getElementById('managerFullName').textContent = tempSelectedManager.name;
-      document.getElementById('managerUsername').textContent = `@${tempSelectedManager.username}`;
-      document.getElementById('managerDept').textContent = tempSelectedManager.dept;
-      document.getElementById('managerAvatar').textContent = tempSelectedManager.name.charAt(0).toUpperCase();
+      document.getElementById('sorumluId').value = selectedManagerObj.id;
+      document.getElementById('managerFullName').textContent = selectedManagerObj.name;
+      document.getElementById('managerUsername').textContent = `@${selectedManagerObj.username}`;
+      document.getElementById('managerDept').textContent = `🏢 ${selectedManagerObj.dept}`;
+      document.getElementById('managerTitle').textContent = `👤 ${selectedManagerObj.title}`;
+      document.getElementById('managerAvatar').textContent = selectedManagerObj.name.charAt(0).toUpperCase();
 
       document.getElementById('selectedManagerDisplay').style.display = 'block';
       document.getElementById('emptyManagerButtonWrap').style.display = 'none';
@@ -455,7 +555,7 @@
       closeManagerSelectModal();
     }
 
-    // Form Validation Check on Submit
+    // Strict Form Validation Check on Submit
     const form = document.getElementById('workshopForm');
     if (form) {
       form.addEventListener('submit', function(e) {

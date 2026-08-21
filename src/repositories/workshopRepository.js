@@ -67,18 +67,30 @@ class WorkshopRepository {
 
   async getEligiblePersonnel(search = '') {
     const where = {
-      rol: { [Op.in]: ['Employee', 'Genel_Personel', 'Genel Personel'] },
-      durum: 'Active'
+      durum: 'Active',
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { rol: { [Op.in]: ['Employee', 'Genel_Personel', 'Genel Personel', 'Personel', 'Ozel_Saha_Uzmani'] } },
+            { unvan: { [Op.iLike]: '%Personel%' } }
+          ]
+        },
+        {
+          rol: { [Op.notIn]: ['Admin', 'Sistem_Admin'] }
+        }
+      ]
     };
 
     if (search) {
-      where[Op.or] = [
-        { ad: { [Op.iLike]: `%${search}%` } },
-        { soyad: { [Op.iLike]: `%${search}%` } },
-        { kullaniciAdi: { [Op.iLike]: `%${search}%` } },
-        { departman: { [Op.iLike]: `%${search}%` } },
-        { unvan: { [Op.iLike]: `%${search}%` } }
-      ];
+      where[Op.and].push({
+        [Op.or]: [
+          { ad: { [Op.iLike]: `%${search}%` } },
+          { soyad: { [Op.iLike]: `%${search}%` } },
+          { kullaniciAdi: { [Op.iLike]: `%${search}%` } },
+          { departman: { [Op.iLike]: `%${search}%` } },
+          { unvan: { [Op.iLike]: `%${search}%` } }
+        ]
+      });
     }
 
     return await Kullanici.findAll({

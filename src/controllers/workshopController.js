@@ -77,9 +77,9 @@ class WorkshopController {
       throw new ValidationError('Seçilen atölye sorumlusu sistemde bulunamadı.');
     }
 
-    const isPersonnel = ['Employee', 'Genel_Personel', 'Genel Personel'].includes(assignedUser.rol);
+    const isPersonnel = (['Employee', 'Genel_Personel', 'Genel Personel', 'Personel', 'Ozel_Saha_Uzmani'].includes(assignedUser.rol) || (assignedUser.unvan && assignedUser.unvan.toLowerCase().includes('personel'))) && assignedUser.rol !== 'Admin';
     if (!isPersonnel) {
-      throw new ValidationError('Atölye sorumlusu sadece Genel Personel (Employee) rolündeki çalışanlardan seçilebilir.');
+      throw new ValidationError('Atölye sorumlusu sadece Genel Personel rolündeki çalışanlardan seçilebilir.');
     }
 
     if (id) {
