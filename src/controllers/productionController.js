@@ -386,9 +386,12 @@ class ProductionController {
     }
 
     const { RotaOperasyon } = require('../../models');
+    const existingRoutings = await RotaOperasyon.findAll({ attributes: ['stokId'], group: ['stokId'] });
+    const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stokId));
     const routingOperations = await RotaOperasyon.findAll({ order: [['operasyonSira', 'ASC']] });
 
-    const unassignedFinishedItems = processedFinishedItems.filter(item => !item.hasBOM);
+    // Only products that have routing and do not have BOM yet are eligible
+    const unassignedFinishedItems = processedFinishedItems.filter(item => !item.hasBOM && productsWithRoutingSet.has(item.id));
 
     res.render('production/bom_form', {
       user: req.user,
@@ -435,7 +438,13 @@ class ProductionController {
       throw new ValidationError('Lütfen reçetesi yazılacak ürünü seçiniz.');
     }
 
-    const { UrunRecetesi } = require('../../models');
+    const { UrunRecetesi, RotaOperasyon } = require('../../models');
+
+    // Rule: "Rota olmadan reçete olamaz"
+    const hasRouting = await RotaOperasyon.findOne({ where: { stokId: targetMamulId } });
+    if (!hasRouting) {
+      throw new ValidationError('Bir ürünün reçetesi (BOM) oluşturulabilmesi için önce üretim rotasının ve operasyon adımlarının tanımlanmış olması gerekmektedir.');
+    }
     const prevBoms = await UrunRecetesi.findAll({ where: { mamulStokId: targetMamulId } });
     
     let autoVersion = '1';
@@ -555,6 +564,7 @@ class ProductionController {
     });
     const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stokId));
 
+    const candidateProductIds = candidateProducts.map(p => p.id);
     const processedCandidateProducts = candidateProducts.map(p => {
       const plain = p.get({ plain: true });
       plain.hasRouting = productsWithRoutingSet.has(p.id);
@@ -562,7 +572,7 @@ class ProductionController {
     });
 
     const allBOMItems = await UrunRecetesi.findAll({
-      where: { mamulStokId: { [Op.in]: finishedItemIds } },
+      where: { mamulStokId: { [Op.in]: candidateProductIds } },
       include: [{ model: StokKarti, as: 'bilesenUrun' }],
       order: [['seviye', 'ASC'], ['id', 'ASC']]
     });
