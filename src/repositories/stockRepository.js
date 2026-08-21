@@ -1,5 +1,6 @@
 const {
   StokKarti,
+  UrunRecetesi,
   Depo,
   StokLokasyonu,
   StokPartisi,
@@ -59,6 +60,62 @@ class StockRepository {
 
   async findByStockCode(stokKodu) {
     return await StokKarti.findOne({ where: { stokKodu } });
+  }
+
+  /**
+   * Returns sellable Mamul items for Sales module.
+   * A Mamul is sellable ONLY if:
+   * 1. Its own status is 'Active' and category is 'Mamul'.
+   * 2. All component items in its recipe (and sub-recipes recursively) have status 'Active'.
+   * If any component (Hammadde or Yarı Mamul) is 'Passive' or 'Discontinued', the Mamul is excluded.
+   */
+  async getSellableMamulItems() {
+    const allStocks = await StokKarti.findAll({
+      order: [['ad', 'ASC']]
+    });
+    const allBOMs = await UrunRecetesi.findAll({
+      where: { durum: 'Active' }
+    });
+
+    const stockMap = new Map();
+    allStocks.forEach(s => stockMap.set(s.id, s));
+
+    const bomsByParent = {};
+    allBOMs.forEach(b => {
+      if (!bomsByParent[b.mamulStokId]) bomsByParent[b.mamulStokId] = [];
+      bomsByParent[b.mamulStokId].push(b);
+    });
+
+    function checkProducible(stockId, visited = new Set()) {
+      if (visited.has(stockId)) return false; // Cycle prevention
+      const item = stockMap.get(stockId);
+      if (!item) return false;
+      if (item.durum !== 'Active') return false;
+
+      const components = bomsByParent[stockId] || [];
+      for (const comp of components) {
+        const compId = comp.bilesenStokId;
+        const compVisited = new Set(visited);
+        compVisited.add(stockId);
+        if (!checkProducible(compId, compVisited)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    return allStocks.filter(s => {
+      const isMamul = (s.kategori || '').toLowerCase() === 'mamul';
+      if (!isMamul) return false;
+      return checkProducible(s.id);
+    });
+  }
+
+  async checkIsItemProducible(stockItemId) {
+    const validId = parseInt(stockItemId, 10);
+    if (!validId || isNaN(validId)) return false;
+    const sellable = await this.getSellableMamulItems();
+    return sellable.some(s => s.id === validId);
   }
 
   async create(data, currentUser = null, ipAddress = null) {
