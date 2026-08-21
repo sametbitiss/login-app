@@ -541,20 +541,12 @@ class ProductionController {
 
     const stockItemId = req.params.stockItemId || req.query.productId || req.params.stokId || null;
 
-    const existingBOMs = await UrunRecetesi.findAll({
-      attributes: ['mamulStokId'],
-      group: ['mamulStokId']
-    });
-    const finishedItemIds = existingBOMs.map(b => b.mamulStokId);
-
-    const bomProducts = await StokKarti.findAll({
+    const candidateProducts = await StokKarti.findAll({
       where: {
-        id: { [Op.in]: finishedItemIds },
         durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
-        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
+        kategori: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] }
       },
-      order: [['ad', 'ASC']]
+      order: [['kategori', 'ASC'], ['ad', 'ASC']]
     });
 
     const existingRoutings = await RotaOperasyon.findAll({
@@ -563,7 +555,7 @@ class ProductionController {
     });
     const productsWithRoutingSet = new Set(existingRoutings.map(r => r.stokId));
 
-    const processedBOMProducts = bomProducts.map(p => {
+    const processedCandidateProducts = candidateProducts.map(p => {
       const plain = p.get({ plain: true });
       plain.hasRouting = productsWithRoutingSet.has(p.id);
       return plain;
@@ -616,7 +608,7 @@ class ProductionController {
       targetProduct,
       existingOperations,
       targetBOMComponents,
-      candidateProducts: processedBOMProducts,
+      candidateProducts: processedCandidateProducts,
       bomComponentsMap,
       allWorkCenters,
       activeSubTab: 'routing'

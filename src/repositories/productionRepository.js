@@ -381,21 +381,19 @@ class ProductionRepository {
   }
 
   async findAllRoutingsGroupedByProduct() {
+    const candidateProducts = await StokKarti.findAll({
+      where: {
+        durum: 'Active',
+        kategori: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] }
+      },
+      order: [['kategori', 'ASC'], ['ad', 'ASC']]
+    });
+
     const existingBOMs = await UrunRecetesi.findAll({
       attributes: ['mamulStokId'],
       group: ['mamulStokId']
     });
-    const finishedItemIds = existingBOMs.map(b => b.mamulStokId);
-
-    const candidateProducts = await StokKarti.findAll({
-      where: {
-        id: { [Op.in]: finishedItemIds },
-        durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
-        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
-      },
-      order: [['kategori', 'ASC'], ['ad', 'ASC']]
-    });
+    const productsWithBOMSet = new Set(existingBOMs.map(b => b.mamulStokId));
 
     const allOperations = await this.findAllRoutings();
 
@@ -410,6 +408,7 @@ class ProductionRepository {
     return candidateProducts.map(product => {
       const ops = routingMap[product.id] || [];
       const hasRouting = ops.length > 0;
+      const hasBOM = productsWithBOMSet.has(product.id);
       let totalSetupTime = 0;
       let totalRunTime = 0;
       const workCentersSet = new Set();
@@ -423,6 +422,7 @@ class ProductionRepository {
       return {
         product: product.get({ plain: true }),
         hasRouting,
+        hasBOM,
         operations: ops.map(o => o.get({ plain: true })),
         totalOperations: ops.length,
         totalSetupTime,
