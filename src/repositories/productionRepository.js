@@ -363,6 +363,41 @@ class ProductionRepository {
       }
     }
 
+    // Hierarchical validation of routing step numbers
+    const routingOps = await RotaOperasyon.findAll({
+      where: { stokId: targetMamulId },
+      order: [['operasyonSira', 'ASC']]
+    });
+    const validStepNumbers = routingOps.map(r => parseInt(r.operasyonSira, 10));
+
+    if (validStepNumbers.length > 0) {
+      for (let i = 0; i < components.length; i++) {
+        const comp = components[i];
+        const opNum = parseInt(comp.operasyonKodu || comp.operationCode, 10);
+        const stepIdx = validStepNumbers.indexOf(opNum);
+
+        if (stepIdx === -1) {
+          throw new Error(`Bileşen Kalemi #${i + 1}: Seçilen rota adımı (${comp.operasyonKodu}) ürünün geçerli rotasında bulunamadı.`);
+        }
+
+        if (i === 0) {
+          if (stepIdx !== 0) {
+            throw new Error(`Bileşen Kalemi #1: Reçetenin ilk bileşeni mutlaka ürünün ilk rota adımına (#${validStepNumbers[0]}) ait olmalıdır.`);
+          }
+        } else {
+          const prevOpNum = parseInt(components[i - 1].operasyonKodu || components[i - 1].operationCode, 10);
+          const prevStepIdx = validStepNumbers.indexOf(prevOpNum);
+
+          if (stepIdx < prevStepIdx) {
+            throw new Error(`Bileşen Kalemi #${i + 1}: Rota adımı (#${opNum}), bir önceki bileşenin rota adımından (#${prevOpNum}) daha küçük olamaz (hiyerarşi geriye gidemez).`);
+          }
+          if (stepIdx > prevStepIdx + 1) {
+            throw new Error(`Bileşen Kalemi #${i + 1}: Rota adımı sırası atlayamaz. Bir önceki bileşen Adım #${prevOpNum} olduğu için bu bileşen sadece Adım #${prevOpNum} veya Adım #${validStepNumbers[prevStepIdx + 1]} olabilir.`);
+          }
+        }
+      }
+    }
+
     await UrunRecetesi.destroy({ where: { mamulStokId: targetMamulId } });
 
     const createdItems = [];

@@ -460,6 +460,30 @@
     let currentModalCategory = 'all';
     let tempModalSelectedId = null;
 
+    // Helper: Determine allowed routing steps for a specific row based on hierarchy
+    function getAllowedStepsForRow(idx) {
+      if (!routingOperations || routingOperations.length === 0) return [];
+      
+      // Row 0: Strictly the first step (e.g. #10)
+      if (idx === 0) {
+        return [routingOperations[0]];
+      }
+      
+      // Subsequent row: Can be either the same step as previous row or immediate next step
+      const prevOpCode = componentsData[idx - 1] ? componentsData[idx - 1].operasyonKodu : null;
+      const prevIdx = routingOperations.findIndex(r => String(r.operasyonSira) === String(prevOpCode) || String(r.operasyonKodu) === String(prevOpCode));
+      
+      if (prevIdx === -1) {
+        return [routingOperations[0]];
+      }
+      
+      const allowed = [routingOperations[prevIdx]];
+      if (prevIdx + 1 < routingOperations.length) {
+        allowed.push(routingOperations[prevIdx + 1]);
+      }
+      return allowed;
+    }
+
     // Initialize Component Rows
     if (existingBOMList && existingBOMList.length > 0) {
       componentsData = existingBOMList.map(b => ({
@@ -472,8 +496,17 @@
         operasyonKodu: b.operasyonKodu || (routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : ''),
         notlar: b.notlar || ''
       }));
+
+      // Ensure initial loaded rows adhere to hierarchy
+      for (let k = 0; k < componentsData.length; k++) {
+        const allowed = getAllowedStepsForRow(k);
+        const isAllowed = allowed.some(r => String(r.operasyonSira) === String(componentsData[k].operasyonKodu));
+        if (!isAllowed && allowed.length > 0) {
+          componentsData[k].operasyonKodu = String(allowed[0].operasyonSira);
+        }
+      }
     } else {
-      // Initialize with 1 clean empty component row
+      // Initialize with 1 clean empty component row with step #10
       componentsData = [
         {
           bilesenStokId: '',
@@ -507,6 +540,18 @@
 
       container.innerHTML = componentsData.map((comp, idx) => {
         const hasSelection = comp.bilesenStokId && comp.bilesenKodu;
+        const allowedSteps = getAllowedStepsForRow(idx);
+
+        // Ensure current value is valid
+        if (allowedSteps.length > 0 && !allowedSteps.some(r => String(r.operasyonSira) === String(comp.operasyonKodu))) {
+          comp.operasyonKodu = String(allowedSteps[0].operasyonSira);
+        }
+
+        const allowedOptionsHtml = allowedSteps.map(r => {
+          const isSelected = String(comp.operasyonKodu) === String(r.operasyonSira);
+          return `<option value="${r.operasyonSira}" ${isSelected ? 'selected' : ''}>[Adım #${r.operasyonSira}] ${escapeHtml(r.operasyonAdi)}</option>`;
+        }).join('');
+
         return `
           <div class="comp-card-box" data-index="${idx}">
             
@@ -527,83 +572,92 @@
               </div>
             </div>
 
-            <!-- Card Inputs Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 12px;">
+            <!-- Card Inputs Container: 1 2 3 / 4 5 / 6 Layout -->
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 8px;">
               
-              <!-- 1. Bileşen Kodu / Adı & Modal Seç Butonu (Zorunlu) -->
-              <div class="input-group" style="grid-column: span 2;">
-                <label style="font-weight: 700; font-size: 0.82rem;">
-                  1. Bileşen Kodu / Adı <span style="color: #f43f5e;">*</span>
-                </label>
-                <div style="display: flex; gap: 8px;">
-                  <input type="text" readonly value="${hasSelection ? `[${comp.bilesenKodu}] ${comp.bilesenAdi}` : ''}" placeholder="— Malzeme Listesinden Seçiniz —" required
-                    style="flex: 1; font-weight: 600; color: ${hasSelection ? '#818cf8' : 'var(--text-muted)'}; background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(255,255,255,0.1); cursor: pointer;"
-                    onclick="openComponentSelectModal(${idx})">
-                  <button type="button" class="btn btn-secondary" onclick="openComponentSelectModal(${idx})" style="padding: 0 14px; font-weight: 700; font-size: 0.82rem; border-radius: 10px; white-space: nowrap;">
-                    🔍 Seç
-                  </button>
+              <!-- Row 1: 1 2 3 (Bileşen Kodu/Adı, Miktar, Birim) -->
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px;">
+                
+                <!-- 1. Bileşen Kodu / Adı & Modal Seç Butonu (Zorunlu) -->
+                <div class="input-group">
+                  <label style="font-weight: 700; font-size: 0.82rem;">
+                    1. Bileşen Kodu / Adı <span style="color: #f43f5e;">*</span>
+                  </label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" readonly value="${hasSelection ? `[${comp.bilesenKodu}] ${comp.bilesenAdi}` : ''}" placeholder="— Malzeme Listesinden Seçiniz —" required
+                      style="flex: 1; font-weight: 600; color: ${hasSelection ? '#818cf8' : 'var(--text-muted)'}; background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(255,255,255,0.1); cursor: pointer;"
+                      onclick="openComponentSelectModal(${idx})">
+                    <button type="button" class="btn btn-secondary" onclick="openComponentSelectModal(${idx})" style="padding: 0 14px; font-weight: 700; font-size: 0.82rem; border-radius: 10px; white-space: nowrap;">
+                      🔍 Seç
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <!-- 2. Miktar (Zorunlu, > 0) -->
-              <div class="input-group">
-                <label style="font-weight: 700; font-size: 0.82rem;">
-                  2. Miktar <span style="color: #f43f5e;">*</span>
-                </label>
-                <input type="number" step="0.0001" min="0.0001" value="${comp.gerekliMiktar !== undefined && comp.gerekliMiktar !== null ? comp.gerekliMiktar : ''}" placeholder="Örn: 1.5" required
-                  class="comp-input-qty" data-index="${idx}" onchange="updateCompField(${idx}, 'gerekliMiktar', this.value)"
-                  style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399;">
-              </div>
-
-              <!-- 3. Birim (Readonly) -->
-              <div class="input-group">
-                <label style="font-weight: 700; font-size: 0.82rem;">
-                  3. Birim <span style="color: #818cf8; font-size: 0.72rem; font-weight: 600;">(Otomatik)</span> <span style="color: #f43f5e;">*</span>
-                </label>
-                <input type="text" readonly value="${comp.birim || ''}" placeholder="Birim" required
-                  class="comp-input-unit" data-index="${idx}"
-                  style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(255,255,255,0.1); color: #fff; cursor: not-allowed;">
-              </div>
-
-              <!-- 4. Fire Oranı (%) (Zorunlu, >= 0) -->
-              <div class="input-group">
-                <label style="font-weight: 700; font-size: 0.82rem;">
-                  4. Fire Oranı (%) <span style="color: #f43f5e;">*</span>
-                </label>
-                <div style="position: relative;">
-                  <input type="number" step="0.1" min="0" value="${comp.fireOrani !== undefined && comp.fireOrani !== null ? comp.fireOrani : ''}" placeholder="0.0" required
-                    class="comp-input-scrap" data-index="${idx}" onchange="updateCompField(${idx}, 'fireOrani', this.value)"
-                    style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fbbf24; padding-right: 40px;">
-                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
-                    %
-                  </span>
+                <!-- 2. Miktar (Zorunlu, > 0) -->
+                <div class="input-group">
+                  <label style="font-weight: 700; font-size: 0.82rem;">
+                    2. Miktar <span style="color: #f43f5e;">*</span>
+                  </label>
+                  <input type="number" step="0.0001" min="0.0001" value="${comp.gerekliMiktar !== undefined && comp.gerekliMiktar !== null ? comp.gerekliMiktar : ''}" placeholder="Örn: 1.5" required
+                    class="comp-input-qty" data-index="${idx}" onchange="updateCompField(${idx}, 'gerekliMiktar', this.value)"
+                    style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399;">
                 </div>
+
+                <!-- 3. Birim (Readonly) -->
+                <div class="input-group">
+                  <label style="font-weight: 700; font-size: 0.82rem;">
+                    3. Birim <span style="color: #818cf8; font-size: 0.72rem; font-weight: 600;">(Otomatik)</span> <span style="color: #f43f5e;">*</span>
+                  </label>
+                  <input type="text" readonly value="${comp.birim || ''}" placeholder="Birim" required
+                    class="comp-input-unit" data-index="${idx}"
+                    style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(255,255,255,0.1); color: #fff; cursor: not-allowed;">
+                </div>
+
               </div>
 
-              <!-- 5. Rota Adımı Numarası (Zorunlu) -->
+              <!-- Row 2: 4 5 (Fire Oranı, Rota Adımı) -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                
+                <!-- 4. Fire Oranı (%) (Zorunlu, >= 0) -->
+                <div class="input-group">
+                  <label style="font-weight: 700; font-size: 0.82rem;">
+                    4. Fire Oranı (%) <span style="color: #f43f5e;">*</span>
+                  </label>
+                  <div style="position: relative;">
+                    <input type="number" step="0.1" min="0" value="${comp.fireOrani !== undefined && comp.fireOrani !== null ? comp.fireOrani : ''}" placeholder="0.0" required
+                      class="comp-input-scrap" data-index="${idx}" onchange="updateCompField(${idx}, 'fireOrani', this.value)"
+                      style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fbbf24; padding-right: 40px;">
+                    <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
+                      %
+                    </span>
+                  </div>
+                </div>
+
+                <!-- 5. Rota Adımı Numarası (Hiyerarşik Sıralama) -->
+                <div class="input-group">
+                  <label style="font-weight: 700; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span>5. Kullanılacağı Rota Adımı <span style="color: #f43f5e;">*</span></span>
+                    <span style="font-size: 0.72rem; color: #818cf8; font-weight: 600;">
+                      ${idx === 0 ? '🔒 1. Adım (#10) Zorunlu' : '🔗 Sıralı Hiyerarşi'}
+                    </span>
+                  </label>
+                  <select required class="comp-input-op" data-index="${idx}" onchange="onStepChange(${idx}, this.value)" style="font-weight: 700;">
+                    ${allowedOptionsHtml}
+                  </select>
+                </div>
+
+              </div>
+
+              <!-- Row 3: 6 (Satır Açıklaması / Notlar) -->
               <div class="input-group">
                 <label style="font-weight: 700; font-size: 0.82rem;">
-                  5. Kullanılacağı Rota Adımı <span style="color: #f43f5e;">*</span>
+                  6. Satır Açıklaması / İmalat Notları <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: normal;">(Opsiyonel)</span>
                 </label>
-                <select required class="comp-input-op" data-index="${idx}" onchange="updateCompField(${idx}, 'operasyonKodu', this.value)" style="font-weight: 700;">
-                  <option value="">— Rota Adımı Seçiniz —</option>
-                  ${routingOperations.map(r => {
-                    const isSelected = String(comp.operasyonKodu) === String(r.operasyonSira) || String(comp.operasyonKodu) === String(r.operasyonKodu);
-                    return `<option value="${r.operasyonSira}" ${isSelected ? 'selected' : ''}>[Adım #${r.operasyonSira}] ${escapeHtml(r.operasyonAdi)}</option>`;
-                  }).join('')}
-                </select>
+                <input type="text" value="${escapeHtml(comp.notlar || '')}" placeholder="Bileşen kullanımı veya montaj sırası ile ilgili ek açıklama girilebilir..."
+                  class="comp-input-notes" data-index="${idx}" oninput="updateCompField(${idx}, 'notlar', this.value)"
+                  style="font-size: 0.85rem;">
               </div>
 
-            </div>
-
-            <!-- 6. Satır Açıklaması / Notlar (Opsiyonel) -->
-            <div class="input-group">
-              <label style="font-weight: 700; font-size: 0.82rem;">
-                6. Satır Açıklaması / İmalat Notları <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: normal;">(Opsiyonel)</span>
-              </label>
-              <input type="text" value="${escapeHtml(comp.notlar || '')}" placeholder="Bileşen kullanımı veya montaj sırası ile ilgili ek açıklama girilebilir..."
-                class="comp-input-notes" data-index="${idx}" oninput="updateCompField(${idx}, 'notlar', this.value)"
-                style="font-size: 0.85rem;">
             </div>
 
           </div>
@@ -611,7 +665,30 @@
       }).join('');
     }
 
+    function onStepChange(idx, newStepVal) {
+      if (componentsData[idx]) {
+        componentsData[idx].operasyonKodu = newStepVal;
+      }
+      
+      // Cascade-adjust subsequent rows to ensure no hierarchy breach
+      for (let k = idx + 1; k < componentsData.length; k++) {
+        const allowedForK = getAllowedStepsForRow(k);
+        const isCurrentKAllowed = allowedForK.some(r => String(r.operasyonSira) === String(componentsData[k].operasyonKodu));
+        if (!isCurrentKAllowed && allowedForK.length > 0) {
+          componentsData[k].operasyonKodu = String(allowedForK[0].operasyonSira);
+        }
+      }
+      
+      renderComponentCards();
+    }
+
     function addNewComponentRow() {
+      const lastRowIdx = componentsData.length - 1;
+      let defaultStep = routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : '';
+      if (lastRowIdx >= 0 && componentsData[lastRowIdx].operasyonKodu) {
+        defaultStep = componentsData[lastRowIdx].operasyonKodu; // Inherit previous row's step
+      }
+
       componentsData.push({
         bilesenStokId: '',
         bilesenKodu: '',
@@ -619,7 +696,7 @@
         gerekliMiktar: '',
         birim: '',
         fireOrani: '',
-        operasyonKodu: routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : '',
+        operasyonKodu: defaultStep,
         notlar: ''
       });
       renderComponentCards();
@@ -630,6 +707,16 @@
         if (!confirm('Bu son bileşen kalemini silmek istediğinize emin misiniz? Reçetede en az 1 bileşen bulunmalıdır.')) return;
       }
       componentsData.splice(index, 1);
+
+      // Re-evaluate subsequent steps after deletion
+      for (let k = 0; k < componentsData.length; k++) {
+        const allowed = getAllowedStepsForRow(k);
+        const isAllowed = allowed.some(r => String(r.operasyonSira) === String(componentsData[k].operasyonKodu));
+        if (!isAllowed && allowed.length > 0) {
+          componentsData[k].operasyonKodu = String(allowed[0].operasyonSira);
+        }
+      }
+
       renderComponentCards();
     }
 
@@ -762,7 +849,7 @@
       window.location.href = `/production/bom/edit/${productId}`;
     }
 
-    // Strict Validation on Form Submission
+    // Strict Validation on Form Submission (Including Hierarchical Step Numbers)
     const form = document.getElementById('bomForm');
     if (form) {
       form.addEventListener('submit', function(e) {
@@ -793,7 +880,9 @@
           return false;
         }
 
-        // Validate all 10 mandatory fields
+        const stepNumbers = (routingOperations || []).map(r => parseInt(r.operasyonSira, 10));
+
+        // Validate all 10 mandatory fields & step hierarchy
         for (let i = 0; i < componentsData.length; i++) {
           const comp = componentsData[i];
 
@@ -833,6 +922,40 @@
             e.preventDefault();
             alert(`⚠️ Bileşen Kalemi #${i + 1}: Lütfen bu bileşenin kullanılacağı Rota Adımını seçiniz.`);
             return false;
+          }
+
+          // Step Hierarchy Check
+          if (stepNumbers.length > 0) {
+            const opNum = parseInt(comp.operasyonKodu, 10);
+            const stepIdx = stepNumbers.indexOf(opNum);
+
+            if (stepIdx === -1) {
+              e.preventDefault();
+              alert(`⚠️ Bileşen Kalemi #${i + 1}: Seçilen rota adımı geçerli rotada bulunamadı.`);
+              return false;
+            }
+
+            if (i === 0) {
+              if (stepIdx !== 0) {
+                e.preventDefault();
+                alert(`⚠️ Bileşen Kalemi #1: İlk bileşenin rota adımı mutlaka ürünün ilk adımı (#${stepNumbers[0]}) olmak zorundadır.`);
+                return false;
+              }
+            } else {
+              const prevOpNum = parseInt(componentsData[i - 1].operasyonKodu, 10);
+              const prevStepIdx = stepNumbers.indexOf(prevOpNum);
+
+              if (stepIdx < prevStepIdx) {
+                e.preventDefault();
+                alert(`⚠️ Bileşen Kalemi #${i + 1}: Rota adımı (#${opNum}), bir önceki bileşenin rota adımından (#${prevOpNum}) daha küçük olamaz (hiyerarşik sıralama geriye gidemez).`);
+                return false;
+              }
+              if (stepIdx > prevStepIdx + 1) {
+                e.preventDefault();
+                alert(`⚠️ Bileşen Kalemi #${i + 1}: Rota adımı sırası atlayamaz. Bir önceki bileşen Adım #${prevOpNum} olduğu için bu bileşen sadece Adım #${prevOpNum} veya Adım #${stepNumbers[prevStepIdx + 1]} olabilir.`);
+                return false;
+              }
+            }
           }
         }
 
