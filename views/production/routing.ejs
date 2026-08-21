@@ -294,10 +294,6 @@
             <span>⚠️ Rotası Tanımlanmamış Ürünler</span>
             <span class="filter-pill-badge" style="background: rgba(245, 158, 11, 0.3);"><%= stats.withoutRouting %></span>
           </button>
-          <button type="button" class="custom-filter-tab" onclick="switchRoutingSection('all', this)">
-            <span>Tüm Reçeteli Ürünler</span>
-            <span class="filter-pill-badge"><%= stats.totalCandidateProducts %></span>
-          </button>
         </div>
 
         <div class="custom-search-wrap">
@@ -477,12 +473,8 @@
       if (tab === 'with') {
         secWith.style.display = 'block';
         secWithout.style.display = 'none';
-      } else if (tab === 'without') {
-        secWith.style.display = 'none';
-        secWithout.style.display = 'block';
       } else {
-        // all
-        secWith.style.display = 'block';
+        secWith.style.display = 'none';
         secWithout.style.display = 'block';
       }
 
