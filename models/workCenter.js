@@ -2,35 +2,39 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Atolye extends Model {
+  class IsMerkezi extends Model {
     static associate(models) {
-      Atolye.belongsTo(models.Kullanici, { foreignKey: 'sorumluId', as: 'sorumlu' });
-      Atolye.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
-      Atolye.hasMany(models.IsMerkezi, { foreignKey: 'atolyeId', as: 'isMerkezleri' });
+      IsMerkezi.belongsTo(models.Atolye, { foreignKey: 'atolyeId', as: 'atolye' });
+      IsMerkezi.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
     }
   }
 
-  Atolye.init({
-    atolyeKodu: {
+  IsMerkezi.init({
+    isMerkeziKodu: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    atolyeAdi: {
+    isMerkeziAdi: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    sorumluId: {
+    atolyeId: {
       type: DataTypes.INTEGER,
       allowNull: false
+    },
+    gunlukCalismaSaati: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: false,
+      defaultValue: 8.00
     },
     durum: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Active'
     },
-    aciklama: {
-      type: DataTypes.TEXT,
+    varsayilanIsciSayisi: {
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     olusturanId: {
@@ -39,9 +43,9 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     sequelize,
-    modelName: 'Atolye',
-    tableName: 'Atolyeler'
+    modelName: 'IsMerkezi',
+    tableName: 'IsMerkezleri'
   });
 
-  return Atolye;
+  return IsMerkezi;
 };

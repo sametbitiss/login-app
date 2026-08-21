@@ -55,4 +55,12 @@ router.get('/workshops/edit/:id', workshopController.renderEditWorkshop);
 router.post('/workshops/save', workshopController.saveWorkshop);
 router.post('/workshops/delete/:id', workshopController.deleteWorkshop);
 
+// 8. Work Centers (İş Merkezleri) Routes
+const workCenterController = require('../controllers/workCenterController');
+router.get('/work-centers', workCenterController.listWorkCenters);
+router.get('/work-centers/add', workCenterController.renderAddWorkCenter);
+router.get('/work-centers/edit/:id', workCenterController.renderEditWorkCenter);
+router.post('/work-centers/save', workCenterController.saveWorkCenter);
+router.post('/work-centers/delete/:id', workCenterController.deleteWorkCenter);
+
 module.exports = router;

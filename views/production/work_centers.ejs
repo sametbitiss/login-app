@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atölye Kartları — Enterprise ERP</title>
+  <title>İş Merkezleri — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Premium Action & Interface Styles */
-    .btn-create-workshop {
+    .btn-create-workcenter {
       background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
       color: #ffffff !important;
       font-weight: 800;
@@ -24,20 +23,20 @@
       align-items: center;
       gap: 8px;
     }
-    .btn-create-workshop:hover {
+    .btn-create-workcenter:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(99, 102, 241, 0.55);
       background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
     }
 
-    /* KPI Cards */
-    .workshop-kpi-grid {
+    /* KPI Grid */
+    .wc-kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 18px;
       margin-bottom: 24px;
     }
-    .workshop-kpi-card {
+    .wc-kpi-card {
       background: rgba(30, 41, 59, 0.5);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -49,11 +48,11 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
       transition: all 0.2s ease;
     }
-    .workshop-kpi-card:hover {
+    .wc-kpi-card:hover {
       border-color: rgba(99, 102, 241, 0.3);
       transform: translateY(-2px);
     }
-    .workshop-kpi-icon {
+    .wc-kpi-icon {
       width: 46px;
       height: 46px;
       border-radius: 12px;
@@ -64,7 +63,7 @@
       flex-shrink: 0;
     }
 
-    /* Modern Filter Bar */
+    /* Filter Bar */
     .filter-bar-container {
       background: rgba(30, 41, 59, 0.45);
       backdrop-filter: blur(12px);
@@ -125,8 +124,8 @@
     .custom-search-wrap {
       position: relative;
       flex: 1;
-      min-width: 260px;
-      max-width: 380px;
+      min-width: 240px;
+      max-width: 360px;
     }
     .custom-search-input {
       width: 100%;
@@ -153,22 +152,6 @@
       color: var(--text-muted);
       font-size: 0.9rem;
       pointer-events: none;
-    }
-
-    /* Table Styles */
-    .user-avatar-sm {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.82rem;
-      font-weight: 800;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
     }
   </style>
   <script src="/sidebar.js" defer></script>
@@ -198,8 +181,8 @@
       <div class="mss-sub">
         <a href="/production/bom" class="mss-sub-link">📜 Üretim Reçeteleri (BOM)</a>
         <a href="/production/routing" class="mss-sub-link">🛠️ Rotalama & Operasyonlar</a>
-        <a href="/production/workshops" class="mss-sub-link active">🏢 Atölye Kartları</a>
-        <a href="/production/work-centers" class="mss-sub-link">⚙️ İş Merkezleri</a>
+        <a href="/production/workshops" class="mss-sub-link">🏢 Atölye Kartları</a>
+        <a href="/production/work-centers" class="mss-sub-link active">⚙️ İş Merkezleri</a>
       </div>
       <div class="mss-group-title">🏭 KAPASİTE & SAHA TAKİBİ (MES)</div>
       <div class="mss-sub">
@@ -237,148 +220,166 @@
 
     <main class="module-content">
 
-      <!-- Header & Top Action Button -->
+      <!-- Header & New Button -->
       <div class="page-header" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
         <div>
-          <h1 style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px;">🏢 Atölye Kartları Yönetimi</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">İmalat sahasındaki atölye tanımları, çalışma merkezleri ve sorumlu personel kayıtları.</p>
+          <h1 style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px;">⚙️ İş Merkezleri Yönetimi</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">İmalat operasyonlarının yürütüldüğü makineler, tezgahlar, montaj istasyonları ve kapasite/vardiya tanımları.</p>
         </div>
-        <a href="/production/workshops/add" class="btn-create-workshop">
-          <span>➕ Yeni Atölye Ekle</span>
+        <a href="/production/work-centers/add" class="btn-create-workcenter">
+          <span>➕ Yeni İş Merkezi Ekle</span>
         </a>
       </div>
 
       <!-- KPI Summary Cards -->
-      <div class="workshop-kpi-grid">
-        <div class="workshop-kpi-card">
-          <div class="workshop-kpi-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">🏢</div>
+      <div class="wc-kpi-grid">
+        <div class="wc-kpi-card">
+          <div class="wc-kpi-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">⚙️</div>
           <div>
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Toplam Atölye</div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Toplam İş Merkezi</div>
             <div style="font-size: 1.45rem; font-weight: 800; color: #fff; margin-top: 2px;"><%= stats.total %></div>
           </div>
         </div>
-        <div class="workshop-kpi-card">
-          <div class="workshop-kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🟢</div>
+        <div class="wc-kpi-card">
+          <div class="wc-kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🟢</div>
           <div>
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Aktif Atölyeler</div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Aktif Merkezler</div>
             <div style="font-size: 1.45rem; font-weight: 800; color: #34d399; margin-top: 2px;"><%= stats.active %></div>
           </div>
         </div>
-        <div class="workshop-kpi-card">
-          <div class="workshop-kpi-icon" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8;">⚪</div>
+        <div class="wc-kpi-card">
+          <div class="wc-kpi-icon" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8;">⚪</div>
           <div>
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Pasif Atölyeler</div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Pasif Merkezler</div>
             <div style="font-size: 1.45rem; font-weight: 800; color: #94a3b8; margin-top: 2px;"><%= stats.inactive %></div>
           </div>
         </div>
-        <div class="workshop-kpi-card">
-          <div class="workshop-kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">👤</div>
+        <div class="wc-kpi-card">
+          <div class="wc-kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⚡</div>
           <div>
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Atölye Sorumluları</div>
-            <div style="font-size: 1.45rem; font-weight: 800; color: #fbbf24; margin-top: 2px;"><%= stats.uniqueManagers %> Kişi</div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Nominal Günlük Kapasite</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #fbbf24; margin-top: 2px;"><%= Number(stats.totalCapacityHours).toFixed(1) %> Saat / Gün</div>
           </div>
         </div>
       </div>
 
-      <!-- Modern Filter Bar (Category Tabs & Search Input) -->
+      <!-- Modern Filter Bar (Status Tabs, Workshop Dropdown & Search) -->
       <div class="filter-bar-container">
         <div class="custom-filter-tabs">
-          <button type="button" class="custom-filter-tab active" onclick="filterWorkshopCategory('all', this)">
-            <span>Tüm Atölyeler</span>
-            <span class="filter-pill-badge"><%= workshops.length %></span>
+          <button type="button" class="custom-filter-tab active" onclick="filterWorkCenterCategory('all', this)">
+            <span>Tüm Merkezler</span>
+            <span class="filter-pill-badge"><%= workCenters.length %></span>
           </button>
-          <button type="button" class="custom-filter-tab" onclick="filterWorkshopCategory('Active', this)">
-            <span>🟢 Aktif Atölyeler</span>
+          <button type="button" class="custom-filter-tab" onclick="filterWorkCenterCategory('Active', this)">
+            <span>🟢 Aktif Merkezler</span>
             <span class="filter-pill-badge"><%= stats.active %></span>
           </button>
-          <button type="button" class="custom-filter-tab" onclick="filterWorkshopCategory('Inactive', this)">
-            <span>⚪ Pasif Atölyeler</span>
+          <button type="button" class="custom-filter-tab" onclick="filterWorkCenterCategory('Inactive', this)">
+            <span>⚪ Pasif Merkezler</span>
             <span class="filter-pill-badge"><%= stats.inactive %></span>
           </button>
         </div>
 
-        <div class="custom-search-wrap">
-          <span class="custom-search-icon">🔍</span>
-          <input type="text" id="workshopSearchInput" class="custom-search-input" placeholder="Atölye Kodu, Adı veya Sorumlu Ara..." oninput="filterWorkshopTable()">
+        <div style="display: flex; gap: 12px; align-items: center; flex: 1; justify-content: flex-end; flex-wrap: wrap;">
+          <div style="min-width: 180px;">
+            <select id="workshopFilterSelect" onchange="filterWorkCenterTable()" style="width: 100%; padding: 9px 12px; background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: #ffffff; font-size: 0.85rem; outline: none; font-weight: 600;">
+              <option value="">— Tüm Atölyeler —</option>
+              <% workshops.forEach(ws => { %>
+                <option value="<%= ws.id %>">[<%= ws.atolyeKodu %>] <%= ws.atolyeAdi %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="custom-search-wrap">
+            <span class="custom-search-icon">🔍</span>
+            <input type="text" id="workCenterSearchInput" class="custom-search-input" placeholder="İş Merkezi Kodu, Adı veya Atölye Ara..." oninput="filterWorkCenterTable()">
+          </div>
         </div>
       </div>
 
-      <!-- Workshops Data Table -->
+      <!-- Work Centers Data Table -->
       <div class="table-wrapper" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-        <table class="data-table" id="workshopsTable" style="width: 100%; border-collapse: collapse;">
+        <table class="data-table" id="workCentersTable" style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr style="background: rgba(30, 41, 59, 0.85); border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;">
-              <th style="padding: 14px 16px; width: 140px;">Atölye Kodu</th>
-              <th style="padding: 14px 16px; min-width: 200px;">Atölye Adı</th>
-              <th style="padding: 14px 16px; min-width: 230px;">Atölye Sorumlusu</th>
-              <th style="padding: 14px 16px; width: 130px;">Durum</th>
-              <th style="padding: 14px 16px; min-width: 220px;">Açıklama / Notlar</th>
+              <th style="padding: 14px 16px; width: 140px;">İş Merkezi Kodu</th>
+              <th style="padding: 14px 16px; min-width: 200px;">İş Merkezi Adı</th>
+              <th style="padding: 14px 16px; min-width: 220px;">Bağlı Olduğu Atölye</th>
+              <th style="padding: 14px 16px; width: 150px; text-align: center;">Günlük Çalışma Saati</th>
+              <th style="padding: 14px 16px; width: 130px; text-align: center;">Varsayılan Personel</th>
+              <th style="padding: 14px 16px; width: 120px; text-align: center;">Durum</th>
               <th style="padding: 14px 16px; width: 130px;">Kayıt Tarihi</th>
               <th style="padding: 14px 16px; text-align: right; width: 140px;">İşlemler</th>
             </tr>
           </thead>
           <tbody>
-            <% if (!workshops || workshops.length === 0) { %>
-              <tr id="emptyWorkshopsRow">
-                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 3.5rem 1rem;">
-                  <div style="font-size: 2.2rem; margin-bottom: 8px;">🏢</div>
-                  <strong style="color: #fff; font-size: 1rem;">Henüz tanımlanmış bir atölye kartı bulunmamaktadır.</strong><br>
+            <% if (!workCenters || workCenters.length === 0) { %>
+              <tr id="emptyWorkCentersRow">
+                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 3.5rem 1rem;">
+                  <div style="font-size: 2.2rem; margin-bottom: 8px;">⚙️</div>
+                  <strong style="color: #fff; font-size: 1rem;">Henüz tanımlanmış bir iş merkezi bulunmamaktadır.</strong><br>
                   <span style="font-size: 0.84rem; margin-top: 6px; display: inline-block; color: #818cf8;">
-                    Yukarıdaki <strong>'➕ Yeni Atölye Ekle'</strong> butonuna tıklayarak ilk atölyeyi kaydedebilirsiniz.
+                    Yukarıdaki <strong>'➕ Yeni İş Merkezi Ekle'</strong> butonuna tıklayarak ilk istasyonu kaydedebilirsiniz.
                   </span>
                 </td>
               </tr>
             <% } else { %>
-              <% workshops.forEach(w => { %>
-                <tr data-status="<%= w.durum %>" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease;">
+              <% workCenters.forEach(wc => { %>
+                <tr data-status="<%= wc.durum %>" data-atolye-id="<%= wc.atolyeId %>" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease;">
                   <td style="padding: 12px 16px;">
                     <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; background: rgba(99, 102, 241, 0.12); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.25);">
-                      <%= w.atolyeKodu %>
+                      <%= wc.isMerkeziKodu %>
                     </strong>
                   </td>
                   <td style="padding: 12px 16px;">
-                    <strong style="color: #ffffff; font-size: 0.94rem;"><%= w.atolyeAdi %></strong>
+                    <strong style="color: #ffffff; font-size: 0.94rem;"><%= wc.isMerkeziAdi %></strong>
                   </td>
                   <td style="padding: 12px 16px;">
-                    <% if (w.sorumlu) { %>
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="user-avatar-sm">
-                          <%= (w.sorumlu.ad ? w.sorumlu.ad.charAt(0) : w.sorumlu.kullaniciAdi.charAt(0)).toUpperCase() %>
+                    <% if (wc.atolye) { %>
+                      <div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 700; font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                            🏢 <%= wc.atolye.atolyeAdi %>
+                          </span>
                         </div>
-                        <div>
-                          <div style="font-weight: 700; color: #fff; font-size: 0.88rem;">
-                            <%= w.sorumlu.ad ? `${w.sorumlu.ad} ${w.sorumlu.soyad || ''}` : w.sorumlu.kullaniciAdi %>
+                        <% if (wc.atolye.sorumlu) { %>
+                          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">
+                            Sorumlu: <span style="color: #cbd5e1;"><%= wc.atolye.sorumlu.ad ? `${wc.atolye.sorumlu.ad} ${wc.atolye.sorumlu.soyad || ''}` : wc.atolye.sorumlu.kullaniciAdi %></span>
                           </div>
-                          <div style="font-size: 0.74rem; color: var(--text-muted); display: flex; gap: 6px; align-items: center; margin-top: 1px;">
-                            <span style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">@<%= w.sorumlu.kullaniciAdi %></span>
-                            <span>•</span>
-                            <span style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;"><%= w.sorumlu.departman || 'Genel Personel' %></span>
-                          </div>
-                        </div>
+                        <% } %>
                       </div>
                     <% } else { %>
-                      <span style="color: var(--text-muted);">— Sorumlu Atanmamış —</span>
+                      <span style="color: var(--text-muted);">— Atölye Bağlantısı Yok —</span>
                     <% } %>
                   </td>
-                  <td style="padding: 12px 16px;">
-                    <% if (w.durum === 'Active') { %>
+                  <td style="padding: 12px 16px; text-align: center;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #fbbf24; background: rgba(245, 158, 11, 0.12); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.25);">
+                      ⚡ <%= Number(wc.gunlukCalismaSaati).toFixed(1) %> Saat / Gün
+                    </span>
+                  </td>
+                  <td style="padding: 12px 16px; text-align: center; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">
+                    <% if (wc.varsayilanIsciSayisi) { %>
+                      <span>👤 <%= wc.varsayilanIsciSayisi %> Personel</span>
+                    <% } else { %>
+                      <span style="color: var(--text-muted);">—</span>
+                    <% } %>
+                  </td>
+                  <td style="padding: 12px 16px; text-align: center;">
+                    <% if (wc.durum === 'Active') { %>
                       <span class="badge-status badge-has-bom" style="font-weight: 700;">🟢 Aktif</span>
                     <% } else { %>
                       <span class="badge-status badge-no-bom" style="font-weight: 700;">⚪ Pasif</span>
                     <% } %>
                   </td>
-                  <td style="padding: 12px 16px; font-size: 0.84rem; color: var(--text-secondary); max-width: 260px;">
-                    <%= w.aciklama || '—' %>
-                  </td>
                   <td style="padding: 12px 16px; font-size: 0.82rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
-                    <%= new Date(w.createdAt).toLocaleDateString('tr-TR') %>
+                    <%= new Date(wc.createdAt).toLocaleDateString('tr-TR') %>
                   </td>
                   <td style="padding: 12px 16px; text-align: right; white-space: nowrap;">
-                    <a href="/production/workshops/edit/<%= w.id %>" class="btn btn-secondary btn-sm" style="font-weight: 700; font-size: 0.8rem; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;">
+                    <a href="/production/work-centers/edit/<%= wc.id %>" class="btn btn-secondary btn-sm" style="font-weight: 700; font-size: 0.8rem; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;">
                       ✏️ Düzenle
                     </a>
-                    <form action="/production/workshops/delete/<%= w.id %>" method="POST" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('Bu atölye kartını silmek istediğinize emin misiniz?');">
-                      <button type="submit" class="btn btn-danger btn-sm" style="font-weight: 700; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px; cursor: pointer;" title="Atölyeyi Sil">🗑️</button>
+                    <form action="/production/work-centers/delete/<%= wc.id %>" method="POST" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('Bu iş merkezini silmek istediğinize emin misiniz?');">
+                      <button type="submit" class="btn btn-danger btn-sm" style="font-weight: 700; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px; cursor: pointer;" title="İş Merkezini Sil">🗑️</button>
                     </form>
                   </td>
                 </tr>
@@ -394,24 +395,26 @@
   <script>
     let activeFilterStatus = 'all';
 
-    function filterWorkshopTable() {
-      const query = (document.getElementById('workshopSearchInput').value || '').toLowerCase().trim();
-      const rows = document.querySelectorAll('#workshopsTable tbody tr:not(#emptyWorkshopsRow)');
+    function filterWorkCenterTable() {
+      const query = (document.getElementById('workCenterSearchInput').value || '').toLowerCase().trim();
+      const atolyeFilter = document.getElementById('workshopFilterSelect').value;
+      const rows = document.querySelectorAll('#workCentersTable tbody tr:not(#emptyWorkCentersRow)');
       
       rows.forEach(tr => {
         const text = tr.textContent.toLowerCase();
         const matchesQuery = text.includes(query);
         const matchesStatus = (activeFilterStatus === 'all') || (tr.dataset.status === activeFilterStatus);
+        const matchesAtolye = !atolyeFilter || (tr.dataset.atolyeId === atolyeFilter);
 
-        tr.style.display = (matchesQuery && matchesStatus) ? '' : 'none';
+        tr.style.display = (matchesQuery && matchesStatus && matchesAtolye) ? '' : 'none';
       });
     }
 
-    function filterWorkshopCategory(status, btn) {
+    function filterWorkCenterCategory(status, btn) {
       document.querySelectorAll('.custom-filter-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeFilterStatus = status;
-      filterWorkshopTable();
+      filterWorkCenterTable();
     }
 
     function updateClock() { 
