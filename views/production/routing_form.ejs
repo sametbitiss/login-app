@@ -270,29 +270,37 @@
 
     let operationsData = [];
 
+    // Automatic re-indexing (10, 20, 30, 40...)
+    function reindexOperations() {
+      operationsData.forEach((op, idx) => {
+        op.operasyonSira = (idx + 1) * 10;
+      });
+    }
+
     // Initialize operations data
     if (existingOpsList && existingOpsList.length > 0) {
-      operationsData = existingOpsList.map(op => ({
-        operasyonSira: op.operasyonSira,
-        operasyonAdi: op.operasyonAdi,
-        isMerkezi: op.isMerkezi,
+      operationsData = existingOpsList.map((op, idx) => ({
+        operasyonSira: (idx + 1) * 10,
+        operasyonAdi: op.operasyonAdi || '',
+        isMerkezi: op.isMerkezi || '',
         isMerkeziId: op.isMerkeziId || '',
-        hazirlikSuresiDakika: op.hazirlikSuresiDakika,
-        calismaSuresiDakikaBirim: op.calismaSuresiDakikaBirim,
-        operatorSayisi: op.operatorSayisi || 1,
+        hazirlikSuresiDakika: op.hazirlikSuresiDakika !== undefined && op.hazirlikSuresiDakika !== null ? op.hazirlikSuresiDakika : '',
+        calismaSuresiDakikaBirim: op.calismaSuresiDakikaBirim !== undefined && op.calismaSuresiDakikaBirim !== null ? op.calismaSuresiDakikaBirim : '',
+        operatorSayisi: op.operatorSayisi !== undefined && op.operatorSayisi !== null ? op.operatorSayisi : '',
         durum: op.durum || 'Active'
       }));
+      reindexOperations();
     } else {
-      // Default initial step 10
+      // Clean initial step 10 with empty inputs (no prefilled dummy defaults)
       operationsData = [
         {
           operasyonSira: 10,
-          operasyonAdi: '1. Kesim & Hazırlık Operasyonu',
-          isMerkezi: workCentersCatalog.length > 0 ? `[${workCentersCatalog[0].isMerkeziKodu}] ${workCentersCatalog[0].isMerkeziAdi}` : 'Montaj İstasyonu',
-          isMerkeziId: workCentersCatalog.length > 0 ? workCentersCatalog[0].id : '',
-          hazirlikSuresiDakika: 15.0,
-          calismaSuresiDakikaBirim: 5.0,
-          operatorSayisi: 1,
+          operasyonAdi: '',
+          isMerkezi: '',
+          isMerkeziId: '',
+          hazirlikSuresiDakika: '',
+          calismaSuresiDakikaBirim: '',
+          operatorSayisi: '',
           durum: 'Active'
         }
       ];
@@ -316,16 +324,17 @@
       }
 
       container.innerHTML = operationsData.map((op, idx) => {
+        const hasName = op.operasyonAdi && op.operasyonAdi.trim().length > 0;
         return `
           <div class="op-card-box" data-index="${idx}">
             
             <!-- Card Header -->
             <div class="op-card-header">
               <div class="op-card-title">
-                <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;">
+                <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.88rem; font-family: 'JetBrains Mono', monospace;">
                   #${op.operasyonSira}
                 </span>
-                <span>Adım ${op.operasyonSira}: ${escapeHtml(op.operasyonAdi || 'İsimsiz Operasyon')}</span>
+                <span>Adım ${op.operasyonSira}${hasName ? ': ' + escapeHtml(op.operasyonAdi) : ''}</span>
               </div>
               <div>
                 <button type="button" onclick="removeOperationStep(${idx})" class="btn btn-danger btn-sm" style="padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.78rem;" title="Bu Adımı Sil">
@@ -337,14 +346,14 @@
             <!-- Card Inputs Grid -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
               
-              <!-- 1. Operasyon Numarası (Adım Sırası - Zorunlu) -->
+              <!-- 1. Operasyon Numarası (Adım Sırası - READONLY) -->
               <div class="input-group">
                 <label style="font-weight: 700; font-size: 0.82rem;">
-                  1. Operasyon No (Adım Sırası) <span style="color: #f43f5e;">*</span>
+                  1. Operasyon No (Adım Sırası) <span style="color: #818cf8; font-size: 0.72rem; font-weight: 600;">(Otomatik)</span>
                 </label>
-                <input type="number" step="10" min="10" value="${op.operasyonSira}" required
-                  class="op-input-seq" data-index="${idx}" onchange="updateOpField(${idx}, 'operasyonSira', this.value)"
-                  style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8;">
+                <input type="number" value="${op.operasyonSira}" readonly required
+                  class="op-input-seq" data-index="${idx}"
+                  style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8; background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(99, 102, 241, 0.35); cursor: not-allowed;">
               </div>
 
               <!-- 2. Operasyon / İşlem Adı (Zorunlu) -->
@@ -352,7 +361,7 @@
                 <label style="font-weight: 700; font-size: 0.82rem;">
                   2. Operasyon / İşlem Adı <span style="color: #f43f5e;">*</span>
                 </label>
-                <input type="text" value="${escapeHtml(op.operasyonAdi || '')}" placeholder="Örn: CNC Lazer Kesim" required
+                <input type="text" value="${escapeHtml(op.operasyonAdi || '')}" placeholder="İşlem Adı (Örn: Lazer Kesim)" required
                   class="op-input-name" data-index="${idx}" oninput="updateOpField(${idx}, 'operasyonAdi', this.value)"
                   style="font-weight: 600;">
               </div>
@@ -378,7 +387,7 @@
                   4. Hazırlık Süresi (Dk) <span style="color: #f43f5e;">*</span>
                 </label>
                 <div style="position: relative;">
-                  <input type="number" step="0.5" min="0" value="${op.hazirlikSuresiDakika !== undefined ? op.hazirlikSuresiDakika : 15}" required
+                  <input type="number" step="0.1" min="0" value="${op.hazirlikSuresiDakika !== undefined && op.hazirlikSuresiDakika !== null ? op.hazirlikSuresiDakika : ''}" placeholder="0.0" required
                     class="op-input-setup" data-index="${idx}" onchange="updateOpField(${idx}, 'hazirlikSuresiDakika', this.value)"
                     style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fbbf24; padding-right: 50px;">
                   <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">
@@ -393,7 +402,7 @@
                   5. İşlem Süresi (Dk/Birim) <span style="color: #f43f5e;">*</span>
                 </label>
                 <div style="position: relative;">
-                  <input type="number" step="0.5" min="0" value="${op.calismaSuresiDakikaBirim !== undefined ? op.calismaSuresiDakikaBirim : 5}" required
+                  <input type="number" step="0.1" min="0" value="${op.calismaSuresiDakikaBirim !== undefined && op.calismaSuresiDakikaBirim !== null ? op.calismaSuresiDakikaBirim : ''}" placeholder="0.0" required
                     class="op-input-run" data-index="${idx}" onchange="updateOpField(${idx}, 'calismaSuresiDakikaBirim', this.value)"
                     style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399; padding-right: 75px;">
                   <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">
@@ -408,7 +417,7 @@
                   6. Personel İhtiyacı <span style="color: #f43f5e;">*</span>
                 </label>
                 <div style="position: relative;">
-                  <input type="number" step="1" min="1" value="${op.operatorSayisi || 1}" required
+                  <input type="number" step="1" min="1" value="${op.operatorSayisi !== undefined && op.operatorSayisi !== null ? op.operatorSayisi : ''}" placeholder="1" required
                     class="op-input-operators" data-index="${idx}" onchange="updateOpField(${idx}, 'operatorSayisi', this.value)"
                     style="font-family: 'JetBrains Mono', monospace; font-weight: 700; padding-right: 50px;">
                   <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">
@@ -435,20 +444,18 @@
     }
 
     function addNewOperationStep() {
-      const maxSeq = operationsData.length > 0 ? Math.max(...operationsData.map(o => parseInt(o.operasyonSira, 10) || 0)) : 0;
-      const nextSeq = maxSeq + 10;
-
       operationsData.push({
-        operasyonSira: nextSeq,
-        operasyonAdi: `${operationsData.length + 1}. Operasyon Adımı`,
-        isMerkezi: workCentersCatalog.length > 0 ? `[${workCentersCatalog[0].isMerkeziKodu}] ${workCentersCatalog[0].isMerkeziAdi}` : '',
-        isMerkeziId: workCentersCatalog.length > 0 ? workCentersCatalog[0].id : '',
-        hazirlikSuresiDakika: 15.0,
-        calismaSuresiDakikaBirim: 5.0,
-        operatorSayisi: 1,
+        operasyonSira: (operationsData.length + 1) * 10,
+        operasyonAdi: '',
+        isMerkezi: '',
+        isMerkeziId: '',
+        hazirlikSuresiDakika: '',
+        calismaSuresiDakikaBirim: '',
+        operatorSayisi: '',
         durum: 'Active'
       });
 
+      reindexOperations();
       renderOperationCards();
     }
 
@@ -457,6 +464,7 @@
         if (!confirm('Bu son operasyon adımını silmek istediğinize emin misiniz? Rota için en az 1 adım gereklidir.')) return;
       }
       operationsData.splice(index, 1);
+      reindexOperations();
       renderOperationCards();
     }
 
