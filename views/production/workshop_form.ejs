@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= isEditMode ? 'Atölye Kartını Düzenle' : 'Yeni Atölye Kartı Ekle' %> — Enterprise ERP</title>
+  <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="/sidebar.js" defer></script>
+  <style>
+    .selected-manager-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1.5px solid rgba(99, 102, 241, 0.35);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      transition: all 0.2s ease;
+    }
+    .selected-manager-card:hover {
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+    }
+    .user-avatar-lg {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+    .manager-modal-row {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      transition: background 0.15s ease;
+      cursor: pointer;
+    }
+    .manager-modal-row:hover {
+      background: rgba(99, 102, 241, 0.08);
+    }
+    .manager-modal-row.selected {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+  </style>
+</head>
+<body class="module-body">
+  <aside class="module-sidebar">
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+    <div class="module-sidebar-section">
+      <div class="mss-label">🏭 ÜRETİM & İMALAT YÖNETİMİ</div>
+      <div class="mss-group-title">📊 DASHBOARD & PERFORMANS</div>
+      <div class="mss-sub">
+        <a href="/production/analytics" class="mss-sub-link">📊 Üretim Analitiği</a>
+      </div>
+      <div class="mss-group-title">⚙️ İMALAT & SİPARİŞ KONTROLÜ</div>
+      <div class="mss-sub">
+        <a href="/production/requisitions" class="mss-sub-link">📩 Üretim Talepleri</a>
+        <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
+        <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
+        <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
+      </div>
+      <div class="mss-group-title">📜 REÇETE & PROCESS MÜHENDİSLİĞİ</div>
+      <div class="mss-sub">
+        <a href="/production/bom" class="mss-sub-link">📜 Üretim Reçeteleri (BOM)</a>
+        <a href="/production/routing" class="mss-sub-link">🛠️ Rotalama & Operasyonlar</a>
+        <a href="/production/workshops" class="mss-sub-link active">🏢 Atölye Kartları</a>
+      </div>
+      <div class="mss-group-title">🏭 KAPASİTE & SAHA TAKİBİ (MES)</div>
+      <div class="mss-sub">
+        <a href="/production/capacity" class="mss-sub-link">🏭 Kapasite Planlaması</a>
+        <a href="/production/mes" class="mss-sub-link">📱 MES Saha Terminali</a>
+      </div>
+    </div>
+    <div class="module-sidebar-user">
+      <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="module-main">
+    <header class="module-topbar">
+      <div class="mt-left">
+        <a href="/" class="mt-link">Ana Sayfa</a>
+        <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <a href="/production" class="mt-link active">Üretim Planlama</a>
+        <a href="/quality" class="mt-link">Kalite Kontrol</a>
+      </div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="module-content">
+
+      <!-- Breadcrumb & Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <a href="/production/workshops" style="color: var(--text-muted); text-decoration: none;">Atölye Kartları</a>
+            <span>/</span>
+            <span style="color: #818cf8;"><%= isEditMode ? 'Atölyeyi Düzenle' : 'Yeni Atölye Kartı Ekle' %></span>
+          </div>
+          <h1 style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px;">
+            🏢 <%= isEditMode ? `[${workshop.atolyeKodu}] ${workshop.atolyeAdi} Düzenleme` : 'Yeni Atölye Kartı Oluşturma' %>
+          </h1>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 4px;">
+            İmalat sahasında görev yapacak atölye kimliği, adı, genel personel rolündeki sorumlu ataması ve çalışma durumu.
+          </p>
+        </div>
+        <a href="/production/workshops" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+          <span>←</span> Atölye Listesine Dön
+        </a>
+      </div>
+
+      <!-- Workshop Form Card -->
+      <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; box-shadow: var(--shadow-md); max-width: 900px; margin: 0 auto;">
+        
+        <form action="/production/workshops/save" method="POST" id="workshopForm">
+          <% if (isEditMode && workshop) { %>
+            <input type="hidden" name="id" value="<%= workshop.id %>">
+          <% } %>
+
+          <h4 style="font-size: 1rem; font-weight: 800; color: #818cf8; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+            <span>🏢</span> Atölye Temel Bilgileri & Sorumlu Personel
+          </h4>
+
+          <!-- Row 1: Code & Name -->
+          <div class="form-grid form-grid--2" style="margin-bottom: 1.5rem;">
+            
+            <!-- 1. Atolye Kodu (Readonly / Otomatik Sistem Kimliği) -->
+            <div class="input-group">
+              <label for="atolyeKodu" style="font-weight: 700;">
+                1. Atölye Kodu <span style="color: #f43f5e;">*</span>
+              </label>
+              <div style="position: relative;">
+                <input type="text" id="atolyeKodu" name="atolyeKodu" value="<%= nextCode %>" readonly 
+                  style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.3); cursor: not-allowed; padding-right: 40px;" required>
+                <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Sistem Tarafından Otomatik Üretilen Benzersiz Numara">🔒</span>
+              </div>
+            </div>
+
+            <!-- 2. Atolye Adi (Zorunlu) -->
+            <div class="input-group">
+              <label for="atolyeAdi" style="font-weight: 700;">
+                2. Atölye Adı <span style="color: #f43f5e;">*</span>
+              </label>
+              <input type="text" id="atolyeAdi" name="atolyeAdi" 
+                value="<%= isEditMode && workshop ? workshop.atolyeAdi : '' %>" 
+                placeholder="Örn: CNC & Talaşlı İmalat Atölyesi" required 
+                style="font-weight: 600;">
+            </div>
+
+          </div>
+
+          <!-- Row 2: Sorumlu Personel (Zorunlu + Modal) -->
+          <div class="input-group" style="margin-bottom: 1.5rem;">
+            <label style="font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+              <span>3. Atölye Sorumlusu (Genel Personel) <span style="color: #f43f5e;">*</span></span>
+              <span style="font-size: 0.75rem; color: #818cf8; font-weight: 600;">Sadece Genel Personel rolündeki çalışanlar atanabilir</span>
+            </label>
+            
+            <% 
+              const currentSorumlu = (isEditMode && workshop && workshop.sorumlu) ? workshop.sorumlu : null;
+              const currentSorumluId = currentSorumlu ? currentSorumlu.id : '';
+            %>
+            <input type="hidden" name="sorumluId" id="sorumluId" value="<%= currentSorumluId %>" required>
+
+            <!-- Sorumlu Display Container -->
+            <div id="selectedManagerDisplay" style="display: <%= currentSorumlu ? 'block' : 'none' %>; margin-bottom: 10px;">
+              <div class="selected-manager-card">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div class="user-avatar-lg" id="managerAvatar">
+                    <%= currentSorumlu ? (currentSorumlu.ad ? currentSorumlu.ad.charAt(0) : currentSorumlu.kullaniciAdi.charAt(0)).toUpperCase() : '?' %>
+                  </div>
+                  <div>
+                    <strong style="font-size: 1rem; color: #fff; display: block;" id="managerFullName">
+                      <%= currentSorumlu ? (currentSorumlu.ad ? `${currentSorumlu.ad} ${currentSorumlu.soyad || ''}` : currentSorumlu.kullaniciAdi) : '' %>
+                    </strong>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; margin-top: 2px;">
+                      <span id="managerUsername" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">
+                        @<%= currentSorumlu ? currentSorumlu.kullaniciAdi : '' %>
+                      </span>
+                      <span>•</span>
+                      <span id="managerDept" style="background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px;">
+                        <%= currentSorumlu ? (currentSorumlu.departman || 'Genel Personel') : '' %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <button type="button" onclick="openManagerSelectModal()" class="btn btn-secondary btn-sm" style="font-weight: 700; border-radius: 8px;">
+                    🔄 Sorumluyu Değiştir
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty Manager Placeholder / Modal Trigger Button -->
+            <div id="emptyManagerButtonWrap" style="display: <%= currentSorumlu ? 'none' : 'block' %>;">
+              <button type="button" onclick="openManagerSelectModal()" class="btn" 
+                style="width: 100%; background: rgba(99, 102, 241, 0.12); border: 2px dashed rgba(99, 102, 241, 0.4); color: #818cf8; padding: 18px; border-radius: 14px; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s;">
+                <span style="font-size: 1.25rem;">👤</span>
+                <span>Personel Listesinden Atölye Sorumlusu Seç (Modal)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Row 3: Durum (Zorunlu) -->
+          <div class="input-group" style="margin-bottom: 1.5rem;">
+            <label for="durum" style="font-weight: 700;">
+              4. Atölye Çalışma Durumu <span style="color: #f43f5e;">*</span>
+            </label>
+            <% 
+              const currentDurum = isEditMode && workshop ? workshop.durum : 'Active';
+            %>
+            <select id="durum" name="durum" required style="font-weight: 700;">
+              <option value="Active" <%= currentDurum === 'Active' ? 'selected' : '' %>>🟢 Aktif (İmalat ve Operasyonlara Açık)</option>
+              <option value="Inactive" <%= currentDurum === 'Inactive' ? 'selected' : '' %>>⚪ Pasif (Bakımda / Geçici Olarak Kapalı)</option>
+            </select>
+          </div>
+
+          <!-- Row 4: Açıklama / Notlar (Opsiyonel) -->
+          <div class="input-group" style="margin-bottom: 2rem;">
+            <label for="aciklama" style="font-weight: 700;">
+              5. Açıklama & Atölye Notları <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal;">(Opsiyonel)</span>
+            </label>
+            <textarea id="aciklama" name="aciklama" rows="3" 
+              placeholder="Atölyenin fiziksel konumu, makine parkuru, çalışma saatleri veya özel emniyet kuralları..."><%= isEditMode && workshop ? (workshop.aciklama || '') : '' %></textarea>
+          </div>
+
+          <!-- Form Actions -->
+          <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 18px;">
+            <a href="/production/workshops" class="btn btn-secondary" style="padding: 10px 22px; border-radius: 10px; font-weight: 600;">
+              Vazgeç
+            </a>
+            <button type="submit" class="btn btn-primary" id="btnSubmitWorkshop" style="background: linear-gradient(135deg, #6366f1 0%, #10b981 100%); color: #fff; border: none; font-weight: 700; padding: 11px 32px; border-radius: 10px; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);">
+              💾 <%= isEditMode ? 'Atölyeyi Güncelle' : 'Atölye Kartını Kaydet' %>
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: ATÖLYE SORUMLUSU SEÇİMİ (GENEL PERSONEL FİLTRELİ) -->
+  <!-- ======================================================================= -->
+  <div id="managerSelectModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; width: 100%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); position: relative;">
+      
+      <!-- Modal Header -->
+      <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.95);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.5rem; background: rgba(99, 102, 241, 0.15); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(99, 102, 241, 0.3);">👤</span>
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">Atölye Sorumlusu Seçimi</h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Sistemde 'Genel Personel' rolüne sahip çalışanlar listelenmektedir. Tek bir personel seçerek atayabilirsiniz.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeManagerSelectModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
+      </div>
+
+      <!-- Modal Search & Filters -->
+      <div style="padding: 16px 24px; background: rgba(30, 41, 59, 0.4); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 240px; position: relative;">
+          <input type="text" id="modalManagerSearchInput" oninput="filterModalManagers()" placeholder="🔍 Personel adı, soyadı veya kullanıcı adı ile ara..." style="width: 100%; padding: 10px 14px 10px 38px; border-radius: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;">
+          <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-muted);">🔍</span>
+        </div>
+      </div>
+
+      <!-- Modal Body (Personnel List) -->
+      <div style="flex: 1; overflow-y: auto; padding: 0 24px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;" id="modalManagersTable">
+          <thead>
+            <tr style="position: sticky; top: 0; background: #0f172a; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; z-index: 10;">
+              <th style="padding: 12px 10px; width: 45px; text-align: center;">Seç</th>
+              <th style="padding: 12px 14px;">Personel Bilgisi</th>
+              <th style="padding: 12px 14px; width: 180px;">Departman & Unvan</th>
+              <th style="padding: 12px 14px; width: 140px;">Rol</th>
+            </tr>
+          </thead>
+          <tbody id="modalManagersTbody">
+            <% if (!eligibleManagers || eligibleManagers.length === 0) { %>
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                  ⚠️ Sistemde aktif 'Genel Personel' rolünde kullanıcı bulunamadı.
+                </td>
+              </tr>
+            <% } else { %>
+              <% eligibleManagers.forEach(emp => { %>
+                <% const fullName = emp.ad ? `${emp.ad} ${emp.soyad || ''}` : emp.kullaniciAdi; %>
+                <tr class="manager-modal-row" 
+                    data-id="<%= emp.id %>" 
+                    data-name="<%= fullName %>" 
+                    data-username="<%= emp.kullaniciAdi %>" 
+                    data-dept="<%= emp.departman || 'Genel Personel' %>" 
+                    data-title="<%= emp.unvan || 'Personel' %>"
+                    onclick="selectManagerRow(this)">
+                  <td style="padding: 12px 10px; text-align: center;">
+                    <input type="radio" name="modalSelectedManagerRadio" value="<%= emp.id %>" 
+                      style="cursor: pointer; transform: scale(1.2);"
+                      onclick="event.stopPropagation(); selectManagerRow(this.closest('tr'))">
+                  </td>
+                  <td style="padding: 12px 14px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="user-avatar-badge">
+                        <%= (emp.ad ? emp.ad.charAt(0) : emp.kullaniciAdi.charAt(0)).toUpperCase() %>
+                      </div>
+                      <div>
+                        <strong style="color: #fff; font-size: 0.88rem;"><%= fullName %></strong>
+                        <div style="font-size: 0.75rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;">@<%= emp.kullaniciAdi %></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="padding: 12px 14px;">
+                    <div style="font-weight: 600; color: #e2e8f0;"><%= emp.departman || 'Genel' %></div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= emp.unvan || 'Personel' %></div>
+                  </td>
+                  <td style="padding: 12px 14px;">
+                    <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">
+                      Genel Personel
+                    </span>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding: 16px 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 23, 42, 0.95); display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 0.85rem; color: #818cf8; font-weight: 700;" id="modalSelectedManagerNotice">
+          Lütfen listeden bir personel seçiniz
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" onclick="closeManagerSelectModal()" class="btn btn-secondary btn-sm" style="padding: 9px 18px; border-radius: 8px;">
+            Vazgeç
+          </button>
+          <button type="button" onclick="confirmAssignManager()" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700; padding: 9px 22px; border-radius: 8px; border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
+            ✓ Seçilen Personeli Sorumlu Olarak Ata
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let tempSelectedManager = null;
+
+    function openManagerSelectModal() {
+      const modal = document.getElementById('managerSelectModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        const currentId = document.getElementById('sorumluId').value;
+        document.querySelectorAll('.manager-modal-row').forEach(row => {
+          const radio = row.querySelector('input[type="radio"]');
+          if (row.dataset.id === currentId) {
+            row.classList.add('selected');
+            if (radio) radio.checked = true;
+            tempSelectedManager = { ...row.dataset };
+          } else {
+            row.classList.remove('selected');
+            if (radio) radio.checked = false;
+          }
+        });
+        updateModalNotice();
+        const searchInp = document.getElementById('modalManagerSearchInput');
+        if (searchInp) {
+          searchInp.value = '';
+          filterModalManagers();
+          searchInp.focus();
+        }
+      }
+    }
+
+    function closeManagerSelectModal() {
+      const modal = document.getElementById('managerSelectModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function filterModalManagers() {
+      const q = (document.getElementById('modalManagerSearchInput').value || '').toLowerCase().trim();
+      document.querySelectorAll('.manager-modal-row').forEach(row => {
+        const name = (row.dataset.name || '').toLowerCase();
+        const uname = (row.dataset.username || '').toLowerCase();
+        const dept = (row.dataset.dept || '').toLowerCase();
+        const match = name.includes(q) || uname.includes(q) || dept.includes(q);
+        row.style.display = match ? '' : 'none';
+      });
+    }
+
+    function selectManagerRow(row) {
+      document.querySelectorAll('.manager-modal-row').forEach(r => r.classList.remove('selected'));
+      row.classList.add('selected');
+      const radio = row.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      tempSelectedManager = { ...row.dataset };
+      updateModalNotice();
+    }
+
+    function updateModalNotice() {
+      const notice = document.getElementById('modalSelectedManagerNotice');
+      if (!notice) return;
+      if (tempSelectedManager) {
+        notice.textContent = `✓ Seçildi: ${tempSelectedManager.name} (@${tempSelectedManager.username})`;
+        notice.style.color = '#34d399';
+      } else {
+        notice.textContent = 'Lütfen listeden bir personel seçiniz';
+        notice.style.color = '#818cf8';
+      }
+    }
+
+    function confirmAssignManager() {
+      if (!tempSelectedManager || !tempSelectedManager.id) {
+        alert('⚠️ Lütfen sorumlu olarak atamak istediğiniz personeli seçiniz.');
+        return;
+      }
+
+      document.getElementById('sorumluId').value = tempSelectedManager.id;
+      document.getElementById('managerFullName').textContent = tempSelectedManager.name;
+      document.getElementById('managerUsername').textContent = `@${tempSelectedManager.username}`;
+      document.getElementById('managerDept').textContent = tempSelectedManager.dept;
+      document.getElementById('managerAvatar').textContent = tempSelectedManager.name.charAt(0).toUpperCase();
+
+      document.getElementById('selectedManagerDisplay').style.display = 'block';
+      document.getElementById('emptyManagerButtonWrap').style.display = 'none';
+
+      closeManagerSelectModal();
+    }
+
+    // Form Validation Check on Submit
+    const form = document.getElementById('workshopForm');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const atolyeKodu = document.getElementById('atolyeKodu').value.trim();
+        const atolyeAdi = document.getElementById('atolyeAdi').value.trim();
+        const sorumluId = document.getElementById('sorumluId').value.trim();
+        const durum = document.getElementById('durum').value.trim();
+
+        if (!atolyeKodu) {
+          e.preventDefault();
+          alert('⚠️ Atölye kodu sistem tarafından oluşturulmalıdır.');
+          return false;
+        }
+
+        if (!atolyeAdi) {
+          e.preventDefault();
+          alert('⚠️ Lütfen atölye adını giriniz.');
+          document.getElementById('atolyeAdi').focus();
+          return false;
+        }
+
+        if (!sorumluId) {
+          e.preventDefault();
+          alert('⚠️ Lütfen "Personel Listesinden Atölye Sorumlusu Seç" butonuna tıklayarak sorumlu personeli atayınız.');
+          openManagerSelectModal();
+          return false;
+        }
+
+        if (!durum) {
+          e.preventDefault();
+          alert('⚠️ Lütfen atölye çalışma durumunu seçiniz.');
+          document.getElementById('durum').focus();
+          return false;
+        }
+      });
+    }
+
+    function updateClock() { 
+      const now = new Date(); 
+      const el = document.getElementById('liveTime'); 
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); 
+    }
+    updateClock(); 
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

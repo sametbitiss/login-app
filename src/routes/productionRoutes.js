@@ -47,4 +47,12 @@ router.get('/capacity', productionController.listCapacity);
 router.get('/mes', productionController.listMES);
 router.post('/mes/:id', productionController.updateMES);
 
+// 7. Workshop (Atölye Kartları) Routes
+const workshopController = require('../controllers/workshopController');
+router.get('/workshops', workshopController.listWorkshops);
+router.get('/workshops/add', workshopController.renderAddWorkshop);
+router.get('/workshops/edit/:id', workshopController.renderEditWorkshop);
+router.post('/workshops/save', workshopController.saveWorkshop);
+router.post('/workshops/delete/:id', workshopController.deleteWorkshop);
+
 module.exports = router;

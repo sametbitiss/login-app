@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       Kullanici.hasMany(models.StokKarti, { foreignKey: 'olusturanId', as: 'olusturulanStokKartlari' });
       Kullanici.hasMany(models.SatisSiparisi, { foreignKey: 'olusturanId', as: 'olusturulanSatisSiparisleri' });
       Kullanici.hasMany(models.SatinAlmaSiparisi, { foreignKey: 'olusturanId', as: 'olusturulanSatinAlmaSiparisleri' });
+      Kullanici.hasMany(models.Atolye, { foreignKey: 'sorumluId', as: 'sorumluOlduguAtolyeler' });
     }
   }
 
