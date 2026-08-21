@@ -274,8 +274,10 @@
                     <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;"><%= item.warehouseLocation || 'Depo-A' %></span>
                   </td>
                   <td>
-                    <% if (item.status === 'Active') { %>
+                    <% if (item.status === 'Active' || item.durum === 'Active') { %>
                       <span class="status-pill status-active" style="font-size: 0.725rem;">● Aktif</span>
+                    <% } else if (item.status === 'Discontinued' || item.durum === 'Discontinued') { %>
+                      <span class="status-pill" style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); font-size: 0.725rem;">● Durduruldu</span>
                     <% } else { %>
                       <span class="status-pill status-rejected" style="font-size: 0.725rem;">● Pasif</span>
                     <% } %>

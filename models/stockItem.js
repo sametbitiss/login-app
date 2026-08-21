@@ -136,9 +136,25 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() { return this.getDataValue('satisFiyati'); }
     },
+    purchasePrice: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('alisFiyati'); }
+    },
     currentStock: {
       type: DataTypes.VIRTUAL,
       get() { return this.getDataValue('mevcutStok'); }
+    },
+    reservedStock: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('rezerveStok'); }
+    },
+    minStock: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('minStok'); }
+    },
+    maxStock: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('maxStok'); }
     },
     unit: {
       type: DataTypes.VIRTUAL,
@@ -151,6 +167,42 @@ module.exports = (sequelize, DataTypes) => {
     taxRate: {
       type: DataTypes.VIRTUAL,
       get() { return this.getDataValue('kdvOrani'); }
+    },
+    status: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('durum'); }
+    },
+    procurementMethod: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('tedarikYontemi'); }
+    },
+    warehouseLocation: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('depoLokasyonu'); }
+    },
+    barcode: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('barkod'); }
+    },
+    description: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('aciklama'); }
+    },
+    supplier: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('tedarikci'); }
+    },
+    brand: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('marka'); }
+    },
+    notes: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('notlar'); }
+    },
+    currency: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('paraBirimi'); }
     }
   }, {
     sequelize,

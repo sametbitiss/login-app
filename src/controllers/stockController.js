@@ -51,6 +51,10 @@ class StockController {
       successMsg = '🛒 Satın Alma Talebi başarıyla oluşturuldu ve Satın Alma Modülüne (Talepler Kartına) iletildi.';
     } else if (req.query.success === 'production') {
       successMsg = '⚙️ Üretim Talebi başarıyla oluşturuldu ve Üretim Modülüne (Talepler Kartına) iletildi.';
+    } else if (req.query.success === 'updated') {
+      successMsg = 'Stok kartı başarıyla güncellendi!';
+    } else if (req.query.success === 'added') {
+      successMsg = 'Yeni stok kartı başarıyla oluşturuldu!';
     }
 
     res.render('stock/list', {
@@ -128,7 +132,7 @@ class StockController {
         kdvOrani: parseFloat(req.body.kdvOrani || req.body.taxRate) || 20
       }, req.user, req.ip);
 
-      res.redirect('/stock');
+      res.redirect('/stock/items?success=added');
     } catch (err) {
       const nextStockCode = await stockRepository.getNextStockCode();
       const warehouses = await stockRepository.findAllWarehouses();
@@ -200,7 +204,7 @@ class StockController {
         notlar: req.body.notlar || req.body.notes ? (req.body.notlar || req.body.notes).trim() : null
       }, req.user, req.ip);
 
-      res.redirect(`/stock/items/${item.id}/detail?success=updated`);
+      res.redirect('/stock/items?success=updated');
     } catch (err) {
       let friendlyError = err.message;
       if (err.name === 'SequelizeUniqueConstraintError' || err.name === 'SequelizeValidationError') {

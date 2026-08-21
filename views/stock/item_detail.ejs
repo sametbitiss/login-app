@@ -347,9 +347,9 @@
             <div class="field-wrap">
               <label class="field-label">Kart Durumu *</label>
               <select name="status" class="field-input" required>
-                <option value="Active" <%= item.status === 'Active' ? 'selected' : '' %>>● Aktif (İşlemlere Açık)</option>
-                <option value="Passive" <%= item.status === 'Passive' ? 'selected' : '' %>>● Pasif (İşlemlere Kapalı)</option>
-                <option value="Discontinued" <%= item.status === 'Discontinued' ? 'selected' : '' %>>● Durduruldu (Üretim/Satış Yapılmaz)</option>
+                <option value="Active" <%= (item.status === 'Active' || item.durum === 'Active') ? 'selected' : '' %>>● Aktif (İşlemlere Açık)</option>
+                <option value="Passive" <%= (item.status === 'Passive' || item.durum === 'Passive') ? 'selected' : '' %>>● Pasif (İşlemlere Kapalı)</option>
+                <option value="Discontinued" <%= (item.status === 'Discontinued' || item.durum === 'Discontinued') ? 'selected' : '' %>>● Durduruldu (Üretim/Satış Yapılmaz)</option>
               </select>
             </div>
           </div>
