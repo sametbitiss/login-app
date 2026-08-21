@@ -346,11 +346,25 @@
             </div>
             <div class="field-wrap">
               <label class="field-label">Kart Durumu *</label>
-              <select name="status" class="field-input" required>
-                <option value="Active" <%= (item.status === 'Active' || item.durum === 'Active') ? 'selected' : '' %>>● Aktif (İşlemlere Açık)</option>
-                <option value="Passive" <%= (item.status === 'Passive' || item.durum === 'Passive') ? 'selected' : '' %>>● Pasif (İşlemlere Kapalı)</option>
-                <option value="Discontinued" <%= (item.status === 'Discontinued' || item.durum === 'Discontinued') ? 'selected' : '' %>>● Durduruldu (Üretim/Satış Yapılmaz)</option>
-              </select>
+              <% if (typeof passiveComponents !== 'undefined' && passiveComponents && passiveComponents.length > 0) { %>
+                <select name="status" class="field-input" required style="border-color: #f43f5e;">
+                  <option value="Active" disabled style="color: #64748b; background: #0f172a;">● Aktif (Reçetede pasif bileşen var - Kilitli)</option>
+                  <option value="Passive" <%= (item.status === 'Passive' || item.durum === 'Passive' || item.status === 'Active' || item.durum === 'Active') ? 'selected' : '' %>>● Pasif (İşlemlere Kapalı)</option>
+                  <option value="Discontinued" <%= (item.status === 'Discontinued' || item.durum === 'Discontinued') ? 'selected' : '' %>>● Durduruldu (Üretim/Satış Yapılmaz)</option>
+                </select>
+                <div style="font-size: 0.75rem; color: #fb7185; margin-top: 6px; background: rgba(244, 63, 94, 0.12); padding: 9px 13px; border-radius: 10px; border: 1px solid rgba(244, 63, 94, 0.3);">
+                  ⚠️ <strong>Reçetede Pasif Bileşen Var:</strong><br>
+                  Bu ürünün reçetesindeki <% passiveComponents.forEach((pc, idx) => { %>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff;">[<%= pc.stokKodu %>] <%= pc.ad %></span><%= idx < passiveComponents.length - 1 ? ', ' : '' %>
+                  <% }) %> pasif durumda olduğu için bu mamulün durumu <u>Aktif yapılamaz</u>. Önce ilgili bileşenin durumu Aktif yapılmalıdır.
+                </div>
+              <% } else { %>
+                <select name="status" class="field-input" required>
+                  <option value="Active" <%= (item.status === 'Active' || item.durum === 'Active') ? 'selected' : '' %>>● Aktif (İşlemlere Açık)</option>
+                  <option value="Passive" <%= (item.status === 'Passive' || item.durum === 'Passive') ? 'selected' : '' %>>● Pasif (İşlemlere Kapalı)</option>
+                  <option value="Discontinued" <%= (item.status === 'Discontinued' || item.durum === 'Discontinued') ? 'selected' : '' %>>● Durduruldu (Üretim/Satış Yapılmaz)</option>
+                </select>
+              <% } %>
             </div>
           </div>
         </div>

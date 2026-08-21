@@ -64,58 +64,87 @@ class StockRepository {
 
   /**
    * Returns sellable Mamul items for Sales module.
-   * A Mamul is sellable ONLY if:
-   * 1. Its own status is 'Active' and category is 'Mamul'.
-   * 2. All component items in its recipe (and sub-recipes recursively) have status 'Active'.
-   * If any component (Hammadde or Yarı Mamul) is 'Passive' or 'Discontinued', the Mamul is excluded.
    */
   async getSellableMamulItems() {
-    const allStocks = await StokKarti.findAll({
+    return await StokKarti.findAll({
+      where: { durum: 'Active', kategori: 'Mamul' },
       order: [['ad', 'ASC']]
-    });
-    const allBOMs = await UrunRecetesi.findAll({
-      where: { durum: 'Active' }
-    });
-
-    const stockMap = new Map();
-    allStocks.forEach(s => stockMap.set(s.id, s));
-
-    const bomsByParent = {};
-    allBOMs.forEach(b => {
-      if (!bomsByParent[b.mamulStokId]) bomsByParent[b.mamulStokId] = [];
-      bomsByParent[b.mamulStokId].push(b);
-    });
-
-    function checkProducible(stockId, visited = new Set()) {
-      if (visited.has(stockId)) return false; // Cycle prevention
-      const item = stockMap.get(stockId);
-      if (!item) return false;
-      if (item.durum !== 'Active') return false;
-
-      const components = bomsByParent[stockId] || [];
-      for (const comp of components) {
-        const compId = comp.bilesenStokId;
-        const compVisited = new Set(visited);
-        compVisited.add(stockId);
-        if (!checkProducible(compId, compVisited)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    return allStocks.filter(s => {
-      const isMamul = (s.kategori || '').toLowerCase() === 'mamul';
-      if (!isMamul) return false;
-      return checkProducible(s.id);
     });
   }
 
   async checkIsItemProducible(stockItemId) {
     const validId = parseInt(stockItemId, 10);
     if (!validId || isNaN(validId)) return false;
-    const sellable = await this.getSellableMamulItems();
-    return sellable.some(s => s.id === validId);
+    const item = await StokKarti.findByPk(validId);
+    return item ? (item.durum === 'Active' && item.kategori === 'Mamul') : false;
+  }
+
+  /**
+   * Returns an array of passive components in the recipe tree of a stock item.
+   */
+  async getPassiveRecipeComponents(stockItemId, visited = new Set()) {
+    const validId = parseInt(stockItemId, 10);
+    if (!validId || isNaN(validId) || visited.has(validId)) return [];
+    visited.add(validId);
+
+    const boms = await UrunRecetesi.findAll({
+      where: { mamulStokId: validId, durum: 'Active' },
+      include: [{ model: StokKarti, as: 'bilesenUrun' }]
+    });
+
+    let passiveList = [];
+    for (const bom of boms) {
+      const comp = bom.bilesenUrun;
+      if (!comp) continue;
+
+      if (comp.durum !== 'Active') {
+        passiveList.push({
+          id: comp.id,
+          stokKodu: comp.stokKodu,
+          ad: comp.ad,
+          kategori: comp.kategori,
+          durum: comp.durum
+        });
+      } else {
+        const subPassives = await this.getPassiveRecipeComponents(comp.id, new Set(visited));
+        passiveList = passiveList.concat(subPassives);
+      }
+    }
+
+    const uniqueMap = new Map();
+    passiveList.forEach(p => uniqueMap.set(p.id, p));
+    return Array.from(uniqueMap.values());
+  }
+
+  /**
+   * Cascades passive status upwards to all parent products in recipes.
+   */
+  async cascadePassiveStatus(stockItemId, newStatus = 'Passive', currentUser = null, ipAddress = null, visited = new Set()) {
+    const validId = parseInt(stockItemId, 10);
+    if (!validId || isNaN(validId) || visited.has(validId)) return;
+    visited.add(validId);
+
+    const parentBoms = await UrunRecetesi.findAll({
+      where: { bilesenStokId: validId },
+      include: [{ model: StokKarti, as: 'mamulUrun' }]
+    });
+
+    for (const bom of parentBoms) {
+      const parent = bom.mamulUrun;
+      if (parent && parent.durum !== newStatus) {
+        await StokKarti.update({ durum: newStatus }, { where: { id: parent.id } });
+        await logService.logCrud({
+          kullaniciId: currentUser ? currentUser.id : null,
+          kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+          islem: 'UPDATE',
+          varlik: 'StokKarti',
+          varlikId: parent.id,
+          detaylar: { action: 'CASCADE_PASSIVE', reason: `Reçete bileşeni ID ${validId} pasif yapıldığı için mamul otomatik pasife alındı.`, newDurum: newStatus },
+          ipAdresi: ipAddress
+        });
+        await this.cascadePassiveStatus(parent.id, newStatus, currentUser, ipAddress, new Set(visited));
+      }
+    }
   }
 
   async create(data, currentUser = null, ipAddress = null) {
@@ -208,8 +237,22 @@ class StockRepository {
     if (data.durum !== undefined || data.status !== undefined) updateData.durum = data.durum || data.status;
     if (data.notlar !== undefined || data.notes !== undefined) updateData.notlar = data.notlar || data.notes;
 
-    const oldData = { ad: item.ad, mevcutStok: item.mevcutStok, satisFiyati: item.satisFiyati };
+    // Check if activating an item with passive recipe components
+    if (updateData.durum === 'Active') {
+      const passiveComps = await this.getPassiveRecipeComponents(item.id);
+      if (passiveComps && passiveComps.length > 0) {
+        const names = passiveComps.map(p => `[${p.stokKodu}] ${p.ad}`).join(', ');
+        throw new Error(`⚠️ Bu ürünün reçetesinde pasif durumda olan bileşen(ler) bulunmaktadır: ${names}. Ürünü aktif yapabilmek için önce reçetesindeki tüm bileşenlerin durumu aktif yapılmalıdır!`);
+      }
+    }
+
+    const oldData = { ad: item.ad, mevcutStok: item.mevcutStok, satisFiyati: item.satisFiyati, durum: item.durum };
     await item.update(updateData);
+
+    // If updated to Passive or Discontinued, cascade to all parent products that use this item in their BOM
+    if (updateData.durum && updateData.durum !== 'Active') {
+      await this.cascadePassiveStatus(item.id, updateData.durum, currentUser, ipAddress);
+    }
 
     await logService.logCrud({
       kullaniciId: currentUser ? currentUser.id : null,

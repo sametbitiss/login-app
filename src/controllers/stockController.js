@@ -170,6 +170,7 @@ class StockController {
 
     const warehouses = await stockRepository.findAllWarehouses();
     const suppliers = await Tedarikci.findAll({ where: { durum: 'Active' }, order: [['firmaAdi', 'ASC']] });
+    const passiveComponents = await stockRepository.getPassiveRecipeComponents(item.id);
 
     res.render('stock/item_detail', {
       user: req.user,
@@ -177,6 +178,7 @@ class StockController {
       warehouses,
       suppliers,
       CATEGORIES,
+      passiveComponents,
       activeSubTab: 'items',
       successMsg: req.query.success === 'updated' ? 'Stok kartı bilgileri başarıyla güncellendi!' : null,
       errorMsg: req.query.error || null
