@@ -21,14 +21,12 @@ class WorkshopController {
   });
 
   renderAddWorkshop = asyncHandler(async (req, res) => {
-    const nextCode = await workshopRepository.generateWorkshopCode();
     const eligibleManagers = await workshopRepository.getEligiblePersonnel();
 
     res.render('production/workshop_form', {
       user: req.user,
       workshop: null,
       isEditMode: false,
-      nextCode,
       eligibleManagers,
       activeSubTab: 'workshops',
       error: null
@@ -48,7 +46,6 @@ class WorkshopController {
       user: req.user,
       workshop,
       isEditMode: true,
-      nextCode: workshop.atolyeKodu,
       eligibleManagers,
       activeSubTab: 'workshops',
       error: null
@@ -57,8 +54,14 @@ class WorkshopController {
 
   saveWorkshop = asyncHandler(async (req, res) => {
     const { id, atolyeKodu, atolyeAdi, sorumluId, durum, aciklama } = req.body;
+    const { Atolye } = require('../../models');
+    const { Op } = require('sequelize');
 
     // Strict Validation for fields 1-4
+    if (!atolyeKodu || !atolyeKodu.trim()) {
+      throw new ValidationError('Lütfen atölye kodunu giriniz.');
+    }
+
     if (!atolyeAdi || !atolyeAdi.trim()) {
       throw new ValidationError('Atölye adı zorunludur.');
     }
@@ -71,7 +74,18 @@ class WorkshopController {
       throw new ValidationError('Lütfen geçerli bir atölye durumu seçiniz (Aktif/Pasif).');
     }
 
-    // Verify assigned manager exists and has general personnel role
+    // Check unique atolyeKodu
+    const existingCode = await Atolye.findOne({
+      where: {
+        atolyeKodu: atolyeKodu.trim(),
+        ...(id ? { id: { [Op.ne]: id } } : {})
+      }
+    });
+    if (existingCode) {
+      throw new ValidationError(`"${atolyeKodu.trim()}" atölye kodu zaten başka bir atölye tarafından kullanılmaktadır.`);
+    }
+
+    // Verify assigned manager exists and has Personel title
     const assignedUser = await Kullanici.findByPk(sorumluId);
     if (!assignedUser) {
       throw new ValidationError('Seçilen atölye sorumlusu sistemde bulunamadı.');
@@ -86,6 +100,7 @@ class WorkshopController {
       await workshopRepository.update(
         id,
         {
+          atolyeKodu: atolyeKodu.trim(),
           atolyeAdi: atolyeAdi.trim(),
           sorumluId: parseInt(sorumluId, 10),
           durum,
@@ -95,10 +110,9 @@ class WorkshopController {
         req.ip
       );
     } else {
-      const code = atolyeKodu || (await workshopRepository.generateWorkshopCode());
       await workshopRepository.create(
         {
-          atolyeKodu: code,
+          atolyeKodu: atolyeKodu.trim(),
           atolyeAdi: atolyeAdi.trim(),
           sorumluId: parseInt(sorumluId, 10),
           durum,

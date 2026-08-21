@@ -122,6 +122,7 @@ class WorkshopRepository {
     if (!workshop) return null;
 
     await workshop.update({
+      atolyeKodu: data.atolyeKodu !== undefined ? data.atolyeKodu : workshop.atolyeKodu,
       atolyeAdi: data.atolyeAdi !== undefined ? data.atolyeAdi : workshop.atolyeAdi,
       sorumluId: data.sorumluId !== undefined ? parseInt(data.sorumluId, 10) : workshop.sorumluId,
       durum: data.durum !== undefined ? data.durum : workshop.durum,

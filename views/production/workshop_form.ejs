@@ -174,16 +174,15 @@
           <!-- Row 1: Code & Name -->
           <div class="form-grid form-grid--2" style="margin-bottom: 1.5rem;">
             
-            <!-- 1. Atolye Kodu (Readonly / Otomatik Sistem Kimliği) -->
+            <!-- 1. Atolye Kodu (Personel Tarafından Girilen Kod) -->
             <div class="input-group">
               <label for="atolyeKodu" style="font-weight: 700;">
                 1. Atölye Kodu <span style="color: #f43f5e;">*</span>
               </label>
-              <div style="position: relative;">
-                <input type="text" id="atolyeKodu" name="atolyeKodu" value="<%= nextCode %>" readonly 
-                  style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.35); cursor: not-allowed; padding-right: 40px;" required>
-                <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.95rem;" title="Sistem Tarafından Otomatik Üretilen Benzersiz Numara">🔒</span>
-              </div>
+              <input type="text" id="atolyeKodu" name="atolyeKodu" 
+                value="<%= isEditMode && workshop ? workshop.atolyeKodu : '' %>" 
+                placeholder="Örn: ATY-001 veya ATY-CNC-01" required 
+                style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #818cf8;">
             </div>
 
             <!-- 2. Atolye Adi (Zorunlu) -->
@@ -566,7 +565,8 @@
 
         if (!atolyeKodu) {
           e.preventDefault();
-          alert('⚠️ Atölye kodu sistem tarafından oluşturulmalıdır.');
+          alert('⚠️ Lütfen atölye kodunu giriniz.');
+          document.getElementById('atolyeKodu').focus();
           return false;
         }
 
