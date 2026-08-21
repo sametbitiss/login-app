@@ -190,8 +190,7 @@ class ProductionRepository {
     const targetProducts = await StokKarti.findAll({
       where: {
         durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] },
-        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
+        kategori: { [Op.in]: ['Mamul', 'Yari_Mamul', 'Yarı_Mamul'] }
       },
       order: [['kategori', 'ASC'], ['ad', 'ASC']]
     });
@@ -265,7 +264,17 @@ class ProductionRepository {
   }
 
   async saveProductBOM(mamulStokId, bomHeaderData, currentUser = null, ipAddress = null) {
-    const { version, baseQuantity, components } = bomHeaderData;
+    const {
+      receteKodu,
+      version,
+      baseQuantity,
+      gecerlilikBaslangic,
+      gecerlilikBitis,
+      durum,
+      notlar,
+      generalNotes,
+      components
+    } = bomHeaderData;
     const targetMamulId = parseInt(mamulStokId, 10);
 
     await UrunRecetesi.destroy({ where: { mamulStokId: targetMamulId } });
@@ -274,7 +283,11 @@ class ProductionRepository {
     if (components && components.length > 0) {
       const finishedProduct = await StokKarti.findByPk(targetMamulId);
       const codePrefix = finishedProduct ? finishedProduct.stokKodu.replace(/[^a-zA-Z0-9]/g, '') : `PRD${targetMamulId}`;
-      const receteKodu = `BOM-${codePrefix}-${version ? version.replace(/[^a-zA-Z0-9]/g, '') : 'V1'}`;
+      const finalReceteKodu = receteKodu || `BOM-${codePrefix}-${version ? version.replace(/[^a-zA-Z0-9]/g, '') : 'V1'}`;
+      const finalDurum = durum || 'Active';
+      const finalBaslangic = gecerlilikBaslangic || null;
+      const finalBitis = gecerlilikBitis || null;
+      const finalGeneralNotes = notlar || generalNotes || null;
 
       for (const comp of components) {
         const compId = comp.bilesenStokId || comp.componentStockItemId;
@@ -285,7 +298,7 @@ class ProductionRepository {
         const calcLevel = isSemiFinished ? 2 : 3;
 
         const newBOM = await UrunRecetesi.create({
-          receteKodu,
+          receteKodu: finalReceteKodu,
           mamulStokId: targetMamulId,
           bilesenStokId: parseInt(compId, 10),
           versiyon: version || 'Rev.01',
@@ -297,7 +310,10 @@ class ProductionRepository {
           operasyonKodu: comp.operasyonKodu || comp.operationCode || null,
           alternatifBilesenStokId: (comp.alternatifBilesenStokId || comp.alternativeComponentItemId) ? parseInt(comp.alternatifBilesenStokId || comp.alternativeComponentItemId, 10) : null,
           alternatifNotlar: comp.alternatifNotlar || comp.alternativeNotes || null,
-          notlar: comp.notlar || comp.notes || null
+          notlar: comp.notlar || comp.notes || finalGeneralNotes,
+          gecerlilikBaslangic: finalBaslangic,
+          gecerlilikBitis: finalBitis,
+          durum: finalDurum
         });
 
         createdItems.push(newBOM);

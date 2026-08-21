@@ -68,6 +68,19 @@ module.exports = (sequelize, DataTypes) => {
     notlar: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    gecerlilikBaslangic: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    gecerlilikBitis: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    durum: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'Active'
     }
   }, {
     sequelize,

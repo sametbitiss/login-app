@@ -286,8 +286,7 @@ class ProductionController {
     const finishedStockItems = await StokKarti.findAll({
       where: {
         durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
-        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
+        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] }
       },
       order: [['ad', 'ASC']]
     });
@@ -295,13 +294,7 @@ class ProductionController {
     const componentStockItems = await StokKarti.findAll({
       where: { 
         durum: 'Active',
-        [Op.or]: [
-          { kategori: { [Op.in]: ['Hammadde', 'Ticari_Mal'] } },
-          {
-            kategori: { [Op.in]: ['Yarı_Mamul', 'Yari_Mamul'] },
-            tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
-          }
-        ]
+        kategori: { [Op.in]: ['Hammadde', 'Yarı_Mamul', 'Yari_Mamul', 'Ticari_Mal'] }
       },
       order: [['ad', 'ASC']]
     });
@@ -337,8 +330,7 @@ class ProductionController {
     const finishedStockItems = await StokKarti.findAll({
       where: {
         durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
-        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
+        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] }
       },
       order: [['ad', 'ASC']]
     });
@@ -378,12 +370,16 @@ class ProductionController {
       });
     }
 
+    const { RotaOperasyon } = require('../../models');
+    const routingOperations = await RotaOperasyon.findAll({ order: [['operasyonSira', 'ASC']] });
+
     res.render('production/bom_form', {
       user: req.user,
       targetProduct,
       existingBOMItems,
       finishedStockItems: processedFinishedItems,
       componentStockItems,
+      routingOperations,
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'bom'
@@ -393,8 +389,16 @@ class ProductionController {
   saveBOM = asyncHandler(async (req, res) => {
     const {
       finishedStockItemId,
+      receteKodu,
       version,
+      versiyon,
       baseQuantity,
+      bazMiktar,
+      gecerlilikBaslangic,
+      gecerlilikBitis,
+      durum,
+      notlar,
+      notes,
       componentsJson,
       componentStockItemId,
       quantityRequired,
@@ -402,8 +406,7 @@ class ProductionController {
       scrapPercentage,
       operationCode,
       alternativeComponentItemId,
-      alternativeNotes,
-      notes
+      alternativeNotes
     } = req.body;
 
     const targetMamulId = finishedStockItemId || req.body.mamulStokId;
@@ -428,7 +431,7 @@ class ProductionController {
         operasyonKodu: Array.isArray(operationCode) ? operationCode[idx] : operationCode,
         alternatifBilesenStokId: Array.isArray(alternativeComponentItemId) ? alternativeComponentItemId[idx] : alternativeComponentItemId,
         alternatifNotlar: Array.isArray(alternativeNotes) ? alternativeNotes[idx] : alternativeNotes,
-        notlar: Array.isArray(notes) ? notes[idx] : notes
+        notlar: Array.isArray(notes) ? notes[idx] : (Array.isArray(notlar) ? notlar[idx] : (notes || notlar))
       }));
     } else if (componentStockItemId) {
       components = [{
@@ -439,15 +442,20 @@ class ProductionController {
         operasyonKodu: operationCode,
         alternatifBilesenStokId: alternativeComponentItemId,
         alternatifNotlar: alternativeNotes,
-        notlar: notes
+        notlar: notes || notlar
       }];
     }
 
     await productionRepository.saveProductBOM(
       targetMamulId,
       {
-        version: version || req.body.versiyon || 'Rev.01',
-        baseQuantity: parseFloat(baseQuantity || req.body.bazMiktar) || 1.0,
+        receteKodu: receteKodu || req.body.receteNo || null,
+        version: version || versiyon || 'Rev.01',
+        baseQuantity: parseFloat(baseQuantity || bazMiktar) || 1.0,
+        gecerlilikBaslangic: gecerlilikBaslangic || null,
+        gecerlilikBitis: gecerlilikBitis || null,
+        durum: durum || 'Active',
+        notlar: notlar || notes || null,
         components
       },
       req.user,
