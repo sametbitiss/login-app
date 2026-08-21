@@ -163,6 +163,9 @@ class SaleController {
           if (!itemName) itemName = st.ad;
           if (!stockCode) stockCode = st.stokKodu;
           if (!unit) unit = st.birim;
+          if (st.durum !== 'Active' || st.kategori !== 'Mamul') {
+            throw new Error(`⚠️ Seçilen "${st.ad}" ([${st.stokKodu}]) ürünü aktif bir mamul değildir (Durum: ${st.durum}, Kategori: ${st.kategori}). Pasif ürünler satış teklifine veya siparişine eklenemez!`);
+          }
         }
       }
       if (!itemName) itemName = 'Ürün Kalemi';
@@ -230,7 +233,7 @@ class SaleController {
       const primaryItem = processedItems[0] || {};
       let primaryStockItemId = safeInt(primaryItem.stokId);
       if (!primaryStockItemId || primaryStockItemId <= 0) {
-        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } } });
+        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: 'Mamul' } });
         primaryStockItemId = defaultStock ? defaultStock.id : 1;
       }
       const customerId = safeInt(req.body.musteriId || req.body.customerId);
@@ -509,7 +512,7 @@ class SaleController {
       const primaryItem = processedItems[0] || {};
       let stockItemId = safeInt(primaryItem.stokId);
       if (!stockItemId || stockItemId <= 0) {
-        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] } } });
+        const defaultStock = await StokKarti.findOne({ where: { durum: 'Active', kategori: 'Mamul' } });
         stockItemId = defaultStock ? defaultStock.id : 1;
       }
 
@@ -1947,8 +1950,8 @@ class SaleController {
     const stockItemId = req.params.stockItemId || req.params.stokId;
     const item = await StokKarti.findByPk(stockItemId);
 
-    if (!item) {
-      return res.status(404).json({ success: false, message: 'Stok kartı bulunamadı.' });
+    if (!item || item.durum !== 'Active' || item.kategori !== 'Mamul') {
+      return res.status(404).json({ success: false, message: 'Aktif bir mamul stok kartı bulunamadı.' });
     }
 
     res.json({

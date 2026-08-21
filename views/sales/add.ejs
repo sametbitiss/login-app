@@ -717,7 +717,8 @@
 
       let items = (stockCatalog || []).filter(item => {
         const isMamul = (item.kategori || '').toLowerCase() === 'mamul';
-        if (!isMamul) return false;
+        const isActive = (item.durum || '').toLowerCase() === 'active';
+        if (!isMamul || !isActive) return false;
         const itemId = parseInt(item.id, 10);
         if (alreadyAddedIds.includes(itemId)) return false;
         const code = (item.stokKodu || item.stockCode || '').toLowerCase();
