@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   class RotaOperasyon extends Model {
     static associate(models) {
       RotaOperasyon.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      RotaOperasyon.belongsTo(models.IsMerkezi, { foreignKey: 'isMerkeziId', as: 'isMerkeziKarti' });
     }
   }
 
@@ -30,6 +31,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
+    isMerkeziId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     isMerkezi: {
       type: DataTypes.STRING,
       allowNull: false
@@ -48,6 +53,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1
+    },
+    durum: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'Active'
     },
     talimatlar: {
       type: DataTypes.TEXT,

@@ -509,24 +509,34 @@ class ProductionController {
 
   // 4. ROUTING & OPERATIONS
   listRouting = asyncHandler(async (req, res) => {
+    const { IsMerkezi } = require('../../models');
     const productRoutingList = await productionRepository.findAllRoutingsGroupedByProduct();
 
+    const withRoutingList = productRoutingList.filter(p => p.hasRouting);
+    const withoutRoutingList = productRoutingList.filter(p => !p.hasRouting);
+
     const totalCandidateProducts = productRoutingList.length;
-    const withRouting = productRoutingList.filter(p => p.hasRouting).length;
-    const withoutRouting = totalCandidateProducts - withRouting;
+    const withRouting = withRoutingList.length;
+    const withoutRouting = withoutRoutingList.length;
+
+    const workCenters = await IsMerkezi.findAll({
+      where: { durum: 'Active' },
+      order: [['isMerkeziKodu', 'ASC']]
+    });
 
     res.render('production/routing', {
       user: req.user,
       productRoutingList,
+      withRoutingList,
+      withoutRoutingList,
       stats: { totalCandidateProducts, withRouting, withoutRouting },
-      WORK_CENTERS,
-      ALL_ROLES,
+      workCenters,
       activeSubTab: 'routing'
     });
   });
 
   renderRoutingForm = asyncHandler(async (req, res) => {
-    const { StokKarti, UrunRecetesi, RotaOperasyon } = require('../../models');
+    const { StokKarti, UrunRecetesi, RotaOperasyon, IsMerkezi } = require('../../models');
     const { Op } = require('sequelize');
 
     const stockItemId = req.params.stockItemId || req.query.productId || req.params.stokId || null;
@@ -580,6 +590,12 @@ class ProductionController {
       });
     });
 
+    // Work Centers catalog from DB
+    const allWorkCenters = await IsMerkezi.findAll({
+      where: { durum: 'Active' },
+      order: [['isMerkeziKodu', 'ASC']]
+    });
+
     let targetProduct = null;
     let existingOperations = [];
     let targetBOMComponents = [];
@@ -602,8 +618,7 @@ class ProductionController {
       targetBOMComponents,
       candidateProducts: processedBOMProducts,
       bomComponentsMap,
-      WORK_CENTERS,
-      ALL_ROLES,
+      allWorkCenters,
       activeSubTab: 'routing'
     });
   });

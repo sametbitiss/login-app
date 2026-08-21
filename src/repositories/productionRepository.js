@@ -495,43 +495,93 @@ class ProductionRepository {
       throw new Error('Geçersiz ürün kimliği.');
     }
 
+    if (!Array.isArray(operationsArray) || operationsArray.length === 0) {
+      throw new Error('Lütfen en az bir operasyon adımı ekleyiniz.');
+    }
+
+    // Step numbers uniqueness & strict field validations
+    const seqSet = new Set();
+    for (let i = 0; i < operationsArray.length; i++) {
+      const op = operationsArray[i];
+      const seq = parseInt(op.operasyonSira || op.operationSeq, 10);
+      if (isNaN(seq) || seq <= 0) {
+        throw new Error(`Operasyon Adımı #${i + 1}: Adım sırası (operasyon numarası) 0'dan büyük bir tam sayı olmalıdır.`);
+      }
+      if (seqSet.has(seq)) {
+        throw new Error(`Aynı rota içinde mükerrer adım numarası (${seq}) kullanılamaz. Lütfen her adıma benzersiz bir numara veriniz.`);
+      }
+      seqSet.add(seq);
+
+      const name = (op.operasyonAdi || op.operationName || '').trim();
+      if (!name) {
+        throw new Error(`Adım ${seq}: Operasyon / İşlem adı zorunludur.`);
+      }
+
+      const wc = (op.isMerkezi || op.workCenter || '').trim();
+      if (!wc) {
+        throw new Error(`Adım ${seq}: Bağlı olduğu İş Merkezi seçimi zorunludur.`);
+      }
+
+      const setup = parseFloat(op.hazirlikSuresiDakika !== undefined ? op.hazirlikSuresiDakika : op.setupTimeMinutes);
+      if (isNaN(setup) || setup < 0) {
+        throw new Error(`Adım ${seq}: Hazırlık süresi negatif olamaz (0 veya daha büyük olmalıdır).`);
+      }
+
+      const run = parseFloat(op.calismaSuresiDakikaBirim !== undefined ? op.calismaSuresiDakikaBirim : op.runTimeMinutesPerUnit);
+      if (isNaN(run) || run < 0) {
+        throw new Error(`Adım ${seq}: İşlem / operasyon süresi negatif olamaz (0 veya daha büyük olmalıdır).`);
+      }
+
+      const operators = parseInt(op.operatorSayisi !== undefined ? op.operatorSayisi : op.operatorCount, 10);
+      if (isNaN(operators) || operators < 1) {
+        throw new Error(`Adım ${seq}: İşçilik / personel ihtiyacı en az 1 kişi olmalıdır (negatif olamaz).`);
+      }
+
+      const durum = op.durum || 'Active';
+      if (!['Active', 'Inactive'].includes(durum)) {
+        throw new Error(`Adım ${seq}: Geçerli bir durum seçilmelidir (Aktif/Pasif).`);
+      }
+    }
+
     await RotaOperasyon.destroy({ where: { stokId: validStockItemId } });
 
     const createdOperations = [];
-    if (Array.isArray(operationsArray) && operationsArray.length > 0) {
-      for (let i = 0; i < operationsArray.length; i++) {
-        const op = operationsArray[i];
-        const seq = parseInt(op.operasyonSira || op.operationSeq, 10) || (i + 1) * 10;
-        const code = op.operasyonKodu || op.operationCode || `OPS-${String(seq).padStart(2, '0')}`;
-        const name = op.operasyonAdi || op.operationName || `Operasyon Adımı #${i + 1}`;
-        const wc = op.isMerkezi || op.workCenter || 'İstasyon-1 (Kesim & Büküm)';
-        const setup = parseFloat(op.hazirlikSuresiDakika || op.setupTimeMinutes) || 15.0;
-        const run = parseFloat(op.calismaSuresiDakikaBirim || op.runTimeMinutesPerUnit) || 5.0;
-        const operators = parseInt(op.operatorSayisi || op.operatorCount, 10) || 1;
-        const inst = op.talimatlar || op.instructions || null;
-        let usedComps = null;
-        if (Array.isArray(op.kullanilanBilesenler || op.usedComponents)) {
-          usedComps = JSON.stringify(op.kullanilanBilesenler || op.usedComponents);
-        } else if (typeof (op.kullanilanBilesenler || op.usedComponents) === 'string') {
-          usedComps = op.kullanilanBilesenler || op.usedComponents;
-        }
-
-        const newOp = await RotaOperasyon.create({
-          rotaKodu: `ROT-${targetProduct.stokKodu}-v1`,
-          stokId: validStockItemId,
-          operasyonSira: seq,
-          operasyonKodu: code,
-          operasyonAdi: name,
-          isMerkezi: wc,
-          hazirlikSuresiDakika: setup,
-          calismaSuresiDakikaBirim: run,
-          operatorSayisi: operators,
-          talimatlar: inst,
-          kullanilanBilesenler: usedComps
-        });
-
-        createdOperations.push(newOp);
+    for (let i = 0; i < operationsArray.length; i++) {
+      const op = operationsArray[i];
+      const seq = parseInt(op.operasyonSira || op.operationSeq, 10);
+      const code = op.operasyonKodu || op.operationCode || `OPS-${String(seq).padStart(2, '0')}`;
+      const name = (op.operasyonAdi || op.operationName || '').trim();
+      const wc = (op.isMerkezi || op.workCenter || '').trim();
+      const wcId = op.isMerkeziId ? parseInt(op.isMerkeziId, 10) : null;
+      const setup = parseFloat(op.hazirlikSuresiDakika !== undefined ? op.hazirlikSuresiDakika : op.setupTimeMinutes) || 0;
+      const run = parseFloat(op.calismaSuresiDakikaBirim !== undefined ? op.calismaSuresiDakikaBirim : op.runTimeMinutesPerUnit) || 0;
+      const operators = parseInt(op.operatorSayisi !== undefined ? op.operatorSayisi : op.operatorCount, 10) || 1;
+      const durum = op.durum || 'Active';
+      const inst = op.talimatlar || op.instructions || null;
+      let usedComps = null;
+      if (Array.isArray(op.kullanilanBilesenler || op.usedComponents)) {
+        usedComps = JSON.stringify(op.kullanilanBilesenler || op.usedComponents);
+      } else if (typeof (op.kullanilanBilesenler || op.usedComponents) === 'string') {
+        usedComps = op.kullanilanBilesenler || op.usedComponents;
       }
+
+      const newOp = await RotaOperasyon.create({
+        rotaKodu: `ROT-${targetProduct.stokKodu}-v1`,
+        stokId: validStockItemId,
+        operasyonSira: seq,
+        operasyonKodu: code,
+        operasyonAdi: name,
+        isMerkeziId: wcId,
+        isMerkezi: wc,
+        hazirlikSuresiDakika: setup,
+        calismaSuresiDakikaBirim: run,
+        operatorSayisi: operators,
+        durum: durum,
+        talimatlar: inst,
+        kullanilanBilesenler: usedComps
+      });
+
+      createdOperations.push(newOp);
     }
 
     await logService.logCrud({
