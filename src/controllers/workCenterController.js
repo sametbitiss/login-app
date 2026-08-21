@@ -88,24 +88,25 @@ class WorkCenterController {
       throw new ValidationError('Lütfen geçerli bir durum seçiniz (Aktif/Pasif).');
     }
 
-    // 6. Optional varsayilanIsciSayisi validation
+    // 6. Optional varsayilanIsciSayisi validation (negatif girilemez)
     let isciSayisi = null;
-    if (varsayilanIsciSayisi !== undefined && varsayilanIsciSayisi !== '') {
+    if (varsayilanIsciSayisi !== undefined && varsayilanIsciSayisi !== null && varsayilanIsciSayisi !== '') {
       const parsedIsci = parseInt(varsayilanIsciSayisi, 10);
-      if (!isNaN(parsedIsci) && parsedIsci >= 0) {
-        isciSayisi = parsedIsci;
+      if (isNaN(parsedIsci) || parsedIsci < 0) {
+        throw new ValidationError('Varsayılan personel/işçi sayısı negatif (0\'dan küçük) olamaz. Lütfen 0 veya daha büyük bir tam sayı giriniz.');
       }
+      isciSayisi = parsedIsci;
     }
 
-    // Check unique code
+    // Check unique code (case-insensitive check)
     const existingCode = await IsMerkezi.findOne({
       where: {
-        isMerkeziKodu: isMerkeziKodu.trim(),
+        isMerkeziKodu: { [Op.iLike]: isMerkeziKodu.trim() },
         ...(id ? { id: { [Op.ne]: id } } : {})
       }
     });
     if (existingCode) {
-      throw new ValidationError(`"${isMerkeziKodu.trim()}" iş merkezi kodu zaten başka bir iş merkezi tarafından kullanılmaktadır.`);
+      throw new ValidationError(`"${isMerkeziKodu.trim()}" iş merkezi kodu zaten başka bir iş merkezi tarafından kullanılmaktadır. Lütfen benzersiz bir iş merkezi kodu giriniz.`);
     }
 
     // Verify Workshop exists

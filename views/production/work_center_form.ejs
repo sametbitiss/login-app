@@ -217,7 +217,7 @@
                 6. Varsayılan Personel / İşçi Sayısı <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal;">(Opsiyonel)</span>
               </label>
               <div style="position: relative;">
-                <input type="number" min="1" step="1" id="varsayilanIsciSayisi" name="varsayilanIsciSayisi" 
+                <input type="number" min="0" step="1" id="varsayilanIsciSayisi" name="varsayilanIsciSayisi" 
                   value="<%= isEditMode && workCenter && workCenter.varsayilanIsciSayisi ? workCenter.varsayilanIsciSayisi : '' %>" 
                   placeholder="Örn: 2" 
                   style="font-family: 'JetBrains Mono', monospace; font-weight: 600; padding-right: 70px;">
@@ -246,7 +246,7 @@
   </div>
 
   <script>
-    // Strict Validation Check for First 5 Fields
+    // Strict Validation Check for Fields
     const form = document.getElementById('workCenterForm');
     if (form) {
       form.addEventListener('submit', function(e) {
@@ -255,6 +255,7 @@
         const atolyeId = document.getElementById('atolyeId').value.trim();
         const saat = document.getElementById('gunlukCalismaSaati').value.trim();
         const durum = document.getElementById('durum').value.trim();
+        const isci = document.getElementById('varsayilanIsciSayisi').value.trim();
 
         if (!kod) {
           e.preventDefault();
@@ -290,6 +291,16 @@
           alert('⚠️ Lütfen 5. Çalışma Durumunu seçiniz.');
           document.getElementById('durum').focus();
           return false;
+        }
+
+        if (isci !== '') {
+          const parsedIsci = parseInt(isci, 10);
+          if (isNaN(parsedIsci) || parsedIsci < 0) {
+            e.preventDefault();
+            alert('⚠️ Varsayılan personel/işçi sayısı negatif (0\'dan küçük) olamaz. Lütfen 0 veya daha büyük bir tam sayı giriniz.');
+            document.getElementById('varsayilanIsciSayisi').focus();
+            return false;
+          }
         }
       });
     }

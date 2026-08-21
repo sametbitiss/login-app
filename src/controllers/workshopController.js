@@ -74,15 +74,15 @@ class WorkshopController {
       throw new ValidationError('Lütfen geçerli bir atölye durumu seçiniz (Aktif/Pasif).');
     }
 
-    // Check unique atolyeKodu
+    // Check unique atolyeKodu (case-insensitive check)
     const existingCode = await Atolye.findOne({
       where: {
-        atolyeKodu: atolyeKodu.trim(),
+        atolyeKodu: { [Op.iLike]: atolyeKodu.trim() },
         ...(id ? { id: { [Op.ne]: id } } : {})
       }
     });
     if (existingCode) {
-      throw new ValidationError(`"${atolyeKodu.trim()}" atölye kodu zaten başka bir atölye tarafından kullanılmaktadır.`);
+      throw new ValidationError(`"${atolyeKodu.trim()}" atölye kodu zaten başka bir atölye tarafından kullanılmaktadır. Lütfen benzersiz bir atölye kodu giriniz.`);
     }
 
     // Verify assigned manager exists and has Personel title
