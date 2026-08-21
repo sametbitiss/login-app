@@ -208,7 +208,6 @@
                       🔒 Sabit Ürün
                     </span>
                   </div>
-                  <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">Düzenleme modunda ürün adı değiştirilemez.</span>
                 <% } else { %>
                   <select id="finishedStockItemId" name="finishedStockItemId" required onchange="handleProductSelect(this)" style="font-weight: 600;">
                     <option value="">— Üretim Ürünü Seçiniz —</option>
@@ -229,25 +228,19 @@
               </div>
 
               <div class="input-group">
-                <label for="receteKodu" style="font-weight: 700;">Reçete Kodu / Numarası <span style="color: #34d399;">(Otomatik Benzersiz)</span></label>
+                <label for="receteKodu" style="font-weight: 700;">Reçete Kodu / Numarası</label>
                 <div style="position: relative;">
-                  <input type="text" id="receteKodu" name="receteKodu" value="<%= currentRecipeNo %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.35); cursor: not-allowed; padding-right: 40px;">
-                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Sistem Tarafından Otomatik Üretilen Benzersiz Numara">🔒</span>
+                  <input type="text" id="receteKodu" name="receteKodu" value="<%= currentRecipeNo %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.3); cursor: not-allowed; padding-right: 40px;">
+                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Otomatik Sistem Numarası">🔒</span>
                 </div>
-                <span style="font-size: 0.75rem; color: #34d399; margin-top: 3px;">🔒 Benzersiz Sistem Numarası (Değiştirilemez)</span>
               </div>
 
               <div class="input-group">
-                <label for="versiyon" style="font-weight: 700;">Revizyon / Versiyon <span style="color: #818cf8;">(Otomatik)</span></label>
+                <label for="versiyon" style="font-weight: 700;">Revizyon / Versiyon Numarası</label>
                 <div style="position: relative;">
-                  <input type="text" id="versiyon" name="versiyon" value="<%= currentVersion %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(99, 102, 241, 0.35); cursor: not-allowed; padding-right: 40px;">
-                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Otomatik Versiyon Sayacı">🔒</span>
+                  <input type="text" id="versiyon" name="versiyon" value="<%= currentVersion %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(99, 102, 241, 0.3); cursor: not-allowed; padding-right: 40px;">
+                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Otomatik Versiyon">🔒</span>
                 </div>
-                <% if (isEditMode && previousVersion) { %>
-                  <span style="font-size: 0.75rem; color: #fbbf24; margin-top: 3px;">🔒 Revizyon: v<%= previousVersion %> ➔ v<%= currentVersion %> (Otomatik Artırıldı)</span>
-                <% } else { %>
-                  <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">🔒 Başlangıç Versiyonu: 1 (Otomatik)</span>
-                <% } %>
               </div>
             </div>
 
