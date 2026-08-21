@@ -210,19 +210,23 @@
                   </div>
                 <% } else { %>
                   <select id="finishedStockItemId" name="finishedStockItemId" required onchange="handleProductSelect(this)" style="font-weight: 600;">
-                    <option value="">— Üretim Ürünü Seçiniz —</option>
-                    <% finishedStockItems.forEach(item => { %>
-                      <% const isSelected = targetProduct && targetProduct.id === item.id; %>
-                      <option value="<%= item.id %>" 
-                              data-code="<%= item.stokKodu %>" 
-                              data-name="<%= item.ad %>" 
-                              data-unit="<%= item.birim %>" 
-                              data-cat="<%= item.kategori %>"
-                              data-stock="<%= item.mevcutStok %>"
-                              <%= isSelected ? 'selected' : '' %>>
-                        [<%= item.stokKodu %>] <%= item.ad %> (<%= item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>) <%= item.hasBOM ? '★ Reçeteli' : '● Reçetesiz' %>
-                      </option>
-                    <% }); %>
+                    <% if (!finishedStockItems || finishedStockItems.length === 0) { %>
+                      <option value="" disabled selected>— Reçetesiz ürün bulunamadı (Tüm mamullerin reçetesi tanımlı) —</option>
+                    <% } else { %>
+                      <option value="">— Reçetesi Olmayan Ürünü Seçiniz (<%= finishedStockItems.length %> Ürün) —</option>
+                      <% finishedStockItems.forEach(item => { %>
+                        <% const isSelected = targetProduct && targetProduct.id === item.id; %>
+                        <option value="<%= item.id %>" 
+                                data-code="<%= item.stokKodu %>" 
+                                data-name="<%= item.ad %>" 
+                                data-unit="<%= item.birim %>" 
+                                data-cat="<%= item.kategori %>"
+                                data-stock="<%= item.mevcutStok %>"
+                                <%= isSelected ? 'selected' : '' %>>
+                          [<%= item.stokKodu %>] <%= item.ad %> (<%= item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>)
+                        </option>
+                      <% }); %>
+                    <% } %>
                   </select>
                 <% } %>
               </div>

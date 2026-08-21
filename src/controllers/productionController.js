@@ -388,6 +388,8 @@ class ProductionController {
     const { RotaOperasyon } = require('../../models');
     const routingOperations = await RotaOperasyon.findAll({ order: [['operasyonSira', 'ASC']] });
 
+    const unassignedFinishedItems = processedFinishedItems.filter(item => !item.hasBOM);
+
     res.render('production/bom_form', {
       user: req.user,
       targetProduct,
@@ -396,7 +398,7 @@ class ProductionController {
       currentRecipeNo,
       currentVersion,
       previousVersion,
-      finishedStockItems: processedFinishedItems,
+      finishedStockItems: unassignedFinishedItems,
       componentStockItems,
       routingOperations,
       WORK_CENTERS,
