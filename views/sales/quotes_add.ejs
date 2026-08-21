@@ -1138,16 +1138,29 @@
       if (modal) modal.style.display = 'none';
     }
 
+    function getAlreadyAddedStockIds() {
+      const stockInputs = document.querySelectorAll('#itemsTbody .item-stock-id');
+      const ids = [];
+      stockInputs.forEach(inp => {
+        const val = parseInt(inp.value, 10);
+        if (val && !isNaN(val)) ids.push(val);
+      });
+      return ids;
+    }
+
     function renderModalProducts() {
       const tbody = document.getElementById('modalProductsTbody');
       if (!tbody) return;
 
+      const alreadyAddedIds = getAlreadyAddedStockIds();
       const searchVal = (document.getElementById('modalProductSearch')?.value || '').toLowerCase().trim();
       const sortVal = document.getElementById('modalProductSort')?.value || 'ad_asc';
 
       let items = (stockCatalog || []).filter(item => {
         const isMamul = (item.kategori || '').toLowerCase() === 'mamul';
         if (!isMamul) return false;
+        const itemId = parseInt(item.id, 10);
+        if (alreadyAddedIds.includes(itemId)) return false;
         const code = (item.stokKodu || item.stockCode || '').toLowerCase();
         const name = (item.ad || item.name || '').toLowerCase();
         return code.includes(searchVal) || name.includes(searchVal);

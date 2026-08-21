@@ -777,6 +777,8 @@
       let items = (stockCatalog || []).filter(item => {
         const isMamul = (item.kategori || '').toLowerCase() === 'mamul';
         if (!isMamul) return false;
+        const itemId = parseInt(item.id, 10);
+        if (alreadyAddedIds.includes(itemId)) return false;
         const code = (item.stokKodu || item.stockCode || '').toLowerCase();
         const name = (item.ad || item.name || '').toLowerCase();
         return code.includes(searchVal) || name.includes(searchVal);
@@ -810,20 +812,19 @@
         const isAdded = alreadyAddedIds.includes(st.id);
 
         return `
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); opacity: ${isAdded ? '0.6' : '1'};">
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
             <td style="padding: 10px 14px; text-align: center;">
-              <input type="checkbox" class="modal-product-chk" data-id="${st.id}" ${isAdded ? 'disabled checked' : ''} onchange="updateModalSelectedCount()" style="cursor: pointer; width: 16px; height: 16px; accent-color: #ec4899;">
+              <input type="checkbox" class="modal-product-chk" data-id="${st.id}" onchange="updateModalSelectedCount()" style="cursor: pointer; width: 16px; height: 16px; accent-color: #ec4899;">
             </td>
             <td style="padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: #ec4899; font-weight: 600;">${code}</td>
             <td style="padding: 10px 14px; font-weight: 600; color: #fff;">
               ${name}
-              ${isAdded ? '<span style="margin-left: 8px; font-size: 0.725rem; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 2px 6px; border-radius: 4px;">✓ Zaten Ekli</span>' : ''}
             </td>
             <td style="padding: 10px 14px;"><span style="background: rgba(236, 72, 153, 0.12); color: #ec4899; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">${category}</span></td>
             <td style="padding: 10px 14px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff;">${price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</td>
             <td style="padding: 10px 14px; text-align: center; font-size: 0.8rem; color: ${stock > 0 ? '#34d399' : '#fb7185'}; font-weight: 600;">${stock} ${unit}</td>
             <td style="padding: 10px 14px; text-align: center;">
-              <input type="number" min="0.01" step="1" value="1" class="modal-product-qty" data-id="${st.id}" ${isAdded ? 'disabled' : ''} style="width: 75px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 4px 8px; border-radius: 6px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+              <input type="number" min="0.01" step="1" value="1" class="modal-product-qty" data-id="${st.id}" style="width: 75px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 4px 8px; border-radius: 6px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
             </td>
           </tr>
         `;
