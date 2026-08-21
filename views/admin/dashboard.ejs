@@ -143,6 +143,7 @@
     .badge-UPDATE { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.25); }
     .badge-DELETE { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.25); }
     .badge-LOGIN { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.25); }
+    .badge-READ { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.25); }
     .badge-OTHER { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25); }
 
     @media (max-width: 1200px) {
@@ -313,11 +314,15 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
           <div>
             <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">📜 Son Güvenlik & Denetim Kayıtları</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Sistem genelinde gerçekleştirilen son 15 güvenlik işlemi</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Sistem genelinde gerçekleştirilen son 15 güvenlik ve operasyon işlemi</p>
           </div>
+          <a href="/admin/logs" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+            <span>Tüm Logları Gör</span>
+            <span>→</span>
+          </a>
         </div>
 
-        <div style="overflow-x. auto;">
+        <div style="overflow-x: auto;">
           <table class="fancy-table">
             <thead>
               <tr>
@@ -331,28 +336,100 @@
             </thead>
             <tbody>
               <% if (logs && logs.length > 0) { %>
-                <% logs.forEach(log => { %>
+                <% 
+                  const entityNameMap = {
+                    'User': 'Kullanıcı Hesabı',
+                    'Kullanici': 'Kullanıcı Hesabı',
+                    'StockItem': 'Stok Malzeme Kartı',
+                    'StokKarti': 'Stok Malzeme Kartı',
+                    'StockLot': 'Lot / Parti İzi',
+                    'StokPartisi': 'Lot / Parti İzi',
+                    'StockMovement': 'Stok Hareket Fişi',
+                    'StokHareketi': 'Stok Hareket Fişi',
+                    'StockCounting': 'Stok Sayım Fişi',
+                    'StokSayimi': 'Stok Sayım Fişi',
+                    'Warehouse': 'Depo / Ambar',
+                    'Depo': 'Depo / Ambar',
+                    'SaleOrder': 'Satış Siparişi',
+                    'SatisSiparisi': 'Satış Siparişi',
+                    'SaleQuote': 'Satış Teklifi',
+                    'SatisTeklifi': 'Satış Teklifi',
+                    'Customer': 'Müşteri Cari Kartı',
+                    'MusteriHesabi': 'Müşteri Cari Kartı',
+                    'Dispatch': 'İrsaliye / Sevkiyat',
+                    'SatisIrsaliyesi': 'İrsaliye / Sevkiyat',
+                    'Invoice': 'Fatura',
+                    'SatisFaturasi': 'Fatura',
+                    'PurchaseOrder': 'Satın Alma Siparişi',
+                    'SatinAlmaSiparisi': 'Satın Alma Siparişi',
+                    'PurchaseRfq': 'Teklif Talebi (RFQ)',
+                    'SatinAlmaTeklifTalebi': 'Teklif Talebi (RFQ)',
+                    'Supplier': 'Tedarikçi Kartı',
+                    'Tedarikci': 'Tedarikçi Kartı',
+                    'GoodsReceipt': 'Mal Kabul Fişi',
+                    'MalKabul': 'Mal Kabul Fişi',
+                    'ProductionOrder': 'Üretim İş Emri',
+                    'UretimEmri': 'Üretim İş Emri',
+                    'BOMItem': 'Ürün Reçetesi (BOM)',
+                    'UrunRecetesi': 'Ürün Reçetesi (BOM)',
+                    'RoutingOperation': 'Üretim Rotalama Operasyonu',
+                    'RotaOperasyon': 'Üretim Rotalama Operasyonu',
+                    'QualityInspection': 'Kalite Muayenesi',
+                    'KaliteMuayene': 'Kalite Muayenesi',
+                    'QualityNonConformance': 'Uygunsuzluk (NCR)',
+                    'KaliteUygunsuzluk': 'Uygunsuzluk (NCR)',
+                    'QualityCapa': 'Düzeltici Aksiyon (CAPA)',
+                    'KaliteDof': 'Düzeltici Aksiyon (CAPA)',
+                    'QualityEquipment': 'Ölçüm Cihazı / Ekipman',
+                    'KaliteEkipmani': 'Ölçüm Cihazı / Ekipman',
+                    'QualityDocument': 'ISO Kalite Dokümanı',
+                    'KaliteDokumani': 'ISO Kalite Dokümanı',
+                    'SystemSetting': 'Sistem Parametresi',
+                    'SistemAyari': 'Sistem Parametresi',
+                    'Auth': 'Kimlik Doğrulama'
+                  };
+                %>
+                <% logs.forEach(log => { 
+                  const uName = log.kullaniciAdi || (log.kullanici ? log.kullanici.kullaniciAdi : (log.user ? log.user.username : 'Sistem'));
+                  const action = log.islem || log.action || 'CREATE';
+                  const rawEntity = log.varlik || log.entity || log.entityName || 'General';
+                  const friendlyEntity = entityNameMap[rawEntity] || rawEntity;
+                  const ip = log.ipAdresi || log.ipAddress || '127.0.0.1';
+                  const rawDetails = log.detaylar || log.details || `${action} işlemi gerçekleştirildi.`;
+
+                  let bClass = 'badge-OTHER';
+                  if (action === 'CREATE') bClass = 'badge-CREATE';
+                  else if (action === 'UPDATE') bClass = 'badge-UPDATE';
+                  else if (action === 'DELETE') bClass = 'badge-DELETE';
+                  else if (action === 'LOGIN') bClass = 'badge-LOGIN';
+                  else if (action === 'READ') bClass = 'badge-READ';
+                %>
                   <tr>
-                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.775rem; color: var(--text-secondary);">
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.775rem; color: var(--text-secondary); white-space: nowrap;">
                       <%= new Date(log.createdAt).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
                     </td>
                     <td>
-                      <strong style="color: var(--text-primary); font-size: 0.85rem;"><%= log.user ? log.user.username : 'Sistem' %></strong>
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 24px; height: 24px; border-radius: 50%; background: rgba(99,102,241,0.15); color: #818cf8; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800;">
+                          <%= (uName || 'S').charAt(0).toUpperCase() %>
+                        </span>
+                        <strong style="color: var(--text-primary); font-size: 0.85rem;"><%= uName %></strong>
+                      </div>
                     </td>
                     <td>
-                      <% 
-                        let bClass = 'badge-OTHER';
-                        if (log.action === 'CREATE') bClass = 'badge-CREATE';
-                        else if (log.action === 'UPDATE') bClass = 'badge-UPDATE';
-                        else if (log.action === 'DELETE') bClass = 'badge-DELETE';
-                        else if (log.action === 'LOGIN') bClass = 'badge-LOGIN';
-                      %>
-                      <span class="action-badge <%= bClass %>"><%= log.action %></span>
+                      <span class="action-badge <%= bClass %>"><%= action %></span>
                     </td>
-                    <td style="font-weight: 600; color: #a5b4fc;"><%= log.entityName %></td>
-                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.775rem; color: var(--text-muted);"><%= log.ipAddress || '127.0.0.1' %></td>
-                    <td style="font-size: 0.8rem; color: var(--text-secondary); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                      <%= log.details ? (typeof log.details === 'object' ? JSON.stringify(log.details) : log.details) : '—' %>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-weight: 600; color: #a5b4fc;"><%= friendlyEntity %></span>
+                        <% if (log.varlikId || log.entityId) { %>
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 5px; border-radius: 4px;">#<%= log.varlikId || log.entityId %></span>
+                        <% } %>
+                      </div>
+                    </td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.775rem; color: var(--text-muted); white-space: nowrap;"><%= ip %></td>
+                    <td style="font-size: 0.825rem; color: var(--text-secondary); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= typeof rawDetails === 'object' ? JSON.stringify(rawDetails) : rawDetails %>">
+                      <%= typeof rawDetails === 'object' ? JSON.stringify(rawDetails) : rawDetails %>
                     </td>
                   </tr>
                 <% }); %>
