@@ -101,33 +101,6 @@ class StockRepository {
 
     const item = await StokKarti.create(cleanData);
 
-    const isProductionItem = ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(item.kategori) &&
-                             ['Üretim', 'Production'].includes(item.tedarikYontemi);
-
-    if (isProductionItem) {
-      try {
-        const reqNo = `REQ-BOM-${Date.now().toString().slice(-6)}`;
-        const today = new Date().toISOString().split('T')[0];
-
-        await UretimEmri.create({
-          isEmriNo: reqNo,
-          uretimBasligi: `📜 Reçete Oluşturma Talebi — ${item.ad}`,
-          stokId: item.id,
-          planlananMiktar: 1,
-          birim: item.birim || 'Adet',
-          durum: 'Planned',
-          oncelik: 'High',
-          isMerkezi: 'İstasyon-1 (Kesim & Büküm)',
-          planlananBaslangicTarihi: today,
-          planlananBitisTarihi: today,
-          notlar: `Stok & Depo Modülünden yeni eklenen [${item.stokKodu}] ${item.ad} (${item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul'}) için otomatik reçete oluşturma talebi açıldı.`,
-          olusturanId: currentUser ? currentUser.id : null
-        });
-      } catch (err) {
-        console.error('Error creating automatic BOM Requisition:', err);
-      }
-    }
-
     await logService.logCrud({
       kullaniciId: currentUser ? currentUser.id : null,
       kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',

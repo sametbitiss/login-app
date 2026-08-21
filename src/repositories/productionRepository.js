@@ -304,24 +304,6 @@ class ProductionRepository {
       }
     }
 
-    try {
-      await UretimEmri.update(
-        { durum: 'Completed', tamamlananMiktar: 1 },
-        {
-          where: {
-            stokId: targetMamulId,
-            [Op.or]: [
-              { isEmriNo: { [Op.like]: 'REQ-BOM-%' } },
-              { uretimBasligi: { [Op.like]: '%Reçete Oluşturma%' } }
-            ],
-            durum: 'Planned'
-          }
-        }
-      );
-    } catch (err) {
-      console.error('Error auto-completing BOM Requisition:', err);
-    }
-
     await logService.logCrud({
       kullaniciId: currentUser ? currentUser.id : null,
       kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',

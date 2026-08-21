@@ -37,79 +37,25 @@ class ProductionController {
 
   // 1. REQUISITIONS & WORK ORDERS LIST
   listRequisitions = asyncHandler(async (req, res) => {
-    const { search, status, priority, tab } = req.query;
-    const { StokKarti, UrunRecetesi, UretimEmri } = require('../../models');
-    const { Op } = require('sequelize');
-
-    try {
-      const finishedStockItems = await StokKarti.findAll({
-        where: {
-          durum: 'Active',
-          kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
-          tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
-        }
-      });
-
-      const existingBOMs = await UrunRecetesi.findAll({ attributes: ['mamulStokId'], group: ['mamulStokId'] });
-      const productsWithBOM = new Set(existingBOMs.map(b => b.mamulStokId));
-
-      const existingBOMReqs = await UretimEmri.findAll({
-        where: {
-          [Op.or]: [
-            { isEmriNo: { [Op.like]: 'REQ-BOM-%' } },
-            { uretimBasligi: { [Op.like]: '%Reçete Oluşturma%' } }
-          ]
-        },
-        attributes: ['stokId']
-      });
-      const productsWithReq = new Set(existingBOMReqs.map(r => r.stokId));
-
-      const today = new Date().toISOString().split('T')[0];
-      for (const item of finishedStockItems) {
-        if (!productsWithBOM.has(item.id) && !productsWithReq.has(item.id)) {
-          const reqNo = `REQ-BOM-${Date.now().toString().slice(-6)}-${item.id}`;
-          await UretimEmri.create({
-            isEmriNo: reqNo,
-            uretimBasligi: `📜 Reçete Oluşturma Talebi — ${item.ad}`,
-            stokId: item.id,
-            planlananMiktar: 1,
-            birim: item.birim || 'Adet',
-            durum: 'Planned',
-            oncelik: 'High',
-            isMerkezi: 'İstasyon-1 (Kesim & Büküm)',
-            planlananBaslangicTarihi: today,
-            planlananBitisTarihi: today,
-            notlar: `Stok & Depo Modülündeki [${item.stokKodu}] ${item.ad} (${item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul'}) ürünü için otomatik reçete oluşturma talebi açıldı.`,
-            olusturanId: req.user ? req.user.id : null
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Error syncing BOM requisitions:', err);
-    }
+    const { search, status, priority } = req.query;
 
     const allOrders = await productionRepository.findAll({ search, status, priority });
     const stats = await productionRepository.getStats();
 
+    // Sadece gerçek üretim taleplerini al
     const productionRequisitions = allOrders.filter(o => {
       const isBOMReq = (o.isEmriNo && o.isEmriNo.startsWith('REQ-BOM')) || (o.uretimBasligi && o.uretimBasligi.includes('Reçete Oluşturma'));
       return !isBOMReq;
     });
 
-    const bomRequisitions = allOrders.filter(o => {
-      return (o.isEmriNo && o.isEmriNo.startsWith('REQ-BOM')) || (o.uretimBasligi && o.uretimBasligi.includes('Reçete Oluşturma'));
-    });
-
     res.render('production/requisitions', {
       user: req.user,
-      orders: allOrders,
+      orders: productionRequisitions,
       productionRequisitions,
-      bomRequisitions,
       stats,
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'requisitions',
-      activeTab: tab || 'production',
       filterSearch: search || '',
       filterStatus: status || '',
       filterPriority: priority || ''

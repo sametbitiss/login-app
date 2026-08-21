@@ -3,52 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Talepler (Üretim & Reçete Talepleri) — Enterprise ERP</title>
+  <title>Üretim Talepleri — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    .tab-nav {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-      border-bottom: 2px solid var(--border);
-      padding-bottom: 2px;
-    }
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 1rem;
-      font-weight: 700;
-      padding: 12px 20px;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .tab-btn:hover {
-      color: var(--text-primary);
-    }
-    .tab-btn.active {
-      color: #818cf8;
-      border-bottom-color: #6366f1;
-    }
-    .tab-badge {
-      background: rgba(99, 102, 241, 0.15);
-      color: #818cf8;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 800;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
     .btn-action-bom {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
       color: #ffffff !important;
@@ -86,7 +44,7 @@
       </div>
       <div class="mss-group-title">⚙️ İMALAT & SİPARİŞ KONTROLÜ</div>
       <div class="mss-sub">
-        <a href="/production/requisitions" class="mss-sub-link active">📩 Talepler</a>
+        <a href="/production/requisitions" class="mss-sub-link active">📩 Üretim Talepleri</a>
         <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
         <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
         <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
@@ -119,237 +77,134 @@
 
       <div class="page-header">
         <div>
-          <h1>📩 Talepler Kartı (Üretim & Reçete Oluşturma Talepleri)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Depodan gelen acil imalat/stok uyarısı talepleri ile yeni eklenen Mamul ve Yarı Mamullar için otomatik oluşturulan reçete hazırlama talepleri.</p>
+          <h1>📩 Üretim Talepleri</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Depodan gelen acil imalat ve kritik stok uyarısı talepleri ile satış siparişlerinden gelen üretim ihtiyaçları.</p>
         </div>
       </div>
 
-      <!-- Main Navigation Dual Tabs -->
-      <div class="tab-nav">
-        <button class="tab-btn <%= activeTab !== 'bom' ? 'active' : '' %>" onclick="switchRequisitionTab('production', this)">
-          <span>📋 Üretim Talepleri</span>
-          <span class="tab-badge"><%= productionRequisitions.length %></span>
-        </button>
-        <button class="tab-btn <%= activeTab === 'bom' ? 'active' : '' %>" onclick="switchRequisitionTab('bom', this)">
-          <span>📜 Reçete Oluşturma Talepleri</span>
-          <span class="tab-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><%= bomRequisitions.length %></span>
-        </button>
-      </div>
-
-      <!-- TAB 1: ÜRETİM TALEPLERİ -->
-      <div id="tab-production" class="tab-content <%= activeTab !== 'bom' ? 'active' : '' %>">
-        <% const stockAlertsCount = productionRequisitions.filter(o => ((o.uretimBasligi && o.uretimBasligi.includes('Kritik Stok')) || (o.productionTitle && o.productionTitle.includes('Kritik Stok'))) && (o.durum === 'Planned' || o.status === 'Planned')).length; %>
-        <% if (stockAlertsCount > 0) { %>
-          <div style="background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; font-weight: 600;">
-            <span>⚙️ <strong>Stok & Depo Modülünden UYARI!</strong> Depoda kritik stok seviyesine düşen <%= stockAlertsCount %> adet Yarı Mamul/Mamul için acil üretim talebi açıldı!</span>
-            <span style="background: #6366f1; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;"><%= stockAlertsCount %> ACİL İMALAT TALEBİ</span>
-          </div>
-        <% } %>
-
-        <div class="kpi-strip">
-          <div class="kpi-chip">
-            <div class="kpi-chip-icon kpi-chip--indigo">📋</div>
-            <div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Üretim Talebi</span><span class="kpi-chip-value"><%= productionRequisitions.length %></span></div>
-          </div>
-          <div class="kpi-chip">
-            <div class="kpi-chip-icon kpi-chip--rose">🚨</div>
-            <div class="kpi-chip-data"><span class="kpi-chip-label">Kritik Stok Talepleri</span><span class="kpi-chip-value"><%= productionRequisitions.filter(o => (o.uretimBasligi && o.uretimBasligi.includes('Kritik Stok')) || (o.productionTitle && o.productionTitle.includes('Kritik Stok'))).length %></span></div>
-          </div>
-          <div class="kpi-chip">
-            <div class="kpi-chip-icon kpi-chip--amber">⚡</div>
-            <div class="kpi-chip-data"><span class="kpi-chip-label">Bekleyen Talepler</span><span class="kpi-chip-value"><%= productionRequisitions.filter(o => o.durum === 'Planned' || o.status === 'Planned').length %></span></div>
-          </div>
-          <div class="kpi-chip">
-            <div class="kpi-chip-icon kpi-chip--emerald">⚙️</div>
-            <div class="kpi-chip-data"><span class="kpi-chip-label">Üretimdeki İşler</span><span class="kpi-chip-value"><%= productionRequisitions.filter(o => o.durum === 'In_Production' || o.status === 'In_Production').length %></span></div>
-          </div>
+      <% const stockAlertsCount = productionRequisitions.filter(o => ((o.uretimBasligi && o.uretimBasligi.includes('Kritik Stok')) || (o.productionTitle && o.productionTitle.includes('Kritik Stok'))) && (o.durum === 'Planned' || o.status === 'Planned')).length; %>
+      <% if (stockAlertsCount > 0) { %>
+        <div style="background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; font-weight: 600;">
+          <span>⚙️ <strong>Stok & Depo Modülünden UYARI!</strong> Depoda kritik stok seviyesine düşen <%= stockAlertsCount %> adet Yarı Mamul/Mamul için acil üretim talebi açıldı!</span>
+          <span style="background: #6366f1; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;"><%= stockAlertsCount %> ACİL İMALAT TALEBİ</span>
         </div>
+      <% } %>
 
-        <div class="table-wrapper" style="margin-top: 16px;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Talep No</th>
-                <th>Talep Tipi</th>
-                <th>Talep Edilen Malzeme</th>
-                <th>Miktar</th>
-                <th>Aciliyet</th>
-                <th>Açıklama / Not</th>
-                <th>Talep Eden</th>
-                <th>Durum</th>
-                <th>Tarih</th>
-                <th style="text-align: right;">Aksiyon</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (productionRequisitions.length === 0) { %>
-                <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 3rem;">Henüz üretim talebi bulunmamaktadır.</td></tr>
-              <% } else { %>
-                <% productionRequisitions.forEach(o => { %>
-                  <% 
-                    const isEmriNo = o.isEmriNo || o.workOrderNo || '—';
-                    const titleText = o.uretimBasligi || o.productionTitle || 'Üretim Talebi';
-                    const stockObj = o.stokKarti || o.stockItem;
-                    const productName = stockObj ? (stockObj.ad || stockObj.name) : titleText;
-                    const stockCode = stockObj ? (stockObj.stokKodu || stockObj.stockCode || '') : '';
-                    const category = stockObj ? (stockObj.kategori || stockObj.category || '') : '';
-                    const plannedQty = o.planlananMiktar !== undefined ? o.planlananMiktar : (o.plannedQuantity !== undefined ? o.plannedQuantity : 1);
-                    const unit = o.birim || o.unit || 'Adet';
-                    const priority = o.oncelik || o.priority || 'Normal';
-                    const notes = o.notlar || o.receteNotlari || o.notes || '—';
-                    const creatorObj = o.olusturan || o.creator;
-                    let creatorDisplay = 'Satış / Sistem Otomasyonu';
-                    if (creatorObj) {
-                      if (creatorObj.ad) creatorDisplay = creatorObj.ad + ' ' + (creatorObj.soyad || '');
-                      else if (creatorObj.firstName) creatorDisplay = creatorObj.firstName + ' ' + (creatorObj.lastName || '');
-                      else if (creatorObj.kullaniciAdi || creatorObj.username) creatorDisplay = creatorObj.kullaniciAdi || creatorObj.username;
-                    }
-                    const status = o.durum || o.status || 'Planned';
-                    const sId = o.stokId || o.stockItemId;
-                  %>
-                  <tr>
-                    <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= isEmriNo %></strong></td>
-                    <td>
-                      <span class="badge-status badge-cat-mamul">🏭 Üretim Talebi</span>
-                    </td>
-                    <td>
-                      <strong style="color: var(--text-primary);"><%= productName %></strong>
-                      <div style="font-size: 0.75rem; color: var(--text-muted);"><%= stockCode ? (stockCode + (category ? ' (' + category + ')' : '')) : titleText %></div>
-                    </td>
-                    <td><strong><%= plannedQty %> <%= unit %></strong></td>
-                    <td>
-                      <% if (priority === 'Urgent' || priority === 'Acil') { %>
-                        <span class="status-pill status-rejected">🚨 Acil</span>
-                      <% } else if (priority === 'High' || priority === 'Yuksek') { %>
-                        <span class="status-pill status-pending">⚠️ Yüksek</span>
-                      <% } else { %>
-                        <span class="status-pill status-approved">Normal</span>
-                      <% } %>
-                    </td>
-                    <td style="font-size: 0.8rem; max-width: 260px; color: var(--text-secondary);">
-                      <%= notes %>
-                    </td>
-                    <td><%= creatorDisplay %></td>
-                    <td>
-                      <% if (status === 'Completed') { %>
-                        <span class="badge-status badge-has-bom">✓ Tamamlandı</span>
-                      <% } else if (status === 'In_Production') { %>
-                        <span class="badge-status badge-has-bom" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">● Üretimde</span>
-                      <% } else if (status === 'Cancelled') { %>
-                        <span class="badge-status badge-no-bom" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">✕ İptal Edildi</span>
-                      <% } else { %>
-                        <span class="badge-status badge-no-bom" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">● Bekliyor</span>
-                      <% } %>
-                    </td>
-                    <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(o.createdAt).toLocaleDateString('tr-TR') %></td>
-                    <td style="text-align: right;">
-                      <% if (status === 'Planned') { %>
-                        <a href="/production/orders/add?stockItemId=<%= sId %>" class="btn-action-bom">
-                          📋 İş Emrine Dönüştür
-                        </a>
-                      <% } else { %>
-                        <span style="color: var(--text-muted); font-size: 0.82rem;">İşlem Yapıldı</span>
-                      <% } %>
-                    </td>
-                  </tr>
-                <% }); %>
-              <% } %>
-            </tbody>
-          </table>
+      <div class="kpi-strip">
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--indigo">📋</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Toplam Üretim Talebi</span><span class="kpi-chip-value"><%= productionRequisitions.length %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--rose">🚨</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Kritik Stok Talepleri</span><span class="kpi-chip-value"><%= productionRequisitions.filter(o => (o.uretimBasligi && o.uretimBasligi.includes('Kritik Stok')) || (o.productionTitle && o.productionTitle.includes('Kritik Stok'))).length %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--amber">⚡</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Bekleyen Talepler</span><span class="kpi-chip-value"><%= productionRequisitions.filter(o => o.durum === 'Planned' || o.status === 'Planned').length %></span></div>
+        </div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--emerald">⚙️</div>
+          <div class="kpi-chip-data"><span class="kpi-chip-label">Üretimdeki İşler</span><span class="kpi-chip-value"><%= productionRequisitions.filter(o => o.durum === 'In_Production' || o.status === 'In_Production').length %></span></div>
         </div>
       </div>
 
-      <!-- TAB 2: REÇETE OLUŞTURMA TALEPLERİ -->
-      <div id="tab-bom" class="tab-content <%= activeTab === 'bom' ? 'active' : '' %>">
-        <div style="background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.25); padding: 16px 20px; border-radius: 14px; margin-bottom: 20px; color: #a7f3d0; font-size: 0.9rem;">
-          <strong>💡 Reçete Oluşturma Otomasyonu:</strong> Stok & Depo modülünden yeni eklenen her <strong>Mamul</strong> ve <strong>Yarı Mamul</strong> ürün için sistem otomatik olarak reçete oluşturma talebi açar. Reçeteyi oluşturduğunuzda talep otomatik olarak <strong>Tamamlandı</strong> durumuna geçer.
-        </div>
-
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Talep Kodu</th>
-                <th>Kaynak Modül</th>
-                <th>Reçete Yazılacak Ürün</th>
-                <th>Ürün Kategorisi</th>
-                <th>Talep Açıklaması</th>
-                <th>Aciliyet</th>
-                <th>Durum</th>
-                <th>Talep Tarihi</th>
-                <th style="text-align: right;">Aksiyon</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (bomRequisitions.length === 0) { %>
-                <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem;">Bekleyen reçete oluşturma talebi bulunmamaktadır.</td></tr>
-              <% } else { %>
-                <% bomRequisitions.forEach(b => { %>
-                  <% 
-                    const bWorkOrderNo = b.isEmriNo || b.workOrderNo || '—';
-                    const bTitleText = b.uretimBasligi || b.productionTitle || 'Reçete Talebi';
-                    const bStockObj = b.stokKarti || b.stockItem;
-                    const bProductName = bStockObj ? (bStockObj.ad || bStockObj.name) : bTitleText;
-                    const bStockCode = bStockObj ? (bStockObj.stokKodu || bStockObj.stockCode || '') : '';
-                    const bCategory = bStockObj ? (bStockObj.kategori || bStockObj.category || 'Mamul') : 'Mamul';
-                    const bNotes = b.notlar || b.receteNotlari || b.notes || '—';
-                    const bStatus = b.durum || b.status || 'Planned';
-                    const bStockId = b.stokId || b.stockItemId;
-                  %>
-                  <tr>
-                    <td><strong style="color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= bWorkOrderNo %></strong></td>
-                    <td><span class="status-pill status-approved">📦 Stok & Depo</span></td>
-                    <td>
-                      <strong style="color: var(--text-primary);"><%= bProductName %></strong>
-                      <div style="font-size: 0.75rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= bStockCode %></div>
-                    </td>
-                    <td>
-                      <% if (bCategory === 'Mamul') { %>
-                        <span class="badge-status badge-cat-mamul">🏭 Mamul</span>
-                      <% } else { %>
-                        <span class="badge-status badge-cat-yarimamul">⚙️ Yarı Mamul</span>
-                      <% } %>
-                    </td>
-                    <td style="font-size: 0.82rem; color: var(--text-secondary); max-width: 280px;"><%= bNotes %></td>
-                    <td><span class="status-pill status-pending">⚠️ Yüksek</span></td>
-                    <td>
-                      <% if (bStatus === 'Completed') { %>
-                        <span class="badge-status badge-has-bom">✓ Tamamlandı</span>
-                      <% } else { %>
-                        <span class="badge-status badge-no-bom">● Reçete Bekliyor</span>
-                      <% } %>
-                    </td>
-                    <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(b.createdAt).toLocaleDateString('tr-TR') %></td>
-                    <td style="text-align: right;">
-                      <% if (bStatus === 'Completed') { %>
-                        <a href="/production/bom/edit/<%= bStockId %>" class="btn-action-edit">
-                          ✏️ Reçeteyi Düzenle
-                        </a>
-                      <% } else { %>
-                        <a href="/production/bom/add?productId=<%= bStockId %>" class="btn-action-bom">
-                          📜 Reçete Oluştur
-                        </a>
-                      <% } %>
-                    </td>
-                  </tr>
-                <% }); %>
-              <% } %>
-            </tbody>
-          </table>
-        </div>
+      <div class="table-wrapper" style="margin-top: 16px;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Talep No</th>
+              <th>Talep Tipi</th>
+              <th>Talep Edilen Malzeme</th>
+              <th>Miktar</th>
+              <th>Aciliyet</th>
+              <th>Açıklama / Not</th>
+              <th>Talep Eden</th>
+              <th>Durum</th>
+              <th>Tarih</th>
+              <th style="text-align: right;">Aksiyon</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (productionRequisitions.length === 0) { %>
+              <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 3rem;">Henüz üretim talebi bulunmamaktadır.</td></tr>
+            <% } else { %>
+              <% productionRequisitions.forEach(o => { %>
+                <% 
+                  const isEmriNo = o.isEmriNo || o.workOrderNo || '—';
+                  const titleText = o.uretimBasligi || o.productionTitle || 'Üretim Talebi';
+                  const stockObj = o.stokKarti || o.stockItem;
+                  const productName = stockObj ? (stockObj.ad || stockObj.name) : titleText;
+                  const stockCode = stockObj ? (stockObj.stokKodu || stockObj.stockCode || '') : '';
+                  const category = stockObj ? (stockObj.kategori || stockObj.category || '') : '';
+                  const plannedQty = o.planlananMiktar !== undefined ? o.planlananMiktar : (o.plannedQuantity !== undefined ? o.plannedQuantity : 1);
+                  const unit = o.birim || o.unit || 'Adet';
+                  const priority = o.oncelik || o.priority || 'Normal';
+                  const notes = o.notlar || o.receteNotlari || o.notes || '—';
+                  const creatorObj = o.olusturan || o.creator;
+                  let creatorDisplay = 'Satış / Sistem Otomasyonu';
+                  if (creatorObj) {
+                    if (creatorObj.ad) creatorDisplay = creatorObj.ad + ' ' + (creatorObj.soyad || '');
+                    else if (creatorObj.firstName) creatorDisplay = creatorObj.firstName + ' ' + (creatorObj.lastName || '');
+                    else if (creatorObj.kullaniciAdi || creatorObj.username) creatorDisplay = creatorObj.kullaniciAdi || creatorObj.username;
+                  }
+                  const status = o.durum || o.status || 'Planned';
+                  const sId = o.stokId || o.stockItemId;
+                %>
+                <tr>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= isEmriNo %></strong></td>
+                  <td>
+                    <span class="badge-status badge-cat-mamul">🏭 Üretim Talebi</span>
+                  </td>
+                  <td>
+                    <strong style="color: var(--text-primary);"><%= productName %></strong>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= stockCode ? (stockCode + (category ? ' (' + category + ')' : '')) : titleText %></div>
+                  </td>
+                  <td><strong><%= plannedQty %> <%= unit %></strong></td>
+                  <td>
+                    <% if (priority === 'Urgent' || priority === 'Acil') { %>
+                      <span class="status-pill status-rejected">🚨 Acil</span>
+                    <% } else if (priority === 'High' || priority === 'Yuksek') { %>
+                      <span class="status-pill status-pending">⚠️ Yüksek</span>
+                    <% } else { %>
+                      <span class="status-pill status-approved">Normal</span>
+                    <% } %>
+                  </td>
+                  <td style="font-size: 0.8rem; max-width: 260px; color: var(--text-secondary);">
+                    <%= notes %>
+                  </td>
+                  <td><%= creatorDisplay %></td>
+                  <td>
+                    <% if (status === 'Completed') { %>
+                      <span class="badge-status badge-has-bom">✓ Tamamlandı</span>
+                    <% } else if (status === 'In_Production') { %>
+                      <span class="badge-status badge-has-bom" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">● Üretimde</span>
+                    <% } else if (status === 'Cancelled') { %>
+                      <span class="badge-status badge-no-bom" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">✕ İptal Edildi</span>
+                    <% } else { %>
+                      <span class="badge-status badge-no-bom" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">● Bekliyor</span>
+                    <% } %>
+                  </td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(o.createdAt).toLocaleDateString('tr-TR') %></td>
+                  <td style="text-align: right;">
+                    <% if (status === 'Planned') { %>
+                      <a href="/production/orders/add?stockItemId=<%= sId %>" class="btn-action-bom">
+                        📋 İş Emrine Dönüştür
+                      </a>
+                    <% } else { %>
+                      <span style="color: var(--text-muted); font-size: 0.82rem;">İşlem Yapıldı</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>
 
   <script>
-    function switchRequisitionTab(tabName, btnEl) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-      btnEl.classList.add('active');
-      document.getElementById('tab-' + tabName).classList.add('active');
-    }
-
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
     updateClock(); setInterval(updateClock, 1000);
   </script>
