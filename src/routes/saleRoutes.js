@@ -25,6 +25,8 @@ router.get('/orders/:id', saleController.viewOrder);
 router.get('/quotes', saleController.listQuotations);
 router.get('/quotes/add', saleController.renderAddQuotation);
 router.post('/quotes/add', saleController.addQuotation);
+router.get('/quotes/:id/edit', saleController.renderEditQuotation);
+router.post('/quotes/:id/edit', saleController.editQuotation);
 router.get('/quotes/:id/detail', saleController.viewQuotation);
 router.get('/quotes/detail/:id', saleController.viewQuotation);
 router.get('/quotes/:id', saleController.viewQuotation);

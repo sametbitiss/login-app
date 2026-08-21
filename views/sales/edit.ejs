@@ -775,6 +775,8 @@
       const sortVal = document.getElementById('modalProductSort')?.value || 'ad_asc';
 
       let items = (stockCatalog || []).filter(item => {
+        const isMamul = (item.kategori || '').toLowerCase() === 'mamul';
+        if (!isMamul) return false;
         const code = (item.stokKodu || item.stockCode || '').toLowerCase();
         const name = (item.ad || item.name || '').toLowerCase();
         return code.includes(searchVal) || name.includes(searchVal);

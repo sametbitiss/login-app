@@ -107,6 +107,70 @@ class QuotationRepository {
     return quotation;
   }
 
+  async update(id, data, currentUser = null, ipAddress = null) {
+    const quote = await SatisTeklifi.findByPk(id);
+    if (!quote) return null;
+
+    const safeInt = (val) => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return null;
+      const n = parseInt(val, 10);
+      return Number.isNaN(n) ? null : n;
+    };
+    const safeFloat = (val, defaultVal = 0) => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === 'undefined' || val === 'NaN') return defaultVal;
+      const n = parseFloat(val);
+      return Number.isNaN(n) ? defaultVal : n;
+    };
+
+    const musteriId = safeInt(data.musteriId || data.customerId) || quote.musteriId;
+    const stokId = safeInt(data.stokId || data.stockItemId) || quote.stokId;
+    const iskontoOrani = data.iskontoOrani !== undefined ? safeFloat(data.iskontoOrani, 0) : quote.iskontoOrani;
+    const toplamTutar = data.toplamTutar !== undefined ? safeFloat(data.toplamTutar, 0) : quote.toplamTutar;
+    const onayGerekli = data.onayGerekli !== undefined ? data.onayGerekli : (iskontoOrani > 20 || toplamTutar > 100000);
+    const durum = (data.durum || data.status) ? (data.durum || data.status) : (onayGerekli ? 'Pending_Approval' : 'Approved');
+
+    if (data.teklifNo) quote.teklifNo = data.teklifNo;
+    quote.musteriId = musteriId;
+    if (data.musteriAdi) quote.musteriAdi = data.musteriAdi;
+    if (data.teklifTarihi) quote.teklifTarihi = data.teklifTarihi;
+    if (data.gecerlilikBitis) quote.gecerlilikBitis = data.gecerlilikBitis;
+    quote.stokId = stokId;
+    if (data.kalemlerJson) quote.kalemlerJson = data.kalemlerJson;
+    if (data.miktar !== undefined) quote.miktar = safeFloat(data.miktar, 1);
+    if (data.birimFiyat !== undefined) quote.birimFiyat = safeFloat(data.birimFiyat, 0);
+    quote.iskontoOrani = iskontoOrani;
+    if (data.kdvOrani !== undefined) quote.kdvOrani = safeFloat(data.kdvOrani, 20);
+    if (data.araToplam !== undefined) quote.araToplam = safeFloat(data.araToplam, 0);
+    if (data.iskontoTutari !== undefined) quote.iskontoTutari = safeFloat(data.iskontoTutari, 0);
+    if (data.kdvTutari !== undefined) quote.kdvTutari = safeFloat(data.kdvTutari, 0);
+    quote.toplamTutar = toplamTutar;
+    if (data.paraBirimi) quote.paraBirimi = data.paraBirimi;
+    if (data.ilgiliKisi !== undefined) quote.ilgiliKisi = data.ilgiliKisi;
+    if (data.iletisimBilgisi !== undefined) quote.iletisimBilgisi = data.iletisimBilgisi;
+    if (data.faturaAdresi !== undefined) quote.faturaAdresi = data.faturaAdresi;
+    if (data.sevkAdresi !== undefined) quote.sevkAdresi = data.sevkAdresi;
+    if (data.istenenTerminTarihi !== undefined) quote.istenenTerminTarihi = data.istenenTerminTarihi;
+    if (data.teslimatSekli !== undefined) quote.teslimatSekli = data.teslimatSekli;
+    quote.durum = durum;
+    quote.onayGerekli = onayGerekli;
+    if (data.onayNedeni !== undefined) quote.onayNedeni = data.onayNedeni;
+    if (data.notlar !== undefined) quote.notlar = data.notlar;
+
+    await quote.save();
+
+    await logService.logCrud({
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'UPDATE',
+      varlik: 'SatisTeklifi',
+      varlikId: quote.id,
+      detaylar: { teklifNo: quote.teklifNo, musteriAdi: quote.musteriAdi, toplamTutar: quote.toplamTutar },
+      ipAdresi: ipAddress
+    });
+
+    return quote;
+  }
+
   async updateStatus(id, durum, yoneticiNotlari = null, currentUser = null, ipAddress = null) {
     const quote = await SatisTeklifi.findByPk(id);
     if (!quote) return null;
