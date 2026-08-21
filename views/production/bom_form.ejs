@@ -197,45 +197,57 @@
                 <label for="finishedStockItemId" style="font-weight: 700;">
                   Reçetesi Yazılacak Ürün (Mamul / Yarı Mamul) <span style="color: #f43f5e;">*</span>
                 </label>
-                <select id="finishedStockItemId" name="finishedStockItemId" required onchange="handleProductSelect(this)" style="font-weight: 600;">
-                  <option value="">— Üretim Ürünü Seçiniz —</option>
-                  <% finishedStockItems.forEach(item => { %>
-                    <% const isSelected = targetProduct && targetProduct.id === item.id; %>
-                    <option value="<%= item.id %>" 
-                            data-code="<%= item.stokKodu %>" 
-                            data-name="<%= item.ad %>" 
-                            data-unit="<%= item.birim %>" 
-                            data-cat="<%= item.kategori %>"
-                            data-stock="<%= item.mevcutStok %>"
-                            <%= isSelected ? 'selected' : '' %>>
-                      [<%= item.stokKodu %>] <%= item.ad %> (<%= item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>) <%= item.hasBOM ? '★ Reçeteli' : '● Reçetesiz' %>
-                    </option>
-                  <% }); %>
-                </select>
+                <% if (isEditMode && targetProduct) { %>
+                  <input type="hidden" name="finishedStockItemId" value="<%= targetProduct.id %>">
+                  <div style="background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(99, 102, 241, 0.35); border-radius: 10px; padding: 11px 14px; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                      <strong style="color: #fff;">[<%= targetProduct.stokKodu %>] <%= targetProduct.ad %></strong>
+                      <span style="font-size: 0.75rem; color: #818cf8; margin-left: 6px;">(<%= targetProduct.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>)</span>
+                    </div>
+                    <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                      🔒 Sabit Ürün
+                    </span>
+                  </div>
+                  <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">Düzenleme modunda ürün adı değiştirilemez.</span>
+                <% } else { %>
+                  <select id="finishedStockItemId" name="finishedStockItemId" required onchange="handleProductSelect(this)" style="font-weight: 600;">
+                    <option value="">— Üretim Ürünü Seçiniz —</option>
+                    <% finishedStockItems.forEach(item => { %>
+                      <% const isSelected = targetProduct && targetProduct.id === item.id; %>
+                      <option value="<%= item.id %>" 
+                              data-code="<%= item.stokKodu %>" 
+                              data-name="<%= item.ad %>" 
+                              data-unit="<%= item.birim %>" 
+                              data-cat="<%= item.kategori %>"
+                              data-stock="<%= item.mevcutStok %>"
+                              <%= isSelected ? 'selected' : '' %>>
+                        [<%= item.stokKodu %>] <%= item.ad %> (<%= item.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %>) <%= item.hasBOM ? '★ Reçeteli' : '● Reçetesiz' %>
+                      </option>
+                    <% }); %>
+                  </select>
+                <% } %>
               </div>
 
               <div class="input-group">
-                <label for="receteKodu" style="font-weight: 700;">Reçete Kodu / Numarası <span style="color: #f43f5e;">*</span></label>
-                <% 
-                  let defaultReceteKodu = '';
-                  if (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].receteKodu) {
-                    defaultReceteKodu = existingBOMItems[0].receteKodu;
-                  } else if (targetProduct) {
-                    defaultReceteKodu = 'BOM-' + targetProduct.stokKodu.replace(/[^a-zA-Z0-9]/g, '') + '-V1';
-                  }
-                %>
-                <input type="text" id="receteKodu" name="receteKodu" value="<%= defaultReceteKodu %>" placeholder="Örn: BOM-MAM-001-V1" required style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #34d399;">
+                <label for="receteKodu" style="font-weight: 700;">Reçete Kodu / Numarası <span style="color: #34d399;">(Otomatik Benzersiz)</span></label>
+                <div style="position: relative;">
+                  <input type="text" id="receteKodu" name="receteKodu" value="<%= currentRecipeNo %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(52, 211, 153, 0.35); cursor: not-allowed; padding-right: 40px;">
+                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Sistem Tarafından Otomatik Üretilen Benzersiz Numara">🔒</span>
+                </div>
+                <span style="font-size: 0.75rem; color: #34d399; margin-top: 3px;">🔒 Benzersiz Sistem Numarası (Değiştirilemez)</span>
               </div>
 
               <div class="input-group">
-                <label for="versiyon" style="font-weight: 700;">Revizyon / Versiyon Numarası</label>
-                <% 
-                  let defaultVersiyon = 'Rev.01';
-                  if (existingBOMItems && existingBOMItems.length > 0 && existingBOMItems[0].versiyon) {
-                    defaultVersiyon = existingBOMItems[0].versiyon;
-                  }
-                %>
-                <input type="text" id="versiyon" name="versiyon" value="<%= defaultVersiyon %>" placeholder="Örn: Rev.01" style="font-family: 'JetBrains Mono', monospace;">
+                <label for="versiyon" style="font-weight: 700;">Revizyon / Versiyon <span style="color: #818cf8;">(Otomatik)</span></label>
+                <div style="position: relative;">
+                  <input type="text" id="versiyon" name="versiyon" value="<%= currentVersion %>" readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(99, 102, 241, 0.35); cursor: not-allowed; padding-right: 40px;">
+                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.9rem;" title="Otomatik Versiyon Sayacı">🔒</span>
+                </div>
+                <% if (isEditMode && previousVersion) { %>
+                  <span style="font-size: 0.75rem; color: #fbbf24; margin-top: 3px;">🔒 Revizyon: v<%= previousVersion %> ➔ v<%= currentVersion %> (Otomatik Artırıldı)</span>
+                <% } else { %>
+                  <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">🔒 Başlangıç Versiyonu: 1 (Otomatik)</span>
+                <% } %>
               </div>
             </div>
 
@@ -560,10 +572,10 @@
     function navigateBomStep(dir) {
       const target = currentStep + dir;
       if (target === 2) {
-        const prodSelect = document.getElementById('finishedStockItemId');
-        if (!prodSelect.value) {
+        const prodInput = document.querySelector('[name="finishedStockItemId"]');
+        if (!prodInput || !prodInput.value) {
           alert('⚠️ Lütfen önce reçetesi yazılacak ürünü seçiniz.');
-          prodSelect.focus();
+          if (prodInput && prodInput.focus) prodInput.focus();
           return;
         }
       }
@@ -572,22 +584,14 @@
       }
     }
 
-    // 3. Product Selection Handler (Auto-generate Recipe Code)
+    // 3. Product Selection Handler
     function handleProductSelect(selectEl) {
       const selectedOpt = selectEl.options[selectEl.selectedIndex];
       if (!selectedOpt || !selectedOpt.value) return;
 
-      const code = selectedOpt.dataset.code || '';
       const unit = selectedOpt.dataset.unit || 'Adet';
-
       const unitBadge = document.getElementById('productUnitBadge');
       if (unitBadge) unitBadge.textContent = unit;
-
-      const codeInp = document.getElementById('receteKodu');
-      if (codeInp && (!codeInp.value || codeInp.value.startsWith('BOM-'))) {
-        const cleanCode = code.replace(/[^a-zA-Z0-9]/g, '');
-        codeInp.value = `BOM-${cleanCode}-V1`;
-      }
     }
 
     // 4. Modal Functions
@@ -839,12 +843,12 @@
     const mainForm = document.getElementById('bomMainForm');
     if (mainForm) {
       mainForm.addEventListener('submit', (e) => {
-        const prodSelect = document.getElementById('finishedStockItemId');
-        if (!prodSelect || !prodSelect.value) {
+        const prodInput = document.querySelector('[name="finishedStockItemId"]');
+        if (!prodInput || !prodInput.value) {
           e.preventDefault();
           alert('⚠️ Lütfen reçetesi yazılacak ürünü seçiniz.');
           switchBomTab(1);
-          prodSelect.focus();
+          if (prodInput && prodInput.focus) prodInput.focus();
           return false;
         }
 

@@ -18,6 +18,27 @@ class ProductionRepository {
     return `${prefix}${String(nextSeq).padStart(4, '0')}`;
   }
 
+  async generateRecipeNo() {
+    const year = new Date().getFullYear();
+    const prefix = `REC-${year}-`;
+    const allRecipes = await UrunRecetesi.findAll({
+      attributes: ['receteKodu']
+    });
+
+    let maxSeq = 0;
+    allRecipes.forEach(r => {
+      if (r.receteKodu && r.receteKodu.startsWith(prefix)) {
+        const numPart = parseInt(r.receteKodu.replace(prefix, ''), 10);
+        if (!isNaN(numPart) && numPart > maxSeq) {
+          maxSeq = numPart;
+        }
+      }
+    });
+
+    const nextSeq = maxSeq + 1;
+    return `${prefix}${String(nextSeq).padStart(4, '0')}`;
+  }
+
   async findAll(filters = {}) {
     const where = {};
     if (filters.status) where.durum = filters.status;
@@ -281,9 +302,8 @@ class ProductionRepository {
 
     const createdItems = [];
     if (components && components.length > 0) {
-      const finishedProduct = await StokKarti.findByPk(targetMamulId);
-      const codePrefix = finishedProduct ? finishedProduct.stokKodu.replace(/[^a-zA-Z0-9]/g, '') : `PRD${targetMamulId}`;
-      const finalReceteKodu = receteKodu || `BOM-${codePrefix}-${version ? version.replace(/[^a-zA-Z0-9]/g, '') : 'V1'}`;
+      const finalReceteKodu = receteKodu || (await this.generateRecipeNo());
+      const finalVersiyon = version ? String(version) : '1';
       const finalDurum = durum || 'Active';
       const finalBaslangic = gecerlilikBaslangic || null;
       const finalBitis = gecerlilikBitis || null;
@@ -301,7 +321,7 @@ class ProductionRepository {
           receteKodu: finalReceteKodu,
           mamulStokId: targetMamulId,
           bilesenStokId: parseInt(compId, 10),
-          versiyon: version || 'Rev.01',
+          versiyon: finalVersiyon,
           bazMiktar: parseFloat(baseQuantity) || 1.0,
           gerekliMiktar: parseFloat(comp.gerekliMiktar || comp.quantityRequired) || 1.0,
           birim: comp.birim || comp.unit || (compItem ? compItem.birim : 'Adet'),

@@ -344,19 +344,19 @@ class ProductionController {
     const componentStockItems = await StokKarti.findAll({
       where: { 
         durum: 'Active',
-        [Op.or]: [
-          { kategori: { [Op.in]: ['Hammadde', 'Ticari_Mal'] } },
-          {
-            kategori: { [Op.in]: ['Yarı_Mamul', 'Yari_Mamul'] },
-            tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
-          }
-        ]
+        kategori: { [Op.in]: ['Hammadde', 'Yarı_Mamul', 'Yari_Mamul', 'Ticari_Mal'] }
       },
       order: [['ad', 'ASC']]
     });
 
     let targetProduct = null;
     let existingBOMItems = [];
+    let isEditMode = false;
+    let currentRecipeNo = '';
+    let currentVersion = '1';
+    let previousVersion = null;
+
+    const nextGeneratedRecipeNo = await productionRepository.generateRecipeNo();
 
     if (finishedStockItemId) {
       targetProduct = await StokKarti.findByPk(finishedStockItemId);
@@ -368,6 +368,21 @@ class ProductionController {
         ],
         order: [['seviye', 'ASC'], ['id', 'ASC']]
       });
+
+      if (existingBOMItems && existingBOMItems.length > 0) {
+        isEditMode = true;
+        const oldVer = existingBOMItems[0].versiyon || '1';
+        previousVersion = oldVer;
+        const oldVerNum = parseInt(String(oldVer).replace(/[^0-9]/g, ''), 10) || 1;
+        currentVersion = String(oldVerNum + 1);
+        currentRecipeNo = nextGeneratedRecipeNo;
+      } else {
+        currentRecipeNo = nextGeneratedRecipeNo;
+        currentVersion = '1';
+      }
+    } else {
+      currentRecipeNo = nextGeneratedRecipeNo;
+      currentVersion = '1';
     }
 
     const { RotaOperasyon } = require('../../models');
@@ -377,6 +392,10 @@ class ProductionController {
       user: req.user,
       targetProduct,
       existingBOMItems,
+      isEditMode,
+      currentRecipeNo,
+      currentVersion,
+      previousVersion,
       finishedStockItems: processedFinishedItems,
       componentStockItems,
       routingOperations,
@@ -414,6 +433,17 @@ class ProductionController {
       throw new ValidationError('Lütfen reçetesi yazılacak ürünü seçiniz.');
     }
 
+    const { UrunRecetesi } = require('../../models');
+    const prevBoms = await UrunRecetesi.findAll({ where: { mamulStokId: targetMamulId } });
+    
+    let autoVersion = '1';
+    if (prevBoms && prevBoms.length > 0) {
+      const oldVer = prevBoms[0].versiyon || '1';
+      const oldVerNum = parseInt(String(oldVer).replace(/[^0-9]/g, ''), 10) || 1;
+      autoVersion = String(oldVerNum + 1);
+    }
+    const autoRecipeNo = await productionRepository.generateRecipeNo();
+
     let components = [];
 
     if (componentsJson) {
@@ -449,8 +479,8 @@ class ProductionController {
     await productionRepository.saveProductBOM(
       targetMamulId,
       {
-        receteKodu: receteKodu || req.body.receteNo || null,
-        version: version || versiyon || 'Rev.01',
+        receteKodu: autoRecipeNo,
+        version: autoVersion,
         baseQuantity: parseFloat(baseQuantity || bazMiktar) || 1.0,
         gecerlilikBaslangic: gecerlilikBaslangic || null,
         gecerlilikBitis: gecerlilikBitis || null,
