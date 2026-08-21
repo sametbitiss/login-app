@@ -65,9 +65,11 @@ class StockRepository {
     const targetCategory = data.kategori || data.category || 'Hammadde';
     let targetProcurementMethod = data.tedarikYontemi || data.procurementMethod;
 
-    if (targetCategory === 'Hammadde') {
+    if (targetCategory === 'Hammadde' || targetCategory === 'Ticari_Mal' || targetCategory === 'Ticari Mal') {
       targetProcurementMethod = 'Satın Alma';
-    } else if (['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(targetCategory)) {
+    } else if (targetCategory === 'Mamul') {
+      targetProcurementMethod = 'Üretim';
+    } else if (['Yarı_Mamul', 'Yari_Mamul'].includes(targetCategory)) {
       targetProcurementMethod = targetProcurementMethod || 'Üretim';
     } else {
       targetProcurementMethod = targetProcurementMethod || 'Satın Alma';
@@ -124,7 +126,15 @@ class StockRepository {
     if (data.ad !== undefined || data.name !== undefined) updateData.ad = data.ad || data.name;
     if (data.aciklama !== undefined || data.description !== undefined) updateData.aciklama = data.aciklama || data.description;
     if (data.kategori !== undefined || data.category !== undefined) updateData.kategori = data.kategori || data.category;
-    if (data.tedarikYontemi !== undefined || data.procurementMethod !== undefined) updateData.tedarikYontemi = data.tedarikYontemi || data.procurementMethod;
+    
+    const effectiveCategory = updateData.kategori || item.kategori;
+    if (effectiveCategory === 'Mamul') {
+      updateData.tedarikYontemi = 'Üretim';
+    } else if (effectiveCategory === 'Hammadde' || effectiveCategory === 'Ticari_Mal' || effectiveCategory === 'Ticari Mal') {
+      updateData.tedarikYontemi = 'Satın Alma';
+    } else if (data.tedarikYontemi !== undefined || data.procurementMethod !== undefined) {
+      updateData.tedarikYontemi = data.tedarikYontemi || data.procurementMethod;
+    }
     if (data.birim !== undefined || data.unit !== undefined) updateData.birim = data.birim || data.unit;
     if (data.marka !== undefined || data.brand !== undefined) updateData.marka = data.marka || data.brand;
     if (data.model !== undefined) updateData.model = data.model;

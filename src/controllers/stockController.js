@@ -98,6 +98,13 @@ class StockController {
       const tedarikci = (req.body.tedarikci || req.body.supplier || '').trim() || null;
       const notlar = (req.body.notlar || req.body.notes || '').trim() || null;
 
+      let procurementMethod = req.body.tedarikYontemi || req.body.procurementMethod || 'Satın Alma';
+      if (category === 'Mamul') {
+        procurementMethod = 'Üretim';
+      } else if (category === 'Hammadde' || category === 'Ticari_Mal' || category === 'Ticari Mal') {
+        procurementMethod = 'Satın Alma';
+      }
+
       await stockRepository.create({
         stokKodu: nextStockCode,
         ad: req.body.ad || req.body.name,
@@ -110,7 +117,7 @@ class StockController {
         tedarikci,
         notlar,
         birim: req.body.birim || req.body.unit || 'Adet',
-        tedarikYontemi: req.body.tedarikYontemi || req.body.procurementMethod || 'Satın Alma',
+        tedarikYontemi: procurementMethod,
         durum: req.body.durum || req.body.status || 'Active',
         mevcutStok: parseFloat(req.body.mevcutStok || req.body.currentStock) || 0,
         asgariStok: parseFloat(req.body.asgariStok || req.body.minStock) || 0,

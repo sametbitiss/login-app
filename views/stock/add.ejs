@@ -446,12 +446,17 @@
       const optUretim = document.getElementById('optProcurementUretim');
       const hint = document.getElementById('procurementHint');
 
-      if (['Hammadde', 'Ticari_Mal', 'Ticari Mal'].includes(cat)) {
+      if (cat === 'Mamul') {
+        procSelect.value = 'Üretim';
+        optUretim.disabled = false;
+        optSatinalma.disabled = true;
+        if (hint) hint.textContent = '🔒 MAMUL ÜRÜNLER YALNIZCA ÜRETİLİR';
+      } else if (['Hammadde', 'Ticari_Mal', 'Ticari Mal'].includes(cat)) {
         procSelect.value = 'Satın Alma';
         optUretim.disabled = true;
         optSatinalma.disabled = false;
         if (hint) hint.textContent = '🔒 HAMMADDE/TİCARİ MAL SATIN ALINIR';
-      } else if (['Mamul', 'Yarı_Mamul', 'Yari_Mamul'].includes(cat)) {
+      } else if (['Yarı_Mamul', 'Yari_Mamul'].includes(cat)) {
         optUretim.disabled = false;
         optSatinalma.disabled = false;
         if (!procSelect.value) procSelect.value = 'Üretim';

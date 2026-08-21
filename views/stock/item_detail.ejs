@@ -327,10 +327,22 @@
           <div class="glass-grid-2">
             <div class="field-wrap">
               <label class="field-label">Tedarik Yöntemi *</label>
-              <select name="procurementMethod" class="field-input" required>
-                <option value="Satın Alma" <%= item.procurementMethod === 'Satın Alma' ? 'selected' : '' %>>🛒 Satın Alma (Dış Tedarik / Satın Alma Talebi)</option>
-                <option value="Üretim" <%= item.procurementMethod === 'Üretim' ? 'selected' : '' %>>⚙️ Üretim (İç İmalat / İş Emri Talebi)</option>
-              </select>
+              <% if (item.category === 'Mamul') { %>
+                <select name="procurementMethod" class="field-input" required>
+                  <option value="Üretim" selected>⚙️ Üretim (İç İmalat / İş Emri Talebi)</option>
+                </select>
+                <div style="font-size: 0.72rem; color: #818cf8; margin-top: 4px;">🔒 Mamul ürünler yalnızca Üretim tedarik yöntemine sahiptir.</div>
+              <% } else if (item.category === 'Hammadde' || item.category === 'Ticari_Mal' || item.category === 'Ticari Mal') { %>
+                <select name="procurementMethod" class="field-input" required>
+                  <option value="Satın Alma" selected>🛒 Satın Alma (Dış Tedarik / Satın Alma Talebi)</option>
+                </select>
+                <div style="font-size: 0.72rem; color: #818cf8; margin-top: 4px;">🔒 Hammadde/Ticari mallar yalnızca Satın Alma tedarik yöntemine sahiptir.</div>
+              <% } else { %>
+                <select name="procurementMethod" class="field-input" required>
+                  <option value="Satın Alma" <%= item.procurementMethod === 'Satın Alma' ? 'selected' : '' %>>🛒 Satın Alma (Dış Tedarik / Satın Alma Talebi)</option>
+                  <option value="Üretim" <%= item.procurementMethod === 'Üretim' ? 'selected' : '' %>>⚙️ Üretim (İç İmalat / İş Emri Talebi)</option>
+                </select>
+              <% } %>
             </div>
             <div class="field-wrap">
               <label class="field-label">Kart Durumu *</label>
