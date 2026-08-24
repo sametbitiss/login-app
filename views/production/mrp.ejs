@@ -348,13 +348,9 @@
                     </td>
                     <td style="text-align: right;">
                       <% if (wo.status === 'Active') { %>
-                        <form action="/production/mrp/execute" method="POST" style="display: inline-block;">
-                          <input type="hidden" name="actionType" value="create_work_orders">
-                          <input type="hidden" name="stockId" value="<%= wo.stockId %>">
-                          <button type="submit" class="btn-quick-action" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
-                            ➕ İş Emri Aç
-                          </button>
-                        </form>
+                        <a href="/production/orders/add?stockId=<%= wo.stockId %>&plannedQty=<%= wo.quantity %>&priority=<%= encodeURIComponent(wo.priority || 'Normal') %>&requisitionNo=<%= encodeURIComponent(wo.demandSources || '') %>" class="btn-quick-action" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); text-decoration: none;">
+                          ➕ İş Emri Aç & İncele
+                        </a>
                       <% } else { %>
                         <button type="button" class="btn-quick-action" style="background: rgba(255, 255, 255, 0.04); color: #64748b; border-color: rgba(255, 255, 255, 0.08); cursor: not-allowed;" title="Alt bileşenleri tamamlanmadan iş emri açılamaz" disabled>
                           🔒 Bağımlılık Bekliyor

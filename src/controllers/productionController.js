@@ -82,69 +82,240 @@ class ProductionController {
   });
 
   renderAddOrder = asyncHandler(async (req, res) => {
-    const { stockItemId, plannedQty, requisitionId, requisitionNo } = req.query;
-    const { StokKarti, UretimEmri } = require('../../models');
+    const { stockId, stockItemId, plannedQty, qty, requisitionId, requisitionNo, demandRef, priority } = req.query;
+    const { StokKarti, UretimEmri, UrunRecetesi, RotaOperasyon, SatisSiparisi, sequelize } = require('../../models');
     const { Op } = require('sequelize');
 
+    const effectiveStockId = stockId || stockItemId;
+    const effectiveQty = parseFloat(plannedQty || qty || 1) || 1;
+    const effectivePriority = priority || 'Normal';
+    const effectiveDemandRef = requisitionNo || demandRef || '';
+
+    // 1. Fetch all candidate manufactured products (Mamul & Yarı Mamul)
     const stockItems = await StokKarti.findAll({
       where: {
         durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] },
-        tedarikYontemi: { [Op.in]: ['Üretim', 'Production'] }
+        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] }
       },
       order: [['ad', 'ASC']]
     });
 
     let targetProduct = null;
-    let multiLevelPlan = [];
-    let sourceRequisition = null;
-    let isLockedProduct = false;
+    let routingOperations = [];
+    let activeRecipeCode = '—';
+    let activeRecipeVersion = 'Rev.01';
+    let activeRoutingCode = '—';
+    let totalSetupMins = 0;
+    let totalRunMins = 0;
+    let totalDurationMins = 0;
+    let totalDurationHours = 0;
+    let primaryWorkCenter = WORK_CENTERS[0];
+    let projectedStartDate = new Date().toISOString().split('T')[0];
+    let projectedEndDate = projectedStartDate;
+    let workCenterStatusText = '🟢 İş İstasyonu Müsait (Hemen Başlayabilir)';
+    let isWorkCenterBusy = false;
+    let calculatedComponents = [];
+    let deliveryDate = null;
+    let hasDeliveryDate = false;
+    let isDeliveryDelayed = false;
+    let delayDays = 0;
 
-    if (requisitionId) {
-      sourceRequisition = await UretimEmri.findByPk(requisitionId);
-    }
-
-    const effectiveStockItemId = stockItemId || (sourceRequisition ? sourceRequisition.stokId : null);
-    if (requisitionId || stockItemId) {
-      isLockedProduct = true;
-    }
-
-    let minStockLimit = 0;
-    let effectiveQty = 100;
-
-    if (effectiveStockItemId) {
-      targetProduct = await StokKarti.findByPk(effectiveStockItemId);
+    if (effectiveStockId) {
+      targetProduct = await StokKarti.findByPk(effectiveStockId);
       if (targetProduct) {
-        minStockLimit = parseFloat(targetProduct.asgariStok || 0);
-        const reqQty = sourceRequisition ? parseFloat(sourceRequisition.planlananMiktar || 0) : 0;
-        const qtyFloor = Math.max(minStockLimit, reqQty, 1);
+        // 2. Fetch Active BOM
+        const rawBOMs = await UrunRecetesi.findAll({
+          where: { mamulStokId: targetProduct.id, durum: 'Active' },
+          include: [{ model: StokKarti, as: 'bilesenUrun' }],
+          order: [
+            [sequelize.cast(sequelize.col('UrunRecetesi.operasyonKodu'), 'INTEGER'), 'ASC'],
+            ['id', 'ASC']
+          ]
+        });
 
-        if (plannedQty) {
-          effectiveQty = Math.max(qtyFloor, parseFloat(plannedQty) || 1);
-        } else if (sourceRequisition) {
-          effectiveQty = qtyFloor;
-        } else {
-          effectiveQty = qtyFloor > 1 ? qtyFloor : 100;
+        if (rawBOMs.length > 0) {
+          activeRecipeCode = rawBOMs[0].receteKodu || 'REC-TANIMLI';
+          activeRecipeVersion = rawBOMs[0].versiyon || 'Rev.01';
         }
 
-        multiLevelPlan = await productionRepository.getMultiLevelProductionPlan(effectiveStockItemId, effectiveQty);
+        // 3. Fetch Active Routings
+        routingOperations = await RotaOperasyon.findAll({
+          where: { stokId: targetProduct.id, durum: 'Active' },
+          order: [['operasyonSira', 'ASC']]
+        });
+
+        if (routingOperations.length > 0) {
+          activeRoutingCode = routingOperations[0].rotaKodu || `ROTA-${targetProduct.stokKodu}`;
+          primaryWorkCenter = routingOperations[0].isMerkezi || WORK_CENTERS[0];
+        }
+
+        // 4. Calculate Operation Times
+        const processedOps = routingOperations.map(op => {
+          const setupM = parseFloat(op.hazirlikSuresiDakika || 0);
+          const runMPerUnit = parseFloat(op.calismaSuresiDakikaBirim || 0);
+          const opTotalRunM = runMPerUnit * effectiveQty;
+          const opTotalMins = setupM + opTotalRunM;
+          const opTotalHours = parseFloat((opTotalMins / 60).toFixed(2));
+
+          totalSetupMins += setupM;
+          totalRunMins += opTotalRunM;
+          totalDurationMins += opTotalMins;
+
+          return {
+            id: op.id,
+            operasyonSira: op.operasyonSira,
+            operasyonKodu: op.operasyonKodu,
+            operasyonAdi: op.operasyonAdi,
+            isMerkezi: op.isMerkezi || primaryWorkCenter,
+            hazirlikSuresiDakika: setupM,
+            calismaSuresiDakikaBirim: runMPerUnit,
+            toplamCalismaDakika: parseFloat(opTotalRunM.toFixed(1)),
+            toplamDakika: parseFloat(opTotalMins.toFixed(1)),
+            toplamSaat: opTotalHours,
+            operatorSayisi: op.operatorSayisi || 1,
+            talimatlar: op.talimatlar
+          };
+        });
+
+        totalDurationHours = parseFloat((totalDurationMins / 60).toFixed(1));
+
+        // 5. Work Center Schedule / Queue check
+        const uniqueWorkCenters = Array.from(new Set(routingOperations.map(r => r.isMerkezi).filter(Boolean)));
+        if (uniqueWorkCenters.length > 0) {
+          const activeWOsInCenters = await UretimEmri.findAll({
+            where: {
+              durum: { [Op.in]: ['Approved', 'In_Production'] },
+              isMerkezi: { [Op.in]: uniqueWorkCenters }
+            },
+            order: [['planlananBitisTarihi', 'DESC']]
+          });
+
+          if (activeWOsInCenters.length > 0) {
+            isWorkCenterBusy = true;
+            const latestEnd = activeWOsInCenters[0].planlananBitisTarihi;
+            if (latestEnd && new Date(latestEnd) >= new Date()) {
+              projectedStartDate = new Date(latestEnd).toISOString().split('T')[0];
+              workCenterStatusText = `🟡 İş İstasyonunda Aktif İşler Var (En erken başlama: ${projectedStartDate})`;
+            }
+          }
+        }
+
+        // 6. Calculate Projected End Date
+        const standardDailyShiftHours = 8;
+        const workDaysNeeded = Math.max(1, Math.ceil(totalDurationHours / standardDailyShiftHours));
+        const startDateObj = new Date(projectedStartDate);
+        startDateObj.setDate(startDateObj.getDate() + workDaysNeeded);
+        projectedEndDate = startDateObj.toISOString().split('T')[0];
+
+        // 7. Calculate Components with scrap and discrete rounding
+        calculatedComponents = rawBOMs.map(bom => {
+          const comp = bom.bilesenUrun;
+          const isLabor = bom.kalemTuru === 'Labor' || !comp;
+          const baseQty = parseFloat(bom.bazMiktar || 1) || 1;
+          const reqQty = parseFloat(bom.gerekliMiktar || 0);
+          const scrapRate = parseFloat(bom.fireOrani || 0);
+          const scrapMultiplier = 1 + (scrapRate / 100);
+
+          let grossReq = 0;
+          let roundedGrossReq = 0;
+          let currentStock = 0;
+          let isSufficient = true;
+          let compUnit = bom.birim || 'Adet';
+
+          if (!isLabor && comp) {
+            compUnit = comp.birim || bom.birim || 'Adet';
+            grossReq = effectiveQty * (reqQty / baseQty) * scrapMultiplier;
+            const discrete = ['Adet', 'Paket', 'Koli', 'Set'].includes(compUnit);
+            roundedGrossReq = discrete ? Math.ceil(grossReq) : parseFloat(grossReq.toFixed(2));
+            currentStock = parseFloat(comp.mevcutStok || 0);
+            isSufficient = currentStock >= roundedGrossReq;
+          }
+
+          // Match operation in routing
+          const matchingOp = routingOperations.find(r => 
+            (bom.operasyonKodu && (r.operasyonKodu === bom.operasyonKodu || String(r.operasyonSira) === String(bom.operasyonKodu)))
+          );
+
+          return {
+            id: bom.id,
+            kalemTuru: bom.kalemTuru,
+            isLabor,
+            operasyonKodu: bom.operasyonKodu || '10',
+            operasyonAdi: matchingOp ? matchingOp.operasyonAdi : `Adım #${bom.operasyonKodu || '10'}`,
+            isMerkezi: matchingOp ? matchingOp.isMerkezi : primaryWorkCenter,
+            bilesenStokId: bom.bilesenStokId,
+            bilesenKodu: comp ? comp.stokKodu : '—',
+            bilesenAdi: comp ? comp.ad : (isLabor ? `[İşçilik / Operasyon Adımı #${bom.operasyonKodu}]` : '—'),
+            kategori: comp ? comp.kategori : 'Hizmet/İşçilik',
+            tedarikYontemi: comp ? comp.tedarikYontemi : '—',
+            birim: compUnit,
+            bazMiktar: baseQty,
+            gerekliMiktar: reqQty,
+            fireOrani: scrapRate,
+            hesaplananBrutMiktar: grossReq,
+            yuvarlanmisMiktar: roundedGrossReq,
+            mevcutStok: currentStock,
+            stokYeterli: isSufficient
+          };
+        });
+
+        // 8. Delivery Date & Delay Check
+        if (effectiveDemandRef) {
+          const srcDemand = await UretimEmri.findOne({ where: { isEmriNo: effectiveDemandRef } });
+          if (srcDemand && srcDemand.planlananBitisTarihi) {
+            deliveryDate = srcDemand.planlananBitisTarihi;
+            hasDeliveryDate = true;
+          } else {
+            const srcSale = await SatisSiparisi.findOne({ where: { siparisNo: effectiveDemandRef } });
+            if (srcSale && (srcSale.teslimTarihi || srcSale.siparisTarihi)) {
+              deliveryDate = srcSale.teslimTarihi || srcSale.siparisTarihi;
+              hasDeliveryDate = true;
+            }
+          }
+
+          if (hasDeliveryDate && deliveryDate) {
+            const projectedEndTs = new Date(projectedEndDate).getTime();
+            const deliveryTs = new Date(deliveryDate).getTime();
+            if (projectedEndTs > deliveryTs) {
+              isDeliveryDelayed = true;
+              delayDays = Math.ceil((projectedEndTs - deliveryTs) / (1000 * 60 * 60 * 24));
+            }
+          }
+        }
+
+        routingOperations = processedOps;
       }
     }
 
-    const effectiveOrderSource = requisitionNo || (sourceRequisition ? sourceRequisition.isEmriNo : `SOP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
     const nextWorkOrderNo = await productionRepository.generateWorkOrderNo();
 
     res.render('production/add', {
       user: req.user,
       stockItems,
       targetProduct,
-      multiLevelPlan,
-      sourceRequisition,
+      effectiveStockId,
       effectiveQty,
-      minStockLimit,
-      isLockedProduct,
-      effectiveOrderSource,
+      effectivePriority,
+      effectiveDemandRef,
       nextWorkOrderNo,
+      activeRecipeCode,
+      activeRecipeVersion,
+      activeRoutingCode,
+      routingOperations,
+      totalSetupMins: parseFloat(totalSetupMins.toFixed(1)),
+      totalRunMins: parseFloat(totalRunMins.toFixed(1)),
+      totalDurationMins: parseFloat(totalDurationMins.toFixed(1)),
+      totalDurationHours,
+      primaryWorkCenter,
+      projectedStartDate,
+      projectedEndDate,
+      workCenterStatusText,
+      isWorkCenterBusy,
+      calculatedComponents,
+      deliveryDate,
+      hasDeliveryDate,
+      isDeliveryDelayed,
+      delayDays,
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'add_order',
@@ -154,94 +325,53 @@ class ProductionController {
 
   addOrder = asyncHandler(async (req, res) => {
     const {
-      ordersJson,
-      requisitionId,
-      productionTitle,
+      isEmriNo,
+      uretimBasligi,
       stockItemId,
+      stockId,
       plannedQuantity,
       unit,
-      status,
       priority,
       workCenter,
       plannedStartDate,
       plannedEndDate,
       estimatedHours,
       productionManager,
-      bomNotes,
-      notes
+      receteNotlari,
+      notlar,
+      demandRef
     } = req.body;
 
     const { UretimEmri, StokKarti } = require('../../models');
 
-    if (ordersJson) {
-      let ordersArray = [];
-      try {
-        ordersArray = JSON.parse(ordersJson);
-      } catch (err) {
-        throw new ValidationError('İş emri verileri geçersiz formatta.');
-      }
-
-      for (let i = 0; i < ordersArray.length; i++) {
-        const item = ordersArray[i];
-        const woNo = await productionRepository.generateWorkOrderNo();
-
-        const sId = item.stokId || item.stockItemId;
-        const itemProduct = await StokKarti.findByPk(sId);
-        const itemMinStock = itemProduct ? parseFloat(itemProduct.asgariStok || 0) : 0;
-        const pQty = parseFloat(item.planlananMiktar || item.plannedQuantity) || 1;
-        const validQty = Math.max(pQty, itemMinStock, 1);
-
-        await productionRepository.create({
-          isEmriNo: woNo,
-          uretimBasligi: item.uretimBasligi || item.productionTitle || `[Seviye ${item.level}] İmalat İş Emri — ${item.productName}`,
-          stokId: sId,
-          planlananMiktar: validQty,
-          birim: item.birim || 'Adet',
-          durum: item.durum || item.status || 'Planned',
-          oncelik: item.oncelik || item.priority || 'Normal',
-          isMerkezi: item.isMerkezi || item.workCenter || WORK_CENTERS[0],
-          planlananBaslangicTarihi: item.planlananBaslangicTarihi || item.plannedStartDate,
-          planlananBitisTarihi: item.planlananBitisTarihi || item.plannedEndDate,
-          notlar: item.notlar || item.notes || `Sipariş Kaynağı: ${item.orderSource || 'Manuel'}`
-        }, req.user, req.ip);
-      }
-
-      if (requisitionId) {
-        const reqOrder = await UretimEmri.findByPk(requisitionId);
-        if (reqOrder) {
-          reqOrder.durum = 'Completed';
-          await reqOrder.save();
-        }
-      }
-
-      return res.redirect('/production/orders');
+    const sId = parseInt(stockId || stockItemId, 10);
+    const targetProduct = await StokKarti.findByPk(sId);
+    if (!targetProduct) {
+      throw new ValidationError('Geçerli bir ürün seçilmelidir.');
     }
+
+    const nextNo = isEmriNo || (await productionRepository.generateWorkOrderNo());
+    const qty = parseFloat(plannedQuantity) || 1;
+    const title = uretimBasligi || `🏭 [İş Emri] ${targetProduct.ad} (${qty} ${unit || targetProduct.birim || 'Adet'})`;
 
     await productionRepository.create({
-      uretimBasligi: productionTitle,
-      stokId: stockItemId,
-      planlananMiktar: parseFloat(plannedQuantity) || 1,
-      birim: unit || 'Adet',
-      durum: status || 'Planned',
+      isEmriNo: nextNo,
+      uretimBasligi: title,
+      stokId: sId,
+      planlananMiktar: qty,
+      birim: unit || targetProduct.birim || 'Adet',
+      durum: 'Approved',
       oncelik: priority || 'Normal',
-      isMerkezi: workCenter || WORK_CENTERS[0],
-      planlananBaslangicTarihi: plannedStartDate,
-      planlananBitisTarihi: plannedEndDate,
+      isMerkezi: workCenter || 'İstasyon-1 (Genel Montaj)',
+      planlananBaslangicTarihi: plannedStartDate || new Date().toISOString().split('T')[0],
+      planlananBitisTarihi: plannedEndDate || new Date().toISOString().split('T')[0],
       tahminiSaat: parseFloat(estimatedHours) || 0,
-      uretimYonetici: productionManager,
-      receteNotlari: bomNotes,
-      notlar: notes
+      uretimYonetici: productionManager || (req.user ? `${req.user.ad || ''} ${req.user.soyad || ''}`.trim() : 'Üretim Mühendisi'),
+      receteNotlari: receteNotlari || `Kaynak: ${demandRef || 'Manuel'}`,
+      notlar: notlar || `[Yeni İş Emri] Kaynak Talep: ${demandRef || 'Doğrudan Giriş'}`
     }, req.user, req.ip);
 
-    if (requisitionId) {
-      const reqOrder = await UretimEmri.findByPk(requisitionId);
-      if (reqOrder) {
-        reqOrder.durum = 'Completed';
-        await reqOrder.save();
-      }
-    }
-
-    res.redirect('/production/orders');
+    res.redirect('/production/orders?success=order_created');
   });
 
   updateOrderStatus = asyncHandler(async (req, res) => {
