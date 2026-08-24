@@ -339,7 +339,7 @@
       <!-- TABLI MENÜ NAVİGASYONU -->
       <nav class="order-wizard-nav">
         <button type="button" class="wizard-tab-btn active" onclick="switchWizardTab('tab-order-info', 1, event)">
-          <span>📋 1. Temel Bilgiler</span>
+          <span>📋 1. Temel Parametreler</span>
         </button>
         <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-recipe-routing', 2, event)">
           <span>📜 2. Reçete & Rota</span>
@@ -369,7 +369,7 @@
         <div id="tab-order-info" class="wizard-tab-content active">
           <div class="form-section-card">
             <div class="section-title">
-              <span>📋 1. İş Emri Temel Bilgileri & Parametreleri</span>
+              <span>📋 1. İş Emri Temel Parametreleri</span>
             </div>
 
             <div class="form-row-4">
@@ -427,7 +427,7 @@
         <div id="tab-recipe-routing" class="wizard-tab-content">
           <div class="form-section-card">
             <div class="section-title">
-              <span>📜 2. Aktif Reçete & Rota Bilgisi</span>
+              <span>📜 2. Aktif Reçete & Rota Mühendisliği</span>
             </div>
 
             <div class="form-row-2">
@@ -475,7 +475,7 @@
         <div id="tab-operations" class="wizard-tab-content">
           <div class="form-section-card">
             <div class="section-title">
-              <span>⏱️ 3. Rota Operasyon Adımları & Süre / Kapasite Planı</span>
+              <span>⏱️ 3. Rota Operasyon Adımları & Bileşen Bazlı Süre Projeksiyonu</span>
             </div>
 
             <div class="table-wrapper">
@@ -483,12 +483,12 @@
                 <thead>
                   <tr>
                     <th style="width: 70px; text-align: center;">Adım</th>
-                    <th>Operasyon Kodu</th>
-                    <th>Operasyon Adı</th>
+                    <th>Operasyon Kodu & Adı</th>
                     <th>Hedef İş Merkezi (İstasyon)</th>
+                    <th>İşlenen / Tüketilen Bileşen</th>
                     <th style="text-align: right;">Hazırlık Süresi</th>
-                    <th style="text-align: right;">Birim Çalışma (Birim Başı)</th>
-                    <th style="text-align: right;">Toplam Çalışma (<%= effectiveQty %> <%= targetProduct.birim || 'Adet' %>)</th>
+                    <th style="text-align: right;">Birim Süre</th>
+                    <th style="text-align: right;">Çalışma Süresi Hesabı</th>
                     <th style="text-align: right;">Toplam Adım Süresi</th>
                   </tr>
                 </thead>
@@ -499,12 +499,15 @@
                     <% routingOperations.forEach(op => { %>
                       <tr>
                         <td style="text-align: center;"><span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">#<%= op.operasyonSira %></span></td>
-                        <td><strong style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;">[<%= op.operasyonKodu %>]</strong></td>
-                        <td><strong style="color: var(--text-primary);"><%= op.operasyonAdi %></strong></td>
+                        <td>
+                          <strong style="color: var(--text-primary);"><%= op.operasyonAdi %></strong>
+                          <div style="color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">[<%= op.operasyonKodu %>]</div>
+                        </td>
                         <td style="font-size: 0.85rem; color: #cbd5e1;"><%= op.isMerkezi %></td>
+                        <td style="font-size: 0.85rem; color: #a5b4fc; font-weight: 600;"><%= op.matchedComponentsText %></td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= op.hazirlikSuresiDakika %> Dk</td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= op.calismaSuresiDakikaBirim %> Dk</td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= op.toplamCalismaDakika %> Dk</td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= op.formulaText %></td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;"><%= op.formattedDuration %></td>
                       </tr>
                     <% }); %>
@@ -521,7 +524,7 @@
               </div>
               <div class="info-box">
                 <span class="info-box-label">Toplam Çalışma Süresi</span>
-                <span class="info-box-value"><%= totalRunMins %> Dk (<%= (totalRunMins/60).toFixed(2) %> Sa)</span>
+                <span class="info-box-value"><%= totalRunMins.toFixed(1) %> Dk (<%= (totalRunMins/60).toFixed(2) %> Sa)</span>
               </div>
               <div class="info-box">
                 <span class="info-box-label">Toplam İmalat Süresi</span>
@@ -645,7 +648,7 @@
         <div id="tab-instructions" class="wizard-tab-content">
           <div class="form-section-card">
             <div class="section-title">
-              <span>✍️ 5. Saha Talimatları & Görevlendirme</span>
+              <span>✍️ 5. Saha Talimatları, Görevlendirme & Onay</span>
             </div>
 
             <div class="form-row-2">

@@ -148,137 +148,141 @@ class ProductionController {
       ]
     });
 
-        if (rawBOMs.length > 0) {
-          activeRecipeCode = rawBOMs[0].receteKodu || 'REC-TANIMLI';
-          activeRecipeVersion = rawBOMs[0].versiyon || 'Rev.01';
-        }
+    if (rawBOMs.length > 0) {
+      activeRecipeCode = rawBOMs[0].receteKodu || 'REC-TANIMLI';
+      activeRecipeVersion = rawBOMs[0].versiyon || 'Rev.01';
+    }
 
-        // 3. Fetch Active Routings
-        routingOperations = await RotaOperasyon.findAll({
-          where: { stokId: targetProduct.id, durum: 'Active' },
-          order: [['operasyonSira', 'ASC']]
-        });
+    // 3. Fetch Active Routings
+    routingOperations = await RotaOperasyon.findAll({
+      where: { stokId: targetProduct.id, durum: 'Active' },
+      order: [['operasyonSira', 'ASC']]
+    });
 
-        if (routingOperations.length > 0) {
-          activeRoutingCode = routingOperations[0].rotaKodu || `ROTA-${targetProduct.stokKodu}`;
-          primaryWorkCenter = routingOperations[0].isMerkezi || WORK_CENTERS[0];
-        }
+    if (routingOperations.length > 0) {
+      activeRoutingCode = routingOperations[0].rotaKodu || `ROTA-${targetProduct.stokKodu}`;
+      primaryWorkCenter = routingOperations[0].isMerkezi || WORK_CENTERS[0];
+    }
 
-        // 4. Calculate Operation Times in Minutes strictly, then convert to hours
-        const processedOps = routingOperations.map(op => {
-          const setupM = parseFloat(op.hazirlikSuresiDakika || 0);
-          const runMPerUnit = parseFloat(op.calismaSuresiDakikaBirim || 0);
-          const opTotalRunM = runMPerUnit * effectiveQty;
-          const opTotalMins = setupM + opTotalRunM;
-          const opTotalHours = parseFloat((opTotalMins / 60).toFixed(2));
+    // 4. Calculate Components with scrap and discrete rounding first
+    calculatedComponents = rawBOMs.map(bom => {
+      const comp = bom.bilesenUrun;
+      const isLabor = bom.kalemTuru === 'Labor' || !comp;
+      const baseQty = parseFloat(bom.bazMiktar || 1) || 1;
+      const reqQty = parseFloat(bom.gerekliMiktar || 0);
+      const scrapRate = parseFloat(bom.fireOrani || 0);
+      const scrapMultiplier = 1 + (scrapRate / 100);
 
-          totalSetupMins += setupM;
-          totalRunMins += opTotalRunM;
-          totalDurationMins += opTotalMins;
+      let grossReq = 0;
+      let roundedGrossReq = 0;
+      let currentStock = 0;
+      let isSufficient = true;
+      let compUnit = bom.birim || 'Adet';
 
-          return {
-            id: op.id,
-            operasyonSira: op.operasyonSira,
-            operasyonKodu: op.operasyonKodu,
-            operasyonAdi: op.operasyonAdi,
-            isMerkezi: op.isMerkezi || primaryWorkCenter,
-            hazirlikSuresiDakika: setupM,
-            calismaSuresiDakikaBirim: runMPerUnit,
-            toplamCalismaDakika: parseFloat(opTotalRunM.toFixed(1)),
-            toplamDakika: parseFloat(opTotalMins.toFixed(1)),
-            toplamSaat: opTotalHours,
-            formattedDuration: `${opTotalMins.toFixed(0)} Dk (${opTotalHours} Sa)`,
-            operatorSayisi: op.operatorSayisi || 1,
-            talimatlar: op.talimatlar
-          };
-        });
+      if (!isLabor && comp) {
+        compUnit = comp.birim || bom.birim || 'Adet';
+        grossReq = effectiveQty * (reqQty / baseQty) * scrapMultiplier;
+        const discrete = ['Adet', 'Paket', 'Koli', 'Set'].includes(compUnit);
+        roundedGrossReq = discrete ? Math.ceil(grossReq) : parseFloat(grossReq.toFixed(2));
+        currentStock = parseFloat(comp.mevcutStok || 0);
+        isSufficient = currentStock >= roundedGrossReq;
+      }
 
-        totalDurationHours = parseFloat((totalDurationMins / 60).toFixed(2));
-        const totalHoursInt = Math.floor(totalDurationMins / 60);
-        const totalMinsRem = Math.round(totalDurationMins % 60);
-        totalTimePretty = totalHoursInt > 0
-          ? `${Math.round(totalDurationMins)} Dk (${totalHoursInt} Sa ${totalMinsRem} Dk / ${totalDurationHours} Saat)`
-          : `${Math.round(totalDurationMins)} Dk (${totalDurationHours} Saat)`;
+      // Match operation in routing
+      const matchingOp = routingOperations.find(r => 
+        (bom.operasyonKodu && (r.operasyonKodu === bom.operasyonKodu || String(r.operasyonSira) === String(bom.operasyonKodu)))
+      );
 
-        // 5. Work Center Schedule / Queue check
-        const uniqueWorkCenters = Array.from(new Set(routingOperations.map(r => r.isMerkezi).filter(Boolean)));
-        if (uniqueWorkCenters.length > 0) {
-          const activeWOsInCenters = await UretimEmri.findAll({
-            where: {
-              durum: { [Op.in]: ['Approved', 'In_Production'] },
-              isMerkezi: { [Op.in]: uniqueWorkCenters }
-            },
-            order: [['planlananBitisTarihi', 'DESC']]
-          });
+      return {
+        id: bom.id,
+        kalemTuru: bom.kalemTuru,
+        isLabor,
+        operasyonKodu: bom.operasyonKodu || '10',
+        operasyonAdi: matchingOp ? matchingOp.operasyonAdi : `Adım #${bom.operasyonKodu || '10'}`,
+        isMerkezi: matchingOp ? matchingOp.isMerkezi : primaryWorkCenter,
+        bilesenStokId: bom.bilesenStokId,
+        bilesenKodu: comp ? comp.stokKodu : '—',
+        bilesenAdi: comp ? comp.ad : (isLabor ? `[İşçilik / Operasyon Adımı #${bom.operasyonKodu}]` : '—'),
+        kategori: comp ? comp.kategori : 'Hizmet/İşçilik',
+        tedarikYontemi: comp ? comp.tedarikYontemi : '—',
+        birim: compUnit,
+        bazMiktar: baseQty,
+        gerekliMiktar: reqQty,
+        fireOrani: scrapRate,
+        hesaplananBrutMiktar: grossReq,
+        yuvarlanmisMiktar: roundedGrossReq,
+        mevcutStok: currentStock,
+        stokYeterli: isSufficient
+      };
+    });
 
-          if (activeWOsInCenters.length > 0) {
-            isWorkCenterBusy = true;
-            const latestEnd = activeWOsInCenters[0].planlananBitisTarihi;
-            if (latestEnd && new Date(latestEnd) >= new Date()) {
-              projectedStartDate = new Date(latestEnd).toISOString().split('T')[0];
-              workCenterStatusText = `🟡 İş İstasyonunda Aktif İşler Var (En erken başlama: ${projectedStartDate})`;
-            }
+    // 5. Calculate Operation Times in Minutes strictly by linking with BOM components
+    const processedOps = routingOperations.map(op => {
+      const setupM = parseFloat(op.hazirlikSuresiDakika || 0);
+      const runMPerUnit = parseFloat(op.calismaSuresiDakikaBirim || 0);
+
+      // Match components assigned to this step
+      const matchedComps = calculatedComponents.filter(c => {
+        const cOp = String(c.operasyonKodu || '').trim();
+        const rOp = String(op.operasyonKodu || '').trim();
+        const rSira = String(op.operasyonSira || '').trim();
+        return cOp === rOp || cOp === rSira || rOp.endsWith(cOp) || rOp.includes(cOp);
+      });
+
+      let opTotalRunM = 0;
+      let matchedCompSummary = [];
+      let formulaSummary = [];
+
+      if (matchedComps.length > 0) {
+        matchedComps.forEach(c => {
+          if (!c.isLabor) {
+            const compRunTime = c.hesaplananBrutMiktar * runMPerUnit;
+            opTotalRunM += compRunTime;
+            matchedCompSummary.push(`${c.bilesenAdi} (${c.hesaplananBrutMiktar.toFixed(2)} ${c.birim})`);
+            formulaSummary.push(`${c.hesaplananBrutMiktar.toFixed(2)} ${c.birim} × ${runMPerUnit.toFixed(2)} Dk = ${compRunTime.toFixed(2)} Dk`);
           }
-        }
-
-        // 6. Calculate Projected End Date
-        const standardDailyShiftHours = 8;
-        const workDaysNeeded = Math.max(1, Math.ceil(totalDurationHours / standardDailyShiftHours));
-        const startDateObj = new Date(projectedStartDate);
-        startDateObj.setDate(startDateObj.getDate() + workDaysNeeded);
-        projectedEndDate = startDateObj.toISOString().split('T')[0];
-
-        // 7. Calculate Components with scrap and discrete rounding
-        calculatedComponents = rawBOMs.map(bom => {
-          const comp = bom.bilesenUrun;
-          const isLabor = bom.kalemTuru === 'Labor' || !comp;
-          const baseQty = parseFloat(bom.bazMiktar || 1) || 1;
-          const reqQty = parseFloat(bom.gerekliMiktar || 0);
-          const scrapRate = parseFloat(bom.fireOrani || 0);
-          const scrapMultiplier = 1 + (scrapRate / 100);
-
-          let grossReq = 0;
-          let roundedGrossReq = 0;
-          let currentStock = 0;
-          let isSufficient = true;
-          let compUnit = bom.birim || 'Adet';
-
-          if (!isLabor && comp) {
-            compUnit = comp.birim || bom.birim || 'Adet';
-            grossReq = effectiveQty * (reqQty / baseQty) * scrapMultiplier;
-            const discrete = ['Adet', 'Paket', 'Koli', 'Set'].includes(compUnit);
-            roundedGrossReq = discrete ? Math.ceil(grossReq) : parseFloat(grossReq.toFixed(2));
-            currentStock = parseFloat(comp.mevcutStok || 0);
-            isSufficient = currentStock >= roundedGrossReq;
-          }
-
-          // Match operation in routing
-          const matchingOp = routingOperations.find(r => 
-            (bom.operasyonKodu && (r.operasyonKodu === bom.operasyonKodu || String(r.operasyonSira) === String(bom.operasyonKodu)))
-          );
-
-          return {
-            id: bom.id,
-            kalemTuru: bom.kalemTuru,
-            isLabor,
-            operasyonKodu: bom.operasyonKodu || '10',
-            operasyonAdi: matchingOp ? matchingOp.operasyonAdi : `Adım #${bom.operasyonKodu || '10'}`,
-            isMerkezi: matchingOp ? matchingOp.isMerkezi : primaryWorkCenter,
-            bilesenStokId: bom.bilesenStokId,
-            bilesenKodu: comp ? comp.stokKodu : '—',
-            bilesenAdi: comp ? comp.ad : (isLabor ? `[İşçilik / Operasyon Adımı #${bom.operasyonKodu}]` : '—'),
-            kategori: comp ? comp.kategori : 'Hizmet/İşçilik',
-            tedarikYontemi: comp ? comp.tedarikYontemi : '—',
-            birim: compUnit,
-            bazMiktar: baseQty,
-            gerekliMiktar: reqQty,
-            fireOrani: scrapRate,
-            hesaplananBrutMiktar: grossReq,
-            yuvarlanmisMiktar: roundedGrossReq,
-            mevcutStok: currentStock,
-            stokYeterli: isSufficient
-          };
         });
+      }
+
+      // If no material component matched, fallback to primary product quantity
+      if (matchedCompSummary.length === 0) {
+        opTotalRunM = effectiveQty * runMPerUnit;
+        matchedCompSummary.push(`[Genel Montaj / Ana Ürün] (${effectiveQty} ${targetProduct.birim || 'Adet'})`);
+        formulaSummary.push(`${effectiveQty} ${targetProduct.birim || 'Adet'} × ${runMPerUnit.toFixed(2)} Dk = ${opTotalRunM.toFixed(2)} Dk`);
+      }
+
+      const opTotalMins = setupM + opTotalRunM;
+      const opTotalHours = parseFloat((opTotalMins / 60).toFixed(2));
+
+      totalSetupMins += setupM;
+      totalRunMins += opTotalRunM;
+      totalDurationMins += opTotalMins;
+
+      return {
+        id: op.id,
+        operasyonSira: op.operasyonSira,
+        operasyonKodu: op.operasyonKodu,
+        operasyonAdi: op.operasyonAdi,
+        isMerkezi: op.isMerkezi || primaryWorkCenter,
+        matchedComponentsText: matchedCompSummary.join(', '),
+        formulaText: formulaSummary.join(' + '),
+        hazirlikSuresiDakika: setupM,
+        calismaSuresiDakikaBirim: runMPerUnit,
+        toplamCalismaDakika: parseFloat(opTotalRunM.toFixed(2)),
+        toplamDakika: parseFloat(opTotalMins.toFixed(2)),
+        toplamSaat: opTotalHours,
+        formattedDuration: `${opTotalMins.toFixed(1)} Dk (${opTotalHours} Sa)`,
+        operatorSayisi: op.operatorSayisi || 1,
+        talimatlar: op.talimatlar
+      };
+    });
+
+    totalDurationHours = parseFloat((totalDurationMins / 60).toFixed(2));
+    const totalHoursInt = Math.floor(totalDurationMins / 60);
+    const totalMinsRem = Math.round(totalDurationMins % 60);
+    totalTimePretty = totalHoursInt > 0
+      ? `${totalDurationMins.toFixed(1)} Dk (${totalHoursInt} Sa ${totalMinsRem} Dk / ${totalDurationHours} Saat)`
+      : `${totalDurationMins.toFixed(1)} Dk (${totalDurationHours} Saat)`;
 
         // 8. Delivery Date & Delay Check
         if (effectiveDemandRef) {
