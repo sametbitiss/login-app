@@ -582,6 +582,13 @@
         operasyonKodu: (b.operasyonKodu !== undefined && b.operasyonKodu !== null && String(b.operasyonKodu).trim()) ? String(b.operasyonKodu).trim() : (routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : ''),
         notlar: b.notlar || ''
       }));
+
+      // Sort existing components in ascending order of routing step number
+      componentsData.sort((a, b) => {
+        const stepA = parseInt(a.operasyonKodu || '0', 10) || 0;
+        const stepB = parseInt(b.operasyonKodu || '0', 10) || 0;
+        return stepA - stepB;
+      });
     } else {
       // Initialize with 1 clean empty component row
       componentsData = [
@@ -1067,6 +1074,13 @@
             }
           }
         }
+
+        // Sort components array numerically by step number before serialization
+        componentsData.sort((a, b) => {
+          const stepA = parseInt(a.operasyonKodu || '0', 10) || 0;
+          const stepB = parseInt(b.operasyonKodu || '0', 10) || 0;
+          return stepA - stepB;
+        });
 
         document.getElementById('componentsJson').value = JSON.stringify(componentsData);
       });

@@ -203,7 +203,11 @@ class ProductionRepository {
         { model: StokKarti, as: 'bilesenUrun', attributes: ['id', 'stokKodu', 'ad', 'birim', 'mevcutStok', 'alisFiyati', 'paraBirimi', 'kategori'] },
         { model: StokKarti, as: 'alternatifBilesenUrun', attributes: ['id', 'stokKodu', 'ad', 'birim'] }
       ],
-      order: [['mamulStokId', 'ASC'], ['seviye', 'ASC'], ['id', 'ASC']]
+      order: [
+        ['mamulStokId', 'ASC'],
+        [sequelize.cast(sequelize.col('operasyonKodu'), 'INTEGER'), 'ASC'],
+        ['id', 'ASC']
+      ]
     });
   }
 
@@ -396,8 +400,15 @@ class ProductionRepository {
     const finalBitis = gecerlilikBitis || null;
     const finalGeneralNotes = notlar || generalNotes || null;
 
-    for (let i = 0; i < components.length; i++) {
-      const comp = components[i];
+    // Sort components numerically by routing step number before saving
+    const sortedComponents = [...components].sort((a, b) => {
+      const stepA = parseInt(a.operasyonKodu || a.operationCode || '0', 10) || 0;
+      const stepB = parseInt(b.operasyonKodu || b.operationCode || '0', 10) || 0;
+      return stepA - stepB;
+    });
+
+    for (let i = 0; i < sortedComponents.length; i++) {
+      const comp = sortedComponents[i];
       const itemType = comp.kalemTuru || (comp.bilesenStokId ? 'Material' : 'Labor');
       const compId = comp.bilesenStokId ? parseInt(comp.bilesenStokId, 10) : null;
       let compItem = null;

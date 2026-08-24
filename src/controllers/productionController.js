@@ -396,12 +396,16 @@ class ProductionController {
           order: [['operasyonSira', 'ASC']]
         });
 
+        const { sequelize } = require('../../models');
         existingBOMItems = await UrunRecetesi.findAll({
           where: { mamulStokId: finishedStockItemId },
           include: [
             { model: StokKarti, as: 'bilesenUrun' }
           ],
-          order: [['id', 'ASC']]
+          order: [
+            [sequelize.cast(sequelize.col('operasyonKodu'), 'INTEGER'), 'ASC'],
+            ['id', 'ASC']
+          ]
         });
 
         if (existingBOMItems && existingBOMItems.length > 0) {
