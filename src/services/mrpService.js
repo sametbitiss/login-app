@@ -305,25 +305,35 @@ class MRPService {
 
       // Eğer yarı mamul veya mamul ise → kendi reçetesini de patlat
       if (isSemiFinished || isFinished) {
+        const compCurrentStock = parseFloat(compItem.mevcutStok || 0);
+        let netCompReq = Math.max(0, compGrossReq - compCurrentStock);
+        if (isDiscreteUnit(compItem.birim || 'Adet') && netCompReq > 0) {
+          netCompReq = Math.ceil(netCompReq);
+        }
+
         // intermediateProducts'a ekle (iş emri önerisi için)
         if (!intermediateProducts.has(compId)) {
           intermediateProducts.set(compId, {
             item: compItem,
-            totalQty: 0,
+            grossQty: 0,
+            netQty: 0,
             demandSources: [],
             isTopLevel: false
           });
         }
         const ipEntry = intermediateProducts.get(compId);
-        ipEntry.totalQty += compGrossReq;
-        ipEntry.demandSources.push({ demandRef, qty: compGrossReq, parentName });
+        ipEntry.grossQty += compGrossReq;
+        ipEntry.netQty += netCompReq;
+        ipEntry.demandSources.push({ demandRef, qty: compGrossReq, netQty: netCompReq, parentName });
 
-        // Recursive çağrı
-        childTree = this._explodeBOM(
-          compId, compGrossReq, demandRef, compItem.ad,
-          stockMap, bomsByParent, globalRequirements, intermediateProducts,
-          depth + 1, currentVisited
-        );
+        // Sadece üretilmesi gereken net miktar > 0 ise alt bileşen reçetesini patlat
+        if (netCompReq > 0) {
+          childTree = this._explodeBOM(
+            compId, netCompReq, demandRef, compItem.ad,
+            stockMap, bomsByParent, globalRequirements, intermediateProducts,
+            depth + 1, currentVisited
+          );
+        }
       }
 
       children.push({
@@ -359,10 +369,12 @@ class MRPService {
    * 
    * Mantık:
    * 1. intermediateProducts'taki tüm ürünleri (yarı mamul + mamul) tara.
-   * 2. Her birinin doğrudan bileşenlerinin stok durumunu kontrol et.
-   * 3. Tüm bileşenler yeterliyse → Aktif iş emri önerisi.
-   * 4. Bir bileşen bile eksikse → Pasif iş emri önerisi (engeli belirt).
-   * 5. Sırala: Önce alt seviyeler (yarı mamuller), sonra üst seviyeler (mamuller).
+   * 2. Net üretim ihtiyacını hesapla: netQty = max(0, grossQty - currentStock).
+   * 3. Eğer yarı mamulün mevcut stoğu yeterliyse (netQty = 0), iş emri açmaya gerek yok.
+   * 4. netQty > 0 ise, bu net miktar için bileşen stoklarını kontrol et.
+   * 5. Tüm bileşenler yeterliyse → Aktif iş emri önerisi.
+   * 6. Bir bileşen bile eksikse → Pasif iş emri önerisi (engeli belirt).
+   * 7. Sırala: Önce alt seviyeler (yarı mamuller), sonra üst seviyeler (mamuller).
    */
   _buildWorkOrderSuggestions(intermediateProducts, bomsByParent, stockMap, globalRequirements, materialRequirements, routingsByStock) {
     const suggestions = [];
@@ -382,13 +394,27 @@ class MRPService {
       
       if (boms.length === 0) continue; // Reçetesi yoksa iş emri verilemez
 
-      const totalQty = ipData.totalQty;
-      let roundedQty = totalQty;
+      const currentStock = parseFloat(item.mevcutStok || 0);
+      const grossQty = ipData.grossQty || ipData.totalQty || 0;
+      let netQty = Math.max(0, grossQty - currentStock);
+
       if (isDiscreteUnit(item.birim || 'Adet')) {
-        roundedQty = Math.ceil(totalQty);
+        netQty = Math.ceil(netQty);
       }
 
-      // Bu ürünün doğrudan bileşenlerini kontrol et
+      // Eğer yarı mamul ise ve mevcut stok zaten tüm ihtiyacı karşılıyorsa (netQty <= 0) iş emri açmaya gerek yok
+      if (!ipData.isTopLevel && netQty <= 0) {
+        continue;
+      }
+
+      // Üretilecek miktar: Net ihtiyaç (eğer top-level ise talep miktarı ya da net eksik)
+      const productionQty = netQty > 0 ? netQty : grossQty;
+      let roundedQty = productionQty;
+      if (isDiscreteUnit(item.birim || 'Adet')) {
+        roundedQty = Math.ceil(productionQty);
+      }
+
+      // Bu ürünün net üretim miktarı için doğrudan bileşenlerini kontrol et
       const blockers = [];
       let allComponentsReady = true;
 
@@ -401,12 +427,12 @@ class MRPService {
         const unitReq = parseFloat(bom.gerekliMiktar || 1) / baseQty;
         const scrapRate = parseFloat(bom.fireOrani || 0);
         const scrapMultiplier = 1 + (scrapRate / 100);
-        const neededQty = totalQty * unitReq * scrapMultiplier;
+        const neededQty = roundedQty * unitReq * scrapMultiplier;
 
-        const currentStock = parseFloat(compItem.mevcutStok || 0);
+        const compCurrentStock = parseFloat(compItem.mevcutStok || 0);
 
         // Bileşen yeterli mi?
-        if (currentStock < neededQty) {
+        if (compCurrentStock < neededQty) {
           allComponentsReady = false;
           const isSemiOrFinished = ['Yari_Mamul', 'Yarı_Mamul', 'Mamul'].includes(compItem.kategori);
           blockers.push({
@@ -415,8 +441,8 @@ class MRPService {
             name: compItem.ad,
             category: compItem.kategori,
             needed: parseFloat(neededQty.toFixed(2)),
-            available: currentStock,
-            shortage: parseFloat((neededQty - currentStock).toFixed(2)),
+            available: compCurrentStock,
+            shortage: parseFloat((neededQty - compCurrentStock).toFixed(2)),
             blockerType: isSemiOrFinished ? 'production' : 'purchase',
             blockerLabel: isSemiOrFinished
               ? `🏭 Önce "${compItem.ad}" üretilmeli`
@@ -454,6 +480,9 @@ class MRPService {
         name: item.ad,
         category: item.kategori,
         quantity: roundedQty,
+        grossRequirement: grossQty,
+        currentStock,
+        netRequirement: roundedQty,
         unit: item.birim || 'Adet',
         status: allComponentsReady ? 'Active' : 'Passive',
         statusLabel: allComponentsReady

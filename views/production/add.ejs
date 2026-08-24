@@ -264,7 +264,7 @@
             <span>📋 Yeni İş Emri Hazırlama & Onaylama</span>
           </h1>
           <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">
-            MRP motorundan seçilen ürünün operasyon adımları, süre/kapasite projeksiyonu ve fireli bileşen ihtiyaçları sekmeler halinde incelenerek onaylanır.
+            MRP motorundan hesaplanan net ihtiyaç miktarı, operasyon süreleri ve fireli bileşenler sekmeler halinde incelenerek onaylanır.
           </p>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -328,7 +328,7 @@
               <span style="color: #475569;">•</span>
               <span>Birim: <strong><%= targetProduct.birim || 'Adet' %></strong></span>
               <span style="color: #475569;">•</span>
-              <span>Mevcut Depo Stoğu: <strong style="color: #34d399;"><%= targetProduct.mevcutStok %> <%= targetProduct.birim || 'Adet' %></strong></span>
+              <span>Mevcut Depo Stoğu: <strong style="color: #34d399;"><%= parseFloat(targetProduct.mevcutStok || 0) %> <%= targetProduct.birim || 'Adet' %></strong></span>
               <span style="color: #475569;">•</span>
               <span>Varsayılan Depo: <strong><%= targetProduct.depoLokasyonu || 'Ana Depo' %></strong></span>
             </div>
@@ -361,6 +361,7 @@
       <form action="/production/orders/add" method="POST" id="workOrderForm">
         <input type="hidden" name="stockId" value="<%= targetProduct.id %>">
         <input type="hidden" name="demandRef" value="<%= effectiveDemandRef %>">
+        <input type="hidden" name="workCenter" value="<%= primaryWorkCenter %>">
 
         <!-- ======================================================== -->
         <!-- SEKME 1: 📋 1. İŞ EMRİ TEMEL BİLGİLERİ                   -->
@@ -389,10 +390,10 @@
                 </select>
               </div>
 
-              <!-- 4. Sipariş / Üretim Miktarı -->
+              <!-- 4. Sipariş / Üretim Miktarı (Değiştirilemez - Salt Okunur) -->
               <div class="form-group">
-                <label class="form-label">4. Üretim Miktarı</label>
-                <input type="number" name="plannedQuantity" id="inputPlannedQty" value="<%= effectiveQty %>" step="1" min="1" class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1rem; color: #f8fafc;" onchange="updateQtyParam(this.value)">
+                <label class="form-label">4. Üretim Miktarı <span style="color: #34d399;">(MRP Net İhtiyaç - Değiştirilemez)</span></label>
+                <input type="number" name="plannedQuantity" id="inputPlannedQty" value="<%= effectiveQty %>" readonly class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1rem; color: #34d399;" title="MRP tarafından hesaplanan net ihtiyaç miktarıdır">
               </div>
 
               <!-- Birim -->
@@ -442,7 +443,7 @@
                 <span class="info-box-label">🛠️ Tanımlı Aktif Rota</span>
                 <span class="info-box-value" style="color: #fbbf24; font-size: 1.25rem;"><%= activeRoutingCode %></span>
                 <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">
-                  Toplam Operasyon: <strong style="color: #f8fafc;"><%= routingOperations.length %> Adım</strong> • Ana İstasyon: <strong style="color: #f8fafc;"><%= primaryWorkCenter %></strong>
+                  Toplam Operasyon: <strong style="color: #f8fafc;"><%= routingOperations.length %> Adım</strong>
                 </div>
               </div>
             </div>
@@ -458,7 +459,7 @@
               </div>
               <div class="info-box">
                 <span class="info-box-label">Mevcut Fiziksel Stok</span>
-                <span class="info-box-value"><%= targetProduct.mevcutStok %> <%= targetProduct.birim %></span>
+                <span class="info-box-value"><%= parseFloat(targetProduct.mevcutStok || 0) %> <%= targetProduct.birim %></span>
               </div>
               <div class="info-box">
                 <span class="info-box-label">Varsayılan Depo Lokasyonu</span>
@@ -528,25 +529,16 @@
               </div>
             </div>
 
-            <!-- Başlangıç ve Bitiş Zamanı Form Alanları -->
-            <div class="form-row-3" style="margin-top: 10px;">
+            <!-- Başlangıç ve Bitiş Zamanı Form Alanları (Başlangıç readonly, Bitiş min=Başlangıç) -->
+            <div class="form-row-2" style="margin-top: 10px;">
               <div class="form-group">
-                <label class="form-label">8. Başlangıç Tarihi <span style="color: #34d399;">(İş İstasyonu Kuyruğuna Göre)</span></label>
-                <input type="date" name="plannedStartDate" value="<%= projectedStartDate %>" class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34d399;">
+                <label class="form-label">8. Başlangıç Tarihi <span style="color: #34d399;">(İstasyon Kuyruğuna Göre - Değiştirilemez)</span></label>
+                <input type="date" name="plannedStartDate" id="inputPlannedStartDate" value="<%= projectedStartDate %>" readonly class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34d399;">
               </div>
 
               <div class="form-group">
-                <label class="form-label">8. Bitiş Tarihi <span style="color: #fbbf24;">(Kapasiteye Göre Hesaplanmış)</span></label>
-                <input type="date" name="plannedEndDate" value="<%= projectedEndDate %>" class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #fbbf24;">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Ana İş İstasyonu</label>
-                <select name="workCenter" class="form-control">
-                  <% WORK_CENTERS.forEach(wc => { %>
-                    <option value="<%= wc %>" <%= primaryWorkCenter === wc ? 'selected' : '' %>><%= wc %></option>
-                  <% }); %>
-                </select>
+                <label class="form-label">8. Bitiş Tarihi <span style="color: #fbbf24;">(Tahmini Kapasiteye Göre)</span></label>
+                <input type="date" name="plannedEndDate" id="inputPlannedEndDate" value="<%= projectedEndDate %>" min="<%= projectedStartDate %>" class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #fbbf24;" onchange="validateEndDate(this)">
               </div>
             </div>
 
@@ -627,7 +619,7 @@
                           <%= comp.isLabor ? '—' : `${comp.yuvarlanmisMiktar} ${comp.birim}` %>
                         </td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
-                          <%= comp.isLabor ? '—' : `${comp.mevcutStok} ${comp.birim}` %>
+                          <%= comp.isLabor ? '—' : `${parseFloat(comp.mevcutStok || 0)} ${comp.birim}` %>
                         </td>
                         <td style="text-align: center;">
                           <% if (comp.isLabor) { %>
@@ -672,25 +664,6 @@
               <label class="form-label">Saha Notları / İmalat Açıklaması</label>
               <textarea name="notlar" rows="3" class="form-control" placeholder="İmalat sahasına iletilecek özel talimatlar...">[MRP Onaylı İş Emri] <%= targetProduct.ad %> için <%= effectiveQty %> <%= targetProduct.birim %> imalat iş emridir. <%= effectiveDemandRef ? 'Kaynak: ' + effectiveDemandRef : '' %></textarea>
             </div>
-
-            <!-- Summary Card Before Confirmation -->
-            <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(16, 185, 129, 0.4); border-radius: 14px; padding: 20px; margin-top: 10px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
-                <div>
-                  <div style="font-size: 0.8rem; font-weight: 800; color: #34d399; text-transform: uppercase;">✅ İŞ EMRİ ONAY ÖZETİ</div>
-                  <div style="font-size: 1.1rem; font-weight: 800; color: #ffffff; margin-top: 2px;">
-                    <%= nextWorkOrderNo %> • <%= targetProduct.ad %> (<%= effectiveQty %> <%= targetProduct.birim %>)
-                  </div>
-                  <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">
-                    Planlanan Süre: <strong style="color: #fbbf24;"><%= projectedStartDate %> ➔ <%= projectedEndDate %> (<%= totalDurationHours %> Saat)</strong>
-                  </div>
-                </div>
-                <button type="submit" class="btn-submit-order" style="padding: 14px 32px;">
-                  <span>✅ İş Emrini Onayla ve Başlat</span>
-                </button>
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -765,12 +738,14 @@
       }
     }
 
-    function updateQtyParam(newQty) {
-      if (!newQty || parseFloat(newQty) <= 0) return;
-      const url = new URL(window.location.href);
-      url.searchParams.set('qty', newQty);
-      url.searchParams.set('plannedQty', newQty);
-      window.location.href = url.toString();
+    function validateEndDate(input) {
+      const startDateInput = document.getElementById('inputPlannedStartDate');
+      if (startDateInput && input.value && startDateInput.value) {
+        if (input.value < startDateInput.value) {
+          alert('Bitiş tarihi, başlangıç tarihinden (' + startDateInput.value + ') önce olamaz!');
+          input.value = startDateInput.value;
+        }
+      }
     }
   </script>
 </body>
