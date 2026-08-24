@@ -390,13 +390,32 @@
 
           <div class="glass-grid-2" style="margin-top: 14px;">
             <div class="field-wrap">
-              <label class="field-label">Ana Depo Konumu</label>
-              <select name="warehouseLocation" class="field-input">
-                <option value="Depo-A" <%= item.warehouseLocation === 'Depo-A' ? 'selected' : '' %>>Ana Depo-A (Genel Envanter)</option>
-                <option value="Hammadde Deposu" <%= item.warehouseLocation === 'Hammadde Deposu' ? 'selected' : '' %>>Hammadde Deposu</option>
-                <option value="Yarı Mamul Deposu" <%= item.warehouseLocation === 'Yarı Mamul Deposu' ? 'selected' : '' %>>Yarı Mamul Deposu</option>
-                <option value="Mamul Deposu" <%= item.warehouseLocation === 'Mamul Deposu' ? 'selected' : '' %>>Mamul Deposu</option>
+              <label class="field-label">
+                <span>Varsayılan Depo *</span>
+                <span style="color: #34d399; font-size: 0.72rem; margin-left: 8px;">🏬 DİNAMİK DEPO LİSTESİ</span>
+              </label>
+              <select id="editWarehouseSelect" name="warehouseSelect" class="field-input" onchange="onEditWarehouseChange()" required>
+                <option value="">-- Depolar Kartından Varsayılan Depoyu Seçiniz --</option>
+                <% if (typeof warehouses !== 'undefined' && warehouses && warehouses.length > 0) { %>
+                  <% warehouses.forEach(wh => { %>
+                    <option value="<%= wh.id %>" data-code="<%= wh.depoKodu || wh.warehouseCode %>" data-name="<%= wh.ad || wh.name %>">
+                      [<%= wh.depoKodu || wh.warehouseCode %>] <%= wh.ad || wh.name %> (<%= wh.tur || wh.type %> — <%= wh.sehir || wh.city || 'İstanbul' %>)
+                    </option>
+                  <% }); %>
+                <% } %>
               </select>
+            </div>
+
+            <div class="field-wrap">
+              <label class="field-label">
+                <span>Depo İçi Lokasyon / Raf / Göz</span>
+                <span style="color: #818cf8; font-size: 0.72rem; margin-left: 8px;">📍 LOKASYON HARİTASI</span>
+              </label>
+              <select id="editLocationSelect" name="locationSelect" class="field-input" onchange="onEditLocationChange()">
+                <option value="">-- Önce Depo Seçiniz --</option>
+              </select>
+              <input type="hidden" id="editWarehouseLocation" name="warehouseLocation" value="<%= item.warehouseLocation || item.depoLokasyonu || '' %>">
+              <input type="hidden" id="editDepoLokasyonu" name="depoLokasyonu" value="<%= item.depoLokasyonu || item.warehouseLocation || '' %>">
             </div>
           </div>
         </div>
@@ -482,6 +501,85 @@
     function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
     updateClock(); setInterval(updateClock, 1000);
 
+    const warehousesData = <%- JSON.stringify(typeof warehouses !== 'undefined' && warehouses ? warehouses : []) %>;
+    const currentLocString = <%- JSON.stringify(item.warehouseLocation || item.depoLokasyonu || '') %>;
+
+    function onEditWarehouseChange() {
+      const whSelect = document.getElementById('editWarehouseSelect');
+      const locSelect = document.getElementById('editLocationSelect');
+      if (!whSelect || !locSelect) return;
+
+      const targetWhId = parseInt(whSelect.value, 10);
+      locSelect.innerHTML = '';
+
+      if (!targetWhId) {
+        locSelect.innerHTML = '<option value="">-- Önce Depo Seçiniz --</option>';
+        updateEditCompositeLocation();
+        return;
+      }
+
+      const selectedWh = warehousesData.find(w => w.id === targetWhId);
+      if (!selectedWh) {
+        locSelect.innerHTML = '<option value="Genel Raf">Genel Depo Alanı / Raf</option>';
+        updateEditCompositeLocation();
+        return;
+      }
+
+      const locs = selectedWh.lokasyonlar || selectedWh.locations || [];
+
+      // Add default general shelf
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = 'Genel Raf';
+      defaultOpt.textContent = `[${selectedWh.depoKodu || selectedWh.warehouseCode || 'DEP'}] Genel Depo Alanı / Raf`;
+      locSelect.appendChild(defaultOpt);
+
+      if (Array.isArray(locs) && locs.length > 0) {
+        locs.forEach(loc => {
+          const opt = document.createElement('option');
+          const code = loc.lokasyonKodu || loc.locationCode;
+          const detailParts = [];
+          if (loc.koridor || loc.aisle) detailParts.push(loc.koridor || loc.aisle);
+          if (loc.raf || loc.shelf) detailParts.push(loc.raf || loc.shelf);
+          if (loc.goz || loc.bin) detailParts.push(loc.goz || loc.bin);
+          const detailStr = detailParts.join(' / ');
+
+          opt.value = code;
+          opt.textContent = `📍 [${code}] ${detailStr ? detailStr + ' ' : ''}(Kapasite: ${loc.kapasite || loc.capacity || 1000})`;
+          locSelect.appendChild(opt);
+        });
+      }
+
+      updateEditCompositeLocation();
+    }
+
+    function onEditLocationChange() {
+      updateEditCompositeLocation();
+    }
+
+    function updateEditCompositeLocation() {
+      const whSelect = document.getElementById('editWarehouseSelect');
+      const locSelect = document.getElementById('editLocationSelect');
+      const hidden1 = document.getElementById('editWarehouseLocation');
+      const hidden2 = document.getElementById('editDepoLokasyonu');
+
+      if (!whSelect || !locSelect) return;
+
+      const selectedOption = whSelect.options[whSelect.selectedIndex];
+      if (!whSelect.value || !selectedOption || !selectedOption.value) {
+        if (hidden1) hidden1.value = '';
+        if (hidden2) hidden2.value = '';
+        return;
+      }
+
+      const whCode = selectedOption.getAttribute('data-code') || '';
+      const whName = selectedOption.getAttribute('data-name') || selectedOption.textContent.trim();
+      const locVal = locSelect.value || 'Genel Raf';
+
+      const compositeString = `${whCode ? '[' + whCode + '] ' : ''}${whName} / ${locVal}`;
+      if (hidden1) hidden1.value = compositeString;
+      if (hidden2) hidden2.value = compositeString;
+    }
+
     function switchTab(tabId, event) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.glass-tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -490,6 +588,39 @@
       if (target) target.classList.add('active');
       if (event && event.currentTarget) event.currentTarget.classList.add('active');
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Try to match initial warehouse and location from currentLocString
+      const whSelect = document.getElementById('editWarehouseSelect');
+      if (whSelect && currentLocString) {
+        for (let i = 0; i < whSelect.options.length; i++) {
+          const opt = whSelect.options[i];
+          const code = opt.getAttribute('data-code');
+          const name = opt.getAttribute('data-name');
+          if (code && currentLocString.includes(code)) {
+            whSelect.selectedIndex = i;
+            break;
+          }
+          if (name && currentLocString.includes(name)) {
+            whSelect.selectedIndex = i;
+            break;
+          }
+        }
+        if (whSelect.selectedIndex > 0) {
+          onEditWarehouseChange();
+          const locSelect = document.getElementById('editLocationSelect');
+          if (locSelect) {
+            for (let j = 0; j < locSelect.options.length; j++) {
+              const lOpt = locSelect.options[j];
+              if (lOpt.value && currentLocString.includes(lOpt.value)) {
+                locSelect.selectedIndex = j;
+                break;
+              }
+            }
+          }
+        }
+      }
+    });
   </script>
 </body>
 </html>

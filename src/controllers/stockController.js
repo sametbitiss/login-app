@@ -73,7 +73,35 @@ class StockController {
 
   renderAdd = asyncHandler(async (req, res) => {
     const nextStockCode = await stockRepository.getNextStockCode();
-    const warehouses = await stockRepository.findAllWarehouses();
+    const rawWarehouses = await stockRepository.findAllWarehouses();
+    const warehouses = rawWarehouses.map(wh => {
+      const p = wh.toJSON ? wh.toJSON() : wh;
+      const rawLocs = p.lokasyonlar || p.locations || [];
+      const locs = rawLocs.map(l => ({
+        id: l.id,
+        lokasyonKodu: l.lokasyonKodu || l.locationCode,
+        locationCode: l.lokasyonKodu || l.locationCode,
+        koridor: l.koridor || l.aisle || '',
+        raf: l.raf || l.shelf || '',
+        goz: l.goz || l.bin || '',
+        kapasite: l.kapasite || l.capacity || 1000
+      }));
+      return {
+        id: p.id,
+        depoKodu: p.depoKodu,
+        warehouseCode: p.depoKodu,
+        ad: p.ad,
+        name: p.ad,
+        tur: p.tur || 'Genel',
+        type: p.tur || 'Genel',
+        sehir: p.sehir || 'İstanbul',
+        city: p.sehir || 'İstanbul',
+        sorumluAdi: p.sorumluAdi || '—',
+        managerName: p.sorumluAdi || '—',
+        lokasyonlar: locs,
+        locations: locs
+      };
+    });
 
     res.render('stock/add', {
       user: req.user,
@@ -135,7 +163,35 @@ class StockController {
       res.redirect('/stock/items?success=added');
     } catch (err) {
       const nextStockCode = await stockRepository.getNextStockCode();
-      const warehouses = await stockRepository.findAllWarehouses();
+      const rawWarehouses = await stockRepository.findAllWarehouses();
+      const warehouses = rawWarehouses.map(wh => {
+        const p = wh.toJSON ? wh.toJSON() : wh;
+        const rawLocs = p.lokasyonlar || p.locations || [];
+        const locs = rawLocs.map(l => ({
+          id: l.id,
+          lokasyonKodu: l.lokasyonKodu || l.locationCode,
+          locationCode: l.lokasyonKodu || l.locationCode,
+          koridor: l.koridor || l.aisle || '',
+          raf: l.raf || l.shelf || '',
+          goz: l.goz || l.bin || '',
+          kapasite: l.kapasite || l.capacity || 1000
+        }));
+        return {
+          id: p.id,
+          depoKodu: p.depoKodu,
+          warehouseCode: p.depoKodu,
+          ad: p.ad,
+          name: p.ad,
+          tur: p.tur || 'Genel',
+          type: p.tur || 'Genel',
+          sehir: p.sehir || 'İstanbul',
+          city: p.sehir || 'İstanbul',
+          sorumluAdi: p.sorumluAdi || '—',
+          managerName: p.sorumluAdi || '—',
+          lokasyonlar: locs,
+          locations: locs
+        };
+      });
 
       let friendlyError = err.message;
       if (err.name === 'SequelizeUniqueConstraintError' || err.name === 'SequelizeValidationError') {
@@ -168,7 +224,36 @@ class StockController {
     const item = await stockRepository.findById(req.params.id);
     if (!item) throw new NotFoundError('Stok kalemi bulunamadı.');
 
-    const warehouses = await stockRepository.findAllWarehouses();
+    const rawWarehouses = await stockRepository.findAllWarehouses();
+    const warehouses = rawWarehouses.map(wh => {
+      const p = wh.toJSON ? wh.toJSON() : wh;
+      const rawLocs = p.lokasyonlar || p.locations || [];
+      const locs = rawLocs.map(l => ({
+        id: l.id,
+        lokasyonKodu: l.lokasyonKodu || l.locationCode,
+        locationCode: l.lokasyonKodu || l.locationCode,
+        koridor: l.koridor || l.aisle || '',
+        raf: l.raf || l.shelf || '',
+        goz: l.goz || l.bin || '',
+        kapasite: l.kapasite || l.capacity || 1000
+      }));
+      return {
+        id: p.id,
+        depoKodu: p.depoKodu,
+        warehouseCode: p.depoKodu,
+        ad: p.ad,
+        name: p.ad,
+        tur: p.tur || 'Genel',
+        type: p.tur || 'Genel',
+        sehir: p.sehir || 'İstanbul',
+        city: p.sehir || 'İstanbul',
+        sorumluAdi: p.sorumluAdi || '—',
+        managerName: p.sorumluAdi || '—',
+        lokasyonlar: locs,
+        locations: locs
+      };
+    });
+
     const suppliers = await Tedarikci.findAll({ where: { durum: 'Active' }, order: [['firmaAdi', 'ASC']] });
     const passiveComponents = await stockRepository.getPassiveRecipeComponents(item.id);
 

@@ -339,18 +339,31 @@
                   <span>Varsayılan Depo *</span>
                   <span style="color: #34d399; font-size: 0.72rem;">🏬 DİNAMİK DEPO LİSTESİ</span>
                 </label>
-                <select name="warehouseLocation" class="aesthetic-input" style="cursor: pointer;">
+                <select id="warehouseSelect" name="warehouseSelect" class="aesthetic-input" style="cursor: pointer;" onchange="onWarehouseChange()" required>
                   <option value="">-- Depolar Kartından Varsayılan Depoyu Seçiniz --</option>
                   <% if (typeof warehouses !== 'undefined' && warehouses && warehouses.length > 0) { %>
                     <% warehouses.forEach(wh => { %>
-                      <option value="<%= wh.name %>">[<%= wh.warehouseCode %>] <%= wh.name %> (<%= wh.type %> — <%= wh.city || 'İstanbul' %>)</option>
+                      <option value="<%= wh.id %>" data-code="<%= wh.depoKodu || wh.warehouseCode %>" data-name="<%= wh.ad || wh.name %>">
+                        [<%= wh.depoKodu || wh.warehouseCode %>] <%= wh.ad || wh.name %> (<%= wh.tur || wh.type %> — <%= wh.sehir || wh.city || 'İstanbul' %>)
+                      </option>
                     <% }); %>
                   <% } else { %>
-                    <option value="Ana Depo">Ana Depo (Merkez)</option>
-                    <option value="Hammadde Deposu">Hammadde Deposu</option>
-                    <option value="Mamul Deposu">Mamul Deposu</option>
+                    <option value="1" data-code="DEP-001" data-name="Ana Hammadde & Üretim Ambarı">[DEP-001] Ana Hammadde & Üretim Ambarı (Hammadde — İstanbul)</option>
+                    <option value="2" data-code="DEP-002" data-name="Gebze Sevkiyat & Lojistik Deposu">[DEP-002] Gebze Sevkiyat & Lojistik Deposu (Sevkiyat — Kocaeli)</option>
                   <% } %>
                 </select>
+              </div>
+
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>Depo İçi Lokasyon / Raf / Göz</span>
+                  <span style="color: #818cf8; font-size: 0.72rem;">📍 LOKASYON HARİTASI</span>
+                </label>
+                <select id="locationSelect" name="locationSelect" class="aesthetic-input" style="cursor: pointer;" onchange="onLocationChange()">
+                  <option value="">-- Önce Depo Seçiniz --</option>
+                </select>
+                <input type="hidden" id="warehouseLocation" name="warehouseLocation" value="">
+                <input type="hidden" id="depoLokasyonu" name="depoLokasyonu" value="">
               </div>
             </div>
           </div>
@@ -468,9 +481,90 @@
       }
     }
 
+    const warehousesData = <%- JSON.stringify(typeof warehouses !== 'undefined' && warehouses ? warehouses : []) %>;
+
+    function onWarehouseChange() {
+      const whSelect = document.getElementById('warehouseSelect');
+      const locSelect = document.getElementById('locationSelect');
+      if (!whSelect || !locSelect) return;
+
+      const targetWhId = parseInt(whSelect.value, 10);
+      locSelect.innerHTML = '';
+
+      if (!targetWhId) {
+        locSelect.innerHTML = '<option value="">-- Önce Depo Seçiniz --</option>';
+        updateCompositeLocation();
+        return;
+      }
+
+      const selectedWh = warehousesData.find(w => w.id === targetWhId);
+      if (!selectedWh) {
+        locSelect.innerHTML = '<option value="Genel Raf">Genel Depo Alanı / Raf</option>';
+        updateCompositeLocation();
+        return;
+      }
+
+      const locs = selectedWh.lokasyonlar || selectedWh.locations || [];
+
+      // Add default general shelf
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = 'Genel Raf';
+      defaultOpt.textContent = `[${selectedWh.depoKodu || selectedWh.warehouseCode || 'DEP'}] Genel Depo Alanı / Raf`;
+      locSelect.appendChild(defaultOpt);
+
+      if (Array.isArray(locs) && locs.length > 0) {
+        locs.forEach(loc => {
+          const opt = document.createElement('option');
+          const code = loc.lokasyonKodu || loc.locationCode;
+          const detailParts = [];
+          if (loc.koridor || loc.aisle) detailParts.push(loc.koridor || loc.aisle);
+          if (loc.raf || loc.shelf) detailParts.push(loc.raf || loc.shelf);
+          if (loc.goz || loc.bin) detailParts.push(loc.goz || loc.bin);
+          const detailStr = detailParts.join(' / ');
+
+          opt.value = code;
+          opt.textContent = `📍 [${code}] ${detailStr ? detailStr + ' ' : ''}(Kapasite: ${loc.kapasite || loc.capacity || 1000})`;
+          locSelect.appendChild(opt);
+        });
+      }
+
+      updateCompositeLocation();
+    }
+
+    function onLocationChange() {
+      updateCompositeLocation();
+    }
+
+    function updateCompositeLocation() {
+      const whSelect = document.getElementById('warehouseSelect');
+      const locSelect = document.getElementById('locationSelect');
+      const hidden1 = document.getElementById('warehouseLocation');
+      const hidden2 = document.getElementById('depoLokasyonu');
+
+      if (!whSelect || !locSelect) return;
+
+      const selectedOption = whSelect.options[whSelect.selectedIndex];
+      if (!whSelect.value || !selectedOption || !selectedOption.value) {
+        if (hidden1) hidden1.value = '';
+        if (hidden2) hidden2.value = '';
+        return;
+      }
+
+      const whCode = selectedOption.getAttribute('data-code') || '';
+      const whName = selectedOption.getAttribute('data-name') || selectedOption.textContent.trim();
+      const locVal = locSelect.value || 'Genel Raf';
+
+      const compositeString = `${whCode ? '[' + whCode + '] ' : ''}${whName} / ${locVal}`;
+      if (hidden1) hidden1.value = compositeString;
+      if (hidden2) hidden2.value = compositeString;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       const catSelect = document.getElementById('categorySelect');
       if (catSelect) handleCategoryChange(catSelect);
+
+      const whSelect = document.getElementById('warehouseSelect');
+      if (whSelect && whSelect.value) onWarehouseChange();
     });
   </script>
 </body>
