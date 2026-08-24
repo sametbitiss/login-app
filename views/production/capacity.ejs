@@ -623,10 +623,13 @@
               <div class="wc-personnel-row">
                 <div>
                   <span style="color: #64748b; font-size: 0.75rem; display: block; font-weight: 700; text-transform: uppercase;">
-                    👤 Aktif Görevli / Operatör
+                    👤 İstasyon / Atölye Sorumlusu
                   </span>
-                  <span style="font-weight: 800; color: #f8fafc;">
-                    <%= c.activePersonnel ? c.activePersonnel : 'Atanmış Operatör Yok' %>
+                  <span style="font-weight: 800; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+                    <strong style="color: #818cf8;"><%= c.stationSupervisor || c.activePersonnel || 'Tanımlı Sorumlu Yok' %></strong>
+                    <% if (c.activeRunningOrder && c.activeRunningOrder.uretimYonetici && c.activeRunningOrder.uretimYonetici !== c.stationSupervisor) { %>
+                      <span style="font-size: 0.75rem; color: #34d399; font-weight: 600;">(Operatör: <%= c.activeRunningOrder.uretimYonetici %>)</span>
+                    <% } %>
                   </span>
                 </div>
                 <div style="text-align: right;">

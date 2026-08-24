@@ -656,10 +656,14 @@ class MRPService {
   }
 
   async calculateCapacityLoad() {
-    // 1. Fetch all real Work Centers from DB with workshop and creator
+    // 1. Fetch all real Work Centers from DB with workshop, workshop supervisor and creator
     const dbWorkCenters = await IsMerkezi.findAll({
       include: [
-        { model: Atolye, as: 'atolye' },
+        { 
+          model: Atolye, 
+          as: 'atolye',
+          include: [{ model: Kullanici, as: 'sorumlu' }]
+        },
         { model: Kullanici, as: 'olusturan' }
       ],
       order: [['isMerkeziKodu', 'ASC'], ['id', 'ASC']]
@@ -738,16 +742,22 @@ class MRPService {
         : 0;
       const isBottleneck = loadPercentage > 85;
 
+      // Station supervisor / responsible person from connected Atolye
+      const atolyeSorumlu = wc.atolye && wc.atolye.sorumlu 
+        ? (wc.atolye.sorumlu.ad ? `${wc.atolye.sorumlu.ad} ${wc.atolye.sorumlu.soyad || ''}`.trim() : wc.atolye.sorumlu.kullaniciAdi)
+        : null;
+
       // Active operator / personnel info
       const activePersonnel = activeRunningOrder 
-        ? (activeRunningOrder.uretimYonetici || (activeRunningOrder.olusturan ? `${activeRunningOrder.olusturan.ad} ${activeRunningOrder.olusturan.soyad}` : 'Atanmış Operatör'))
-        : null;
+        ? (activeRunningOrder.uretimYonetici || (activeRunningOrder.olusturan ? `${activeRunningOrder.olusturan.ad} ${activeRunningOrder.olusturan.soyad || ''}`.trim() : atolyeSorumlu))
+        : atolyeSorumlu;
 
       return {
         id: wc.id,
         workCenterCode: wc.isMerkeziKodu,
         workCenterName: wc.isMerkeziAdi,
         atolyeName: wc.atolye ? wc.atolye.atolyeAdi : 'Genel Atölye',
+        stationSupervisor: atolyeSorumlu,
         rawStatus: wc.durum,
         operationalStatus,
         statusLabel,
