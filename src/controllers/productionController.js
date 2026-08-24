@@ -904,14 +904,313 @@ class ProductionController {
 
   // 6. MES & PRODUCTION TRACKING
   listMES = asyncHandler(async (req, res) => {
-    const orders = await productionRepository.findAll();
+    const { IsMerkezi, Atolye, Kullanici, UretimEmri, StokKarti, UrunRecetesi, RotaOperasyon } = require('../../models');
+    const { Op } = require('sequelize');
+
+    const isAdmin = req.user.rol === 'Admin' || req.user.role === 'Admin';
+    const currentUserId = req.user.id;
+    const currentUsername = req.user.kullaniciAdi || req.user.username;
+
+    // 1. Fetch all real Work Centers from DB
+    const allWorkCenters = await IsMerkezi.findAll({
+      include: [
+        { 
+          model: Atolye, 
+          as: 'atolye',
+          include: [{ model: Kullanici, as: 'sorumlu' }]
+        },
+        { model: Kullanici, as: 'olusturan' }
+      ],
+      order: [['isMerkeziKodu', 'ASC'], ['id', 'ASC']]
+    });
+
+    // 2. Fetch all employees
+    const allEmployees = await Kullanici.findAll({
+      where: { rol: 'Employee' }
+    });
+
+    // 3. Fetch all active/planned/in-production orders
+    const allOrders = await UretimEmri.findAll({
+      where: {
+        durum: { [Op.in]: ['Planned', 'Approved', 'In_Production', 'Quality_Check'] }
+      },
+      include: [
+        { model: StokKarti, as: 'stokKarti' },
+        { model: Kullanici, as: 'olusturan' }
+      ],
+      order: [
+        ['planlananBaslangicTarihi', 'ASC'],
+        ['id', 'ASC']
+      ]
+    });
+
+    // 4. Fetch all BOM items and Routing operations to enrich work orders
+    const allBomItems = await UrunRecetesi.findAll({
+      include: [{ model: StokKarti, as: 'bilesenUrun' }]
+    });
+
+    const allRoutingOps = await RotaOperasyon.findAll({
+      order: [['stokId', 'ASC'], ['operasyonSira', 'ASC']]
+    });
+
+    // Helper to enrich a work order object with operation and BOM components
+    const enrichOrder = (order, wc) => {
+      const stockId = order.stokId;
+      const plannedQty = parseFloat(order.planlananMiktar || 1);
+      const completedQty = parseFloat(order.tamamlananMiktar || 0);
+      const remainingQty = Math.max(0, plannedQty - completedQty);
+
+      // Find matching routing operation for this product and work center
+      const rotasForStock = allRoutingOps.filter(r => r.stokId === stockId);
+      const matchingRota = rotasForStock.find(r => {
+        if (!r.isMerkezi) return false;
+        const code = wc.isMerkeziKodu || '';
+        const name = wc.isMerkeziAdi || '';
+        return r.isMerkezi.includes(code) || r.isMerkezi.includes(name);
+      }) || rotasForStock[0] || null;
+
+      // Find BOM material components for this product
+      const bomsForStock = allBomItems.filter(b => b.mamulStokId === stockId && b.kalemTuru === 'Material');
+      const components = bomsForStock.map(b => {
+        const compStock = b.bilesenUrun;
+        const qtyPerUnit = parseFloat(b.gerekliMiktar || 1);
+        const scrapMult = 1 + (parseFloat(b.fireOrani || 0) / 100);
+        const totalNeeded = parseFloat((qtyPerUnit * plannedQty * scrapMult).toFixed(2));
+        const currentStock = compStock ? parseFloat(compStock.mevcutStok || 0) : 0;
+        return {
+          id: b.id,
+          bilesenStokId: b.bilesenStokId,
+          stokKodu: compStock ? compStock.stokKodu : '—',
+          stokAdi: compStock ? compStock.ad : 'Bileşen',
+          birimMiktar: qtyPerUnit,
+          toplamGerekli: totalNeeded,
+          birim: b.birim || (compStock ? compStock.birim : 'Adet'),
+          mevcutStok: currentStock,
+          yeterliMi: currentStock >= totalNeeded
+        };
+      });
+
+      // Check if paused
+      const notlar = order.notlar || '';
+      const isPaused = notlar.includes('[DURAKLATILDI');
+      let pauseReason = null;
+      let pauseNotes = null;
+      if (isPaused) {
+        const match = notlar.match(/\[DURAKLATILDI:\s*([^-\]]+)\s*-\s*([^\]]+)\]:\s*([^\n]+)/);
+        if (match) {
+          pauseReason = match[1].trim();
+          pauseNotes = match[3].trim();
+        } else {
+          pauseReason = 'Mola';
+          pauseNotes = 'İşletme kararı ile duraklatıldı';
+        }
+      }
+
+      const estHours = parseFloat(order.tahminiSaat || 0);
+      const estMinutes = Math.round(estHours * 60) || 60;
+
+      return {
+        id: order.id,
+        isEmriNo: order.isEmriNo,
+        uretimBasligi: order.uretimBasligi,
+        stokId: order.stokId,
+        stokKodu: order.stokKarti ? order.stokKarti.stokKodu : '—',
+        stokAdi: order.stokKarti ? order.stokKarti.ad : order.uretimBasligi,
+        birim: order.birim || 'Adet',
+        planlananMiktar: plannedQty,
+        tamamlananMiktar: completedQty,
+        kalanMiktar: remainingQty,
+        durum: order.durum,
+        oncelik: order.oncelik,
+        tahminiSaat: estHours,
+        tahminiDakika: estMinutes,
+        planlananBaslangicTarihi: order.planlananBaslangicTarihi,
+        planlananBitisTarihi: order.planlananBitisTarihi,
+        gerceklesenBaslangicTarihi: order.gerceklesenBaslangicTarihi,
+        uretimYonetici: order.uretimYonetici,
+        notlar: order.notlar,
+        isPaused,
+        pauseReason,
+        pauseNotes,
+        operasyon: matchingRota ? {
+          sira: matchingRota.operasyonSira,
+          kod: matchingRota.operasyonKodu || `OPS-${matchingRota.operasyonSira}`,
+          ad: matchingRota.operasyonAdi,
+          hazirlikDk: parseFloat(matchingRota.hazirlikSuresiDakika || 0),
+          birimDk: parseFloat(matchingRota.calismaSuresiDakikaBirim || 0)
+        } : {
+          sira: 10,
+          kod: 'OPS-10',
+          ad: 'Genel İmalat & Montaj Operasyonu',
+          hazirlikDk: 15,
+          birimDk: 5
+        },
+        components
+      };
+    };
+
+    // 5. Build enriched work centers list
+    const workCentersReport = allWorkCenters.map(wc => {
+      // Station supervisor
+      const atolyeSorumlu = wc.atolye && wc.atolye.sorumlu 
+        ? (wc.atolye.sorumlu.ad ? `${wc.atolye.sorumlu.ad} ${wc.atolye.sorumlu.soyad || ''}`.trim() : wc.atolye.sorumlu.kullaniciAdi)
+        : null;
+
+      // Assigned personnel IDs
+      let rawPersonnelIds = wc.atananPersonelIds;
+      if (typeof rawPersonnelIds === 'string') {
+        try { rawPersonnelIds = JSON.parse(rawPersonnelIds); } catch (_) { rawPersonnelIds = []; }
+      }
+      const assignedIds = Array.isArray(rawPersonnelIds) ? rawPersonnelIds.map(Number).filter(Boolean) : [];
+
+      const assignedPersonnelList = allEmployees.filter(e => assignedIds.includes(Number(e.id))).map(e => ({
+        id: e.id,
+        ad: e.ad,
+        soyad: e.soyad,
+        fullName: e.ad ? `${e.ad} ${e.soyad || ''}`.trim() : e.kullaniciAdi,
+        kullaniciAdi: e.kullaniciAdi,
+        departman: e.departman || 'Genel Personel',
+        unvan: e.unvan || 'Personel'
+      }));
+
+      // Find orders for this station
+      const stationOrders = allOrders.filter(o => {
+        if (!o.isMerkezi) return false;
+        const oCenter = o.isMerkezi.trim();
+        const code = wc.isMerkeziKodu ? wc.isMerkeziKodu.trim() : '';
+        const name = wc.isMerkeziAdi ? wc.isMerkeziAdi.trim() : '';
+        return (
+          oCenter === code ||
+          oCenter === name ||
+          (code && oCenter.includes(code)) ||
+          (name && oCenter.includes(name))
+        );
+      });
+
+      // Split active running order vs queued orders
+      const rawActiveOrder = stationOrders.find(o => o.durum === 'In_Production') || null;
+      const rawQueuedOrders = stationOrders.filter(o => o !== rawActiveOrder);
+
+      const activeRunningOrder = rawActiveOrder ? enrichOrder(rawActiveOrder, wc) : null;
+      const queuedOrders = rawQueuedOrders.map(o => enrichOrder(o, wc));
+
+      // Operational status
+      let operationalStatus = 'Idle';
+      let statusLabel = '🟢 Boş (Müsait)';
+      let statusClass = 'wc-status--idle';
+
+      if (['Maintenance', 'Bakim', 'Bakımda', 'Fault', 'Arızalı', 'Arizali'].includes(wc.durum)) {
+        operationalStatus = 'Maintenance';
+        statusLabel = '🛠️ Bakımda / Arızalı';
+        statusClass = 'wc-status--maintenance';
+      } else if (wc.durum === 'Inactive') {
+        operationalStatus = 'Inactive';
+        statusLabel = '⛔ Pasif';
+        statusClass = 'wc-status--inactive';
+      } else if (activeRunningOrder) {
+        if (activeRunningOrder.isPaused) {
+          operationalStatus = 'Paused';
+          statusLabel = `⏸️ Duraklatıldı (${activeRunningOrder.pauseReason || 'Mola'})`;
+          statusClass = 'wc-status--paused';
+        } else {
+          operationalStatus = 'Busy';
+          statusLabel = '⚡ Üretim Devam Ediyor';
+          statusClass = 'wc-status--busy';
+        }
+      }
+
+      return {
+        id: wc.id,
+        workCenterCode: wc.isMerkeziKodu,
+        workCenterName: wc.isMerkeziAdi,
+        atolyeName: wc.atolye ? wc.atolye.atolyeAdi : 'Genel Atölye',
+        atolyeSorumluId: wc.atolye ? wc.atolye.sorumluId : null,
+        stationSupervisor: atolyeSorumlu,
+        workersCount: wc.varsayilanIsciSayisi || 1,
+        assignedPersonnelIds: assignedIds,
+        assignedPersonnelList,
+        operationalStatus,
+        statusLabel,
+        statusClass,
+        activeRunningOrder,
+        queuedOrders
+      };
+    });
+
+    // 6. Role-based filtering:
+    // If Admin: show ALL
+    // If Employee: show ONLY work centers where assigned in shift or workshop supervisor
+    let visibleWorkCenters = workCentersReport;
+    if (!isAdmin) {
+      visibleWorkCenters = workCentersReport.filter(wc => {
+        const isAssignedWorker = wc.assignedPersonnelIds.includes(Number(currentUserId));
+        const isSupervisor = Number(wc.atolyeSorumluId) === Number(currentUserId);
+        const isActiveOrderManager = wc.activeRunningOrder && (
+          wc.activeRunningOrder.uretimYonetici === currentUsername ||
+          wc.activeRunningOrder.uretimYonetici === req.user.firstName ||
+          wc.activeRunningOrder.olusturanId === currentUserId
+        );
+        return isAssignedWorker || isSupervisor || isActiveOrderManager;
+      });
+    }
 
     res.render('production/mes', {
       user: req.user,
-      orders,
+      isAdmin,
+      workCenters: visibleWorkCenters,
+      totalCount: workCentersReport.length,
+      visibleCount: visibleWorkCenters.length,
       ALL_ROLES,
-      activeSubTab: 'mes'
+      activeSubTab: 'mes',
+      success: req.query.success || null,
+      error: req.query.error || null
     });
+  });
+
+  startMESJob = asyncHandler(async (req, res) => {
+    const { orderId, workCenterId } = req.body;
+    if (!orderId) throw new ValidationError('İş emri ID belirtilmedi.');
+
+    const order = await productionService.startMESJob(orderId, workCenterId, req.user);
+
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.json({ success: true, message: `${order.isEmriNo} başlatıldı.`, order });
+    }
+    res.redirect('/production/mes?success=' + encodeURIComponent(`[${order.isEmriNo}] iş emri başlatıldı ve kronometre çalışmaya başladı.`));
+  });
+
+  pauseMESJob = asyncHandler(async (req, res) => {
+    const { orderId, workCenterId, reason, notes } = req.body;
+    if (!orderId) throw new ValidationError('İş emri ID belirtilmedi.');
+    if (!reason || !['Mola', 'Malzeme Bekleme', 'Arıza'].includes(reason)) {
+      throw new ValidationError('Lütfen geçerli bir duraklatma sebebi seçiniz (Mola, Malzeme Bekleme, Arıza).');
+    }
+    if (!notes || !notes.trim()) {
+      throw new ValidationError('Duraklatma gerekçesi ve notlar alanı boş bırakılamaz!');
+    }
+
+    const order = await productionService.pauseMESJob(orderId, workCenterId, reason, notes.trim(), req.user);
+
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.json({ success: true, message: `${order.isEmriNo} duraklatıldı.`, order });
+    }
+    res.redirect('/production/mes?success=' + encodeURIComponent(`[${order.isEmriNo}] iş emri duraklatıldı (${reason}).`));
+  });
+
+  completeMESJob = asyncHandler(async (req, res) => {
+    const { orderId, workCenterId, completedQuantity, notes } = req.body;
+    if (!orderId) throw new ValidationError('İş emri ID belirtilmedi.');
+    const qty = parseFloat(completedQuantity);
+    if (isNaN(qty) || qty <= 0) {
+      throw new ValidationError('Lütfen geçerli bir tamamlanan üretim miktarı giriniz.');
+    }
+
+    const order = await productionService.recordProductionOutput(orderId, qty, 0, req.user, notes ? notes.trim() : '');
+
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.json({ success: true, message: `${order.isEmriNo} tamamlandı ve stok artışı yapıldı.`, order });
+    }
+    res.redirect('/production/mes?success=' + encodeURIComponent(`[${order.isEmriNo}] üretimi tamamlandı, ${qty} birim ürün stoka eklendi ve iş merkezi serbest bırakıldı.`));
   });
 
   updateMES = asyncHandler(async (req, res) => {

@@ -49,6 +49,9 @@ router.post('/capacity/:id/personnel', productionController.assignShiftPersonnel
 
 // 6. MES Shop Floor Tracking Routes
 router.get('/mes', productionController.listMES);
+router.post('/mes/start-job', productionController.startMESJob);
+router.post('/mes/pause-job', productionController.pauseMESJob);
+router.post('/mes/complete-job', productionController.completeMESJob);
 router.post('/mes/:id', productionController.updateMES);
 
 // 7. Workshop (Atölye Kartları) Routes

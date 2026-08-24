@@ -3,14 +3,355 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MES Saha Üretim Kontrol Terminali — Enterprise ERP</title>
+  <title>MES Saha Üretim Kontrol & İstasyon Operatör Terminali — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    .mes-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); transition: transform 0.2s, box-shadow 0.2s; }
-    .mes-card:hover { border-color: var(--indigo); box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15); }
-    .mes-progress-bar { height: 8px; background: var(--bg-elevated); border-radius: 4px; overflow: hidden; margin: 12px 0; }
-    .mes-progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #10b981); border-radius: 4px; }
+    .mes-kiosk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .mes-kiosk-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 22px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(16px);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .mes-kiosk-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .mes-kiosk-card--busy {
+      border-left: 6px solid #6366f1;
+    }
+    .mes-kiosk-card--idle {
+      border-left: 6px solid #10b981;
+    }
+    .mes-kiosk-card--paused {
+      border-left: 6px solid #f59e0b;
+      background: rgba(35, 25, 15, 0.8);
+    }
+    .mes-kiosk-card--maintenance {
+      border-left: 6px solid #f43f5e;
+      background: rgba(35, 15, 20, 0.8);
+    }
+    .mes-kiosk-card--inactive {
+      border-left: 6px solid #64748b;
+      opacity: 0.75;
+    }
+
+    /* Header */
+    .mes-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .mes-station-title {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #ffffff;
+      margin: 4px 0 0 0;
+      letter-spacing: -0.3px;
+    }
+    .mes-station-meta {
+      font-size: 0.82rem;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    /* Status Badges */
+    .wc-status-badge {
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+    .wc-status--idle {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1.5px solid rgba(16, 185, 129, 0.4);
+    }
+    .wc-status--busy {
+      background: rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      border: 1.5px solid rgba(99, 102, 241, 0.55);
+      animation: mesPulse 2s infinite;
+    }
+    .wc-status--paused {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1.5px solid rgba(245, 158, 11, 0.5);
+    }
+    .wc-status--maintenance {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fb7185;
+      border: 1.5px solid rgba(244, 63, 94, 0.5);
+    }
+    .wc-status--inactive {
+      background: rgba(100, 116, 139, 0.2);
+      color: #94a3b8;
+      border: 1.5px solid rgba(100, 116, 139, 0.4);
+    }
+
+    @keyframes mesPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(99, 102, 241, 0.2); }
+      50% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.6); }
+    }
+
+    /* Active Order Big Box */
+    .mes-active-box {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(30, 41, 59, 0.7) 100%);
+      border: 1.5px solid rgba(99, 102, 241, 0.4);
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mes-active-box:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.22) 0%, rgba(30, 41, 59, 0.85) 100%);
+      border-color: rgba(99, 102, 241, 0.7);
+      transform: scale(1.005);
+    }
+    .mes-active-box--paused {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.7) 100%);
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    .mes-active-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mes-order-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.15);
+      padding: 3px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .mes-product-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 2px 0 0 0;
+    }
+    .mes-op-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.15);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    /* Big Digital LED Timer */
+    .mes-timer-display {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1.5px solid rgba(99, 102, 241, 0.3);
+      border-radius: 14px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mes-timer-clock {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.55rem;
+      font-weight: 900;
+      color: #34d399;
+      letter-spacing: 1px;
+    }
+    .mes-timer-clock--paused {
+      color: #fbbf24;
+      animation: blinkTimer 1.2s infinite;
+    }
+    @keyframes blinkTimer {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Queued Orders List */
+    .mes-queue-section {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .mes-queue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .mes-queue-card {
+      background: rgba(30, 41, 59, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mes-queue-card:hover {
+      background: rgba(99, 102, 241, 0.12);
+      border-color: rgba(99, 102, 241, 0.35);
+      transform: translateX(2px);
+    }
+    .mes-queue-card:last-child { margin-bottom: 0; }
+
+    /* Action Buttons */
+    .mes-actions-row {
+      display: flex;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn-mes-action {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1.5px solid transparent;
+      outline: none;
+    }
+    .btn-mes-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-mes-start {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .btn-mes-start:hover {
+      background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    }
+
+    .btn-mes-pause {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+    .btn-mes-pause:hover {
+      background: rgba(245, 158, 11, 0.3);
+      color: #fff;
+    }
+
+    .btn-mes-resume {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+    }
+    .btn-mes-resume:hover {
+      background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+    }
+
+    .btn-mes-complete {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
+    }
+    .btn-mes-complete:hover {
+      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    }
+
+    /* Modal styles */
+    .mes-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(14px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .mes-modal-window {
+      background: #0f172a;
+      border: 1.5px solid rgba(99, 102, 241, 0.3);
+      border-radius: 22px;
+      width: 100%;
+      max-width: 850px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+    .mes-modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.95);
+    }
+    .mes-modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .mes-modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(15, 23, 42, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
   </style>
   <script src="/sidebar.js" defer></script>
 </head>
@@ -57,68 +398,651 @@
 
     <main class="module-content">
 
-      <div class="page-header">
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
         <div>
-          <h1>MES Saha Üretim Giriş Terminali (Shop Floor Data Collection)</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Tezgah başı imalat girişi, miktar bildirimi ve otomatik reçeteli hammadde düşümü (Backflushing).</p>
+          <div style="font-size: 0.85rem; color: #818cf8; font-weight: 700; margin-bottom: 4px;">
+            📱 SHOP FLOOR CONTROL & REAL-TIME MES KIOSK
+          </div>
+          <h1 style="display: flex; align-items: center; gap: 10px; font-size: 1.6rem; font-weight: 900; margin: 0; color: #fff;">
+            <span>📱 MES Saha Operatör Terminali</span>
+          </h1>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">
+            <% if (isAdmin) { %>
+              <span style="color: #fbbf24; font-weight: 700;">👑 Fabrika Yönetici Modu:</span> Tüm üretim parkuru (<%= totalCount %> İş Merkezi) listelenmektedir.
+            <% } else { %>
+              <span style="color: #34d399; font-weight: 700;">👤 Operatör Modu:</span> Yalnızca görevli olduğunuz iş merkezleri listelenmektedir.
+            <% } %>
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a href="/production/capacity" class="btn btn-secondary" style="text-decoration: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.85rem;">
+            🏭 Kapasite Planlaması
+          </a>
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
-        <% if (orders.length === 0) { %>
-          <div style="grid-column: span 2; text-align: center; padding: 3rem; color: var(--text-muted);">Aktif iş emri bulunmamaktadır.</div>
-        <% } else { %>
-          <% orders.forEach(o => { %>
-            <% const pct = Math.min(100, Math.round((parseFloat(o.completedQuantity) / (parseFloat(o.plannedQuantity) || 1)) * 100)); %>
-            <div class="mes-card">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1.5px solid rgba(16, 185, 129, 0.4); color: #34d399; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+          <span>✓</span> <%= success %>
+        </div>
+      <% } %>
+
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div style="background: rgba(244, 63, 94, 0.15); border: 1.5px solid rgba(244, 63, 94, 0.4); color: #fb7185; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+          <span>⚠️</span> <%= error %>
+        </div>
+      <% } %>
+
+      <!-- Work Centers Grid -->
+      <% if (workCenters.length === 0) { %>
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1.5px dashed rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 3.5rem; text-align: center; color: var(--text-muted);">
+          <div style="font-size: 2.8rem; margin-bottom: 12px;">📱</div>
+          <strong style="color: #fff; font-size: 1.15rem;">Şu anda size atanmış aktif bir iş istasyonu/merkezi bulunmamaktadır.</strong>
+          <p style="font-size: 0.88rem; color: #94a3b8; margin-top: 6px; max-width: 500px; margin-left: auto; margin-right: auto;">
+            Atölye şefiniz veya fabrika yöneticiniz ile iletişime geçerek iş merkezi vardiya personeli listesine kaydınızı yaptırabilirsiniz.
+          </p>
+        </div>
+      <% } else { %>
+        <div class="mes-kiosk-grid">
+          <% workCenters.forEach(wc => { %>
+            <div class="mes-kiosk-card mes-kiosk-card--<%= wc.operationalStatus.toLowerCase() %>" id="wcCard_<%= wc.id %>">
+              
+              <!-- 1. HEADER: Code, Name, Workshop, Status Badge -->
+              <div class="mes-card-top">
                 <div>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--indigo); font-weight: 700;"><%= o.workOrderNo %></span>
-                  <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin-top: 2px;"><%= o.productionTitle %></h4>
-                </div>
-                <span class="status-pill <%= o.status === 'Completed' ? 'status-active' : 'status-pending' %>">● <%= o.status %></span>
-              </div>
-
-              <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
-                İstasyon: <strong><%= o.workCenter %></strong> | Ürün: <strong><%= o.stockItem ? o.stockItem.name : '—' %></strong>
-              </div>
-
-              <div class="mes-progress-bar">
-                <div class="mes-progress-fill" style="width: <%= pct %>%;"></div>
-              </div>
-
-              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-                <span>Planlanan: <strong><%= o.plannedQuantity %> <%= o.unit %></strong></span>
-                <span>Tamamlanan: <strong style="color: var(--emerald);"><%= o.completedQuantity %> <%= o.unit %></strong></span>
-                <span>Fire: <strong style="color: var(--rose);"><%= o.scrapQuantity %></strong></span>
-              </div>
-
-              <form action="/production/mes/<%= o.id %>" method="POST" style="background: var(--bg-elevated); border: 1px solid var(--border); padding: 16px; border-radius: 12px;">
-                <div style="font-size: 0.85rem; font-weight: 700; color: var(--indigo); margin-bottom: 10px;">📱 Operatör Miktar Bildirimi (Backflushing)</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-                  <div>
-                    <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Yeni Üretilen Miktar (+)</label>
-                    <input type="number" name="completedQuantity" placeholder="10" min="0.01" step="0.01" class="form-control" required style="font-size: 0.9rem; padding: 6px 10px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8; background: rgba(99, 102, 241, 0.15); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3); font-size: 0.85rem;">
+                      <%= wc.workCenterCode %>
+                    </span>
+                    <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">🏢 <%= wc.atolyeName %></span>
                   </div>
-                  <div>
-                    <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Fire / Hurda Miktarı</label>
-                    <input type="number" name="scrapQuantity" placeholder="0" min="0" step="0.01" class="form-control" style="font-size: 0.9rem; padding: 6px 10px;">
+                  <h3 class="mes-station-title"><%= wc.workCenterName %></h3>
+                  <div class="mes-station-meta">
+                    <span>👤 Sorumlu: <strong style="color: #cbd5e1;"><%= wc.stationSupervisor || '—' %></strong></span>
+                    <span>•</span>
+                    <span>👥 Vardiya: 
+                      <% if (wc.assignedPersonnelList.length > 0) { %>
+                        <strong style="color: #a5b4fc;"><%= wc.assignedPersonnelList.map(p => p.fullName).join(', ') %></strong>
+                      <% } else { %>
+                        <span style="color: #64748b;">(Atanmamış)</span>
+                      <% } %>
+                    </span>
                   </div>
                 </div>
-                <button type="submit" class="btn btn-sm btn-success" style="width: 100%;">
-                  ⚙️ Üretimi Bildir & Reçete Stokunu Otomatik Düş (Backflush)
-                </button>
-              </form>
+
+                <!-- Live Status Badge -->
+                <div>
+                  <span class="wc-status-badge <%= wc.statusClass %>">
+                    <%= wc.statusLabel %>
+                  </span>
+                </div>
+              </div>
+
+              <!-- 2. AKTİF ÇALIŞAN İŞ EMRİ & KRONOMETRE BÖLÜMÜ -->
+              <div>
+                <div style="font-size: 0.76rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                  ⚡ Aktif Çalışan İş Emri (Detay için Tıklayınız)
+                </div>
+
+                <% if (wc.activeRunningOrder) { %>
+                  <% const ao = wc.activeRunningOrder; %>
+                  <div class="mes-active-box <%= ao.isPaused ? 'mes-active-box--paused' : '' %>" onclick="openOrderDetailModal(<%= JSON.stringify(ao) %>, '<%= wc.workCenterCode %>', '<%= wc.workCenterName.replace(/'/g, "\\'") %>')">
+                    
+                    <div class="mes-active-header">
+                      <span class="mes-order-code">📋 <%= ao.isEmriNo %></span>
+                      <span class="status-pill status-completed" style="font-size: 0.72rem; padding: 2px 8px;">
+                        ⚡ <%= ao.oncelik %> Öncelikli
+                      </span>
+                    </div>
+
+                    <div>
+                      <div class="mes-product-title">[<%= ao.stokKodu %>] <%= ao.stokAdi %></div>
+                      <div class="mes-op-badge">🛠️ <%= ao.operasyon.kod %>: <%= ao.operasyon.ad %> (Adım <%= ao.operasyon.sira %>)</div>
+                    </div>
+
+                    <!-- Hedef & Tamamlanan Miktar -->
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #cbd5e1; background: rgba(0, 0, 0, 0.2); padding: 8px 12px; border-radius: 8px;">
+                      <span>Hedef Miktar: <strong style="color: #fff;"><%= ao.planlananMiktar %> <%= ao.birim %></strong></span>
+                      <span>Tamamlanan: <strong style="color: #34d399;"><%= ao.tamamlananMiktar %> <%= ao.birim %></strong></span>
+                      <span>Kalan: <strong style="color: #fbbf24;"><%= ao.kalanMiktar %> <%= ao.birim %></strong></span>
+                    </div>
+
+                    <!-- Digital LED Kronometre Display -->
+                    <div class="mes-timer-display" id="timerBox_<%= ao.id %>" onclick="event.stopPropagation()">
+                      <div>
+                        <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; display: block;">
+                          <%= ao.isPaused ? '⏸️ KRONOMETRE DONDURULDU (' + ao.pauseReason + ')' : '⏱️ İŞ KRONOMETRESİ & KALAN SÜRE' %>
+                        </span>
+                        <span class="mes-timer-clock <%= ao.isPaused ? 'mes-timer-clock--paused' : '' %>" id="timerClock_<%= ao.id %>" data-minutes="<%= ao.tahminiDakika %>" data-paused="<%= ao.isPaused %>" data-order-id="<%= ao.id %>" data-wc-id="<%= wc.id %>">
+                          --:--:--
+                        </span>
+                      </div>
+                      <div style="text-align: right;">
+                        <span style="font-size: 0.75rem; color: #94a3b8; display: block;">Tahmini Süre:</span>
+                        <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= ao.tahminiSaat %> Saat</strong>
+                      </div>
+                    </div>
+
+                    <% if (ao.isPaused) { %>
+                      <div style="font-size: 0.8rem; color: #fbbf24; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); padding: 8px 12px; border-radius: 8px;">
+                        <strong>⏸️ Duraklatma Sebebi:</strong> <%= ao.pauseReason %> • <em>"<%= ao.pauseNotes %>"</em>
+                      </div>
+                    <% } %>
+
+                  </div>
+                <% } else { %>
+                  <div style="background: rgba(16, 185, 129, 0.06); border: 1.5px dashed rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 18px; text-align: center; color: #34d399; font-weight: 700; font-size: 0.88rem;">
+                    🟢 Bu iş merkezinde şu anda aktif çalışan bir iş emri bulunmamaktadır (İstasyon Boş & Müsait).
+                  </div>
+                <% } %>
+              </div>
+
+              <!-- 3. SIRADA BEKLEYEN İŞ EMİRLERİ (KUYRUK) -->
+              <div class="mes-queue-section">
+                <div class="mes-queue-header">
+                  <span>⏳ Sırada Bekleyen / Atanan İşler</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; color: #818cf8;"><%= wc.queuedOrders.length %> İş Emri</span>
+                </div>
+
+                <% if (wc.queuedOrders.length === 0) { %>
+                  <div style="font-size: 0.8rem; color: #64748b; font-style: italic; padding: 6px 2px;">
+                    Bekleyen sırada iş emri bulunmamaktadır.
+                  </div>
+                <% } else { %>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <% wc.queuedOrders.forEach((qo, idx) => { %>
+                      <div class="mes-queue-card" onclick="openOrderDetailModal(<%= JSON.stringify(qo) %>, '<%= wc.workCenterCode %>', '<%= wc.workCenterName.replace(/'/g, "\\'") %>')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 6px; border-radius: 4px;">
+                            #<%= idx + 1 %>
+                          </span>
+                          <div>
+                            <strong style="color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"><%= qo.isEmriNo %></strong>
+                            <div style="font-size: 0.78rem; color: #cbd5e1;"><%= qo.stokAdi %> (<%= qo.planlananMiktar %> <%= qo.birim %>)</div>
+                          </div>
+                        </div>
+                        <div style="text-align: right;">
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #fbbf24; font-weight: 700;">
+                            <%= qo.tahminiSaat %> Sa
+                          </span>
+                          <div style="font-size: 0.72rem; color: #818cf8; font-weight: 600;">Detay ➔</div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                <% } %>
+              </div>
+
+              <!-- 4. OPERATÖR AKSİYON BUTONLARI -->
+              <div class="mes-actions-row">
+                <% if (wc.activeRunningOrder) { %>
+                  <% const ao = wc.activeRunningOrder; %>
+                  <% if (ao.isPaused) { %>
+                    <!-- Resume Button -->
+                    <form action="/production/mes/start-job" method="POST" style="flex: 1; margin: 0;">
+                      <input type="hidden" name="orderId" value="<%= ao.id %>">
+                      <input type="hidden" name="workCenterId" value="<%= wc.id %>">
+                      <button type="submit" class="btn-mes-action btn-mes-resume" style="width: 100%;">
+                        <span>▶️ İşe Devam Et / Başlat</span>
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <!-- Pause Button -->
+                    <button type="button" class="btn-mes-action btn-mes-pause" onclick="openPauseModal('<%= ao.id %>', '<%= wc.id %>', '<%= ao.isEmriNo %>', '<%= wc.workCenterCode %>')">
+                      <span>⏸️ Duraklat / Beklemeye Al</span>
+                    </button>
+                  <% } %>
+
+                  <!-- Complete Button -->
+                  <button type="button" class="btn-mes-action btn-mes-complete" onclick="openCompleteModal('<%= ao.id %>', '<%= wc.id %>', '<%= ao.isEmriNo %>', '<%= ao.stokAdi.replace(/'/g, "\\'") %>', <%= ao.kalanMiktar %>, '<%= ao.birim %>')">
+                    <span>✅ Üretimi Tamamla / Kaydet</span>
+                  </button>
+                <% } else if (wc.queuedOrders.length > 0) { %>
+                  <!-- Start Next Order in Queue -->
+                  <% const nextOrder = wc.queuedOrders[0]; %>
+                  <form action="/production/mes/start-job" method="POST" style="flex: 1; margin: 0;">
+                    <input type="hidden" name="orderId" value="<%= nextOrder.id %>">
+                    <input type="hidden" name="workCenterId" value="<%= wc.id %>">
+                    <button type="submit" class="btn-mes-action btn-mes-start" style="width: 100%;">
+                      <span>▶️ Sıradaki İşi Başlat (<%= nextOrder.isEmriNo %>)</span>
+                    </button>
+                  </form>
+                <% } else { %>
+                  <button type="button" class="btn-mes-action" style="background: rgba(255, 255, 255, 0.05); color: #64748b; cursor: default;" disabled>
+                    <span>🟢 İstasyon Boş & Bekleyen İş Yok</span>
+                  </button>
+                <% } %>
+              </div>
+
             </div>
           <% }); %>
-        <% } %>
-      </div>
+        </div>
+      <% } %>
+
     </main>
   </div>
 
+  <!-- ======================================================================= -->
+  <!-- 1. İŞ EMRİ DETAY MODALI (ÜRÜN, MİKTAR, OPERASYON & BİLEŞENLER TABLOSU)  -->
+  <!-- ======================================================================= -->
+  <div id="orderDetailModal" class="mes-modal-backdrop">
+    <div class="mes-modal-window">
+      
+      <div class="mes-modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.5rem; background: rgba(99, 102, 241, 0.15); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(99, 102, 241, 0.3);">📋</span>
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">
+              İş Emri Detayları: <span id="dtlOrderNo" style="color: #34d399; font-family: 'JetBrains Mono', monospace;"></span>
+            </h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+              İş İstasyonu: <strong style="color: #818cf8;" id="dtlStationName"></strong>
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="closeOrderDetailModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
+      </div>
+
+      <div class="mes-modal-body">
+        
+        <!-- Ürün & Hedef Miktar Özeti -->
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+          <div>
+            <span style="font-size: 0.74rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; display: block;">Ürün Kodu & Adı</span>
+            <strong style="color: #fff; font-size: 0.95rem;" id="dtlProductName"></strong>
+          </div>
+          <div>
+            <span style="font-size: 0.74rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; display: block;">Üretilecek Hedef Miktar</span>
+            <strong style="color: #34d399; font-size: 1.1rem; font-family: 'JetBrains Mono', monospace;" id="dtlTargetQty"></strong>
+          </div>
+          <div>
+            <span style="font-size: 0.74rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; display: block;">Öncelik & Termin</span>
+            <strong style="color: #fbbf24; font-size: 0.92rem;" id="dtlPriorityTermin"></strong>
+          </div>
+        </div>
+
+        <!-- Operasyon ve Rota Adımı -->
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1.5px solid rgba(99, 102, 241, 0.25); border-radius: 14px; padding: 16px;">
+          <span style="font-size: 0.74rem; color: #818cf8; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 4px;">🛠️ Operasyon Adımı & Rota Bilgisi</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <strong style="color: #fff; font-size: 1.05rem;" id="dtlOpName"></strong>
+              <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 2px;" id="dtlOpCodeStep"></div>
+            </div>
+            <div style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fbbf24;" id="dtlOpTimes"></div>
+          </div>
+        </div>
+
+        <!-- Kullanılacak Bileşenler Tablosu (BOM) -->
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+            📦 Bu İmalatta Tüketilecek Bileşenler & Hammaddeler (BOM)
+          </div>
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; overflow: hidden;">
+            <thead>
+              <tr style="background: rgba(30, 41, 59, 0.8); color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                <th style="padding: 10px 12px;">Bileşen Kodu</th>
+                <th style="padding: 10px 12px;">Bileşen Adı</th>
+                <th style="padding: 10px 12px; text-align: right;">Birim İhtiyaç</th>
+                <th style="padding: 10px 12px; text-align: right;">Toplam Gerekli</th>
+                <th style="padding: 10px 12px; text-align: center;">Mevcut Stok</th>
+              </tr>
+            </thead>
+            <tbody id="dtlComponentsTbody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div class="mes-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeOrderDetailModal()" style="padding: 10px 22px; border-radius: 10px; font-weight: 700;">
+          Kapat
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 2. DURAKLATMA / BEKLEMEYE ALMA MODALI (SEBEP + ZORUNLU AÇIKLAMA NOTU)    -->
+  <!-- ======================================================================= -->
+  <div id="pauseJobModal" class="mes-modal-backdrop">
+    <div class="mes-modal-window" style="max-width: 580px;">
+      
+      <div class="mes-modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.5rem; background: rgba(245, 158, 11, 0.15); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(245, 158, 11, 0.3);">⏸️</span>
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">İşi Duraklat / Beklemeye Al</h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+              İş Emri: <strong style="color: #fbbf24;" id="pauseModalOrderNo"></strong> • Kronometre durdurulacaktır.
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="closePauseModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
+      </div>
+
+      <form id="pauseJobForm" action="/production/mes/pause-job" method="POST" style="margin: 0;">
+        <input type="hidden" name="orderId" id="pauseModalOrderId">
+        <input type="hidden" name="workCenterId" id="pauseModalWcId">
+
+        <div class="mes-modal-body">
+          
+          <!-- Sebepler Radio -->
+          <div>
+            <label style="font-size: 0.82rem; color: #cbd5e1; font-weight: 800; display: block; margin-bottom: 10px; text-transform: uppercase;">
+              1. Duraklatma Sebebi Seçiniz <span style="color: #f43f5e;">*</span>
+            </label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+              <label style="background: rgba(30, 41, 59, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <input type="radio" name="reason" value="Mola" checked style="accent-color: #f59e0b;">
+                <span style="font-size: 1.3rem;">☕</span>
+                <strong style="color: #fff; font-size: 0.85rem;">Mola</strong>
+              </label>
+
+              <label style="background: rgba(30, 41, 59, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <input type="radio" name="reason" value="Malzeme Bekleme" style="accent-color: #f59e0b;">
+                <span style="font-size: 1.3rem;">📦</span>
+                <strong style="color: #fff; font-size: 0.85rem;">Malzeme Bekleme</strong>
+              </label>
+
+              <label style="background: rgba(30, 41, 59, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <input type="radio" name="reason" value="Arıza" style="accent-color: #f59e0b;">
+                <span style="font-size: 1.3rem;">🛠️</span>
+                <strong style="color: #fff; font-size: 0.85rem;">Arıza</strong>
+              </label>
+            </div>
+          </div>
+
+          <!-- Açıklama ve Notlar (ZORUNLU) -->
+          <div>
+            <label style="font-size: 0.82rem; color: #cbd5e1; font-weight: 800; display: block; margin-bottom: 6px; text-transform: uppercase;">
+              2. Duraklatma Açıklaması & Notlar <span style="color: #f43f5e;">* (Zorunlu Alan)</span>
+            </label>
+            <textarea id="pauseModalNotesInput" name="notes" required rows="3" placeholder="Lütfen duraklatma gerekçesini detaylı olarak açıklayınız (Boş bırakılamaz)..." style="width: 100%; padding: 12px 14px; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(245, 158, 11, 0.4); border-radius: 12px; color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;"></textarea>
+            <span style="font-size: 0.74rem; color: #fbbf24; margin-top: 4px; display: block;">
+              ⚠️ İş emrinin duraklatılabilmesi için açıklama girilmesi zorunludur.
+            </span>
+          </div>
+
+        </div>
+
+        <div class="mes-modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closePauseModal()" style="padding: 10px 18px; border-radius: 10px; font-weight: 600;">
+            İptal
+          </button>
+          <button type="submit" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; font-weight: 800; padding: 10px 24px; border-radius: 10px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35); cursor: pointer;">
+            ⏸️ Duraklatmayı Onayla
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 3. ÜRETİMİ TAMAMLAMA / KAYDET MODALI (MİKTAR + OPSİYONEL NOT GİRİŞİ)    -->
+  <!-- ======================================================================= -->
+  <div id="completeJobModal" class="mes-modal-backdrop">
+    <div class="mes-modal-window" style="max-width: 600px;">
+      
+      <div class="mes-modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.5rem; background: rgba(16, 185, 129, 0.15); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(16, 185, 129, 0.3);">✅</span>
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">Üretimi Tamamla & Stok Girişi Yap</h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+              İş Emri: <strong style="color: #34d399;" id="completeModalOrderNo"></strong> • Ürün: <span id="completeModalProdName"></span>
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCompleteModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
+      </div>
+
+      <form id="completeJobForm" action="/production/mes/complete-job" method="POST" style="margin: 0;">
+        <input type="hidden" name="orderId" id="completeModalOrderId">
+        <input type="hidden" name="workCenterId" id="completeModalWcId">
+
+        <div class="mes-modal-body">
+          
+          <!-- Üretilen Miktar Inputu -->
+          <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 16px;">
+            <label style="font-size: 0.82rem; color: #cbd5e1; font-weight: 800; display: block; margin-bottom: 6px; text-transform: uppercase;">
+              Tamamlanan Üretim Miktarı <span style="color: #f43f5e;">*</span>
+            </label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="number" step="0.01" min="0.01" id="completeModalQtyInput" name="completedQuantity" required style="flex: 1; padding: 12px 16px; background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(16, 185, 129, 0.4); border-radius: 12px; color: #34d399; font-size: 1.3rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; outline: none; box-sizing: border-box;">
+              <span id="completeModalUnitBadge" style="background: rgba(255, 255, 255, 0.1); color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 800; font-size: 0.95rem;">
+                Adet
+              </span>
+            </div>
+            <span style="font-size: 0.76rem; color: #94a3b8; margin-top: 6px; display: block;">
+              📦 Girilen miktar kadar ürün doğrudan depodaki stok kartına eklenecek ve reçetedeki bileşenler düşülecektir.
+            </span>
+          </div>
+
+          <!-- Açıklama ve Notlar (OPSİYONEL) -->
+          <div>
+            <label style="font-size: 0.82rem; color: #cbd5e1; font-weight: 800; display: block; margin-bottom: 6px; text-transform: uppercase;">
+              Açıklama ve Notlar <span style="color: #94a3b8; font-weight: 400; text-transform: none;">(Opsiyonel — Boş Bırakılabilir)</span>
+            </label>
+            <textarea id="completeModalNotesInput" name="notes" rows="2" placeholder="Varsa vardiya notu, parti açıklaması veya operasyon notu yazabilirsiniz..." style="width: 100%; padding: 12px 14px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; color: #fff; font-size: 0.88rem; outline: none; box-sizing: border-box;"></textarea>
+          </div>
+
+        </div>
+
+        <div class="mes-modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeCompleteModal()" style="padding: 10px 18px; border-radius: 10px; font-weight: 600;">
+            İptal
+          </button>
+          <button type="submit" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 800; padding: 10px 26px; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35); cursor: pointer;">
+            ✅ Üretimi Tamamla & Stok Girişi Yap
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
   <script>
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    function updateClock() { 
+      const now = new Date(); 
+      const el = document.getElementById('liveTime'); 
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); 
+    }
+    updateClock(); 
+    setInterval(updateClock, 1000);
+
+    // =========================================================================
+    // KRONOMETRE VE COUNTDOWN MOTORU
+    // =========================================================================
+    const timers = {};
+
+    function initTimers() {
+      const timerClocks = document.querySelectorAll('.mes-timer-clock');
+      timerClocks.forEach(clock => {
+        const orderId = clock.getAttribute('data-order-id');
+        const wcId = clock.getAttribute('data-wc-id');
+        const totalMinutes = parseFloat(clock.getAttribute('data-minutes')) || 60;
+        const isPaused = clock.getAttribute('data-paused') === 'true';
+
+        // Set initial countdown seconds based on estimate
+        let remainingSeconds = Math.round(totalMinutes * 60);
+
+        // Check if there is stored timestamp in localStorage for continuous countdown
+        const storageKey = 'mes_timer_' + orderId;
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          const parsed = parseInt(stored, 10);
+          if (!isNaN(parsed) && parsed > 0) remainingSeconds = parsed;
+        }
+
+        timers[orderId] = {
+          clockEl: clock,
+          wcId: wcId,
+          remainingSeconds: remainingSeconds,
+          isPaused: isPaused
+        };
+
+        renderTimerString(clock, remainingSeconds);
+      });
+
+      // Ticker interval
+      setInterval(() => {
+        Object.keys(timers).forEach(orderId => {
+          const t = timers[orderId];
+          if (t && !t.isPaused && t.remainingSeconds > 0) {
+            t.remainingSeconds--;
+            localStorage.setItem('mes_timer_' + orderId, t.remainingSeconds);
+            renderTimerString(t.clockEl, t.remainingSeconds);
+
+            // If timer reaches 0: auto open complete modal!
+            if (t.remainingSeconds === 0) {
+              const activeBox = t.clockEl.closest('.mes-active-box');
+              const orderCodeEl = activeBox?.querySelector('.mes-order-code');
+              const orderNo = orderCodeEl ? orderCodeEl.textContent.replace('📋', '').trim() : orderId;
+              const prodTitle = activeBox?.querySelector('.mes-product-title')?.textContent || 'Ürün';
+              
+              openCompleteModal(orderId, t.wcId, orderNo, prodTitle, 10, 'Adet');
+            }
+          }
+        });
+      }, 1000);
+    }
+
+    function renderTimerString(clockEl, totalSecs) {
+      if (!clockEl) return;
+      const hrs = Math.floor(totalSecs / 3600);
+      const mins = Math.floor((totalSecs % 3600) / 60);
+      const secs = totalSecs % 60;
+
+      const pad = (n) => String(n).padStart(2, '0');
+      clockEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', initTimers);
+
+    // =========================================================================
+    // 1. İŞ EMRİ DETAY MODALI FONKSİYONLARI
+    // =========================================================================
+    function openOrderDetailModal(orderObj, wcCode, wcName) {
+      const modal = document.getElementById('orderDetailModal');
+      if (!modal || !orderObj) return;
+
+      document.getElementById('dtlOrderNo').textContent = orderObj.isEmriNo;
+      document.getElementById('dtlStationName').textContent = `[${wcCode}] ${wcName}`;
+      document.getElementById('dtlProductName').textContent = `[${orderObj.stokKodu}] ${orderObj.stokAdi}`;
+      document.getElementById('dtlTargetQty').textContent = `${orderObj.planlananMiktar} ${orderObj.birim} (Kalan: ${orderObj.kalanMiktar} ${orderObj.birim})`;
+      document.getElementById('dtlPriorityTermin').textContent = `${orderObj.oncelik} Öncelikli • Termin: ${orderObj.planlananBitisTarihi}`;
+
+      const op = orderObj.operasyon || {};
+      document.getElementById('dtlOpName').textContent = op.ad || 'Genel İmalat Operasyonu';
+      document.getElementById('dtlOpCodeStep').textContent = `Operasyon Kodu: ${op.kod || 'OPS-10'} • Rota Adımı: ${op.sira || 10}`;
+      document.getElementById('dtlOpTimes').textContent = `Birim: ${op.birimDk || 5} Dk/Ad • Hazırlık: ${op.hazirlikDk || 15} Dk`;
+
+      // Components table
+      const tbody = document.getElementById('dtlComponentsTbody');
+      const comps = orderObj.components || [];
+
+      if (comps.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">
+              Bu ürün için reçetede tanımlı malzeme bileşeni bulunamadı.
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = comps.map(c => `
+          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+            <td style="padding: 10px 12px; font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 700;">
+              ${c.stokKodu}
+            </td>
+            <td style="padding: 10px 12px; color: #fff; font-weight: 600;">
+              ${c.stokAdi}
+            </td>
+            <td style="padding: 10px 12px; text-align: right; color: #cbd5e1;">
+              ${c.birimMiktar} ${c.birim}
+            </td>
+            <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace;">
+              ${c.toplamGerekli} ${c.birim}
+            </td>
+            <td style="padding: 10px 12px; text-align: center;">
+              <span style="background: ${c.yeterliMi ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)'}; color: ${c.yeterliMi ? '#34d399' : '#fb7185'}; font-size: 0.74rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
+                ${c.yeterliMi ? '✓ Yeterli (' + c.mevcutStok + ' ' + c.birim + ')' : '⚠️ Yetersiz (' + c.mevcutStok + ' ' + c.birim + ')'}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeOrderDetailModal() {
+      const modal = document.getElementById('orderDetailModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // =========================================================================
+    // 2. DURAKLAT / BEKLEMEYE AL MODALI (ZORUNLU AÇIKLAMA NOTU)
+    // =========================================================================
+    function openPauseModal(orderId, wcId, orderNo, wcCode) {
+      const modal = document.getElementById('pauseJobModal');
+      if (!modal) return;
+
+      document.getElementById('pauseModalOrderId').value = orderId;
+      document.getElementById('pauseModalWcId').value = wcId;
+      document.getElementById('pauseModalOrderNo').textContent = `${orderNo} [${wcCode}]`;
+      document.getElementById('pauseModalNotesInput').value = '';
+
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        document.getElementById('pauseModalNotesInput').focus();
+      }, 100);
+    }
+
+    function closePauseModal() {
+      const modal = document.getElementById('pauseJobModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    document.getElementById('pauseJobForm').addEventListener('submit', function(e) {
+      const notes = document.getElementById('pauseModalNotesInput').value.trim();
+      if (!notes) {
+        e.preventDefault();
+        alert('⚠️ Lütfen iş emrini duraklatma gerekçesini detaylı olarak açıklayınız (Zorunlu alan)!');
+      }
+    });
+
+    // =========================================================================
+    // 3. ÜRETİMİ TAMAMLA & STOK GİRİŞİ YAP MODALI (OPSİYONEL NOT GİRİŞİ)
+    // =========================================================================
+    function openCompleteModal(orderId, wcId, orderNo, prodName, remainingQty, unit) {
+      const modal = document.getElementById('completeJobModal');
+      if (!modal) return;
+
+      document.getElementById('completeModalOrderId').value = orderId;
+      document.getElementById('completeModalWcId').value = wcId;
+      document.getElementById('completeModalOrderNo').textContent = orderNo;
+      document.getElementById('completeModalProdName').textContent = prodName;
+      document.getElementById('completeModalQtyInput').value = parseFloat(remainingQty || 1);
+      document.getElementById('completeModalUnitBadge').textContent = unit || 'Adet';
+      document.getElementById('completeModalNotesInput').value = '';
+
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        document.getElementById('completeModalQtyInput').focus();
+      }, 100);
+    }
+
+    function closeCompleteModal() {
+      const modal = document.getElementById('completeJobModal');
+      if (modal) modal.style.display = 'none';
+    }
   </script>
 </body>
 </html>
