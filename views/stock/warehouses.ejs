@@ -5,53 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Çoklu Depo & Lokasyon Yönetimi — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* High-End Form Card Styling */
-    .form-card {
+    .wh-card {
       background: var(--bg-surface);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: 20px;
-      padding: 28px;
-      box-shadow: var(--shadow-md);
+      padding: 24px;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
       position: relative;
       overflow: hidden;
     }
-    .form-card::before {
+    .wh-card:hover {
+      border-color: rgba(99, 102, 241, 0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+    .wh-card::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
+      top: 0; left: 0; right: 0; height: 4px;
     }
-    .form-card--indigo::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
-    .form-card--emerald::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+    .wh-card--Hammadde::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .wh-card--Sevkiyat::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .wh-card--Yedek_Parca::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .wh-card--Genel::before { background: linear-gradient(90deg, #8b5cf6, #a855f7); }
 
-    .form-card-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 22px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    .form-card-icon {
-      width: 40px;
-      height: 40px;
+    .wh-stat-chip {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 12px;
+      padding: 10px 14px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
+      flex-direction: column;
+      gap: 2px;
     }
-    .icon--indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
-    .icon--emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .wh-stat-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .wh-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
 
-    .form-card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
-    .form-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    .wh-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .wh-type-badge--Hammadde { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .wh-type-badge--Sevkiyat { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .wh-type-badge--Yedek_Parca { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .wh-type-badge--Genel { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
 
-    /* Ultra Aesthetic Inputs */
+    /* Ultra Aesthetic Inputs & Modals */
     .aesthetic-group { margin-bottom: 16px; }
     .aesthetic-label {
       font-size: 0.82rem;
@@ -82,31 +104,38 @@
 
     .btn-indigo-gradient {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: #ffffff;
-      font-weight: 700;
+      color: #ffffff !important;
+      font-weight: 800;
       padding: 12px 20px;
       border-radius: 10px;
       border: none;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
       transition: all 0.2s ease;
-      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     .btn-indigo-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
 
     .btn-emerald-gradient {
       background: linear-gradient(135deg, #10b981, #059669);
-      color: #ffffff;
-      font-weight: 700;
+      color: #ffffff !important;
+      font-weight: 800;
       padding: 12px 20px;
       border-radius: 10px;
       border: none;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
       transition: all 0.2s ease;
-      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     .btn-emerald-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
+
     .wh-modal-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
@@ -114,9 +143,7 @@
       z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.25s ease;
       padding: 20px;
     }
-    .wh-modal-overlay.active {
-      opacity: 1; visibility: visible;
-    }
+    .wh-modal-overlay.active { opacity: 1; visibility: visible; }
     .wh-modal-content {
       background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
       border: 1.5px solid rgba(255, 255, 255, 0.15);
@@ -148,7 +175,7 @@
       </div>
       <div class="mss-group-title">📦 MALZEME & LOKASYON</div>
       <div class="mss-sub">
-        <a href="/stock/items" class="mss-sub-link">📦 Stok Kartları</a>
+        <a href="/stock" class="mss-sub-link">📦 Stok Kartları</a>
         <a href="/stock/warehouses" class="mss-sub-link active">🏬 Depo & Lokasyonlar</a>
         <a href="/stock/lots" class="mss-sub-link">🏷️ Lot & Seri Numaraları</a>
       </div>
@@ -169,8 +196,11 @@
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
         <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
-        <a href="/stock" class="mt-link active">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link">Satın Alma</a>
-        <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %><% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %><a href="/quality" class="mt-link">Kalite Kontrol</a><% } %>
+        <a href="/stock" class="mt-link active">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link">Satın Alma</a>
+        <a href="/production" class="mt-link">Üretim Planlama</a>
+        <a href="/quality" class="mt-link">Kalite Kontrol</a>
       </div>
       <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
     </header>
@@ -179,14 +209,18 @@
 
       <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
         <div>
-          <h1>Çoklu Depo ve Lokasyon Yönetimi</h1>
-          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Farklı şehir/şubelerdeki depolarınızı ve koridor, raf, göz detaylı lokasyon haritanızı yönetin.</p>
+          <h1 style="display: flex; align-items: center; gap: 10px;">
+            <span>🏬 Çoklu Depo ve Lokasyon Yönetimi</span>
+          </h1>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">
+            Fabrika ambarları, şube depoları, koridor-raf-göz lokasyon haritası ve depo bazlı anlık stok envanteri.
+          </p>
         </div>
         <div style="display: flex; gap: 12px;">
-          <button type="button" onclick="openModal('createWarehouseModal')" class="btn-indigo-gradient" style="width: auto; padding: 11px 22px; font-weight: 800; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <button type="button" onclick="openModal('createWarehouseModal')" class="btn-indigo-gradient">
             <span>➕</span> Yeni Depo Ekle
           </button>
-          <button type="button" onclick="openModal('createLocationModal')" class="btn-emerald-gradient" style="width: auto; padding: 11px 22px; font-weight: 800; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <button type="button" onclick="openModal('createLocationModal')" class="btn-emerald-gradient">
             <span>📍</span> Yeni Lokasyon Ekle
           </button>
         </div>
@@ -194,48 +228,48 @@
 
       <!-- MODAL 1: YENİ DEPO TANIMLA MODALI -->
       <div id="createWarehouseModal" class="wh-modal-overlay" onclick="handleOverlayClick(event, 'createWarehouseModal')">
-        <div class="wh-modal-content" style="max-width: 650px;" onclick="event.stopPropagation()">
+        <div class="wh-modal-content" style="max-width: 620px;" onclick="event.stopPropagation()">
           <button type="button" class="wh-modal-close" onclick="closeModal('createWarehouseModal')">&times;</button>
           
           <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
             <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏬</div>
             <div>
               <h3 style="font-size: 1.25rem; font-weight: 900; margin: 0; color: #f8fafc;">Yeni Depo Tanımla</h3>
-              <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 2px;">Şehir, ambar tipi ve sorumlu personel tanımı</div>
+              <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 2px;">Fiziksel ambar, depo tipi ve sorumlu yönetici tanımlayın</div>
             </div>
           </div>
 
           <form action="/stock/warehouses/add" method="POST">
             <div class="aesthetic-group">
               <label class="aesthetic-label">Depo Adı *</label>
-              <input type="text" name="name" placeholder="Örn: Ankara Merkez Lojistik Deposu" class="aesthetic-input" required>
+              <input type="text" name="ad" placeholder="Örn: Ankara Merkez Lojistik Deposu" class="aesthetic-input" required>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Depo Tipi</label>
-                <select name="type" class="aesthetic-input" style="cursor: pointer;">
-                  <option value="Hammadde">Hammadde Ambarı</option>
-                  <option value="Sevkiyat">Sevkiyat & Mamul Deposu</option>
-                  <option value="Yedek_Parca">Yedek Parça Ambarı</option>
-                  <option value="Genel">Genel Depo</option>
+                <label class="aesthetic-label">Depo Tipi *</label>
+                <select name="tur" class="aesthetic-input" style="cursor: pointer;">
+                  <option value="Hammadde">🟦 Hammadde Ambarı</option>
+                  <option value="Sevkiyat">🟩 Sevkiyat & Mamul Deposu</option>
+                  <option value="Yedek_Parca">🟨 Yedek Parça Ambarı</option>
+                  <option value="Genel">🟪 Genel Depo</option>
                 </select>
               </div>
 
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Şehir</label>
-                <input type="text" name="city" placeholder="Ankara" class="aesthetic-input">
+                <label class="aesthetic-label">Şehir *</label>
+                <input type="text" name="sehir" placeholder="İstanbul / Ankara / Kocaeli" class="aesthetic-input" required>
               </div>
             </div>
 
             <div class="aesthetic-group">
-              <label class="aesthetic-label">Depo Sorumlusu</label>
-              <input type="text" name="managerName" placeholder="Örn: Ahmet Yılmaz" class="aesthetic-input">
+              <label class="aesthetic-label">Depo Sorumlusu Personel</label>
+              <input type="text" name="sorumluAdi" placeholder="Örn: Ahmet Yılmaz" class="aesthetic-input">
             </div>
 
             <div class="aesthetic-group">
               <label class="aesthetic-label">Açık Adres</label>
-              <textarea name="address" class="aesthetic-input" rows="3" placeholder="Ambar açık adresi..."></textarea>
+              <textarea name="adres" class="aesthetic-input" rows="3" placeholder="Depo fiziksel adresi..."></textarea>
             </div>
 
             <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
@@ -248,13 +282,13 @@
 
       <!-- MODAL 2: DEPO İÇİ LOKASYON EKLE MODALI -->
       <div id="createLocationModal" class="wh-modal-overlay" onclick="handleOverlayClick(event, 'createLocationModal')">
-        <div class="wh-modal-content" style="max-width: 650px;" onclick="event.stopPropagation()">
+        <div class="wh-modal-content" style="max-width: 620px;" onclick="event.stopPropagation()">
           <button type="button" class="wh-modal-close" onclick="closeModal('createLocationModal')">&times;</button>
           
           <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
             <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">📍</div>
             <div>
-              <h3 style="font-size: 1.25rem; font-weight: 900; margin: 0; color: #f8fafc;">Depo İçi Lokasyon Ekle</h3>
+              <h3 style="font-size: 1.25rem; font-weight: 900; margin: 0; color: #f8fafc;">Depo İçi Lokasyon (Göz / Raf) Ekle</h3>
               <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 2px;">Koridor, raf ve göz (bin) detaylı adres haritası</div>
             </div>
           </div>
@@ -262,9 +296,9 @@
           <form action="/stock/locations/add" method="POST">
             <div class="aesthetic-group">
               <label class="aesthetic-label">Hedef Depo Seçin *</label>
-              <select name="warehouseId" class="aesthetic-input" required style="cursor: pointer;">
+              <select name="depoId" class="aesthetic-input" required style="cursor: pointer;">
                 <% warehouses.forEach(w => { %>
-                  <option value="<%= w.id %>"><%= w.warehouseCode %> — <%= w.name %></option>
+                  <option value="<%= w.id %>">[<%= w.depoKodu %>] <%= w.ad %> (<%= w.sehir %>)</option>
                 <% }); %>
               </select>
             </div>
@@ -272,21 +306,21 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
               <div class="aesthetic-group">
                 <label class="aesthetic-label">Koridor *</label>
-                <input type="text" name="aisle" placeholder="Koridor-A" class="aesthetic-input" required>
+                <input type="text" name="koridor" placeholder="Koridor-A" class="aesthetic-input" required>
               </div>
               <div class="aesthetic-group">
                 <label class="aesthetic-label">Raf *</label>
-                <input type="text" name="shelf" placeholder="Raf-04" class="aesthetic-input" required>
+                <input type="text" name="raf" placeholder="Raf-04" class="aesthetic-input" required>
               </div>
               <div class="aesthetic-group">
                 <label class="aesthetic-label">Göz / Bin *</label>
-                <input type="text" name="bin" placeholder="Göz-02" class="aesthetic-input" required>
+                <input type="text" name="goz" placeholder="Göz-02" class="aesthetic-input" required>
               </div>
             </div>
 
             <div class="aesthetic-group">
-              <label class="aesthetic-label">Kapasite Limit (Adet / Hacim)</label>
-              <input type="number" name="capacity" value="1000" class="aesthetic-input">
+              <label class="aesthetic-label">Kapasite Limiti (Adet / Hacim)</label>
+              <input type="number" name="kapasite" value="1000" class="aesthetic-input">
             </div>
 
             <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
@@ -297,115 +331,143 @@
         </div>
       </div>
 
-      <!-- Warehouse Cards & Location Table -->
-      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">📋 Mevcut Depolar ve Lokasyon Haritası</h3>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-        <% warehouses.forEach(wh => { %>
-          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
-                <div>
-                  <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: rgba(99,102,241,0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(99,102,241,0.2);"><%= wh.warehouseCode %></strong>
-                  <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-top: 6px;"><%= wh.name %></h4>
-                  <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;"><%= wh.city %> | Tip: <%= wh.type %> • Sorumlu: <strong><%= wh.managerName || '—' %></strong></div>
-                </div>
-                <span class="status-pill status-active">● Active</span>
-              </div>
-
-              <!-- DEPO GİRİŞİ YAPILAN ÜRÜNLER CANLI LİSTESİ -->
-              <div style="margin-bottom: 16px; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                  <span style="font-size: 0.825rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
-                    <span>📦</span> Depoya Girilen Ürünler & Stok Miktarları
-                  </span>
-                  <span style="font-size: 0.72rem; background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); padding: 2px 8px; border-radius: 10px; font-weight: 700;">
-                    <%= wh.productSummary ? wh.productSummary.length : 0 %> Kalem Ürün
-                  </span>
-                </div>
-
-                <% if (!wh.productSummary || wh.productSummary.length === 0) { %>
-                  <div style="font-size: 0.8rem; color: var(--text-muted); padding: 10px 0; text-align: center;">
-                    Henüz bu depoya mal kabul girişi yapılmamıştır.
-                  </div>
-                <% } else { %>
-                  <div style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto; padding-right: 4px;">
-                    <% wh.productSummary.forEach(p => { %>
-                      <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.825rem;">
-                        <div>
-                          <strong style="color: #f8fafc;"><%= p.name %></strong>
-                          <span style="font-size: 0.72rem; color: #94a3b8; margin-left: 6px; font-family: 'JetBrains Mono', monospace;"><%= p.stockCode %></span>
-                        </div>
-                        <div style="text-align: right;">
-                          <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace;"><%= parseFloat(p.totalQuantity).toLocaleString('tr-TR') %> <%= p.unit %></strong>
-                          <div style="font-size: 0.7rem; color: #64748b;">Son Giriş: <%= p.lastReceiptDate %></div>
-                        </div>
-                      </div>
-                    <% }); %>
-                  </div>
-                <% } %>
-              </div>
-
-              <!-- SON MAL KABUL HAREKETLERİ ÖZETİ -->
-              <% if (wh.receiptLogs && wh.receiptLogs.length > 0) { %>
-                <div style="margin-bottom: 16px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 12px;">
-                  <div style="font-size: 0.78rem; font-weight: 800; color: #818cf8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                    <span>🚛</span> Son Mal Kabul Kayıtları (<%= wh.receiptLogs.length %> Giriş Fişi)
-                  </div>
-                  <div style="display: flex; flex-direction: column; gap: 4px; max-height: 90px; overflow-y: auto;">
-                    <% wh.receiptLogs.slice(0, 3).forEach(log => { %>
-                      <div style="font-size: 0.75rem; color: var(--text-secondary); display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 5px 8px; border-radius: 6px; align-items: center;">
-                        <span><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= log.orderNo %></strong> — <%= log.productName %></span>
-                        <strong style="color: #34d399;"><%= log.quantity %> <%= log.unit %></strong>
-                      </div>
-                    <% }); %>
-                  </div>
-                </div>
-              <% } %>
-
-              <!-- DEPO İÇİ LOKASYONLAR -->
-              <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Depo İçi Tanımlı Lokasyonlar (<%= wh.locations ? wh.locations.length : 0 %>)</div>
-              <% if (!wh.locations || wh.locations.length === 0) { %>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Henüz lokasyon tanımlanmamış.</div>
-              <% } else { %>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
-                  <% wh.locations.forEach(loc => { %>
-                    <span style="background: #0f172a; border: 1px solid #1e293b; padding: 4px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #f8fafc; display: inline-flex; align-items: center; gap: 4px;">
-                      📍 <%= loc.locationCode %> <small style="color: #64748b;">(<%= loc.capacity %>)</small>
-                    </span>
-                  <% }); %>
-                </div>
-              <% } %>
-            </div>
-
-            <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-size: 0.85rem; font-weight: 800; color: #34d399;">
-                  📦 <%= wh.productSummary ? wh.productSummary.length : 0 %> Çeşit Ürün Stokta
-                </div>
-                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
-                  <%= wh.receiptLogs ? wh.receiptLogs.length : 0 %> Adet Mal Kabul İrsaliyesi
-                </div>
-              </div>
-              <button type="button" onclick="openWhModal('<%= wh.id %>')" class="btn-indigo-gradient" style="width: auto; padding: 10px 18px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px;">
-                🔍 Tüm Ürün Detaylarını Göster
-              </button>
-            </div>
+      <!-- WAREHOUSES GRID -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 24px;">
+        <% if (warehouses.length === 0) { %>
+          <div style="grid-column: 1 / -1; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; text-align: center; color: var(--text-muted);">
+            Sistemde henüz tanımlı depo bulunmamaktadır. Sağ üstteki <strong>"Yeni Depo Ekle"</strong> butonundan ilk ambarınızı tanımlayabilirsiniz.
           </div>
-        <% }); %>
+        <% } else { %>
+          <% warehouses.forEach(wh => { %>
+            <div class="wh-card wh-card--<%= wh.tur %>">
+              <div>
+                <!-- Header -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                      <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: rgba(99,102,241,0.12); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(99,102,241,0.25);"><%= wh.depoKodu %></strong>
+                      <span class="wh-type-badge wh-type-badge--<%= wh.tur %>">
+                        <% if (wh.tur === 'Hammadde') { %>🟦 Hammadde Ambarı
+                        <% } else if (wh.tur === 'Sevkiyat') { %>🟩 Sevkiyat & Lojistik
+                        <% } else if (wh.tur === 'Yedek_Parca') { %>🟨 Yedek Parça
+                        <% } else { %>🟪 Genel Depo<% } %>
+                      </span>
+                    </div>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;"><%= wh.ad %></h3>
+                    <div style="font-size: 0.825rem; color: var(--text-secondary); margin-top: 4px; display: flex; align-items: center; gap: 10px;">
+                      <span>📍 <%= wh.sehir %></span>
+                      <span>•</span>
+                      <span>👤 Sorumlu: <strong><%= wh.sorumluAdi %></strong></span>
+                    </div>
+                  </div>
+                  <span class="status-pill status-active">● <%= wh.durum %></span>
+                </div>
+
+                <!-- KPI Strip for this Warehouse -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px;">
+                  <div class="wh-stat-chip">
+                    <span class="wh-stat-label">Ürün Çeşidi</span>
+                    <span class="wh-stat-value" style="color: #818cf8;"><%= wh.totalProductTypes %> Kalem</span>
+                  </div>
+                  <div class="wh-stat-chip">
+                    <span class="wh-stat-label">Fiziksel Stok</span>
+                    <span class="wh-stat-value" style="color: #34d399;"><%= parseFloat(wh.totalPhysicalStock || 0).toLocaleString('tr-TR') %></span>
+                  </div>
+                  <div class="wh-stat-chip">
+                    <span class="wh-stat-label">Envanter Değeri</span>
+                    <span class="wh-stat-value" style="color: #fbbf24; font-size: 0.95rem;">₺<%= parseFloat(wh.totalInventoryValue || 0).toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
+                  </div>
+                  <div class="wh-stat-chip">
+                    <span class="wh-stat-label">Lokasyon</span>
+                    <span class="wh-stat-value" style="color: #cbd5e1;"><%= wh.totalLocationsCount %> Göz</span>
+                  </div>
+                </div>
+
+                <!-- DEPO İÇİ LOKASYON LİSTESİ -->
+                <div style="margin-bottom: 18px;">
+                  <div style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>📍 Depo İçi Tanımlı Raf / Lokasyonlar (<%= wh.lokasyonlar.length %>)</span>
+                  </div>
+                  <% if (wh.lokasyonlar.length === 0) { %>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px;">
+                      Henüz bu depoda özel raf/göz lokasyonu tanımlanmamıştır.
+                    </div>
+                  <% } else { %>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                      <% wh.lokasyonlar.forEach(loc => { %>
+                        <span style="background: #0f172a; border: 1px solid #1e293b; padding: 5px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #f8fafc; display: inline-flex; align-items: center; gap: 6px;">
+                          <strong style="color: #818cf8;"><%= loc.lokasyonKodu %></strong>
+                          <span style="color: #64748b; font-size: 0.72rem;">(<%= loc.koridor %> / <%= loc.raf %> / <%= loc.goz %> • Kapasite: <%= loc.kapasite %>)</span>
+                        </span>
+                      <% }); %>
+                    </div>
+                  <% } %>
+                </div>
+
+                <!-- DEPO GİRİŞİ YAPILAN ÜRÜNLER CANLI LİSTESİ -->
+                <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; margin-bottom: 14px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 0.825rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                      <span>📦</span> Depodaki Güncel Stok Kalemleri
+                    </span>
+                    <span style="font-size: 0.75rem; background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); padding: 2px 8px; border-radius: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace;">
+                      <%= wh.productSummary.length %> Ürün
+                    </span>
+                  </div>
+
+                  <% if (wh.productSummary.length === 0) { %>
+                    <div style="font-size: 0.825rem; color: var(--text-muted); padding: 12px; text-align: center;">
+                      Bu depoya atanmış aktif stok kalemi bulunmamaktadır.
+                    </div>
+                  <% } else { %>
+                    <div style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto; padding-right: 4px;">
+                      <% wh.productSummary.forEach(p => { %>
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.825rem;">
+                          <div>
+                            <strong style="color: #f8fafc;"><%= p.name %></strong>
+                            <span style="font-size: 0.75rem; color: #818cf8; margin-left: 6px; font-family: 'JetBrains Mono', monospace;">[<%= p.stockCode %>]</span>
+                            <div style="font-size: 0.72rem; color: #64748b;"><%= p.category %> • Lokasyon: <%= p.locationCode %></div>
+                          </div>
+                          <div style="text-align: right;">
+                            <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;"><%= parseFloat(p.totalQuantity).toLocaleString('tr-TR') %> <%= p.unit %></strong>
+                            <% if (p.totalValue > 0) { %>
+                              <div style="font-size: 0.72rem; color: #fbbf24; font-family: 'JetBrains Mono', monospace;">₺<%= parseFloat(p.totalValue).toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></div>
+                            <% } %>
+                          </div>
+                        </div>
+                      <% }); %>
+                    </div>
+                  <% } %>
+                </div>
+
+              </div>
+
+              <!-- Card Footer Action -->
+              <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  📍 Adres: <span style="color: #cbd5e1;"><%= wh.adres %></span>
+                </div>
+                <button type="button" onclick="openWhModal('<%= wh.id %>')" class="btn-indigo-gradient" style="padding: 9px 18px; font-size: 0.85rem;">
+                  🔍 Detaylı Envanter Raporu
+                </button>
+              </div>
+            </div>
+          <% }); %>
+        <% } %>
       </div>
 
-      <!-- WAREHOUSE PRODUCT DETAILS MODALS -->
+      <!-- WAREHOUSE DETAILED MODALS -->
       <% warehouses.forEach(wh => { %>
-        <div id="whModal-<%= wh.id %>" class="wh-modal-overlay">
-          <div class="wh-modal-content">
+        <div id="whModal-<%= wh.id %>" class="wh-modal-overlay" onclick="handleOverlayClick(event, 'whModal-<%= wh.id %>')">
+          <div class="wh-modal-content" onclick="event.stopPropagation()">
             <button type="button" class="wh-modal-close" onclick="closeWhModal('<%= wh.id %>')">&times;</button>
             
-            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-              <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏬</div>
+            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+              <div style="width: 52px; height: 52px; background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">🏬</div>
               <div>
-                <h3 style="font-size: 1.3rem; font-weight: 900; margin: 0; color: #f8fafc;"><%= wh.name %> — Depo Ürün Detayları & Giriş Kayıtları</h3>
-                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 2px;">
-                  Depo Kodu: <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= wh.warehouseCode %></strong> • Şehir: <strong><%= wh.city %></strong> • Sorumlu: <strong><%= wh.managerName || '—' %></strong>
+                <h3 style="font-size: 1.4rem; font-weight: 900; margin: 0; color: #f8fafc;"><%= wh.ad %> — Detaylı Depo Envanteri</h3>
+                <div style="font-size: 0.88rem; color: #94a3b8; margin-top: 4px;">
+                  Depo Kodu: <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">[<%= wh.depoKodu %>]</strong> • Şehir: <strong><%= wh.sehir %></strong> • Sorumlu: <strong><%= wh.sorumluAdi %></strong> • Tip: <strong><%= wh.tur %></strong>
                 </div>
               </div>
             </div>
@@ -414,11 +476,11 @@
             <div style="margin-bottom: 28px;">
               <h4 style="font-size: 0.95rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                 <span>📦 DEPODAKİ GÜNCEL ÜRÜN KARTLARI VE STOK MİKTARLARI</span>
-                <span style="font-size: 0.75rem; background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); padding: 2px 10px; border-radius: 12px;"><%= wh.productSummary ? wh.productSummary.length : 0 %> Kalem</span>
+                <span style="font-size: 0.75rem; background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); padding: 2px 10px; border-radius: 12px; font-family: 'JetBrains Mono', monospace;"><%= wh.productSummary.length %> Kalem</span>
               </h4>
 
-              <% if (!wh.productSummary || wh.productSummary.length === 0) { %>
-                <div style="background: rgba(15, 23, 42, 0.6); padding: 18px; border-radius: 12px; text-align: center; color: #94a3b8; font-size: 0.88rem; border: 1px dashed rgba(255,255,255,0.1);">
+              <% if (wh.productSummary.length === 0) { %>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 14px; text-align: center; color: #94a3b8; font-size: 0.88rem; border: 1px dashed rgba(255,255,255,0.1);">
                   Henüz bu depoya mal kabul veya stok girişi yapılmamıştır.
                 </div>
               <% } else { %>
@@ -428,19 +490,29 @@
                       <tr style="background: rgba(30, 41, 59, 0.85); color: #94a3b8; text-align: left; font-size: 0.75rem; text-transform: uppercase;">
                         <th style="padding: 12px 16px;">Stok Kodu</th>
                         <th style="padding: 12px 16px;">Ürün / Malzeme Adı</th>
-                        <th style="padding: 12px 16px; text-align: right;">Depodaki Mevcut Miktar</th>
-                        <th style="padding: 12px 16px; text-align: right;">Son Giriş Tarihi</th>
+                        <th style="padding: 12px 16px;">Kategori</th>
+                        <th style="padding: 12px 16px;">Depo Lokasyonu</th>
+                        <th style="padding: 12px 16px; text-align: right;">Mevcut Stok</th>
+                        <th style="padding: 12px 16px; text-align: right;">Birim Alış Fiyatı</th>
+                        <th style="padding: 12px 16px; text-align: right;">Toplam Tutar</th>
                       </tr>
                     </thead>
                     <tbody>
                       <% wh.productSummary.forEach(ps => { %>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                          <td style="padding: 12px 16px; font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 700;"><%= ps.stockCode %></td>
+                          <td style="padding: 12px 16px; font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 700;">[<%= ps.stockCode %>]</td>
                           <td style="padding: 12px 16px; color: #f8fafc; font-weight: 600;"><%= ps.name %></td>
+                          <td style="padding: 12px 16px;"><span class="status-pill status-approved"><%= ps.category %></span></td>
+                          <td style="padding: 12px 16px; font-size: 0.825rem; color: #cbd5e1;"><%= ps.locationCode %></td>
                           <td style="padding: 12px 16px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; font-size: 1rem;">
-                            <%= parseFloat(ps.totalQuantity || 0).toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) %> <%= ps.unit %>
+                            <%= parseFloat(ps.totalQuantity || 0).toLocaleString('tr-TR') %> <%= ps.unit %>
                           </td>
-                          <td style="padding: 12px 16px; text-align: right; font-size: 0.8rem; color: #94a3b8;"><%= ps.lastReceiptDate || '—' %></td>
+                          <td style="padding: 12px 16px; text-align: right; font-family: 'JetBrains Mono', monospace; color: #cbd5e1;">
+                            ₺<%= parseFloat(ps.unitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %>
+                          </td>
+                          <td style="padding: 12px 16px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #fbbf24;">
+                            ₺<%= parseFloat(ps.totalValue || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %>
+                          </td>
                         </tr>
                       <% }); %>
                     </tbody>
@@ -453,11 +525,11 @@
             <div>
               <h4 style="font-size: 0.95rem; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                 <span>📥 DEPO GİRİŞ & MAL KABUL HAREKET GEÇMİŞİ</span>
-                <span style="font-size: 0.75rem; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 10px; border-radius: 12px;"><%= wh.receiptLogs ? wh.receiptLogs.length : 0 %> Giriş Hareketi</span>
+                <span style="font-size: 0.75rem; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 10px; border-radius: 12px; font-family: 'JetBrains Mono', monospace;"><%= wh.receiptLogs ? wh.receiptLogs.length : 0 %> Giriş Fişi</span>
               </h4>
 
               <% if (!wh.receiptLogs || wh.receiptLogs.length === 0) { %>
-                <div style="background: rgba(15, 23, 42, 0.6); padding: 18px; border-radius: 12px; text-align: center; color: #94a3b8; font-size: 0.88rem; border: 1px dashed rgba(255,255,255,0.1);">
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 14px; text-align: center; color: #94a3b8; font-size: 0.88rem; border: 1px dashed rgba(255,255,255,0.1);">
                   Bu depoya ait geçmiş mal kabul kaydı bulunmamaktadır.
                 </div>
               <% } else { %>
@@ -502,6 +574,7 @@
           </div>
         </div>
       <% }); %>
+
     </main>
   </div>
 
@@ -531,8 +604,13 @@
       }
     }
 
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
   </script>
 </body>
 </html>

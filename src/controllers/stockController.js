@@ -221,6 +221,10 @@ class StockController {
   // 2. MULTI-WAREHOUSE & LOCATIONS
   listWarehouses = asyncHandler(async (req, res) => {
     const warehouses = await stockRepository.findAllWarehouses();
+    const allStockItems = await StokKarti.findAll({
+      where: { durum: 'Active' },
+      order: [['ad', 'ASC']]
+    });
     const allReceipts = await MalKabul.findAll({
       include: [
         { model: SatinAlmaSiparisi, as: 'satinAlmaSiparisi' },
@@ -233,99 +237,122 @@ class StockController {
     const warehouseData = warehouses.map(wh => {
       const whPlain = wh.toJSON();
 
+      // Normalize locations with bilingual support
+      const rawLocations = whPlain.lokasyonlar || whPlain.locations || [];
+      const normalizedLocations = rawLocations.map(l => ({
+        id: l.id,
+        lokasyonKodu: l.lokasyonKodu || l.locationCode,
+        locationCode: l.lokasyonKodu || l.locationCode,
+        depoId: l.depoId || l.warehouseId,
+        koridor: l.koridor || l.aisle,
+        aisle: l.koridor || l.aisle,
+        raf: l.raf || l.shelf,
+        shelf: l.raf || l.shelf,
+        goz: l.goz || l.bin,
+        bin: l.goz || l.bin,
+        kapasite: l.kapasite || l.capacity || 1000,
+        capacity: l.kapasite || l.capacity || 1000,
+        durum: l.durum || l.status || 'Active'
+      }));
+
+      // Find stock items residing in this warehouse
+      const matchedStocks = allStockItems.filter(st => {
+        const loc = (st.depoLokasyonu || '').trim().toLowerCase();
+        const code = (whPlain.depoKodu || '').trim().toLowerCase();
+        const name = (whPlain.ad || '').trim().toLowerCase();
+
+        if (loc.includes(code) || (name && loc.includes(name))) return true;
+        if (whPlain.id === 1 && (loc.includes('depo-a') || st.kategori === 'Hammadde')) return true;
+        if (whPlain.id === 2 && (loc.includes('depo-b') || st.kategori === 'Mamul' || st.kategori === 'Ticari_Mal')) return true;
+        return false;
+      });
+
+      const productMap = {};
+
+      matchedStocks.forEach(st => {
+        const key = st.stokKodu || st.id;
+        const currentQty = parseFloat(st.mevcutStok || 0);
+        const reservedQty = parseFloat(st.rezerveStok || 0);
+        const unitPrice = parseFloat(st.alisFiyati || 0);
+
+        productMap[key] = {
+          stockId: st.id,
+          stockCode: st.stokKodu,
+          stokKodu: st.stokKodu,
+          name: st.ad,
+          ad: st.ad,
+          category: st.kategori,
+          kategori: st.kategori,
+          totalQuantity: currentQty,
+          mevcutStok: currentQty,
+          reservedQuantity: reservedQty,
+          rezerveStok: reservedQty,
+          unit: st.birim || 'Adet',
+          birim: st.birim || 'Adet',
+          unitPrice: unitPrice,
+          alisFiyati: unitPrice,
+          totalValue: currentQty * unitPrice,
+          locationCode: st.depoLokasyonu || `${whPlain.depoKodu} / Genel Raf`,
+          lastReceiptDate: st.updatedAt ? new Date(st.updatedAt).toLocaleDateString('tr-TR') : '—'
+        };
+      });
+
+      // Match goods receipts logs for this warehouse
       const receiptsForWh = allReceipts.filter(gr => {
-        const whLoc = gr.depoLokasyonu || gr.warehouseLocation;
-        if (!whLoc) {
-          return whPlain.id === 1 || whPlain.tur === 'Hammadde' || whPlain.ad.includes('Ana Hammadde');
-        }
-        const locClean = whLoc.replace(/&amp;/g, '&').trim().toLowerCase();
-        const nameClean = whPlain.ad.replace(/&amp;/g, '&').trim().toLowerCase();
-        const codeClean = whPlain.depoKodu.replace(/&amp;/g, '&').trim().toLowerCase();
-
-        return locClean === nameClean || locClean === codeClean || nameClean.includes(locClean) || locClean.includes(nameClean);
+        const whLoc = (gr.depoLokasyonu || gr.warehouseLocation || '').trim().toLowerCase();
+        const code = (whPlain.depoKodu || '').trim().toLowerCase();
+        const name = (whPlain.ad || '').trim().toLowerCase();
+        if (whLoc && (whLoc.includes(code) || whLoc.includes(name))) return true;
+        if (whPlain.id === 1 && (!whLoc || whLoc.includes('depo-a') || whPlain.tur === 'Hammadde')) return true;
+        return false;
       });
 
-      let receiptLogs = [];
-      let productMap = {};
-
+      const receiptLogs = [];
       receiptsForWh.forEach(gr => {
-        let items = [];
-        const kalData = gr.kalemlerVerisi || gr.itemsData;
-        if (kalData) {
-          try { items = typeof kalData === 'string' ? JSON.parse(kalData) : kalData; } catch(e) { items = []; }
-        }
-        if (!Array.isArray(items) || items.length === 0) {
-          items = [{
-            productName: gr.stokKarti ? gr.stokKarti.ad : 'Ürün Kalemi',
-            stockCode: gr.stokKarti ? gr.stokKarti.stokKodu : '-',
-            currentReceivedQuantity: gr.kabulEdilenMiktar || gr.teslimAlinanMiktar,
-            unit: gr.stokKarti ? gr.stokKarti.birim : 'Adet'
-          }];
-        }
-
-        items.forEach(it => {
-          const qty = parseFloat(it.currentReceivedQuantity || it.teslimAlinanMiktar || it.kabulEdilenMiktar || it.receivedQuantity || 0);
-          if (qty > 0) {
-            const pName = it.productName || it.ad || (gr.stokKarti ? gr.stokKarti.ad : 'Malzeme');
-            const sCode = it.stockCode || it.stokKodu || (gr.stokKarti ? gr.stokKarti.stokKodu : '-');
-            const unit = it.unit || it.birim || (gr.stokKarti ? gr.stokKarti.birim : 'Adet');
-            const receiptDate = gr.kabulTarihi ? new Date(gr.kabulTarihi).toLocaleDateString('tr-TR') : new Date(gr.createdAt).toLocaleDateString('tr-TR');
-
-            receiptLogs.push({
-              grnNo: gr.kabulNo || gr.grnNo,
-              orderNo: gr.satinAlmaSiparisi ? gr.satinAlmaSiparisi.siparisNo : '—',
-              supplierName: gr.tedarikci ? gr.tedarikci.firmaAdi : (gr.satinAlmaSiparisi ? gr.satinAlmaSiparisi.tedarikciAdi : '—'),
-              deliveryNoteNo: gr.irsaliyeNo || '—',
-              receiptDate: receiptDate,
-              productName: pName,
-              stockCode: sCode,
-              quantity: qty,
-              unit: unit
-            });
-
-            const key = sCode !== '-' ? sCode : pName;
-            if (!productMap[key]) {
-              productMap[key] = {
-                stockCode: sCode,
-                name: pName,
-                totalQuantity: 0,
-                unit: unit,
-                lastReceiptDate: receiptDate
-              };
-            }
-            productMap[key].totalQuantity += qty;
-          }
+        const receiptDate = gr.kabulTarihi ? new Date(gr.kabulTarihi).toLocaleDateString('tr-TR') : (gr.createdAt ? new Date(gr.createdAt).toLocaleDateString('tr-TR') : '—');
+        const qty = parseFloat(gr.kabulEdilenMiktar || gr.teslimAlinanMiktar || 0);
+        receiptLogs.push({
+          grnNo: gr.malKabulNo || gr.kabulNo || gr.grnNo || `GRN-${gr.id}`,
+          orderNo: gr.satinAlmaSiparisi ? gr.satinAlmaSiparisi.siparisNo : '—',
+          supplierName: gr.tedarikci ? gr.tedarikci.firmaAdi : (gr.satinAlmaSiparisi ? gr.satinAlmaSiparisi.tedarikciAdi : '—'),
+          deliveryNoteNo: gr.irsaliyeNo || '—',
+          receiptDate: receiptDate,
+          productName: gr.stokKarti ? gr.stokKarti.ad : 'Malzeme Kalemi',
+          stockCode: gr.stokKarti ? gr.stokKarti.stokKodu : '—',
+          quantity: qty,
+          unit: gr.stokKarti ? gr.stokKarti.birim : 'Adet'
         });
       });
 
-      let jsonItems = [];
-      const whKalemler = whPlain.kalemlerJson || whPlain.itemsJson;
-      if (whKalemler) {
-        try { jsonItems = typeof whKalemler === 'string' ? JSON.parse(whKalemler) : whKalemler; } catch(e) { jsonItems = []; }
-      }
-      if (Array.isArray(jsonItems)) {
-        jsonItems.forEach(ji => {
-          const key = ji.stokKodu || ji.stockCode || ji.ad || ji.name;
-          if (key) {
-            if (!productMap[key]) {
-              productMap[key] = {
-                stockCode: ji.stokKodu || ji.stockCode || '-',
-                name: ji.ad || ji.name || 'Malzeme',
-                totalQuantity: parseFloat(ji.miktar || ji.quantity) || 0,
-                unit: ji.birim || ji.unit || 'Adet',
-                lastReceiptDate: ji.lastUpdated ? new Date(ji.lastUpdated).toLocaleDateString('tr-TR') : '—'
-              };
-            } else {
-              productMap[key].totalQuantity = Math.max(productMap[key].totalQuantity, parseFloat(ji.miktar || ji.quantity) || 0);
-            }
-          }
-        });
-      }
+      const productSummary = Object.values(productMap);
+      const totalInventoryValue = productSummary.reduce((sum, p) => sum + (p.totalValue || 0), 0);
+      const totalPhysicalStock = productSummary.reduce((sum, p) => sum + (p.totalQuantity || 0), 0);
 
-      whPlain.productSummary = Object.values(productMap);
-      whPlain.receiptLogs = receiptLogs;
-
-      return whPlain;
+      return {
+        id: whPlain.id,
+        depoKodu: whPlain.depoKodu,
+        warehouseCode: whPlain.depoKodu,
+        ad: whPlain.ad,
+        name: whPlain.ad,
+        tur: whPlain.tur || 'Genel',
+        type: whPlain.tur || 'Genel',
+        sehir: whPlain.sehir || 'İstanbul',
+        city: whPlain.sehir || 'İstanbul',
+        adres: whPlain.adres || '—',
+        address: whPlain.adres || '—',
+        sorumluAdi: whPlain.sorumluAdi || '—',
+        managerName: whPlain.sorumluAdi || '—',
+        durum: whPlain.durum || 'Active',
+        status: whPlain.durum || 'Active',
+        lokasyonlar: normalizedLocations,
+        locations: normalizedLocations,
+        productSummary: productSummary,
+        receiptLogs: receiptLogs,
+        totalProductTypes: productSummary.length,
+        totalPhysicalStock: totalPhysicalStock,
+        totalInventoryValue: totalInventoryValue,
+        totalLocationsCount: normalizedLocations.length
+      };
     });
 
     res.render('stock/warehouses', {
