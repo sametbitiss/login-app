@@ -64,7 +64,17 @@ class ProductionController {
 
   listOrders = asyncHandler(async (req, res) => {
     const { search, status, priority, workCenter } = req.query;
-    const orders = await productionRepository.findAll({ search, status, priority, workCenter });
+    const { Op } = require('sequelize');
+
+    const filterObj = { search, priority, workCenter };
+    if (status) {
+      filterObj.status = status;
+    } else {
+      // Aktif iş emirleri sayfasında sadece onaylanmış/aktif iş emirleri gösterilir, ham talepler (Planned) görünmez
+      filterObj.status = { [Op.ne]: 'Planned' };
+    }
+
+    const orders = await productionRepository.findAll(filterObj);
     const stats = await productionRepository.getStats();
 
     res.render('production/list', {
