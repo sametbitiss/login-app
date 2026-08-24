@@ -84,7 +84,9 @@ class StockController {
         koridor: l.koridor || l.aisle || '',
         raf: l.raf || l.shelf || '',
         goz: l.goz || l.bin || '',
-        kapasite: l.kapasite || l.capacity || 1000
+        kapasite: l.kapasite || l.capacity || 1000,
+        isOccupied: !!l.isOccupied,
+        occupiedBy: l.occupiedBy || null
       }));
       return {
         id: p.id,
@@ -174,7 +176,9 @@ class StockController {
           koridor: l.koridor || l.aisle || '',
           raf: l.raf || l.shelf || '',
           goz: l.goz || l.bin || '',
-          kapasite: l.kapasite || l.capacity || 1000
+          kapasite: l.kapasite || l.capacity || 1000,
+          isOccupied: !!l.isOccupied,
+          occupiedBy: l.occupiedBy || null
         }));
         return {
           id: p.id,
@@ -235,7 +239,9 @@ class StockController {
         koridor: l.koridor || l.aisle || '',
         raf: l.raf || l.shelf || '',
         goz: l.goz || l.bin || '',
-        kapasite: l.kapasite || l.capacity || 1000
+        kapasite: l.kapasite || l.capacity || 1000,
+        isOccupied: !!l.isOccupied,
+        occupiedBy: l.occupiedBy || null
       }));
       return {
         id: p.id,
@@ -320,7 +326,7 @@ class StockController {
     });
 
     const warehouseData = warehouses.map(wh => {
-      const whPlain = wh.toJSON();
+      const whPlain = wh.toJSON ? wh.toJSON() : wh;
 
       // Normalize locations with bilingual support
       const rawLocations = whPlain.lokasyonlar || whPlain.locations || [];
@@ -337,7 +343,10 @@ class StockController {
         bin: l.goz || l.bin,
         kapasite: l.kapasite || l.capacity || 1000,
         capacity: l.kapasite || l.capacity || 1000,
-        durum: l.durum || l.status || 'Active'
+        durum: l.durum || l.status || 'Active',
+        status: l.durum || l.status || 'Active',
+        isOccupied: !!l.isOccupied,
+        occupiedBy: l.occupiedBy || null
       }));
 
       // Find stock items residing in this warehouse

@@ -533,6 +533,8 @@
       defaultOpt.textContent = `[${selectedWh.depoKodu || selectedWh.warehouseCode || 'DEP'}] Genel Depo Alanı / Raf`;
       locSelect.appendChild(defaultOpt);
 
+      const currentItemId = <%= item.id %>;
+
       if (Array.isArray(locs) && locs.length > 0) {
         locs.forEach(loc => {
           const opt = document.createElement('option');
@@ -544,7 +546,23 @@
           const detailStr = detailParts.join(' / ');
 
           opt.value = code;
-          opt.textContent = `📍 [${code}] ${detailStr ? detailStr + ' ' : ''}(Kapasite: ${loc.kapasite || loc.capacity || 1000})`;
+
+          if (loc.isOccupied && loc.occupiedBy) {
+            if (loc.occupiedBy.id === currentItemId) {
+              opt.style.color = '#38bdf8';
+              opt.style.fontWeight = '700';
+              opt.textContent = `📍 [${code}] ${detailStr ? detailStr + ' ' : ''}— MEVCUT LOKASYONUNUZ (Kapasite: ${loc.kapasite || loc.capacity || 1000})`;
+            } else {
+              opt.disabled = true;
+              opt.style.color = '#fb7185';
+              opt.style.background = '#1e1b2e';
+              opt.textContent = `🚫 [${code}] ${detailStr ? detailStr + ' ' : ''}— DOLU ([${loc.occupiedBy.stokKodu}] ${loc.occupiedBy.name})`;
+            }
+          } else {
+            opt.style.color = '#34d399';
+            opt.textContent = `📍 [${code}] ${detailStr ? detailStr + ' ' : ''}— BOŞ (Kapasite: ${loc.kapasite || loc.capacity || 1000})`;
+          }
+
           locSelect.appendChild(opt);
         });
       }

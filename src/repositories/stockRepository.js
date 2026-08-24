@@ -11,6 +11,7 @@ const {
   sequelize
 } = require('../../models');
 const logService = require('../services/logService');
+const { ValidationError } = require('../utils/appError');
 const { Op } = require('sequelize');
 
 class StockRepository {
@@ -147,25 +148,57 @@ class StockRepository {
     }
   }
 
-  async create(data, currentUser = null, ipAddress = null) {
-    const targetCategory = data.kategori || data.category || 'Hammadde';
-    let targetProcurementMethod = data.tedarikYontemi || data.procurementMethod;
+  async validateLocationUnique(targetLocation, excludeStockId = null) {
+    if (!targetLocation || typeof targetLocation !== 'string') return;
+    const locStr = targetLocation.trim();
+    if (!locStr || locStr === 'Genel Raf' || locStr.endsWith('/ Genel Raf') || locStr === 'Genel Depo Alanı / Raf') return;
 
-    if (targetCategory === 'Hammadde' || targetCategory === 'Ticari_Mal' || targetCategory === 'Ticari Mal') {
-      targetProcurementMethod = 'Satın Alma';
-    } else if (targetCategory === 'Mamul') {
-      targetProcurementMethod = 'Üretim';
-    } else if (['Yarı_Mamul', 'Yari_Mamul'].includes(targetCategory)) {
-      targetProcurementMethod = targetProcurementMethod || 'Üretim';
+    // Check if contains a specific location code like LOC-...
+    const locMatch = locStr.match(/LOC-[\w-]+/i);
+    const specificCode = locMatch ? locMatch[0].toUpperCase() : null;
+
+    const whereClause = {
+      durum: { [Op.ne]: 'Passive' }
+    };
+    if (excludeStockId) {
+      whereClause.id = { [Op.ne]: excludeStockId };
+    }
+
+    if (specificCode) {
+      whereClause.depoLokasyonu = { [Op.like]: `%${specificCode}%` };
     } else {
-      targetProcurementMethod = targetProcurementMethod || 'Satın Alma';
+      whereClause.depoLokasyonu = locStr;
+    }
+
+    const occupiedItem = await StokKarti.findOne({ where: whereClause });
+    if (occupiedItem) {
+      const locDisplay = specificCode || locStr;
+      throw new ValidationError(`Seçilen depo lokasyonu ([${locDisplay}]) halihazırda '[${occupiedItem.stokKodu}] ${occupiedItem.ad}' stok kartı tarafından kullanılmaktadır. Bir lokasyona yalnızca tek bir ürün atanabilir!`);
+    }
+  }
+
+  async create(data, currentUser = null, ipAddress = null) {
+    const rawCategory = data.kategori || data.category || 'Hammadde';
+    let targetCategory = rawCategory;
+    if (rawCategory === 'Yarı_Mamul') targetCategory = 'Yari_Mamul';
+
+    let targetProcurementMethod = data.tedarikYontemi || data.procurementMethod || 'Satın Alma';
+    if (targetCategory === 'Mamul') {
+      targetProcurementMethod = 'Üretim';
+    } else if (targetCategory === 'Hammadde' || targetCategory === 'Ticari_Mal' || targetCategory === 'Ticari Mal') {
+      targetProcurementMethod = 'Satın Alma';
+    }
+
+    const targetLocation = ((data.depoLokasyonu || data.warehouseLocation) && (data.depoLokasyonu || data.warehouseLocation).trim()) ? (data.depoLokasyonu || data.warehouseLocation).trim() : null;
+    if (targetLocation) {
+      await this.validateLocationUnique(targetLocation);
     }
 
     const cleanData = {
       stokKodu: data.stokKodu || data.stockCode,
-      barkod: ((data.barkod || data.barcode) && (data.barkod || data.barcode).trim()) ? (data.barkod || data.barcode).trim() : null,
+      barkod: (data.barkod || data.barcode) ? (data.barkod || data.barcode).trim() : null,
       ad: data.ad || data.name,
-      aciklama: data.aciklama || data.description,
+      aciklama: data.aciklama || data.description || null,
       kategori: targetCategory,
       tedarikYontemi: targetProcurementMethod,
       birim: data.birim || data.unit || 'Adet',
@@ -181,7 +214,7 @@ class StockRepository {
       boyutlar: ((data.boyutlar || data.dimensions) && (data.boyutlar || data.dimensions).trim()) ? (data.boyutlar || data.dimensions).trim() : null,
       marka: ((data.marka || data.brand) && (data.marka || data.brand).trim()) ? (data.marka || data.brand).trim() : null,
       model: ((data.model) && data.model.trim()) ? data.model.trim() : null,
-      depoLokasyonu: ((data.depoLokasyonu || data.warehouseLocation) && (data.depoLokasyonu || data.warehouseLocation).trim()) ? (data.depoLokasyonu || data.warehouseLocation).trim() : null,
+      depoLokasyonu: targetLocation,
       tedarikci: ((data.tedarikci || data.supplier) && (data.tedarikci || data.supplier).trim()) ? (data.tedarikci || data.supplier).trim() : null,
       notlar: ((data.notlar || data.notes) && (data.notlar || data.notes).trim()) ? (data.notlar || data.notes).trim() : null,
       olusturanId: currentUser ? currentUser.id : null
@@ -232,7 +265,13 @@ class StockRepository {
     if (data.satisFiyati !== undefined || data.salePrice !== undefined) updateData.satisFiyati = data.satisFiyati !== undefined ? data.satisFiyati : data.salePrice;
     if (data.paraBirimi !== undefined || data.currency !== undefined) updateData.paraBirimi = data.paraBirimi || data.currency;
     if (data.kdvOrani !== undefined || data.taxRate !== undefined) updateData.kdvOrani = data.kdvOrani !== undefined ? data.kdvOrani : data.taxRate;
-    if (data.depoLokasyonu !== undefined || data.warehouseLocation !== undefined) updateData.depoLokasyonu = data.depoLokasyonu || data.warehouseLocation;
+    if (data.depoLokasyonu !== undefined || data.warehouseLocation !== undefined) {
+      const locToSet = (data.depoLokasyonu || data.warehouseLocation) ? (data.depoLokasyonu || data.warehouseLocation).trim() : null;
+      if (locToSet) {
+        await this.validateLocationUnique(locToSet, id);
+      }
+      updateData.depoLokasyonu = locToSet;
+    }
     if (data.tedarikci !== undefined || data.supplier !== undefined) updateData.tedarikci = data.tedarikci || data.supplier;
     if (data.durum !== undefined || data.status !== undefined) updateData.durum = data.durum || data.status;
     if (data.notlar !== undefined || data.notes !== undefined) updateData.notlar = data.notlar || data.notes;
@@ -318,9 +357,51 @@ class StockRepository {
 
   // --- 2. MULTI-WAREHOUSE & LOCATION METHODS ---
   async findAllWarehouses() {
-    return await Depo.findAll({
+    const warehouses = await Depo.findAll({
       include: [{ model: StokLokasyonu, as: 'lokasyonlar' }],
       order: [['id', 'ASC']]
+    });
+
+    const allActiveStocks = await StokKarti.findAll({
+      where: { durum: { [Op.ne]: 'Passive' } },
+      attributes: ['id', 'stokKodu', 'ad', 'kategori', 'depoLokasyonu']
+    });
+
+    return warehouses.map(wh => {
+      const p = wh.toJSON ? wh.toJSON() : wh;
+      const rawLocs = p.lokasyonlar || p.locations || [];
+      const enrichedLocs = rawLocs.map(l => {
+        const code = l.lokasyonKodu || l.locationCode;
+        const occupant = allActiveStocks.find(st => {
+          const stLoc = (st.depoLokasyonu || '').trim();
+          return stLoc && stLoc.includes(code);
+        });
+
+        return {
+          id: l.id,
+          lokasyonKodu: code,
+          locationCode: code,
+          depoId: l.depoId || l.warehouseId,
+          koridor: l.koridor || l.aisle || '',
+          aisle: l.koridor || l.aisle || '',
+          raf: l.raf || l.shelf || '',
+          shelf: l.raf || l.shelf || '',
+          goz: l.goz || l.bin || '',
+          bin: l.goz || l.bin || '',
+          kapasite: l.kapasite || l.capacity || 1000,
+          capacity: l.kapasite || l.capacity || 1000,
+          durum: l.durum || l.status || 'Active',
+          status: l.durum || l.status || 'Active',
+          isOccupied: !!occupant,
+          occupiedBy: occupant ? { id: occupant.id, stokKodu: occupant.stokKodu, name: occupant.ad } : null
+        };
+      });
+
+      return {
+        ...p,
+        lokasyonlar: enrichedLocs,
+        locations: enrichedLocs
+      };
     });
   }
 

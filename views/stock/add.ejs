@@ -523,7 +523,17 @@
           const detailStr = detailParts.join(' / ');
 
           opt.value = code;
-          opt.textContent = `📍 [${code}] ${detailStr ? detailStr + ' ' : ''}(Kapasite: ${loc.kapasite || loc.capacity || 1000})`;
+
+          if (loc.isOccupied && loc.occupiedBy) {
+            opt.disabled = true;
+            opt.style.color = '#fb7185';
+            opt.style.background = '#1e1b2e';
+            opt.textContent = `🚫 [${code}] ${detailStr ? detailStr + ' ' : ''}— DOLU ([${loc.occupiedBy.stokKodu}] ${loc.occupiedBy.name})`;
+          } else {
+            opt.style.color = '#34d399';
+            opt.textContent = `📍 [${code}] ${detailStr ? detailStr + ' ' : ''}— BOŞ (Kapasite: ${loc.kapasite || loc.capacity || 1000})`;
+          }
+
           locSelect.appendChild(opt);
         });
       }
