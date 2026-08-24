@@ -369,19 +369,19 @@
         <div id="tab-order-info" class="wizard-tab-content active">
           <div class="form-section-card">
             <div class="section-title">
-              <span>📋 1. İş Emri Temel Parametreleri</span>
+              <span>📋 1. İş Emri Temel Bilgileri & Parametreleri</span>
             </div>
 
             <div class="form-row-4">
               <!-- 1. İş Emri No (Sistem tarafından atanır, değiştirilemez) -->
               <div class="form-group">
-                <label class="form-label">1. İş Emri No <span style="color: #34d399;">(Otomatik & Salt Okunur)</span></label>
+                <label class="form-label">İş Emri No <span style="color: #34d399;">(Otomatik & Salt Okunur)</span></label>
                 <input type="text" name="isEmriNo" value="<%= nextWorkOrderNo %>" readonly class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; letter-spacing: 0.5px;">
               </div>
 
               <!-- 2. Öncelik Seviyesi -->
               <div class="form-group">
-                <label class="form-label">2. Öncelik Seviyesi</label>
+                <label class="form-label">Öncelik Seviyesi</label>
                 <select name="priority" class="form-control" style="font-weight: 700;">
                   <option value="Low" <%= effectivePriority === 'Low' ? 'selected' : '' %>>Düşük (Low)</option>
                   <option value="Normal" <%= effectivePriority === 'Normal' ? 'selected' : '' %>>Normal (Standart)</option>
@@ -392,7 +392,7 @@
 
               <!-- 4. Sipariş / Üretim Miktarı (Değiştirilemez - Salt Okunur) -->
               <div class="form-group">
-                <label class="form-label">4. Üretim Miktarı <span style="color: #34d399;">(MRP Net İhtiyaç - Değiştirilemez)</span></label>
+                <label class="form-label">Net Üretim Miktarı <span style="color: #34d399;">(MRP Net İhtiyaç - Değiştirilemez)</span></label>
                 <input type="number" name="plannedQuantity" id="inputPlannedQty" value="<%= effectiveQty %>" readonly class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1rem; color: #34d399;" title="MRP tarafından hesaplanan net ihtiyaç miktarıdır">
               </div>
 
@@ -405,7 +405,7 @@
 
             <div class="form-row-2">
               <div class="form-group">
-                <label class="form-label">3. Ürün Kodu & Adı (DB Kaydı)</label>
+                <label class="form-label">Ürün Kodu & Adı (DB Kaydı)</label>
                 <input type="text" value="[<%= targetProduct.stokKodu %>] <%= targetProduct.ad %>" readonly class="form-control" style="color: #cbd5e1; font-weight: 700;">
               </div>
               <div class="form-group">
@@ -427,7 +427,7 @@
         <div id="tab-recipe-routing" class="wizard-tab-content">
           <div class="form-section-card">
             <div class="section-title">
-              <span>📜 5. Aktif Reçete & Rota Bilgisi</span>
+              <span>📜 2. Aktif Reçete & Rota Bilgisi</span>
             </div>
 
             <div class="form-row-2">
@@ -475,7 +475,7 @@
         <div id="tab-operations" class="wizard-tab-content">
           <div class="form-section-card">
             <div class="section-title">
-              <span>⏱️ 8. Rota Operasyon Adımları & Süre / Kapasite Projeksiyonu</span>
+              <span>⏱️ 3. Rota Operasyon Adımları & Süre / Kapasite Planı</span>
             </div>
 
             <div class="table-wrapper">
@@ -486,10 +486,10 @@
                     <th>Operasyon Kodu</th>
                     <th>Operasyon Adı</th>
                     <th>Hedef İş Merkezi (İstasyon)</th>
-                    <th style="text-align: right;">Hazırlık (Dk)</th>
-                    <th style="text-align: right;">Birim Süre (Dk)</th>
-                    <th style="text-align: right;">Toplam Süre (Dk)</th>
-                    <th style="text-align: right;">Toplam Süre (Saat)</th>
+                    <th style="text-align: right;">Hazırlık Süresi</th>
+                    <th style="text-align: right;">Birim Çalışma (Birim Başı)</th>
+                    <th style="text-align: right;">Toplam Çalışma (<%= effectiveQty %> <%= targetProduct.birim || 'Adet' %>)</th>
+                    <th style="text-align: right;">Toplam Adım Süresi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -504,8 +504,8 @@
                         <td style="font-size: 0.85rem; color: #cbd5e1;"><%= op.isMerkezi %></td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= op.hazirlikSuresiDakika %> Dk</td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= op.calismaSuresiDakikaBirim %> Dk</td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= op.toplamDakika %> Dk</td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;"><%= op.toplamSaat %> Saat</td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= op.toplamCalismaDakika %> Dk</td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;"><%= op.formattedDuration %></td>
                       </tr>
                     <% }); %>
                   <% } %>
@@ -517,27 +517,27 @@
             <div class="info-box-grid" style="margin-top: 10px;">
               <div class="info-box">
                 <span class="info-box-label">Toplam Hazırlık Süresi</span>
-                <span class="info-box-value"><%= totalSetupMins %> Dk</span>
+                <span class="info-box-value"><%= totalSetupMins %> Dk (<%= (totalSetupMins/60).toFixed(2) %> Sa)</span>
               </div>
               <div class="info-box">
                 <span class="info-box-label">Toplam Çalışma Süresi</span>
-                <span class="info-box-value"><%= totalRunMins %> Dk</span>
+                <span class="info-box-value"><%= totalRunMins %> Dk (<%= (totalRunMins/60).toFixed(2) %> Sa)</span>
               </div>
               <div class="info-box">
                 <span class="info-box-label">Toplam İmalat Süresi</span>
-                <span class="info-box-value" style="color: #fbbf24;"><%= totalDurationHours %> Saat</span>
+                <span class="info-box-value" style="color: #fbbf24; font-size: 1.15rem;"><%= totalTimePretty %></span>
               </div>
             </div>
 
             <!-- Başlangıç ve Bitiş Zamanı Form Alanları (Başlangıç readonly, Bitiş min=Başlangıç) -->
             <div class="form-row-2" style="margin-top: 10px;">
               <div class="form-group">
-                <label class="form-label">8. Başlangıç Tarihi <span style="color: #34d399;">(İstasyon Kuyruğuna Göre - Değiştirilemez)</span></label>
+                <label class="form-label">Planlanan Başlangıç Tarihi <span style="color: #34d399;">(İstasyon Kuyruğuna Göre - Değiştirilemez)</span></label>
                 <input type="date" name="plannedStartDate" id="inputPlannedStartDate" value="<%= projectedStartDate %>" readonly class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34d399;">
               </div>
 
               <div class="form-group">
-                <label class="form-label">8. Bitiş Tarihi <span style="color: #fbbf24;">(Tahmini Kapasiteye Göre)</span></label>
+                <label class="form-label">Planlanan Bitiş Tarihi <span style="color: #fbbf24;">(Tahmini Kapasiteye Göre)</span></label>
                 <input type="date" name="plannedEndDate" id="inputPlannedEndDate" value="<%= projectedEndDate %>" min="<%= projectedStartDate %>" class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #fbbf24;" onchange="validateEndDate(this)">
               </div>
             </div>
@@ -554,11 +554,11 @@
         <div id="tab-components" class="wizard-tab-content">
           <div class="form-section-card">
             <div class="section-title">
-              <span>📦 6, 7 & 9. Tüketilecek Bileşenler & Fireli Harcama Planı (MRP Yuvarlanmış)</span>
+              <span>📦 4. Tüketilecek Bileşenler & Fireli Harcama Planı</span>
             </div>
 
             <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px;">
-              Reçetedeki her bileşenin hangi adımda, hangi operasyonda harcanacağı ve MRP katmanında fire oranı eklenerek <strong>Math.ceil</strong> ile yuvarlanmış net gereksinimleri aşağıda listelenmiştir.
+              Reçetedeki her bileşenin hangi adımda, hangi operasyonda harcanacağı ve <strong><%= effectiveQty %> <%= targetProduct.birim || 'Adet' %></strong> net üretim için fire oranı eklenerek <strong>Math.ceil</strong> ile yuvarlanmış gereksinimleri aşağıda listelenmiştir.
             </div>
 
             <div class="table-wrapper">
@@ -572,7 +572,7 @@
                     <th style="text-align: right;">Birim Katsayı</th>
                     <th style="text-align: right;">Fire Oranı</th>
                     <th style="text-align: right;">Brüt İhtiyaç</th>
-                    <th style="text-align: right;">9. Yuvarlanmış İhtiyaç</th>
+                    <th style="text-align: right;">Net Harcama İhtiyacı</th>
                     <th style="text-align: right;">Depo Stoğu</th>
                     <th style="text-align: center;">Stok Yeterliliği</th>
                   </tr>
@@ -645,7 +645,7 @@
         <div id="tab-instructions" class="wizard-tab-content">
           <div class="form-section-card">
             <div class="section-title">
-              <span>✍️ 5. Saha Talimatları, Görevlendirme & Nihai Onay</span>
+              <span>✍️ 5. Saha Talimatları & Görevlendirme</span>
             </div>
 
             <div class="form-row-2">

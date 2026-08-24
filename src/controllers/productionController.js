@@ -106,7 +106,15 @@ class ProductionController {
       return res.redirect('/production/mrp');
     }
 
-    const effectiveQty = parseFloat(plannedQty || qty || 1) || 1;
+    let grossQty = parseFloat(plannedQty || qty || 1) || 1;
+    let effectiveQty = grossQty;
+
+    // Eğer ürün yarı mamul veya mamul ise ve depoda mevcut stok varsa, net üretim ihtiyacı hesaplanır
+    const currentStock = parseFloat(targetProduct.mevcutStok || 0);
+    if (grossQty > currentStock && currentStock > 0 && ['Yari_Mamul', 'Yarı_Mamul', 'Mamul'].includes(targetProduct.kategori)) {
+      effectiveQty = Math.max(1, grossQty - currentStock);
+    }
+
     const effectivePriority = priority || 'Normal';
     const effectiveDemandRef = requisitionNo || demandRef || '';
 
@@ -118,6 +126,7 @@ class ProductionController {
     let totalRunMins = 0;
     let totalDurationMins = 0;
     let totalDurationHours = 0;
+    let totalTimePretty = '';
     let primaryWorkCenter = WORK_CENTERS[0];
     let projectedStartDate = new Date().toISOString().split('T')[0];
     let projectedEndDate = projectedStartDate;
@@ -155,7 +164,7 @@ class ProductionController {
           primaryWorkCenter = routingOperations[0].isMerkezi || WORK_CENTERS[0];
         }
 
-        // 4. Calculate Operation Times
+        // 4. Calculate Operation Times in Minutes strictly, then convert to hours
         const processedOps = routingOperations.map(op => {
           const setupM = parseFloat(op.hazirlikSuresiDakika || 0);
           const runMPerUnit = parseFloat(op.calismaSuresiDakikaBirim || 0);
@@ -178,12 +187,18 @@ class ProductionController {
             toplamCalismaDakika: parseFloat(opTotalRunM.toFixed(1)),
             toplamDakika: parseFloat(opTotalMins.toFixed(1)),
             toplamSaat: opTotalHours,
+            formattedDuration: `${opTotalMins.toFixed(0)} Dk (${opTotalHours} Sa)`,
             operatorSayisi: op.operatorSayisi || 1,
             talimatlar: op.talimatlar
           };
         });
 
-        totalDurationHours = parseFloat((totalDurationMins / 60).toFixed(1));
+        totalDurationHours = parseFloat((totalDurationMins / 60).toFixed(2));
+        const totalHoursInt = Math.floor(totalDurationMins / 60);
+        const totalMinsRem = Math.round(totalDurationMins % 60);
+        totalTimePretty = totalHoursInt > 0
+          ? `${Math.round(totalDurationMins)} Dk (${totalHoursInt} Sa ${totalMinsRem} Dk / ${totalDurationHours} Saat)`
+          : `${Math.round(totalDurationMins)} Dk (${totalDurationHours} Saat)`;
 
         // 5. Work Center Schedule / Queue check
         const uniqueWorkCenters = Array.from(new Set(routingOperations.map(r => r.isMerkezi).filter(Boolean)));
@@ -309,6 +324,7 @@ class ProductionController {
       totalRunMins: parseFloat(totalRunMins.toFixed(1)),
       totalDurationMins: parseFloat(totalDurationMins.toFixed(1)),
       totalDurationHours,
+      totalTimePretty,
       primaryWorkCenter,
       projectedStartDate,
       projectedEndDate,
