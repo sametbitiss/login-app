@@ -21,14 +21,14 @@ class ProductionController {
     const orders = await productionRepository.findAll();
     const stats = await productionRepository.getStats();
     const capacityReport = await mrpService.calculateCapacityLoad();
-    const mrpResults = await mrpService.runMRP();
+    const mrpData = await mrpService.runMRP();
 
     res.render('production/analytics', {
       user: req.user,
       orders,
       stats,
       capacityReport,
-      mrpResults: mrpResults.slice(0, 5),
+      mrpResults: (mrpData.mrpResults || []).slice(0, 5),
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'analytics'
