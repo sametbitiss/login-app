@@ -3,9 +3,344 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kapasite Planlaması ve İstasyon Yük Dengesi — Enterprise ERP</title>
+  <title>İş Merkezi Kapasite & İstasyon Yük Yönetimi — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .capacity-summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .cap-stat-card {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .cap-stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .cap-stat-label { font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cap-stat-val { font-size: 1.45rem; font-weight: 900; color: #f8fafc; font-family: 'JetBrains Mono', monospace; }
+
+    .work-centers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 22px;
+    }
+
+    .wc-capacity-card {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .wc-capacity-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    .wc-capacity-card--busy {
+      border-left: 5px solid #6366f1;
+    }
+    .wc-capacity-card--idle {
+      border-left: 5px solid #10b981;
+    }
+    .wc-capacity-card--maintenance {
+      border-left: 5px solid #f43f5e;
+      background: rgba(30, 20, 30, 0.7);
+    }
+    .wc-capacity-card--inactive {
+      border-left: 5px solid #64748b;
+      opacity: 0.8;
+    }
+
+    .wc-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .wc-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .wc-code-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.15);
+      padding: 2px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      width: fit-content;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .wc-name {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #ffffff;
+      margin: 2px 0 0 0;
+    }
+    .wc-workshop-sub {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Status Pills */
+    .wc-status-badge {
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+    .wc-status--idle {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1.5px solid rgba(16, 185, 129, 0.4);
+    }
+    .wc-status--busy {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      border: 1.5px solid rgba(99, 102, 241, 0.5);
+      animation: pulseGlow 2s infinite;
+    }
+    .wc-status--maintenance {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fb7185;
+      border: 1.5px solid rgba(244, 63, 94, 0.5);
+    }
+    .wc-status--inactive {
+      background: rgba(100, 116, 139, 0.2);
+      color: #94a3b8;
+      border: 1.5px solid rgba(100, 116, 139, 0.4);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(99, 102, 241, 0.2); }
+      50% { box-shadow: 0 0 16px rgba(99, 102, 241, 0.5); }
+    }
+
+    /* Progress & Load */
+    .wc-load-section {
+      background: rgba(30, 41, 59, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 14px 18px;
+    }
+    .wc-load-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+    .wc-progress-track {
+      width: 100%;
+      height: 10px;
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .wc-progress-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.4s ease;
+    }
+
+    .wc-load-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      text-align: center;
+    }
+    .wc-load-meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .wc-load-meta-lbl { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+    .wc-load-meta-val { font-size: 0.88rem; color: #cbd5e1; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+    /* Active Running Work Order Block */
+    .active-order-box {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(30, 41, 59, 0.6));
+      border: 1.5px solid rgba(99, 102, 241, 0.35);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .active-order-title {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .active-order-body {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .active-order-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .active-order-meta {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .no-active-order-box {
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px dashed rgba(16, 185, 129, 0.25);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #34d399;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Queued Orders List */
+    .queue-section {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .queue-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .queue-item {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.825rem;
+    }
+    .queue-item:last-child { margin-bottom: 0; }
+
+    /* Personnel & Workers info */
+    .wc-personnel-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.825rem;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    /* Actions Footer */
+    .wc-actions-bar {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn-action-cap {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.825rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      outline: none;
+    }
+    .btn-action-cap--maintenance {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fb7185;
+      border-color: rgba(244, 63, 94, 0.35);
+    }
+    .btn-action-cap--maintenance:hover {
+      background: rgba(244, 63, 94, 0.3);
+      color: #fff;
+    }
+    .btn-action-cap--resume {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    .btn-action-cap--resume:hover {
+      background: rgba(16, 185, 129, 0.35);
+      color: #fff;
+    }
+    .btn-action-cap--release {
+      background: rgba(148, 163, 184, 0.12);
+      color: #cbd5e1;
+      border-color: rgba(148, 163, 184, 0.25);
+    }
+    .btn-action-cap--release:hover {
+      background: rgba(148, 163, 184, 0.25);
+      color: #fff;
+    }
+  </style>
   <script src="/sidebar.js" defer></script>
 </head>
 <body class="module-body">
@@ -51,51 +386,298 @@
 
     <main class="module-content">
 
-      <div class="page-header">
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h1>İş İstasyonu Kapasite Planlaması ve Darboğaz Tespiti</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Fabrika tezgah parkuru ve iş gücü mevcudiyetine göre yük dengesi hesabı (5 Günlük Vadi).</p>
+          <div style="font-size: 0.85rem; color: #818cf8; font-weight: 700; margin-bottom: 4px;">🏭 FABRİKA TEZGAH PARKURU & SAHA YÜK DENGELEME</div>
+          <h1 style="display: flex; align-items: center; gap: 10px;">
+            <span>⚙️ İş Merkezi Kapasite Planlaması & İstasyon Yük Dengesi</span>
+          </h1>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">
+            Sistemdeki tüm iş merkezlerinin anlık çalışma statüleri, aktif iş emirleri, sırasını bekleyen kuyruklar ve vardiya doluluk oranları (5 Günlük Vade).
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a href="/production/work-centers" class="btn-action-cap btn-action-cap--release" style="text-decoration: none; padding: 10px 18px;">
+            ⚙️ İş Merkezlerini Yönet
+          </a>
+          <a href="/production/orders" class="btn-action-cap btn-action-cap--resume" style="text-decoration: none; padding: 10px 18px;">
+            📋 İş Emirleri Listesi
+          </a>
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-        <% capacityReport.forEach(c => { %>
-          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-              <div>
-                <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);"><%= c.workCenterName %></h4>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Günlük Kapasite: <%= c.dailyCapacityHours %> Saat (5 Gün: <%= c.horizonCapacityHours %> Saat)</div>
-              </div>
-              <% if (c.isBottleneck) { %>
-                <span class="status-pill status-rejected">🚨 Darboğaz Riski</span>
-              <% } else { %>
-                <span class="status-pill status-active">✓ Dengeli Yük</span>
-              <% } %>
-            </div>
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1.5px solid rgba(16, 185, 129, 0.4); color: #34d399; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+          <span>✓</span> <%= success %>
+        </div>
+      <% } %>
 
-            <div style="margin-bottom: 12px;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
-                <span>Atanan Yük: <strong><%= c.allocatedHours %> Saat</strong></span>
-                <span style="font-weight: 700; color: <%= c.isBottleneck ? 'var(--rose)' : 'var(--emerald)' %>;"><%= c.loadPercentage %>% Doluluk</span>
-              </div>
-              <div style="width: 100%; height: 10px; background: var(--bg-elevated); border-radius: 5px; overflow: hidden;">
-                <div style="width: <%= c.loadPercentage %>%; height: 100%; background: <%= c.isBottleneck ? 'var(--rose)' : 'var(--indigo)' %>; border-radius: 5px; transition: width 0.3s;"></div>
-              </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px;">
-              <span>Atanan İş Emri: <strong><%= c.activeOrdersCount %> Adet</strong></span>
-              <span>Kullanılabilir Boş Kapasite: <strong><%= c.availableHours %> Saat</strong></span>
-            </div>
+      <!-- Top Summary Metrics -->
+      <% 
+        const totalCenters = capacityReport.length;
+        const busyCenters = capacityReport.filter(c => c.operationalStatus === 'Busy').length;
+        const idleCenters = capacityReport.filter(c => c.operationalStatus === 'Idle').length;
+        const maintCenters = capacityReport.filter(c => c.operationalStatus === 'Maintenance').length;
+        const bottleneckCount = capacityReport.filter(c => c.isBottleneck).length;
+        const totalAllocatedHours = capacityReport.reduce((sum, c) => sum + c.allocatedHours, 0).toFixed(1);
+        const totalHorizonHours = capacityReport.reduce((sum, c) => sum + c.horizonCapacityHours, 0).toFixed(1);
+        const avgLoad = totalHorizonHours > 0 ? Math.round((totalAllocatedHours / totalHorizonHours) * 100) : 0;
+      %>
+      <div class="capacity-summary-cards">
+        <div class="cap-stat-card">
+          <div class="cap-stat-icon" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">⚙️</div>
+          <div>
+            <div class="cap-stat-label">Toplam İş Merkezi</div>
+            <div class="cap-stat-val"><%= totalCenters %> <span style="font-size: 0.85rem; color: #94a3b8;">İstasyon</span></div>
           </div>
-        <% }); %>
+        </div>
+
+        <div class="cap-stat-card">
+          <div class="cap-stat-icon" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">🟢</div>
+          <div>
+            <div class="cap-stat-label">Müsait (Boş) İstasyon</div>
+            <div class="cap-stat-val" style="color: #34d399;"><%= idleCenters %> <span style="font-size: 0.85rem; color: #94a3b8;">Adet</span></div>
+          </div>
+        </div>
+
+        <div class="cap-stat-card">
+          <div class="cap-stat-icon" style="background: rgba(99, 102, 241, 0.25); color: #a5b4fc;">⚡</div>
+          <div>
+            <div class="cap-stat-label">Aktif Üretimde (Meşgul)</div>
+            <div class="cap-stat-val" style="color: #818cf8;"><%= busyCenters %> <span style="font-size: 0.85rem; color: #94a3b8;">Adet</span></div>
+          </div>
+        </div>
+
+        <div class="cap-stat-card">
+          <div class="cap-stat-icon" style="background: rgba(244, 63, 94, 0.2); color: #fb7185;">🛠️</div>
+          <div>
+            <div class="cap-stat-label">Bakımda / Arızalı</div>
+            <div class="cap-stat-val" style="color: <%= maintCenters > 0 ? '#fb7185' : '#cbd5e1' %>;"><%= maintCenters %> <span style="font-size: 0.85rem; color: #94a3b8;">Adet</span></div>
+          </div>
+        </div>
+
+        <div class="cap-stat-card">
+          <div class="cap-stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">📊</div>
+          <div>
+            <div class="cap-stat-label">Genel Parkur Yükü</div>
+            <div class="cap-stat-val" style="color: #fbbf24;">%<%= avgLoad %> <span style="font-size: 0.85rem; color: #94a3b8;">Doluluk</span></div>
+          </div>
+        </div>
       </div>
+
+      <!-- WORK CENTERS GRID -->
+      <div class="work-centers-grid">
+        <% if (capacityReport.length === 0) { %>
+          <div style="grid-column: 1 / -1; background: var(--bg-surface); border: 1px dashed var(--border); border-radius: 16px; padding: 3rem; text-align: center; color: var(--text-muted);">
+            Sistemde kayıtlı iş merkezi bulunmamaktadır. <a href="/production/work-centers/add" style="color: #818cf8; font-weight: 700;">Buradan yeni iş merkezi ekleyebilirsiniz.</a>
+          </div>
+        <% } else { %>
+          <% capacityReport.forEach(c => { %>
+            <div class="wc-capacity-card wc-capacity-card--<%= c.operationalStatus.toLowerCase() %>">
+              
+              <!-- 1. CARD HEADER: Code, Name, Workshop, Status -->
+              <div class="wc-card-header">
+                <div class="wc-title-group">
+                  <span class="wc-code-badge"><%= c.workCenterCode %></span>
+                  <h3 class="wc-name"><%= c.workCenterName %></h3>
+                  <div class="wc-workshop-sub">
+                    <span>🏢 <%= c.atolyeName %></span>
+                    <span>•</span>
+                    <span>👥 <%= c.workersCount %> Operatör Kapasiteli</span>
+                  </div>
+                </div>
+
+                <!-- Anlık Statü Rozeti -->
+                <div>
+                  <% if (c.operationalStatus === 'Idle') { %>
+                    <span class="wc-status-badge wc-status--idle">🟢 Boş (Müsait)</span>
+                  <% } else if (c.operationalStatus === 'Busy') { %>
+                    <span class="wc-status-badge wc-status--busy">⚡ Meşgul (Üretimde)</span>
+                  <% } else if (c.operationalStatus === 'Maintenance') { %>
+                    <span class="wc-status-badge wc-status--maintenance">🛠️ Bakımda / Arızalı</span>
+                  <% } else { %>
+                    <span class="wc-status-badge wc-status--inactive">⛔ Pasif</span>
+                  <% } %>
+                </div>
+              </div>
+
+              <!-- 2. DOLULUK VE KAPASİTE BARI -->
+              <div class="wc-load-section">
+                <div class="wc-load-header">
+                  <span style="color: #94a3b8; font-weight: 700; font-size: 0.8rem;">
+                    📊 İstasyon Doluluk Oranı (5 Günlük Vade)
+                  </span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 0.95rem; color: <%= c.loadPercentage > 85 ? '#fb7185' : (c.loadPercentage > 50 ? '#fbbf24' : '#34d399') %>;">
+                    %<%= c.loadPercentage %> Doluluk
+                  </span>
+                </div>
+
+                <div class="wc-progress-track">
+                  <div class="wc-progress-fill" style="width: <%= c.loadPercentage %>%; background: <%= c.loadPercentage > 85 ? 'linear-gradient(90deg, #f43f5e, #e11d48)' : (c.loadPercentage > 50 ? 'linear-gradient(90deg, #f59e0b, #d97706)' : 'linear-gradient(90deg, #10b981, #059669)') %>;"></div>
+                </div>
+
+                <div class="wc-load-meta-grid">
+                  <div class="wc-load-meta-item">
+                    <span class="wc-load-meta-lbl">Günlük Kapasite</span>
+                    <span class="wc-load-meta-val"><%= c.dailyCapacityHours %> Sa/Gün</span>
+                  </div>
+                  <div class="wc-load-meta-item">
+                    <span class="wc-load-meta-lbl">5 Günlük Kapasite</span>
+                    <span class="wc-load-meta-val"><%= c.horizonCapacityHours %> Saat</span>
+                  </div>
+                  <div class="wc-load-meta-item">
+                    <span class="wc-load-meta-lbl">Atanan Toplam Yük</span>
+                    <span class="wc-load-meta-val" style="color: #fbbf24;"><%= c.allocatedHours %> Saat</span>
+                  </div>
+                  <div class="wc-load-meta-item">
+                    <span class="wc-load-meta-lbl">Kullanılabilir Boş</span>
+                    <span class="wc-load-meta-val" style="color: #34d399;"><%= c.availableHours %> Saat</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. AKTİF ÇALIŞAN İŞ EMRİ BÖLÜMÜ -->
+              <div>
+                <div style="font-size: 0.76rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                  ⚡ Aktif Çalışan İş Emri
+                </div>
+
+                <% if (c.activeRunningOrder) { %>
+                  <div class="active-order-box">
+                    <div class="active-order-title">
+                      <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #34d399;">
+                        📋 <%= c.activeRunningOrder.isEmriNo %>
+                      </span>
+                      <span class="status-pill status-completed" style="font-size: 0.72rem; padding: 2px 8px;">
+                        ⚡ <%= c.activeRunningOrder.oncelik %> Öncelikli
+                      </span>
+                    </div>
+
+                    <div class="active-order-body">
+                      <div>
+                        <div class="active-order-name">
+                          [<%= c.activeRunningOrder.stokKarti ? c.activeRunningOrder.stokKarti.stokKodu : '—' %>] 
+                          <%= c.activeRunningOrder.stokKarti ? c.activeRunningOrder.stokKarti.ad : c.activeRunningOrder.uretimBasligi %>
+                        </div>
+                        <div class="active-order-meta">
+                          <span>Miktar: <strong style="color: #f8fafc;"><%= parseFloat(c.activeRunningOrder.tamamlananMiktar || 0) %> / <%= parseFloat(c.activeRunningOrder.planlananMiktar) %> <%= c.activeRunningOrder.birim %></strong></span>
+                          <span>•</span>
+                          <span>Tahmini: <strong style="color: #fbbf24;"><%= c.activeRunningOrder.tahminiSaat || 0 %> Saat</strong></span>
+                          <span>•</span>
+                          <span>Termin: <strong style="color: #cbd5e1;"><%= c.activeRunningOrder.planlananBitisTarihi %></strong></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% } else { %>
+                  <div class="no-active-order-box">
+                    <span>🟢 Bu iş merkezinde şu anda aktif çalışan bir iş emri bulunmamaktadır (İstasyon Boş & Müsait).</span>
+                  </div>
+                <% } %>
+              </div>
+
+              <!-- 4. KUYRUKTA / SIRADA BEKLEYEN İŞ EMİRLERİ LİSTESİ -->
+              <div class="queue-section">
+                <div class="queue-title">
+                  <span>⏳ Kuyrukta Sırasını Bekleyen İşler</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; color: #818cf8; font-size: 0.78rem;">
+                    <%= c.queuedOrders.length %> Adet İş Emri
+                  </span>
+                </div>
+
+                <% if (c.queuedOrders.length === 0) { %>
+                  <div style="font-size: 0.8rem; color: #64748b; font-style: italic; padding: 6px 4px;">
+                    Bu istasyona atanmış bekleyen kuyruk kaydı bulunmamaktadır.
+                  </div>
+                <% } else { %>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <% c.queuedOrders.forEach((qo, idx) => { %>
+                      <div class="queue-item">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
+                            #<%= idx + 1 %>
+                          </span>
+                          <div>
+                            <strong style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;"><%= qo.isEmriNo %></strong>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">
+                              <%= qo.stokKarti ? qo.stokKarti.ad : qo.uretimBasligi %> (<%= parseFloat(qo.planlananMiktar) %> <%= qo.birim %>)
+                            </div>
+                          </div>
+                        </div>
+                        <div style="text-align: right;">
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #fbbf24; font-weight: 700;">
+                            <%= qo.tahminiSaat || 0 %> Sa
+                          </span>
+                          <div style="font-size: 0.7rem; color: #64748b;">
+                            <%= qo.durum === 'Approved' ? 'Onaylı' : 'Planlandı' %>
+                          </div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                <% } %>
+              </div>
+
+              <!-- 5. PERSONEL & OPERATÖR BİLGİSİ -->
+              <div class="wc-personnel-row">
+                <div>
+                  <span style="color: #64748b; font-size: 0.75rem; display: block; font-weight: 700; text-transform: uppercase;">
+                    👤 Aktif Görevli / Operatör
+                  </span>
+                  <span style="font-weight: 800; color: #f8fafc;">
+                    <%= c.activePersonnel ? c.activePersonnel : 'Atanmış Operatör Yok' %>
+                  </span>
+                </div>
+                <div style="text-align: right;">
+                  <span style="color: #64748b; font-size: 0.75rem; display: block; font-weight: 700; text-transform: uppercase;">
+                    👥 Vardiya Personeli
+                  </span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #a5b4fc;">
+                    <%= c.workersCount %> Kişi
+                  </span>
+                </div>
+              </div>
+
+              <!-- 6. AKSİYON BUTONLARI -->
+              <div class="wc-actions-bar">
+                <% if (c.operationalStatus === 'Maintenance') { %>
+                  <form action="/production/capacity/<%= c.id %>/maintenance" method="POST" style="flex: 1; margin: 0;">
+                    <button type="submit" class="btn-action-cap btn-action-cap--resume" style="width: 100%;">
+                      <span>✅ Bakımdan Çıkar / Devreye Al</span>
+                    </button>
+                  </form>
+                <% } else { %>
+                  <form action="/production/capacity/<%= c.id %>/maintenance" method="POST" style="flex: 1; margin: 0;">
+                    <button type="submit" class="btn-action-cap btn-action-cap--maintenance" style="width: 100%;">
+                      <span>🛠️ Bakıma Al / Arıza Bildir</span>
+                    </button>
+                  </form>
+                <% } %>
+
+                <form action="/production/capacity/<%= c.id %>/release" method="POST" style="flex: 1; margin: 0;">
+                  <button type="submit" class="btn-action-cap btn-action-cap--release" style="width: 100%;">
+                    <span>🔄 Boşalt / Serbest Bırak</span>
+                  </button>
+                </form>
+              </div>
+
+            </div>
+          <% }); %>
+        <% } %>
+      </div>
+
     </main>
   </div>
 
   <script>
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    function updateClock() { 
+      const now = new Date(); 
+      const el = document.getElementById('liveTime'); 
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); 
+    }
+    updateClock(); 
+    setInterval(updateClock, 1000);
   </script>
 </body>
 </html>

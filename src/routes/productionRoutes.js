@@ -43,6 +43,8 @@ router.post('/routing/delete/:stockItemId', productionController.deleteRouting);
 
 // 5. Capacity Planning Routes
 router.get('/capacity', productionController.listCapacity);
+router.post('/capacity/:id/maintenance', productionController.toggleWorkCenterMaintenance);
+router.post('/capacity/:id/release', productionController.releaseWorkCenter);
 
 // 6. MES Shop Floor Tracking Routes
 router.get('/mes', productionController.listMES);

@@ -4,6 +4,9 @@ const {
   StokKarti,
   SatinAlmaTalebi,
   RotaOperasyon,
+  IsMerkezi,
+  Atolye,
+  Kullanici,
   sequelize
 } = require('../../models');
 const logService = require('./logService');
@@ -653,39 +656,113 @@ class MRPService {
   }
 
   async calculateCapacityLoad() {
-    const WORK_CENTERS = [
-      { name: 'İstasyon-1 (Kesim & Büküm)', dailyCapacityHours: 16 },
-      { name: 'İstasyon-2 (Kaynak & Sac İşleme)', dailyCapacityHours: 16 },
-      { name: 'İstasyon-3 (CNC & Talaşlı İmalat)', dailyCapacityHours: 24 },
-      { name: 'İstasyon-4 (Boya & Kaplama)', dailyCapacityHours: 16 },
-      { name: 'İstasyon-5 (Montaj & Test)', dailyCapacityHours: 16 },
-      { name: 'İstasyon-6 (Paketleme & Sevkiyat)', dailyCapacityHours: 16 }
-    ];
-
-    const activeOrders = await UretimEmri.findAll({
-      where: { durum: { [Op.in]: ['Planned', 'Approved', 'In_Production'] } }
+    // 1. Fetch all real Work Centers from DB with workshop and creator
+    const dbWorkCenters = await IsMerkezi.findAll({
+      include: [
+        { model: Atolye, as: 'atolye' },
+        { model: Kullanici, as: 'olusturan' }
+      ],
+      order: [['isMerkeziKodu', 'ASC'], ['id', 'ASC']]
     });
 
-    const report = WORK_CENTERS.map(wc => {
-      const stationOrders = activeOrders.filter(o => o.isMerkezi === wc.name);
+    // 2. Fetch all active/pending/in-production production orders from DB with stock item and user
+    const allProductionOrders = await UretimEmri.findAll({
+      where: {
+        durum: { [Op.in]: ['Planned', 'Approved', 'In_Production', 'Quality_Check'] }
+      },
+      include: [
+        { model: StokKarti, as: 'stokKarti' },
+        { model: Kullanici, as: 'olusturan' }
+      ],
+      order: [
+        ['planlananBaslangicTarihi', 'ASC'],
+        ['id', 'ASC']
+      ]
+    });
+
+    // 3. Process each work center
+    const report = dbWorkCenters.map(wc => {
+      const dailyCapacityHours = parseFloat(wc.gunlukCalismaSaati || 8);
+      const horizonCapacityHours = dailyCapacityHours * 5;
+
+      // Find work orders assigned to this work center
+      const stationOrders = allProductionOrders.filter(o => {
+        if (!o.isMerkezi) return false;
+        const oCenter = o.isMerkezi.trim();
+        const code = wc.isMerkeziKodu ? wc.isMerkeziKodu.trim() : '';
+        const name = wc.isMerkeziAdi ? wc.isMerkeziAdi.trim() : '';
+        return (
+          oCenter === code ||
+          oCenter === name ||
+          (code && oCenter.includes(code)) ||
+          (name && oCenter.includes(name))
+        );
+      });
+
+      // Split into active running order and queued orders
+      const activeRunningOrder = stationOrders.find(o => o.durum === 'In_Production') || null;
+      const queuedOrders = stationOrders.filter(o => o !== activeRunningOrder);
+
+      // Determine operational status
+      let operationalStatus = 'Idle'; // 'Idle' (Boş), 'Busy' (Meşgul), 'Maintenance' (Bakımda/Arızalı), 'Inactive' (Pasif)
+      let statusLabel = '🟢 Boş (Müsait)';
+      let statusBadgeClass = 'status-approved';
+
+      if (['Maintenance', 'Bakim', 'Bakımda', 'Fault', 'Arızalı', 'Arizali'].includes(wc.durum)) {
+        operationalStatus = 'Maintenance';
+        statusLabel = '🛠️ Bakımda / Arızalı';
+        statusBadgeClass = 'status-rejected';
+      } else if (wc.durum === 'Inactive') {
+        operationalStatus = 'Inactive';
+        statusLabel = '⛔ Pasif';
+        statusBadgeClass = 'status-pending';
+      } else if (activeRunningOrder) {
+        operationalStatus = 'Busy';
+        statusLabel = '⚡ Meşgul (Üretimde)';
+        statusBadgeClass = 'status-completed';
+      } else {
+        operationalStatus = 'Idle';
+        statusLabel = '🟢 Boş (Müsait)';
+        statusBadgeClass = 'status-approved';
+      }
+
+      // Calculate allocated hours
       const allocatedHours = stationOrders.reduce((sum, o) => {
-        const remainingQty = Math.max(0, parseFloat(o.planlananMiktar) - parseFloat(o.tamamlananMiktar));
+        const remainingQty = Math.max(0, parseFloat(o.planlananMiktar || 1) - parseFloat(o.tamamlananMiktar || 0));
         const estHours = parseFloat(o.tahminiSaat || 0);
         return sum + (remainingQty * (estHours / (parseFloat(o.planlananMiktar) || 1)));
       }, 0);
 
-      const loadPercentage = Math.min(100, Math.round((allocatedHours / (wc.dailyCapacityHours * 5)) * 100));
+      const loadPercentage = horizonCapacityHours > 0 
+        ? Math.min(100, Math.round((allocatedHours / horizonCapacityHours) * 100))
+        : 0;
       const isBottleneck = loadPercentage > 85;
 
+      // Active operator / personnel info
+      const activePersonnel = activeRunningOrder 
+        ? (activeRunningOrder.uretimYonetici || (activeRunningOrder.olusturan ? `${activeRunningOrder.olusturan.ad} ${activeRunningOrder.olusturan.soyad}` : 'Atanmış Operatör'))
+        : null;
+
       return {
-        workCenterName: wc.name,
-        dailyCapacityHours: wc.dailyCapacityHours,
-        horizonCapacityHours: wc.dailyCapacityHours * 5,
+        id: wc.id,
+        workCenterCode: wc.isMerkeziKodu,
+        workCenterName: wc.isMerkeziAdi,
+        atolyeName: wc.atolye ? wc.atolye.atolyeAdi : 'Genel Atölye',
+        rawStatus: wc.durum,
+        operationalStatus,
+        statusLabel,
+        statusBadgeClass,
+        dailyCapacityHours,
+        horizonCapacityHours,
         allocatedHours: parseFloat(allocatedHours.toFixed(1)),
-        availableHours: Math.max(0, parseFloat(((wc.dailyCapacityHours * 5) - allocatedHours).toFixed(1))),
+        availableHours: Math.max(0, parseFloat((horizonCapacityHours - allocatedHours).toFixed(1))),
         loadPercentage,
         activeOrdersCount: stationOrders.length,
-        isBottleneck
+        isBottleneck,
+        workersCount: wc.varsayilanIsciSayisi || 1,
+        activeRunningOrder,
+        queuedOrders,
+        activePersonnel
       };
     });
 

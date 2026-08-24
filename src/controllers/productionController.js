@@ -815,8 +815,42 @@ class ProductionController {
       user: req.user,
       capacityReport,
       ALL_ROLES,
-      activeSubTab: 'capacity'
+      activeSubTab: 'capacity',
+      success: req.query.success || null,
+      error: req.query.error || null
     });
+  });
+
+  toggleWorkCenterMaintenance = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { IsMerkezi } = require('../../models');
+    const wc = await IsMerkezi.findByPk(id);
+    if (!wc) {
+      throw new NotFoundError('İş merkezi kaydı bulunamadı.');
+    }
+
+    if (['Maintenance', 'Bakim', 'Bakımda', 'Fault', 'Arızalı', 'Arizali'].includes(wc.durum)) {
+      wc.durum = 'Active';
+    } else {
+      wc.durum = 'Maintenance';
+    }
+    await wc.save();
+
+    res.redirect('/production/capacity?success=' + encodeURIComponent(`[${wc.isMerkeziKodu}] durumu güncellendi: ${wc.durum === 'Maintenance' ? 'Bakımda / Arızalı' : 'Aktif'}`));
+  });
+
+  releaseWorkCenter = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { IsMerkezi } = require('../../models');
+    const wc = await IsMerkezi.findByPk(id);
+    if (!wc) {
+      throw new NotFoundError('İş merkezi kaydı bulunamadı.');
+    }
+
+    wc.durum = 'Active';
+    await wc.save();
+
+    res.redirect('/production/capacity?success=' + encodeURIComponent(`[${wc.isMerkeziKodu}] başarıyla boşaltıldı ve serbest bırakıldı.`));
   });
 
   // 6. MES & PRODUCTION TRACKING
