@@ -24,6 +24,7 @@ router.post('/orders/:id/status', productionController.updateOrderStatus);
 // 2. Material Requirements Planning (MRP) Routes
 router.get('/mrp', productionController.showMRP);
 router.post('/mrp/execute', productionController.executeMRP);
+router.get('/mrp/api/analysis', productionController.apiGetMRP);
 
 // 3. BOM (Bill of Materials) Routes
 router.get('/bom', productionController.listBOM);

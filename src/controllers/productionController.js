@@ -258,22 +258,70 @@ class ProductionController {
 
   // 2. MATERIAL REQUIREMENTS PLANNING (MRP)
   showMRP = asyncHandler(async (req, res) => {
-    const mrpResults = await mrpService.runMRP();
-    const successMsg = req.query.success === '1' ? 'Otomatik Satın Alma Talepleri başarıyla oluşturuldu ve Satın Alma departmanına iletildi.' : null;
+    const mrpData = await mrpService.runMRP();
+    let successMsg = null;
+    if (req.query.success === 'purchase_created') {
+      successMsg = '🛒 Satın Alma Talepleri başarıyla oluşturuldu ve Satın Alma modülüne iletildi.';
+    } else if (req.query.success === 'work_order_created') {
+      successMsg = '📋 Seçilen iş emirleri başarıyla oluşturuldu ve İmalat planına eklendi.';
+    } else if (req.query.success === 'all_created' || req.query.success === '1') {
+      successMsg = '⚡ Tüm MRP önerileri (Satın Alma Talepleri ve İş Emirleri) başarıyla sisteme işlendi.';
+    }
 
     res.render('production/mrp', {
       user: req.user,
-      mrpResults,
+      mrpData,
+      mrpResults: mrpData.mrpResults,
+      workOrderSuggestions: mrpData.workOrderSuggestions,
+      productionRequisitionSuggestions: mrpData.productionRequisitionSuggestions,
+      purchaseRequisitionSuggestions: mrpData.purchaseRequisitionSuggestions,
+      orderAnalysisTrees: mrpData.orderAnalysisTrees,
+      kpiSummary: mrpData.kpiSummary,
+      demandsAnalyzed: mrpData.demandsAnalyzed,
       successMsg,
+      errorMsg: req.query.error || null,
       ALL_ROLES,
       activeSubTab: 'mrp'
     });
   });
 
   executeMRP = asyncHandler(async (req, res) => {
-    const mrpResults = await mrpService.runMRP();
-    await mrpService.generateRequisitions(mrpResults, req.user);
-    res.redirect('/production/mrp?success=1');
+    const { actionType, stockId } = req.body;
+    let selectedStockIds = null;
+    if (stockId) {
+      selectedStockIds = [parseInt(stockId, 10)];
+    }
+
+    let createPurchaseReqs = true;
+    let createWorkOrders = false;
+    let successParam = '1';
+
+    if (actionType === 'create_work_orders') {
+      createPurchaseReqs = false;
+      createWorkOrders = true;
+      successParam = 'work_order_created';
+    } else if (actionType === 'create_all') {
+      createPurchaseReqs = true;
+      createWorkOrders = true;
+      successParam = 'all_created';
+    } else {
+      createPurchaseReqs = true;
+      createWorkOrders = false;
+      successParam = 'purchase_created';
+    }
+
+    await mrpService.executeMRPRecommendations({
+      createPurchaseReqs,
+      createWorkOrders,
+      selectedStockIds
+    }, req.user, req.ip);
+
+    res.redirect(`/production/mrp?success=${successParam}`);
+  });
+
+  apiGetMRP = asyncHandler(async (req, res) => {
+    const data = await mrpService.runMRP();
+    res.json({ success: true, data });
   });
 
   // 3. BOM (BILL OF MATERIALS)
