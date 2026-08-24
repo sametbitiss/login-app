@@ -46,7 +46,6 @@
       <div class="mss-sub">
         <a href="/production/requisitions" class="mss-sub-link active">📩 Üretim Talepleri</a>
         <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
-        <a href="/production/orders/add" class="mss-sub-link">➕ Yeni İş Emri Ekle</a>
         <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
       </div>
       <div class="mss-group-title">📜 REÇETE & PROCESS MÜHENDİSLİĞİ</div>
@@ -190,8 +189,8 @@
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(o.createdAt).toLocaleDateString('tr-TR') %></td>
                   <td style="text-align: right;">
                     <% if (status === 'Planned') { %>
-                      <a href="/production/orders/add?stockItemId=<%= sId %>" class="btn-action-bom">
-                        📋 İş Emrine Dönüştür
+                      <a href="/production/orders/add?stockId=<%= sId %>&plannedQty=<%= o.planlananMiktar || 1 %>&priority=<%= encodeURIComponent(o.oncelik || 'Normal') %>&requisitionNo=<%= encodeURIComponent(o.isEmriNo || '') %>" class="btn-action-bom">
+                        📋 İş Emri Aç & İncele
                       </a>
                     <% } else { %>
                       <span style="color: var(--text-muted); font-size: 0.82rem;">İşlem Yapıldı</span>

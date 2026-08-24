@@ -226,7 +226,6 @@
       <div class="mss-sub">
         <a href="/production/requisitions" class="mss-sub-link">📩 Üretim Talepleri</a>
         <a href="/production/orders" class="mss-sub-link">📋 Üretim İş Emirleri</a>
-        <a href="/production/orders/add" class="mss-sub-link active">➕ Yeni İş Emri Ekle</a>
         <a href="/production/mrp" class="mss-sub-link">⚡ Malzeme İhtiyaç (MRP)</a>
       </div>
       <div class="mss-group-title">📜 REÇETE & PROCESS MÜHENDİSLİĞİ</div>
@@ -265,7 +264,7 @@
             <span>📋 Yeni İş Emri Hazırlama & Onaylama</span>
           </h1>
           <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">
-            Seçilen ürünün operasyon adımları, süre/kapasite projeksiyonu ve fireli bileşen ihtiyaçları sekmeler halinde incelenerek onaylanır.
+            MRP motorundan seçilen ürünün operasyon adımları, süre/kapasite projeksiyonu ve fireli bileşen ihtiyaçları sekmeler halinde incelenerek onaylanır.
           </p>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -310,436 +309,413 @@
         <% } %>
       <% } %>
 
-      <!-- PRODUCT SELECTOR (Ürün seçilmemişse dropdown, seçildiyse rozetli kart) -->
-      <% if (!targetProduct) { %>
-        <div class="form-section-card">
-          <div class="section-title">📦 Üretilecek Ürünü Seçiniz</div>
-          <div class="form-group">
-            <label class="form-label">Hedef İmalat Ürünü (Mamul veya Yarı Mamul)</label>
-            <select class="form-control" onchange="if(this.value) window.location='/production/orders/add?stockId=' + this.value;">
-              <option value="">-- Üretilecek Ürünü Seçiniz --</option>
-              <% stockItems.forEach(s => { %>
-                <option value="<%= s.id %>">[<%= s.stokKodu %>] <%= s.ad %> (<%= s.kategori %>)</option>
-              <% }); %>
-            </select>
-          </div>
-        </div>
-      <% } else { %>
-
-        <!-- Selected Product Header Strip -->
-        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(16, 185, 129, 0.12)); border: 1.5px solid rgba(99, 102, 241, 0.4); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
-          <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
-              🏭
-            </div>
-            <div>
-              <div style="font-size: 0.75rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px;">
-                📦 HEDEF İMALAT ÜRÜNÜ
-              </div>
-              <div style="font-size: 1.2rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 10px;">
-                <span style="color: #34d399; font-family: 'JetBrains Mono', monospace;">[<%= targetProduct.stokKodu %>]</span>
-                <span><%= targetProduct.ad %></span>
-              </div>
-              <div style="font-size: 0.825rem; color: #cbd5e1; margin-top: 4px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <span>Kategori: <strong style="color: #fbbf24;"><%= targetProduct.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %></strong></span>
-                <span style="color: #475569;">•</span>
-                <span>Birim: <strong><%= targetProduct.birim || 'Adet' %></strong></span>
-                <span style="color: #475569;">•</span>
-                <span>Mevcut Depo Stoğu: <strong style="color: #34d399;"><%= targetProduct.mevcutStok %> <%= targetProduct.birim || 'Adet' %></strong></span>
-              </div>
-            </div>
+      <!-- Selected Product Header Strip -->
+      <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(16, 185, 129, 0.12)); border: 1.5px solid rgba(99, 102, 241, 0.4); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+            🏭
           </div>
           <div>
-            <select class="form-control" style="font-size: 0.82rem; padding: 8px 12px; width: auto;" onchange="if(this.value) window.location='/production/orders/add?stockId=' + this.value + '&qty=<%= effectiveQty %>&demandRef=<%= encodeURIComponent(effectiveDemandRef) %>';">
-              <option value="">Farklı Ürün Seç...</option>
-              <% stockItems.forEach(s => { %>
-                <option value="<%= s.id %>" <%= s.id === targetProduct.id ? 'selected' : '' %>>[<%= s.stokKodu %>] <%= s.ad %></option>
-              <% }); %>
-            </select>
+            <div style="font-size: 0.75rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px;">
+              📦 HEDEF İMALAT ÜRÜNÜ (MRP KAYNAKLI)
+            </div>
+            <div style="font-size: 1.2rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+              <span style="color: #34d399; font-family: 'JetBrains Mono', monospace;">[<%= targetProduct.stokKodu %>]</span>
+              <span><%= targetProduct.ad %></span>
+            </div>
+            <div style="font-size: 0.825rem; color: #cbd5e1; margin-top: 4px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <span>Kategori: <strong style="color: #fbbf24;"><%= targetProduct.kategori === 'Mamul' ? 'Mamul' : 'Yarı Mamul' %></strong></span>
+              <span style="color: #475569;">•</span>
+              <span>Birim: <strong><%= targetProduct.birim || 'Adet' %></strong></span>
+              <span style="color: #475569;">•</span>
+              <span>Mevcut Depo Stoğu: <strong style="color: #34d399;"><%= targetProduct.mevcutStok %> <%= targetProduct.birim || 'Adet' %></strong></span>
+              <span style="color: #475569;">•</span>
+              <span>Varsayılan Depo: <strong><%= targetProduct.depoLokasyonu || 'Ana Depo' %></strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLI MENÜ NAVİGASYONU -->
+      <nav class="order-wizard-nav">
+        <button type="button" class="wizard-tab-btn active" onclick="switchWizardTab('tab-order-info', 1, event)">
+          <span>📋 1. Temel Bilgiler</span>
+        </button>
+        <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-recipe-routing', 2, event)">
+          <span>📜 2. Reçete & Rota</span>
+        </button>
+        <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-operations', 3, event)">
+          <span>⏱️ 3. Operasyonlar & Süre</span>
+          <span class="tab-badge"><%= routingOperations.length %> Adım</span>
+        </button>
+        <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-components', 4, event)">
+          <span>📦 4. Fireli Bileşenler</span>
+          <span class="tab-badge"><%= calculatedComponents.length %> Kalem</span>
+        </button>
+        <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-instructions', 5, event)">
+          <span>✍️ 5. Talimatlar & Onay</span>
+        </button>
+      </nav>
+
+      <!-- MAIN FORM -->
+      <form action="/production/orders/add" method="POST" id="workOrderForm">
+        <input type="hidden" name="stockId" value="<%= targetProduct.id %>">
+        <input type="hidden" name="demandRef" value="<%= effectiveDemandRef %>">
+
+        <!-- ======================================================== -->
+        <!-- SEKME 1: 📋 1. İŞ EMRİ TEMEL BİLGİLERİ                   -->
+        <!-- ======================================================== -->
+        <div id="tab-order-info" class="wizard-tab-content active">
+          <div class="form-section-card">
+            <div class="section-title">
+              <span>📋 1. İş Emri Temel Parametreleri</span>
+            </div>
+
+            <div class="form-row-4">
+              <!-- 1. İş Emri No (Sistem tarafından atanır, değiştirilemez) -->
+              <div class="form-group">
+                <label class="form-label">1. İş Emri No <span style="color: #34d399;">(Otomatik & Salt Okunur)</span></label>
+                <input type="text" name="isEmriNo" value="<%= nextWorkOrderNo %>" readonly class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; letter-spacing: 0.5px;">
+              </div>
+
+              <!-- 2. Öncelik Seviyesi -->
+              <div class="form-group">
+                <label class="form-label">2. Öncelik Seviyesi</label>
+                <select name="priority" class="form-control" style="font-weight: 700;">
+                  <option value="Low" <%= effectivePriority === 'Low' ? 'selected' : '' %>>Düşük (Low)</option>
+                  <option value="Normal" <%= effectivePriority === 'Normal' ? 'selected' : '' %>>Normal (Standart)</option>
+                  <option value="High" <%= effectivePriority === 'High' ? 'selected' : '' %>>Yüksek / Acil (High)</option>
+                  <option value="Urgent" <%= effectivePriority === 'Urgent' ? 'selected' : '' %>>🚨 Çok Acil (Urgent)</option>
+                </select>
+              </div>
+
+              <!-- 4. Sipariş / Üretim Miktarı -->
+              <div class="form-group">
+                <label class="form-label">4. Üretim Miktarı</label>
+                <input type="number" name="plannedQuantity" id="inputPlannedQty" value="<%= effectiveQty %>" step="1" min="1" class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1rem; color: #f8fafc;" onchange="updateQtyParam(this.value)">
+              </div>
+
+              <!-- Birim -->
+              <div class="form-group">
+                <label class="form-label">Birim</label>
+                <input type="text" name="unit" value="<%= targetProduct.birim || 'Adet' %>" readonly class="form-control" style="font-weight: 700;">
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">3. Ürün Kodu & Adı (DB Kaydı)</label>
+                <input type="text" value="[<%= targetProduct.stokKodu %>] <%= targetProduct.ad %>" readonly class="form-control" style="color: #cbd5e1; font-weight: 700;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">İlişkili Sipariş / Talep No (Kaynak)</label>
+                <input type="text" value="<%= effectiveDemandRef || 'Doğrudan Üretim Planı' %>" readonly class="form-control" style="font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 800;">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">İş Emri Başlığı</label>
+              <input type="text" name="uretimBasligi" value="🏭 [İş Emri] <%= targetProduct.ad %> (<%= effectiveQty %> <%= targetProduct.birim || 'Adet' %>)" class="form-control" style="font-weight: 700;">
+            </div>
           </div>
         </div>
 
-        <!-- TABLI MENÜ NAVİGASYONU -->
-        <nav class="order-wizard-nav">
-          <button type="button" class="wizard-tab-btn active" onclick="switchWizardTab('tab-order-info', 1, event)">
-            <span>📋 1. Temel Bilgiler</span>
-          </button>
-          <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-recipe-routing', 2, event)">
-            <span>📜 2. Reçete & Rota</span>
-          </button>
-          <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-operations', 3, event)">
-            <span>⏱️ 3. Operasyonlar & Süre</span>
-            <span class="tab-badge"><%= routingOperations.length %> Adım</span>
-          </button>
-          <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-components', 4, event)">
-            <span>📦 4. Fireli Bileşenler</span>
-            <span class="tab-badge"><%= calculatedComponents.length %> Kalem</span>
-          </button>
-          <button type="button" class="wizard-tab-btn" onclick="switchWizardTab('tab-instructions', 5, event)">
-            <span>✍️ 5. Talimatlar & Onay</span>
-          </button>
-        </nav>
-
-        <!-- MAIN FORM -->
-        <form action="/production/orders/add" method="POST" id="workOrderForm">
-          <input type="hidden" name="stockId" value="<%= targetProduct.id %>">
-          <input type="hidden" name="demandRef" value="<%= effectiveDemandRef %>">
-
-          <!-- ======================================================== -->
-          <!-- SEKME 1: 📋 1. İŞ EMRİ TEMEL BİLGİLERİ                   -->
-          <!-- ======================================================== -->
-          <div id="tab-order-info" class="wizard-tab-content active">
-            <div class="form-section-card">
-              <div class="section-title">
-                <span>📋 1. İş Emri Temel Parametreleri</span>
-              </div>
-
-              <div class="form-row-4">
-                <!-- 1. İş Emri No (Sistem tarafından atanır, değiştirilemez) -->
-                <div class="form-group">
-                  <label class="form-label">1. İş Emri No <span style="color: #34d399;">(Otomatik & Salt Okunur)</span></label>
-                  <input type="text" name="isEmriNo" value="<%= nextWorkOrderNo %>" readonly class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399; letter-spacing: 0.5px;">
-                </div>
-
-                <!-- 2. Öncelik Seviyesi -->
-                <div class="form-group">
-                  <label class="form-label">2. Öncelik Seviyesi</label>
-                  <select name="priority" class="form-control" style="font-weight: 700;">
-                    <option value="Low" <%= effectivePriority === 'Low' ? 'selected' : '' %>>Düşük (Low)</option>
-                    <option value="Normal" <%= effectivePriority === 'Normal' ? 'selected' : '' %>>Normal (Standart)</option>
-                    <option value="High" <%= effectivePriority === 'High' ? 'selected' : '' %>>Yüksek / Acil (High)</option>
-                    <option value="Urgent" <%= effectivePriority === 'Urgent' ? 'selected' : '' %>>🚨 Çok Acil (Urgent)</option>
-                  </select>
-                </div>
-
-                <!-- 4. Sipariş / Üretim Miktarı -->
-                <div class="form-group">
-                  <label class="form-label">4. Üretim Miktarı</label>
-                  <input type="number" name="plannedQuantity" id="inputPlannedQty" value="<%= effectiveQty %>" step="1" min="1" class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1rem; color: #f8fafc;" onchange="updateQtyParam(this.value)">
-                </div>
-
-                <!-- Birim -->
-                <div class="form-group">
-                  <label class="form-label">Birim</label>
-                  <input type="text" name="unit" value="<%= targetProduct.birim || 'Adet' %>" readonly class="form-control" style="font-weight: 700;">
-                </div>
-              </div>
-
-              <div class="form-row-2">
-                <div class="form-group">
-                  <label class="form-label">3. Ürün Kodu & Adı (DB Kaydı)</label>
-                  <input type="text" value="[<%= targetProduct.stokKodu %>] <%= targetProduct.ad %>" readonly class="form-control" style="color: #cbd5e1; font-weight: 700;">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">İlişkili Sipariş / Talep No (Kaynak)</label>
-                  <input type="text" value="<%= effectiveDemandRef || 'Doğrudan Üretim Planı' %>" readonly class="form-control" style="font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 800;">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">İş Emri Başlığı</label>
-                <input type="text" name="uretimBasligi" value="🏭 [İş Emri] <%= targetProduct.ad %> (<%= effectiveQty %> <%= targetProduct.birim || 'Adet' %>)" class="form-control" style="font-weight: 700;">
-              </div>
+        <!-- ======================================================== -->
+        <!-- SEKME 2: 📜 2. AKTİF REÇETE VE ROTA BİLGİSİ              -->
+        <!-- ======================================================== -->
+        <div id="tab-recipe-routing" class="wizard-tab-content">
+          <div class="form-section-card">
+            <div class="section-title">
+              <span>📜 5. Aktif Reçete & Rota Bilgisi</span>
             </div>
-          </div>
 
-          <!-- ======================================================== -->
-          <!-- SEKME 2: 📜 2. AKTİF REÇETE VE ROTA BİLGİSİ              -->
-          <!-- ======================================================== -->
-          <div id="tab-recipe-routing" class="wizard-tab-content">
-            <div class="form-section-card">
-              <div class="section-title">
-                <span>📜 5. Aktif Reçete & Rota Bilgisi</span>
-              </div>
-
-              <div class="form-row-2">
-                <div class="info-box" style="border-left: 4px solid #6366f1; padding: 18px 22px;">
-                  <span class="info-box-label">📜 Tanımlı Aktif Reçete</span>
-                  <span class="info-box-value" style="color: #818cf8; font-size: 1.25rem;"><%= activeRecipeCode %></span>
-                  <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">
-                    Versiyon: <strong style="color: #f8fafc;"><%= activeRecipeVersion %></strong> • Durum: <span style="color: #34d399; font-weight: 700;">✓ Aktif</span>
-                  </div>
-                </div>
-
-                <div class="info-box" style="border-left: 4px solid #f59e0b; padding: 18px 22px;">
-                  <span class="info-box-label">🛠️ Tanımlı Aktif Rota</span>
-                  <span class="info-box-value" style="color: #fbbf24; font-size: 1.25rem;"><%= activeRoutingCode %></span>
-                  <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">
-                    Toplam Operasyon: <strong style="color: #f8fafc;"><%= routingOperations.length %> Adım</strong> • Ana İstasyon: <strong style="color: #f8fafc;"><%= primaryWorkCenter %></strong>
-                  </div>
+            <div class="form-row-2">
+              <div class="info-box" style="border-left: 4px solid #6366f1; padding: 18px 22px;">
+                <span class="info-box-label">📜 Tanımlı Aktif Reçete</span>
+                <span class="info-box-value" style="color: #818cf8; font-size: 1.25rem;"><%= activeRecipeCode %></span>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">
+                  Versiyon: <strong style="color: #f8fafc;"><%= activeRecipeVersion %></strong> • Durum: <span style="color: #34d399; font-weight: 700;">✓ Aktif</span>
                 </div>
               </div>
 
-              <div class="info-box-grid" style="margin-top: 8px;">
-                <div class="info-box">
-                  <span class="info-box-label">Ürün Stok Kodu</span>
-                  <span class="info-box-value" style="color: #34d399;"><%= targetProduct.stokKodu %></span>
-                </div>
-                <div class="info-box">
-                  <span class="info-box-label">Ürün Kategorisi</span>
-                  <span class="info-box-value"><%= targetProduct.kategori %></span>
-                </div>
-                <div class="info-box">
-                  <span class="info-box-label">Mevcut Fiziksel Stok</span>
-                  <span class="info-box-value"><%= targetProduct.mevcutStok %> <%= targetProduct.birim %></span>
-                </div>
-                <div class="info-box">
-                  <span class="info-box-label">Varsayılan Depo Lokasyonu</span>
-                  <span class="info-box-value" style="font-size: 0.95rem;"><%= targetProduct.depoLokasyonu || 'Ana Depo' %></span>
+              <div class="info-box" style="border-left: 4px solid #f59e0b; padding: 18px 22px;">
+                <span class="info-box-label">🛠️ Tanımlı Aktif Rota</span>
+                <span class="info-box-value" style="color: #fbbf24; font-size: 1.25rem;"><%= activeRoutingCode %></span>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">
+                  Toplam Operasyon: <strong style="color: #f8fafc;"><%= routingOperations.length %> Adım</strong> • Ana İstasyon: <strong style="color: #f8fafc;"><%= primaryWorkCenter %></strong>
                 </div>
               </div>
             </div>
+
+            <div class="info-box-grid" style="margin-top: 8px;">
+              <div class="info-box">
+                <span class="info-box-label">Ürün Stok Kodu</span>
+                <span class="info-box-value" style="color: #34d399;"><%= targetProduct.stokKodu %></span>
+              </div>
+              <div class="info-box">
+                <span class="info-box-label">Ürün Kategorisi</span>
+                <span class="info-box-value"><%= targetProduct.kategori %></span>
+              </div>
+              <div class="info-box">
+                <span class="info-box-label">Mevcut Fiziksel Stok</span>
+                <span class="info-box-value"><%= targetProduct.mevcutStok %> <%= targetProduct.birim %></span>
+              </div>
+              <div class="info-box">
+                <span class="info-box-label">Varsayılan Depo Lokasyonu</span>
+                <span class="info-box-value" style="font-size: 0.95rem;"><%= targetProduct.depoLokasyonu || 'Ana Depo' %></span>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <!-- ======================================================== -->
-          <!-- SEKME 3: ⏱️ 3. ROTA OPERASYONLARI & KAPASİTE PLANI        -->
-          <!-- ======================================================== -->
-          <div id="tab-operations" class="wizard-tab-content">
-            <div class="form-section-card">
-              <div class="section-title">
-                <span>⏱️ 8. Rota Operasyon Adımları & Süre / Kapasite Projeksiyonu</span>
-              </div>
+        <!-- ======================================================== -->
+        <!-- SEKME 3: ⏱️ 3. ROTA OPERASYONLARI & KAPASİTE PLANI        -->
+        <!-- ======================================================== -->
+        <div id="tab-operations" class="wizard-tab-content">
+          <div class="form-section-card">
+            <div class="section-title">
+              <span>⏱️ 8. Rota Operasyon Adımları & Süre / Kapasite Projeksiyonu</span>
+            </div>
 
-              <div class="table-wrapper">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 70px; text-align: center;">Adım</th>
-                      <th>Operasyon Kodu</th>
-                      <th>Operasyon Adı</th>
-                      <th>Hedef İş Merkezi (İstasyon)</th>
-                      <th style="text-align: right;">Hazırlık (Dk)</th>
-                      <th style="text-align: right;">Birim Süre (Dk)</th>
-                      <th style="text-align: right;">Toplam Süre (Dk)</th>
-                      <th style="text-align: right;">Toplam Süre (Saat)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if (routingOperations.length === 0) { %>
-                      <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Bu ürün için tanımlı rota operasyonu bulunamadı. Genel montaj süresi uygulanacaktır.</td></tr>
-                    <% } else { %>
-                      <% routingOperations.forEach(op => { %>
-                        <tr>
-                          <td style="text-align: center;"><span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">#<%= op.operasyonSira %></span></td>
-                          <td><strong style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;">[<%= op.operasyonKodu %>]</strong></td>
-                          <td><strong style="color: var(--text-primary);"><%= op.operasyonAdi %></strong></td>
-                          <td style="font-size: 0.85rem; color: #cbd5e1;"><%= op.isMerkezi %></td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= op.hazirlikSuresiDakika %> Dk</td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= op.calismaSuresiDakikaBirim %> Dk</td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= op.toplamDakika %> Dk</td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;"><%= op.toplamSaat %> Saat</td>
-                        </tr>
-                      <% }); %>
-                    <% } %>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Süre ve Tarih Özeti -->
-              <div class="info-box-grid" style="margin-top: 10px;">
-                <div class="info-box">
-                  <span class="info-box-label">Toplam Hazırlık Süresi</span>
-                  <span class="info-box-value"><%= totalSetupMins %> Dk</span>
-                </div>
-                <div class="info-box">
-                  <span class="info-box-label">Toplam Çalışma Süresi</span>
-                  <span class="info-box-value"><%= totalRunMins %> Dk</span>
-                </div>
-                <div class="info-box">
-                  <span class="info-box-label">Toplam İmalat Süresi</span>
-                  <span class="info-box-value" style="color: #fbbf24;"><%= totalDurationHours %> Saat</span>
-                </div>
-              </div>
-
-              <!-- Başlangıç ve Bitiş Zamanı Form Alanları -->
-              <div class="form-row-3" style="margin-top: 10px;">
-                <div class="form-group">
-                  <label class="form-label">8. Başlangıç Tarihi <span style="color: #34d399;">(İş İstasyonu Kuyruğuna Göre)</span></label>
-                  <input type="date" name="plannedStartDate" value="<%= projectedStartDate %>" class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34d399;">
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">8. Bitiş Tarihi <span style="color: #fbbf24;">(Kapasiteye Göre Hesaplanmış)</span></label>
-                  <input type="date" name="plannedEndDate" value="<%= projectedEndDate %>" class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #fbbf24;">
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Ana İş İstasyonu</label>
-                  <select name="workCenter" class="form-control">
-                    <% WORK_CENTERS.forEach(wc => { %>
-                      <option value="<%= wc %>" <%= primaryWorkCenter === wc ? 'selected' : '' %>><%= wc %></option>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 70px; text-align: center;">Adım</th>
+                    <th>Operasyon Kodu</th>
+                    <th>Operasyon Adı</th>
+                    <th>Hedef İş Merkezi (İstasyon)</th>
+                    <th style="text-align: right;">Hazırlık (Dk)</th>
+                    <th style="text-align: right;">Birim Süre (Dk)</th>
+                    <th style="text-align: right;">Toplam Süre (Dk)</th>
+                    <th style="text-align: right;">Toplam Süre (Saat)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (routingOperations.length === 0) { %>
+                    <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Bu ürün için tanımlı rota operasyonu bulunamadı. Genel montaj süresi uygulanacaktır.</td></tr>
+                  <% } else { %>
+                    <% routingOperations.forEach(op => { %>
+                      <tr>
+                        <td style="text-align: center;"><span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">#<%= op.operasyonSira %></span></td>
+                        <td><strong style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;">[<%= op.operasyonKodu %>]</strong></td>
+                        <td><strong style="color: var(--text-primary);"><%= op.operasyonAdi %></strong></td>
+                        <td style="font-size: 0.85rem; color: #cbd5e1;"><%= op.isMerkezi %></td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= op.hazirlikSuresiDakika %> Dk</td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><%= op.calismaSuresiDakikaBirim %> Dk</td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= op.toplamDakika %> Dk</td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;"><%= op.toplamSaat %> Saat</td>
+                      </tr>
                     <% }); %>
-                  </select>
-                </div>
-              </div>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
 
-              <div style="background: rgba(15, 23, 42, 0.6); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.85rem; color: #cbd5e1;">
-                📌 <strong>İş İstasyonu Kuyruk Durumu:</strong> <%= workCenterStatusText %>
+            <!-- Süre ve Tarih Özeti -->
+            <div class="info-box-grid" style="margin-top: 10px;">
+              <div class="info-box">
+                <span class="info-box-label">Toplam Hazırlık Süresi</span>
+                <span class="info-box-value"><%= totalSetupMins %> Dk</span>
+              </div>
+              <div class="info-box">
+                <span class="info-box-label">Toplam Çalışma Süresi</span>
+                <span class="info-box-value"><%= totalRunMins %> Dk</span>
+              </div>
+              <div class="info-box">
+                <span class="info-box-label">Toplam İmalat Süresi</span>
+                <span class="info-box-value" style="color: #fbbf24;"><%= totalDurationHours %> Saat</span>
               </div>
             </div>
-          </div>
 
-          <!-- ======================================================== -->
-          <!-- SEKME 4: 📦 4. TÜKETİLECEK BİLEŞENLER & FİRE PLANI       -->
-          <!-- ======================================================== -->
-          <div id="tab-components" class="wizard-tab-content">
-            <div class="form-section-card">
-              <div class="section-title">
-                <span>📦 6, 7 & 9. Tüketilecek Bileşenler & Fireli Harcama Planı (MRP Yuvarlanmış)</span>
-              </div>
-
-              <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px;">
-                Reçetedeki her bileşenin hangi adımda, hangi operasyonda harcanacağı ve MRP katmanında fire oranı eklenerek <strong>Math.ceil</strong> ile yuvarlanmış net gereksinimleri aşağıda listelenmiştir.
-              </div>
-
-              <div class="table-wrapper">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 70px; text-align: center;">Adım</th>
-                      <th>Operasyon Adı</th>
-                      <th>Bileşen Kodu & Adı</th>
-                      <th>Kategori</th>
-                      <th style="text-align: right;">Birim Katsayı</th>
-                      <th style="text-align: right;">Fire Oranı</th>
-                      <th style="text-align: right;">Brüt İhtiyaç</th>
-                      <th style="text-align: right;">9. Yuvarlanmış İhtiyaç</th>
-                      <th style="text-align: right;">Depo Stoğu</th>
-                      <th style="text-align: center;">Stok Yeterliliği</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if (calculatedComponents.length === 0) { %>
-                      <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 2rem;">Bu ürün için tanımlı reçete bileşeni bulunamadı.</td></tr>
-                    <% } else { %>
-                      <% calculatedComponents.forEach(comp => { %>
-                        <tr>
-                          <td style="text-align: center;">
-                            <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">
-                              #<%= comp.operasyonKodu %>
-                            </span>
-                          </td>
-                          <td><strong style="color: #cbd5e1;"><%= comp.operasyonAdi %></strong></td>
-                          <td>
-                            <% if (comp.isLabor) { %>
-                              <span style="color: #a5b4fc; font-weight: 700;">⚙️ <%= comp.bilesenAdi %></span>
-                            <% } else { %>
-                              <strong style="color: var(--text-primary);"><%= comp.bilesenAdi %></strong>
-                              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #94a3b8;">[<%= comp.bilesenKodu %>]</div>
-                            <% } %>
-                          </td>
-                          <td>
-                            <% if (comp.kategori === 'Hammadde') { %>
-                              <span class="status-pill status-approved">🟦 Hammadde</span>
-                            <% } else if (['Yari_Mamul', 'Yarı_Mamul'].includes(comp.kategori)) { %>
-                              <span class="status-pill status-pending">🟧 Yarı Mamul</span>
-                            <% } else { %>
-                              <span class="status-pill status-completed">⚙️ <%= comp.kategori %></span>
-                            <% } %>
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
-                            <%= comp.isLabor ? '—' : `${comp.gerekliMiktar} ${comp.birim}` %>
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
-                            <%= comp.fireOrani > 0 ? `%${comp.fireOrani}` : '—' %>
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #cbd5e1;">
-                            <%= comp.isLabor ? '—' : `${comp.hesaplananBrutMiktar.toFixed(2)} ${comp.birim}` %>
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 0.95rem; color: #fbbf24;">
-                            <%= comp.isLabor ? '—' : `${comp.yuvarlanmisMiktar} ${comp.birim}` %>
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
-                            <%= comp.isLabor ? '—' : `${comp.mevcutStok} ${comp.birim}` %>
-                          </td>
-                          <td style="text-align: center;">
-                            <% if (comp.isLabor) { %>
-                              <span style="color: #94a3b8; font-size: 0.78rem;">Saf İşçilik</span>
-                            <% } else if (comp.stokYeterli) { %>
-                              <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">✓ Yeterli</span>
-                            <% } else { %>
-                              <span style="background: rgba(244, 63, 94, 0.15); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">🚨 Eksik</span>
-                            <% } %>
-                          </td>
-                        </tr>
-                      <% }); %>
-                    <% } %>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- ======================================================== -->
-          <!-- SEKME 5: ✍️ 5. SAHA TALİMATLARI & ONAY                     -->
-          <!-- ======================================================== -->
-          <div id="tab-instructions" class="wizard-tab-content">
-            <div class="form-section-card">
-              <div class="section-title">
-                <span>✍️ 5. Saha Talimatları, Görevlendirme & Nihai Onay</span>
-              </div>
-
-              <div class="form-row-2">
-                <div class="form-group">
-                  <label class="form-label">Üretim Yöneticisi / Sorumlu Mühendis</label>
-                  <input type="text" name="productionManager" value="<%= user ? (user.firstName ? user.firstName + ' ' + (user.lastName || '') : user.username) : 'Üretim Mühendisi' %>" class="form-control" style="font-weight: 700;">
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Reçete / Mühendislik Notları</label>
-                  <input type="text" name="receteNotlari" value="Aktif Reçete: <%= activeRecipeCode %> • Rota: <%= activeRoutingCode %>" class="form-control">
-                </div>
+            <!-- Başlangıç ve Bitiş Zamanı Form Alanları -->
+            <div class="form-row-3" style="margin-top: 10px;">
+              <div class="form-group">
+                <label class="form-label">8. Başlangıç Tarihi <span style="color: #34d399;">(İş İstasyonu Kuyruğuna Göre)</span></label>
+                <input type="date" name="plannedStartDate" value="<%= projectedStartDate %>" class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34d399;">
               </div>
 
               <div class="form-group">
-                <label class="form-label">Saha Notları / İmalat Açıklaması</label>
-                <textarea name="notlar" rows="3" class="form-control" placeholder="İmalat sahasına iletilecek özel talimatlar...">[MRP Onaylı İş Emri] <%= targetProduct.ad %> için <%= effectiveQty %> <%= targetProduct.birim %> imalat iş emridir. <%= effectiveDemandRef ? 'Kaynak: ' + effectiveDemandRef : '' %></textarea>
+                <label class="form-label">8. Bitiş Tarihi <span style="color: #fbbf24;">(Kapasiteye Göre Hesaplanmış)</span></label>
+                <input type="date" name="plannedEndDate" value="<%= projectedEndDate %>" class="form-control" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #fbbf24;">
               </div>
 
-              <!-- Summary Card Before Confirmation -->
-              <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(16, 185, 129, 0.4); border-radius: 14px; padding: 20px; margin-top: 10px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
-                  <div>
-                    <div style="font-size: 0.8rem; font-weight: 800; color: #34d399; text-transform: uppercase;">✅ İŞ EMRİ ONAY ÖZETİ</div>
-                    <div style="font-size: 1.1rem; font-weight: 800; color: #ffffff; margin-top: 2px;">
-                      <%= nextWorkOrderNo %> • <%= targetProduct.ad %> (<%= effectiveQty %> <%= targetProduct.birim %>)
-                    </div>
-                    <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">
-                      Planlanan Süre: <strong style="color: #fbbf24;"><%= projectedStartDate %> ➔ <%= projectedEndDate %> (<%= totalDurationHours %> Saat)</strong>
-                    </div>
+              <div class="form-group">
+                <label class="form-label">Ana İş İstasyonu</label>
+                <select name="workCenter" class="form-control">
+                  <% WORK_CENTERS.forEach(wc => { %>
+                    <option value="<%= wc %>" <%= primaryWorkCenter === wc ? 'selected' : '' %>><%= wc %></option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div style="background: rgba(15, 23, 42, 0.6); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.85rem; color: #cbd5e1;">
+              📌 <strong>İş İstasyonu Kuyruk Durumu:</strong> <%= workCenterStatusText %>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- SEKME 4: 📦 4. TÜKETİLECEK BİLEŞENLER & FİRE PLANI       -->
+        <!-- ======================================================== -->
+        <div id="tab-components" class="wizard-tab-content">
+          <div class="form-section-card">
+            <div class="section-title">
+              <span>📦 6, 7 & 9. Tüketilecek Bileşenler & Fireli Harcama Planı (MRP Yuvarlanmış)</span>
+            </div>
+
+            <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px;">
+              Reçetedeki her bileşenin hangi adımda, hangi operasyonda harcanacağı ve MRP katmanında fire oranı eklenerek <strong>Math.ceil</strong> ile yuvarlanmış net gereksinimleri aşağıda listelenmiştir.
+            </div>
+
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 70px; text-align: center;">Adım</th>
+                    <th>Operasyon Adı</th>
+                    <th>Bileşen Kodu & Adı</th>
+                    <th>Kategori</th>
+                    <th style="text-align: right;">Birim Katsayı</th>
+                    <th style="text-align: right;">Fire Oranı</th>
+                    <th style="text-align: right;">Brüt İhtiyaç</th>
+                    <th style="text-align: right;">9. Yuvarlanmış İhtiyaç</th>
+                    <th style="text-align: right;">Depo Stoğu</th>
+                    <th style="text-align: center;">Stok Yeterliliği</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (calculatedComponents.length === 0) { %>
+                    <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 2rem;">Bu ürün için tanımlı reçete bileşeni bulunamadı.</td></tr>
+                  <% } else { %>
+                    <% calculatedComponents.forEach(comp => { %>
+                      <tr>
+                        <td style="text-align: center;">
+                          <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">
+                            #<%= comp.operasyonKodu %>
+                          </span>
+                        </td>
+                        <td><strong style="color: #cbd5e1;"><%= comp.operasyonAdi %></strong></td>
+                        <td>
+                          <% if (comp.isLabor) { %>
+                            <span style="color: #a5b4fc; font-weight: 700;">⚙️ <%= comp.bilesenAdi %></span>
+                          <% } else { %>
+                            <strong style="color: var(--text-primary);"><%= comp.bilesenAdi %></strong>
+                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #94a3b8;">[<%= comp.bilesenKodu %>]</div>
+                          <% } %>
+                        </td>
+                        <td>
+                          <% if (comp.kategori === 'Hammadde') { %>
+                            <span class="status-pill status-approved">🟦 Hammadde</span>
+                          <% } else if (['Yari_Mamul', 'Yarı_Mamul'].includes(comp.kategori)) { %>
+                            <span class="status-pill status-pending">🟧 Yarı Mamul</span>
+                          <% } else { %>
+                            <span class="status-pill status-completed">⚙️ <%= comp.kategori %></span>
+                          <% } %>
+                        </td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
+                          <%= comp.isLabor ? '—' : `${comp.gerekliMiktar} ${comp.birim}` %>
+                        </td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
+                          <%= comp.fireOrani > 0 ? `%${comp.fireOrani}` : '—' %>
+                        </td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #cbd5e1;">
+                          <%= comp.isLabor ? '—' : `${comp.hesaplananBrutMiktar.toFixed(2)} ${comp.birim}` %>
+                        </td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 0.95rem; color: #fbbf24;">
+                          <%= comp.isLabor ? '—' : `${comp.yuvarlanmisMiktar} ${comp.birim}` %>
+                        </td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
+                          <%= comp.isLabor ? '—' : `${comp.mevcutStok} ${comp.birim}` %>
+                        </td>
+                        <td style="text-align: center;">
+                          <% if (comp.isLabor) { %>
+                            <span style="color: #94a3b8; font-size: 0.78rem;">Saf İşçilik</span>
+                          <% } else if (comp.stokYeterli) { %>
+                            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">✓ Yeterli</span>
+                          <% } else { %>
+                            <span style="background: rgba(244, 63, 94, 0.15); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">🚨 Eksik</span>
+                          <% } %>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- SEKME 5: ✍️ 5. SAHA TALİMATLARI & ONAY                     -->
+        <!-- ======================================================== -->
+        <div id="tab-instructions" class="wizard-tab-content">
+          <div class="form-section-card">
+            <div class="section-title">
+              <span>✍️ 5. Saha Talimatları, Görevlendirme & Nihai Onay</span>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Üretim Yöneticisi / Sorumlu Mühendis</label>
+                <input type="text" name="productionManager" value="<%= user ? (user.firstName ? user.firstName + ' ' + (user.lastName || '') : user.username) : 'Üretim Mühendisi' %>" class="form-control" style="font-weight: 700;">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Reçete / Mühendislik Notları</label>
+                <input type="text" name="receteNotlari" value="Aktif Reçete: <%= activeRecipeCode %> • Rota: <%= activeRoutingCode %>" class="form-control">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Saha Notları / İmalat Açıklaması</label>
+              <textarea name="notlar" rows="3" class="form-control" placeholder="İmalat sahasına iletilecek özel talimatlar...">[MRP Onaylı İş Emri] <%= targetProduct.ad %> için <%= effectiveQty %> <%= targetProduct.birim %> imalat iş emridir. <%= effectiveDemandRef ? 'Kaynak: ' + effectiveDemandRef : '' %></textarea>
+            </div>
+
+            <!-- Summary Card Before Confirmation -->
+            <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(16, 185, 129, 0.4); border-radius: 14px; padding: 20px; margin-top: 10px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                <div>
+                  <div style="font-size: 0.8rem; font-weight: 800; color: #34d399; text-transform: uppercase;">✅ İŞ EMRİ ONAY ÖZETİ</div>
+                  <div style="font-size: 1.1rem; font-weight: 800; color: #ffffff; margin-top: 2px;">
+                    <%= nextWorkOrderNo %> • <%= targetProduct.ad %> (<%= effectiveQty %> <%= targetProduct.birim %>)
                   </div>
-                  <button type="submit" class="btn-submit-order" style="padding: 14px 32px;">
-                    <span>✅ İş Emrini Onayla ve Başlat</span>
-                  </button>
+                  <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">
+                    Planlanan Süre: <strong style="color: #fbbf24;"><%= projectedStartDate %> ➔ <%= projectedEndDate %> (<%= totalDurationHours %> Saat)</strong>
+                  </div>
                 </div>
+                <button type="submit" class="btn-submit-order" style="padding: 14px 32px;">
+                  <span>✅ İş Emrini Onayla ve Başlat</span>
+                </button>
               </div>
-
             </div>
+
+          </div>
+        </div>
+
+        <!-- WIZARD STEPPER FOOTER (Sekmeler Arası Geçiş & Hızlı Aksiyon) -->
+        <div class="wizard-footer-bar">
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-step-nav" id="btnPrevTab" onclick="navigateWizard(-1)" style="display: none;">
+              <span>← Önceki Adım</span>
+            </button>
+            <button type="button" class="btn-step-nav" id="btnNextTab" onclick="navigateWizard(1)">
+              <span>Sonraki Adım →</span>
+            </button>
           </div>
 
-          <!-- WIZARD STEPPER FOOTER (Sekmeler Arası Geçiş & Hızlı Aksiyon) -->
-          <div class="wizard-footer-bar">
-            <div style="display: flex; gap: 10px;">
-              <button type="button" class="btn-step-nav" id="btnPrevTab" onclick="navigateWizard(-1)" style="display: none;">
-                <span>← Önceki Adım</span>
-              </button>
-              <button type="button" class="btn-step-nav" id="btnNextTab" onclick="navigateWizard(1)">
-                <span>Sonraki Adım →</span>
-              </button>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 14px;">
-              <a href="/production/mrp" class="btn-back-link" style="padding: 10px 18px;">
-                ✕ İptal
-              </a>
-              <button type="submit" class="btn-submit-order" id="btnConfirmWorkOrder">
-                <span>✅ İş Emrini Onayla ve Başlat</span>
-              </button>
-            </div>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <a href="/production/mrp" class="btn-back-link" style="padding: 10px 18px;">
+              ✕ İptal
+            </a>
+            <button type="submit" class="btn-submit-order" id="btnConfirmWorkOrder">
+              <span>✅ İş Emrini Onayla ve Başlat</span>
+            </button>
           </div>
+        </div>
 
-        </form>
-      <% } %>
+      </form>
 
     </main>
   </div>
@@ -768,7 +744,6 @@
 
       currentStepIndex = stepIdx;
 
-      // Activate clicked button or button matching index
       const buttons = document.querySelectorAll('.wizard-tab-btn');
       if (buttons[stepIdx - 1]) {
         buttons[stepIdx - 1].classList.add('active');
@@ -777,7 +752,6 @@
       const target = document.getElementById(tabId);
       if (target) target.classList.add('active');
 
-      // Update Prev/Next button visibility
       const btnPrev = document.getElementById('btnPrevTab');
       const btnNext = document.getElementById('btnNextTab');
       if (btnPrev) btnPrev.style.display = currentStepIndex === 1 ? 'none' : 'inline-flex';

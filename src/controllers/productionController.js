@@ -97,20 +97,19 @@ class ProductionController {
     const { Op } = require('sequelize');
 
     const effectiveStockId = stockId || stockItemId;
+    if (!effectiveStockId) {
+      return res.redirect('/production/mrp');
+    }
+
+    const targetProduct = await StokKarti.findByPk(effectiveStockId);
+    if (!targetProduct) {
+      return res.redirect('/production/mrp');
+    }
+
     const effectiveQty = parseFloat(plannedQty || qty || 1) || 1;
     const effectivePriority = priority || 'Normal';
     const effectiveDemandRef = requisitionNo || demandRef || '';
 
-    // 1. Fetch all candidate manufactured products (Mamul & Yarı Mamul)
-    const stockItems = await StokKarti.findAll({
-      where: {
-        durum: 'Active',
-        kategori: { [Op.in]: ['Mamul', 'Yarı_Mamul', 'Yari_Mamul'] }
-      },
-      order: [['ad', 'ASC']]
-    });
-
-    let targetProduct = null;
     let routingOperations = [];
     let activeRecipeCode = '—';
     let activeRecipeVersion = 'Rev.01';
@@ -130,18 +129,15 @@ class ProductionController {
     let isDeliveryDelayed = false;
     let delayDays = 0;
 
-    if (effectiveStockId) {
-      targetProduct = await StokKarti.findByPk(effectiveStockId);
-      if (targetProduct) {
-        // 2. Fetch Active BOM
-        const rawBOMs = await UrunRecetesi.findAll({
-          where: { mamulStokId: targetProduct.id, durum: 'Active' },
-          include: [{ model: StokKarti, as: 'bilesenUrun' }],
-          order: [
-            [sequelize.cast(sequelize.col('UrunRecetesi.operasyonKodu'), 'INTEGER'), 'ASC'],
-            ['id', 'ASC']
-          ]
-        });
+    // 2. Fetch Active BOM
+    const rawBOMs = await UrunRecetesi.findAll({
+      where: { mamulStokId: targetProduct.id, durum: 'Active' },
+      include: [{ model: StokKarti, as: 'bilesenUrun' }],
+      order: [
+        [sequelize.cast(sequelize.col('UrunRecetesi.operasyonKodu'), 'INTEGER'), 'ASC'],
+        ['id', 'ASC']
+      ]
+    });
 
         if (rawBOMs.length > 0) {
           activeRecipeCode = rawBOMs[0].receteKodu || 'REC-TANIMLI';
@@ -294,14 +290,11 @@ class ProductionController {
         }
 
         routingOperations = processedOps;
-      }
-    }
 
     const nextWorkOrderNo = await productionRepository.generateWorkOrderNo();
 
     res.render('production/add', {
       user: req.user,
-      stockItems,
       targetProduct,
       effectiveStockId,
       effectiveQty,
