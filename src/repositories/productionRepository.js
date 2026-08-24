@@ -334,32 +334,36 @@ class ProductionRepository {
     // Validate each component item
     for (let i = 0; i < components.length; i++) {
       const comp = components[i];
-      const compId = parseInt(comp.bilesenStokId || comp.componentStockItemId, 10);
-      if (!compId || isNaN(compId)) {
-        throw new Error(`Bileşen Kalemi #${i + 1}: Lütfen geçerli bir bileşen seçiniz.`);
-      }
-      if (compId === targetMamulId) {
-        throw new Error(`Bileşen Kalemi #${i + 1}: Ürünün kendisi kendi reçetesine bileşen olarak eklenemez.`);
-      }
+      const itemType = comp.kalemTuru || (comp.bilesenStokId ? 'Material' : 'Labor');
 
-      const qty = parseFloat(comp.gerekliMiktar !== undefined ? comp.gerekliMiktar : comp.quantityRequired);
-      if (isNaN(qty) || qty <= 0) {
-        throw new Error(`Bileşen Kalemi #${i + 1}: Gerekli miktar 0'dan büyük pozitif bir sayı olmalıdır.`);
-      }
+      if (itemType === 'Material') {
+        const compId = parseInt(comp.bilesenStokId || comp.componentStockItemId, 10);
+        if (!compId || isNaN(compId)) {
+          throw new Error(`Bileşen Kalemi #${i + 1}: Malzeme seçildiğinde lütfen geçerli bir bileşen/ürün seçiniz.`);
+        }
+        if (compId === targetMamulId) {
+          throw new Error(`Bileşen Kalemi #${i + 1}: Ürünün kendisi kendi reçetesine bileşen olarak eklenemez.`);
+        }
 
-      const unit = (comp.birim || comp.unit || '').trim();
-      if (!unit) {
-        throw new Error(`Bileşen Kalemi #${i + 1}: Bileşen birimi zorunludur.`);
-      }
+        const qty = parseFloat(comp.gerekliMiktar !== undefined ? comp.gerekliMiktar : comp.quantityRequired);
+        if (isNaN(qty) || qty <= 0) {
+          throw new Error(`Bileşen Kalemi #${i + 1}: Malzeme seçildiğinde gerekli miktar 0'dan büyük pozitif bir sayı olmalıdır.`);
+        }
 
-      const scrap = parseFloat(comp.fireOrani !== undefined ? comp.fireOrani : comp.scrapPercentage);
-      if (isNaN(scrap) || scrap < 0) {
-        throw new Error(`Bileşen Kalemi #${i + 1}: Fire oranı negatif (0'dan küçük) olamaz.`);
+        const unit = (comp.birim || comp.unit || '').trim();
+        if (!unit) {
+          throw new Error(`Bileşen Kalemi #${i + 1}: Bileşen birimi zorunludur.`);
+        }
+
+        const scrap = parseFloat(comp.fireOrani !== undefined ? comp.fireOrani : comp.scrapPercentage);
+        if (isNaN(scrap) || scrap < 0) {
+          throw new Error(`Bileşen Kalemi #${i + 1}: Fire oranı negatif (0'dan küçük) olamaz.`);
+        }
       }
 
       const opCode = (comp.operasyonKodu || comp.operationCode || '').trim();
       if (!opCode) {
-        throw new Error(`Bileşen Kalemi #${i + 1}: İlgili bileşenin kullanılacağı Rota Adımı seçimi zorunludur.`);
+        throw new Error(`Bileşen Kalemi #${i + 1}: İlgili adımın/işçiliğin işletileceği Rota Adımı seçimi zorunludur.`);
       }
     }
 
@@ -382,7 +386,7 @@ class ProductionRepository {
 
         if (i === 0) {
           if (stepIdx !== 0) {
-            throw new Error(`Bileşen Kalemi #1: Reçetenin ilk bileşeni mutlaka ürünün ilk rota adımına (#${validStepNumbers[0]}) ait olmalıdır.`);
+            throw new Error(`Bileşen Kalemi #1: Reçetenin ilk bileşeni/adımı mutlaka ürünün ilk rota adımına (#${validStepNumbers[0]}) ait olmalıdır.`);
           }
         } else {
           const prevOpNum = parseInt(components[i - 1].operasyonKodu || components[i - 1].operationCode, 10);
@@ -392,7 +396,7 @@ class ProductionRepository {
             throw new Error(`Bileşen Kalemi #${i + 1}: Rota adımı (#${opNum}), bir önceki bileşenin rota adımından (#${prevOpNum}) daha küçük olamaz (hiyerarşi geriye gidemez).`);
           }
           if (stepIdx > prevStepIdx + 1) {
-            throw new Error(`Bileşen Kalemi #${i + 1}: Rota adımı sırası atlayamaz. Bir önceki bileşen Adım #${prevOpNum} olduğu için bu bileşen sadece Adım #${prevOpNum} veya Adım #${validStepNumbers[prevStepIdx + 1]} olabilir.`);
+            throw new Error(`Bileşen Kalemi #${i + 1}: Rota adımı sırası atlayamaz. Bir önceki adım #${prevOpNum} olduğu için bu adım sadece #${prevOpNum} veya #${validStepNumbers[prevStepIdx + 1]} olabilir.`);
           }
         }
       }
@@ -410,20 +414,27 @@ class ProductionRepository {
 
     for (let i = 0; i < components.length; i++) {
       const comp = components[i];
-      const compId = parseInt(comp.bilesenStokId || comp.componentStockItemId, 10);
-      const compItem = await StokKarti.findByPk(compId);
+      const itemType = comp.kalemTuru || (comp.bilesenStokId ? 'Material' : 'Labor');
+      const compId = comp.bilesenStokId ? parseInt(comp.bilesenStokId, 10) : null;
+      let compItem = null;
+      if (compId) {
+        compItem = await StokKarti.findByPk(compId);
+      }
       const isSemiFinished = compItem && (compItem.kategori === 'Yari_Mamul' || compItem.kategori === 'Yarı_Mamul');
-      const calcLevel = isSemiFinished ? 2 : 3;
+      const calcLevel = itemType === 'Labor' ? 1 : (isSemiFinished ? 2 : 3);
 
-      const qty = parseFloat(comp.gerekliMiktar !== undefined ? comp.gerekliMiktar : comp.quantityRequired);
-      const scrap = parseFloat(comp.fireOrani !== undefined ? comp.fireOrani : comp.scrapPercentage) || 0;
-      const unit = comp.birim || comp.unit || (compItem ? compItem.birim : 'Adet');
+      const rawQty = comp.gerekliMiktar !== undefined && comp.gerekliMiktar !== '' ? parseFloat(comp.gerekliMiktar) : (itemType === 'Labor' ? 0 : 1);
+      const qty = isNaN(rawQty) ? 0 : rawQty;
+      const rawScrap = parseFloat(comp.fireOrani !== undefined ? comp.fireOrani : comp.scrapPercentage);
+      const scrap = isNaN(rawScrap) ? 0 : rawScrap;
+      const unit = comp.birim || comp.unit || (compItem ? compItem.birim : (itemType === 'Labor' ? 'Saat' : 'Adet'));
       const opCode = (comp.operasyonKodu || comp.operationCode || '').trim();
       const lineNote = (comp.notlar || comp.notes || '').trim() || finalGeneralNotes;
 
       const newBOM = await UrunRecetesi.create({
         receteKodu: finalReceteKodu,
         mamulStokId: targetMamulId,
+        kalemTuru: itemType,
         bilesenStokId: compId,
         versiyon: finalVersiyon,
         bazMiktar: parseFloat(baseQuantity) || 1.0,

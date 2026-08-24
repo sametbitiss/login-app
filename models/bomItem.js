@@ -19,9 +19,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
+    kalemTuru: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'Material' // 'Material' (Malzeme) or 'Labor' (Saf İşçilik / Operasyon)
+    },
     bilesenStokId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     versiyon: {
       type: DataTypes.STRING,
@@ -35,12 +40,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     gerekliMiktar: {
       type: DataTypes.DECIMAL(12, 4),
-      allowNull: false,
+      allowNull: true,
       defaultValue: 1.0
     },
     birim: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       defaultValue: 'Adet'
     },
     fireOrani: {
