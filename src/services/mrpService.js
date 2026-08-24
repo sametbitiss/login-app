@@ -3,28 +3,40 @@ const {
   UrunRecetesi,
   StokKarti,
   SatinAlmaTalebi,
-  SatisSiparisi,
   RotaOperasyon,
   sequelize
 } = require('../../models');
 const logService = require('./logService');
 const { Op } = require('sequelize');
 
+/**
+ * Birim türünün kesirli olup olmadığını belirler.
+ * Adet, Paket, Koli, Set gibi birimler tam sayı olmalı.
+ * Mt, Kg, Lt, M2, M3, Ton gibi birimler kesirli olabilir.
+ */
+function isDiscreteUnit(unit) {
+  const discreteUnits = ['Adet', 'Paket', 'Koli', 'Set'];
+  return discreteUnits.includes(unit);
+}
+
 class MRPService {
   /**
-   * Runs the full hierarchical Multi-Level Material Requirements Planning (MRP) engine.
-   * - Evaluates active demands from Approved Sales Orders and Planned Production Requisitions.
-   * - Recursively explodes BOM trees down to raw materials, factoring in scrap (fire) rates at each level.
-   * - Checks real-time stock inventory in the database.
-   * - Implements Dependency Branch Gating:
-   *     - If all direct child components are available -> Work Order Suggestion (İş Emri Önerisi).
-   *     - If child components are missing -> Halts branch, generates Production Requisition Suggestion for the parent and Purchase Requisitions for missing raw materials.
+   * Tam Hiyerarşik MRP Motoru (v2)
+   * 
+   * Algoritma:
+   * 1. Aktif üretim taleplerini topla (UretimEmri durum=Planned)
+   * 2. Her talep ürününün reçetesini recursive olarak hammaddeye kadar patlat
+   * 3. Aynı bileşenleri topla (aggregation)
+   * 4. Küsürat yuvarlama (Adet birimliler Math.ceil)
+   * 5. Fiziksel stok yeterliliği kontrolü
+   * 6. Tedarik önerileri (Satın Alma / Üretim Talebi)
+   * 7. İş emri önerileri (aşağıdan yukarı, aktif/pasif bağımlılık grafiği)
    */
   async runMRP() {
-    // 1. Fetch all active stock items and recipes for fast in-memory indexing
-    const allStocks = await StokKarti.findAll({
-      order: [['ad', 'ASC']]
-    });
+    // ═══════════════════════════════════════════════════════════════
+    // ADIM 1: Veri Yükleme (tüm stoklar, reçeteler, rotalar, talepler)
+    // ═══════════════════════════════════════════════════════════════
+    const allStocks = await StokKarti.findAll({ order: [['ad', 'ASC']] });
     const stockMap = new Map();
     allStocks.forEach(s => stockMap.set(s.id, s));
 
@@ -32,9 +44,10 @@ class MRPService {
       where: { durum: 'Active' },
       include: [{ model: StokKarti, as: 'bilesenUrun' }]
     });
-
+    // BOM'ları parent stokId'ye göre grupla, sadece Material satırlarını al
     const bomsByParent = {};
     allBOMs.forEach(b => {
+      if (b.kalemTuru === 'Labor' || !b.bilesenStokId) return; // Labor satırlarını atla
       if (!bomsByParent[b.mamulStokId]) bomsByParent[b.mamulStokId] = [];
       bomsByParent[b.mamulStokId].push(b);
     });
@@ -43,373 +56,466 @@ class MRPService {
       where: { durum: 'Active' },
       order: [['stokId', 'ASC'], ['operasyonSira', 'ASC']]
     });
-
     const routingsByStock = {};
     allRoutings.forEach(r => {
       if (!routingsByStock[r.stokId]) routingsByStock[r.stokId] = [];
       routingsByStock[r.stokId].push(r);
     });
 
-    // 2. Fetch active demands: Approved Sales Orders and Planned Production Requests
-    const activeSales = await SatisSiparisi.findAll({
-      where: {
-        durum: { [Op.in]: ['Approved', 'Preparing'] },
-        karsilanmaDurumu: { [Op.ne]: 'Delivered' }
-      },
-      include: [{ model: StokKarti, as: 'stokKarti' }]
-    });
-
-    const activeReqOrders = await UretimEmri.findAll({
+    // Aktif üretim taleplerini al (YALNIZCA UretimEmri, durum=Planned)
+    const activeDemands = await UretimEmri.findAll({
       where: { durum: 'Planned' },
       include: [{ model: StokKarti, as: 'stokKarti' }]
     });
 
-    const openPurchaseReqs = await SatinAlmaTalebi.findAll({
-      where: { durum: { [Op.in]: ['Pending', 'Pending_Approval', 'Approved'] } }
-    });
-    const openReqQtyMap = new Map();
-    openPurchaseReqs.forEach(pr => {
-      const current = openReqQtyMap.get(pr.stokId) || 0;
-      openReqQtyMap.set(pr.stokId, current + parseFloat(pr.talepEdilenMiktar || 0));
-    });
+    if (activeDemands.length === 0) {
+      return this._emptyResult();
+    }
 
-    // 3. Normalize demand list
-    const demandList = [];
+    // ═══════════════════════════════════════════════════════════════
+    // ADIM 2: Her talep için Recursive BOM Explosion
+    // ═══════════════════════════════════════════════════════════════
+    
+    // globalRequirements: { stokId -> { item, grossQty, sources: [{demandRef, parentName, qty}] } }
+    const globalRequirements = new Map();
+    
+    // demandTrees: Her talep için tam ağaç yapısı
+    const demandAnalyses = [];
+    
+    // intermediateProducts: Yarı mamul/mamul ürünler ve üretim miktarları
+    // { stokId -> { item, totalQty, demandSources: [{demandRef, qty, parentName}] } }
+    const intermediateProducts = new Map();
 
-    for (const s of activeSales) {
-      let items = [];
-      if (s.kalemlerJson) {
-        try {
-          const parsed = typeof s.kalemlerJson === 'string' ? JSON.parse(s.kalemlerJson) : s.kalemlerJson;
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            items = parsed.filter(it => it && (it.stokId || it.stockItemId) && parseFloat(it.miktar || it.quantity || 0) > 0);
-          }
-        } catch (e) { items = []; }
+    for (const demand of activeDemands) {
+      const st = stockMap.get(demand.stokId);
+      if (!st) continue;
+
+      const demandRef = demand.isEmriNo;
+      const demandQty = parseFloat(demand.planlananMiktar || 1);
+      const demandInfo = {
+        demandId: demand.id,
+        demandRef,
+        productName: st.ad,
+        productCode: st.stokKodu,
+        stockId: demand.stokId,
+        quantity: demandQty,
+        unit: demand.birim || st.birim || 'Adet',
+        priority: demand.oncelik || 'Normal',
+        deliveryDate: demand.planlananBitisTarihi,
+        startDate: demand.planlananBaslangicTarihi,
+        title: demand.uretimBasligi
+      };
+
+      // Ana ürün kendisi de intermediateProducts'a ekle (iş emri önerisi için)
+      if (!intermediateProducts.has(demand.stokId)) {
+        intermediateProducts.set(demand.stokId, {
+          item: st,
+          totalQty: 0,
+          demandSources: [],
+          isTopLevel: true
+        });
+      }
+      const ipEntry = intermediateProducts.get(demand.stokId);
+      ipEntry.totalQty += demandQty;
+      ipEntry.demandSources.push({ demandRef, qty: demandQty, parentName: null });
+
+      // BOM ağacını recursive olarak patlat
+      const tree = this._explodeBOM(
+        demand.stokId, demandQty, demandRef, st.ad,
+        stockMap, bomsByParent, globalRequirements, intermediateProducts,
+        1, new Set()
+      );
+
+      demandAnalyses.push({ demand: demandInfo, tree });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADIM 3 & 4: Aggregation + Küsürat Yuvarlama
+    // ═══════════════════════════════════════════════════════════════
+    const materialRequirements = []; // Nihai hammadde ihtiyaç tablosu
+
+    for (const [stokId, data] of globalRequirements.entries()) {
+      const item = data.item;
+      let grossQty = data.grossQty;
+      const unit = item.birim || 'Adet';
+
+      // Küsürat yuvarlama: Adet gibi kesikli birimler yukarı yuvarla
+      if (isDiscreteUnit(unit)) {
+        grossQty = Math.ceil(grossQty);
+      } else {
+        grossQty = parseFloat(grossQty.toFixed(4));
       }
 
-      if (items.length > 0) {
-        for (const itemLine of items) {
-          const sId = itemLine.stokId || itemLine.stockItemId;
-          const qty = parseFloat(itemLine.miktar || itemLine.quantity || 1);
-          const st = stockMap.get(sId);
-          demandList.push({
-            demandId: `SO-${s.id}-${sId}`,
-            sourceType: 'SalesOrder',
-            sourceNo: s.siparisNo,
-            sourceRef: `Satış Siparişi: ${s.siparisNo}`,
-            customerName: s.musteriAdi || 'Genel Müşteri',
-            stockId: sId,
-            productName: st ? st.ad : (itemLine.ad || itemLine.name || `Stok #${sId}`),
-            stockCode: st ? st.stokKodu : (itemLine.stokKodu || itemLine.stockCode || '—'),
-            quantity: qty,
-            unit: st ? st.birim : (itemLine.birim || itemLine.unit || 'Adet'),
-            deliveryDate: s.teslimTarihi || s.siparisTarihi,
-            priority: s.oncelik || 'Normal'
-          });
-        }
-      } else if (s.stokId && parseFloat(s.miktar || 0) > 0) {
-        const st = stockMap.get(s.stokId);
-        demandList.push({
-          demandId: `SO-${s.id}`,
-          sourceType: 'SalesOrder',
-          sourceNo: s.siparisNo,
-          sourceRef: `Satış Siparişi: ${s.siparisNo}`,
-          customerName: s.musteriAdi || 'Genel Müşteri',
-          stockId: s.stokId,
-          productName: st ? st.ad : (s.stokKarti ? s.stokKarti.ad : `Stok #${s.stokId}`),
-          stockCode: st ? st.stokKodu : (s.stokKarti ? s.stokKarti.stokKodu : '—'),
-          quantity: parseFloat(s.miktar),
-          unit: st ? st.birim : 'Adet',
-          deliveryDate: s.teslimTarihi || s.siparisTarihi,
-          priority: s.oncelik || 'Normal'
+      const currentStock = parseFloat(item.mevcutStok || 0);
+      const netShortage = Math.max(0, grossQty - currentStock);
+      const isStockSufficient = netShortage === 0;
+
+      // Net eksik de yuvarlansın
+      let roundedNetShortage = netShortage;
+      if (isDiscreteUnit(unit) && roundedNetShortage > 0) {
+        roundedNetShortage = Math.ceil(roundedNetShortage);
+      }
+
+      const procurementMethod = item.tedarikYontemi || 'Satın Alma';
+
+      materialRequirements.push({
+        stockId: stokId,
+        stockCode: item.stokKodu,
+        name: item.ad,
+        category: item.kategori,
+        unit,
+        procurementMethod,
+        grossRequirement: grossQty,
+        currentStock,
+        netShortage: roundedNetShortage,
+        isStockSufficient,
+        sources: data.sources
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADIM 5 & 6: Tedarik Önerileri
+    // ═══════════════════════════════════════════════════════════════
+    const purchaseSuggestions = [];
+    const productionReqSuggestions = [];
+
+    for (const req of materialRequirements) {
+      if (req.isStockSufficient) continue;
+
+      const sourceSummary = req.sources.map(s => s.demandRef).filter((v, i, a) => a.indexOf(v) === i).join(', ');
+
+      if (req.procurementMethod === 'Satın Alma' || req.procurementMethod === 'Purchase') {
+        purchaseSuggestions.push({
+          stockId: req.stockId,
+          stockCode: req.stockCode,
+          name: req.name,
+          category: req.category,
+          unit: req.unit,
+          grossRequirement: req.grossRequirement,
+          currentStock: req.currentStock,
+          netShortage: req.netShortage,
+          suggestedSupplier: req.sources[0]?.item?.tedarikci || stockMap.get(req.stockId)?.tedarikci || 'Ana Tedarikçi',
+          demandSources: sourceSummary,
+          actionType: 'purchase',
+          actionLabel: '🛒 Satın Alma Talebi Oluştur'
+        });
+      } else if (req.procurementMethod === 'Üretim' || req.procurementMethod === 'Production') {
+        productionReqSuggestions.push({
+          stockId: req.stockId,
+          stockCode: req.stockCode,
+          name: req.name,
+          category: req.category,
+          unit: req.unit,
+          grossRequirement: req.grossRequirement,
+          currentStock: req.currentStock,
+          netShortage: req.netShortage,
+          demandSources: sourceSummary,
+          actionType: 'production_request',
+          actionLabel: '🏭 Üretim Talebi Oluştur'
         });
       }
     }
 
-    for (const r of activeReqOrders) {
-      const st = stockMap.get(r.stokId);
-      demandList.push({
-        demandId: `WO-${r.id}`,
-        sourceType: 'ProductionRequisition',
-        sourceNo: r.isEmriNo,
-        sourceRef: `Üretim Talebi: ${r.isEmriNo}`,
-        customerName: 'Dahili Üretim Talebi',
-        stockId: r.stokId,
-        productName: st ? st.ad : (r.stokKarti ? r.stokKarti.ad : `Stok #${r.stokId}`),
-        stockCode: st ? st.stokKodu : (r.stokKarti ? r.stokKarti.stokKodu : '—'),
-        quantity: parseFloat(r.planlananMiktar || 1),
-        unit: r.birim || 'Adet',
-        deliveryDate: r.planlananBitisTarihi,
-        priority: r.oncelik || 'Normal'
+    // ═══════════════════════════════════════════════════════════════
+    // ADIM 7: İş Emri Önerileri (Aşağıdan Yukarı Bağımlılık Grafiği)
+    // ═══════════════════════════════════════════════════════════════
+    const workOrderSuggestions = this._buildWorkOrderSuggestions(
+      intermediateProducts, bomsByParent, stockMap, globalRequirements,
+      materialRequirements, routingsByStock
+    );
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADIM 8: KPI Özeti
+    // ═══════════════════════════════════════════════════════════════
+    const activeWOs = workOrderSuggestions.filter(w => w.status === 'Active');
+    const passiveWOs = workOrderSuggestions.filter(w => w.status === 'Passive');
+
+    const kpiSummary = {
+      totalDemandsCount: activeDemands.length,
+      totalMaterialTypesCount: materialRequirements.length,
+      sufficientMaterialsCount: materialRequirements.filter(m => m.isStockSufficient).length,
+      shortMaterialsCount: materialRequirements.filter(m => !m.isStockSufficient).length,
+      purchaseSuggestionsCount: purchaseSuggestions.length,
+      productionReqSuggestionsCount: productionReqSuggestions.length,
+      activeWorkOrdersCount: activeWOs.length,
+      passiveWorkOrdersCount: passiveWOs.length,
+      totalWorkOrdersCount: workOrderSuggestions.length
+    };
+
+    return {
+      demandsAnalyzed: demandAnalyses.map(d => d.demand),
+      demandAnalyses,
+      materialRequirements,
+      purchaseSuggestions,
+      productionReqSuggestions,
+      workOrderSuggestions,
+      kpiSummary,
+      // Geriye dönük uyumluluk aliasları
+      mrpResults: materialRequirements,
+      orderAnalysisTrees: demandAnalyses,
+      purchaseRequisitionSuggestions: purchaseSuggestions,
+      productionRequisitionSuggestions: productionReqSuggestions
+    };
+  }
+
+  /**
+   * Recursive BOM Explosion
+   * Bir ürünün reçetesini hammaddeye kadar patlat.
+   */
+  _explodeBOM(parentStockId, requiredQty, demandRef, parentName, stockMap, bomsByParent, globalRequirements, intermediateProducts, depth, visited) {
+    if (visited.has(parentStockId) || depth > 15) return null;
+    const currentVisited = new Set(visited);
+    currentVisited.add(parentStockId);
+
+    const parentItem = stockMap.get(parentStockId);
+    if (!parentItem) return null;
+
+    const boms = bomsByParent[parentStockId] || [];
+    const children = [];
+
+    for (const bom of boms) {
+      const compId = bom.bilesenStokId;
+      const compItem = stockMap.get(compId);
+      if (!compItem) continue;
+
+      // Brüt ihtiyaç hesabı: (gerekliMiktar / bazMiktar) × talep × (1 + fire/100)
+      const baseQty = parseFloat(bom.bazMiktar || 1) || 1;
+      const unitReq = parseFloat(bom.gerekliMiktar || 1) / baseQty;
+      const scrapRate = parseFloat(bom.fireOrani || 0);
+      const scrapMultiplier = 1 + (scrapRate / 100);
+      const compGrossReq = requiredQty * unitReq * scrapMultiplier;
+
+      const isRawMaterial = compItem.kategori === 'Hammadde';
+      const isSemiFinished = compItem.kategori === 'Yari_Mamul' || compItem.kategori === 'Yarı_Mamul';
+      const isFinished = compItem.kategori === 'Mamul';
+
+      // Global ihtiyaç tablosuna ekle
+      if (!globalRequirements.has(compId)) {
+        globalRequirements.set(compId, {
+          item: compItem,
+          grossQty: 0,
+          sources: []
+        });
+      }
+      const gEntry = globalRequirements.get(compId);
+      gEntry.grossQty += compGrossReq;
+      gEntry.sources.push({ demandRef, parentName, qty: compGrossReq });
+
+      let childTree = null;
+
+      // Eğer yarı mamul veya mamul ise → kendi reçetesini de patlat
+      if (isSemiFinished || isFinished) {
+        // intermediateProducts'a ekle (iş emri önerisi için)
+        if (!intermediateProducts.has(compId)) {
+          intermediateProducts.set(compId, {
+            item: compItem,
+            totalQty: 0,
+            demandSources: [],
+            isTopLevel: false
+          });
+        }
+        const ipEntry = intermediateProducts.get(compId);
+        ipEntry.totalQty += compGrossReq;
+        ipEntry.demandSources.push({ demandRef, qty: compGrossReq, parentName });
+
+        // Recursive çağrı
+        childTree = this._explodeBOM(
+          compId, compGrossReq, demandRef, compItem.ad,
+          stockMap, bomsByParent, globalRequirements, intermediateProducts,
+          depth + 1, currentVisited
+        );
+      }
+
+      children.push({
+        stockId: compId,
+        stockCode: compItem.stokKodu,
+        name: compItem.ad,
+        category: compItem.kategori,
+        unit: compItem.birim || 'Adet',
+        procurementMethod: compItem.tedarikYontemi,
+        unitRecipeQty: parseFloat(unitReq.toFixed(4)),
+        scrapRate,
+        grossRequired: parseFloat(compGrossReq.toFixed(4)),
+        currentStock: parseFloat(compItem.mevcutStok || 0),
+        depth,
+        subTree: childTree
       });
     }
 
-    // 4. Data structures for results
-    const globalRequirementsMap = new Map();
-    const orderAnalysisTrees = [];
-    const workOrderSuggestions = [];
-    const productionRequisitionSuggestions = [];
-    const purchaseRequisitionSuggestions = [];
+    return {
+      stockId: parentStockId,
+      stockCode: parentItem.stokKodu,
+      name: parentItem.ad,
+      category: parentItem.kategori,
+      requiredQty: parseFloat(requiredQty.toFixed(4)),
+      unit: parentItem.birim || 'Adet',
+      hasBOM: boms.length > 0,
+      children
+    };
+  }
 
-    // Helper: Recursive BOM explosion
-    const analyzeSubTree = (parentStockId, requiredQty, depth = 1, visited = new Set(), parentPath = '') => {
-      if (visited.has(parentStockId) || depth > 10) return null; // Avoid cycle or infinite depth
-      const currentVisited = new Set(visited);
-      currentVisited.add(parentStockId);
+  /**
+   * Aşağıdan yukarı iş emri önerileri oluştur.
+   * 
+   * Mantık:
+   * 1. intermediateProducts'taki tüm ürünleri (yarı mamul + mamul) tara.
+   * 2. Her birinin doğrudan bileşenlerinin stok durumunu kontrol et.
+   * 3. Tüm bileşenler yeterliyse → Aktif iş emri önerisi.
+   * 4. Bir bileşen bile eksikse → Pasif iş emri önerisi (engeli belirt).
+   * 5. Sırala: Önce alt seviyeler (yarı mamuller), sonra üst seviyeler (mamuller).
+   */
+  _buildWorkOrderSuggestions(intermediateProducts, bomsByParent, stockMap, globalRequirements, materialRequirements, routingsByStock) {
+    const suggestions = [];
 
-      const parentItem = stockMap.get(parentStockId);
-      if (!parentItem) return null;
+    // Shortage lookup: stokId -> netShortage (materyaller arasından)
+    const shortageMap = new Map();
+    materialRequirements.forEach(m => {
+      if (!m.isStockSufficient) {
+        shortageMap.set(m.stockId, m);
+      }
+    });
 
-      const boms = bomsByParent[parentStockId] || [];
-      const children = [];
-      let directComponentsReady = true;
+    // Her intermediate product için iş emri önerisi oluştur
+    for (const [stokId, ipData] of intermediateProducts.entries()) {
+      const item = ipData.item;
+      const boms = bomsByParent[stokId] || [];
+      
+      if (boms.length === 0) continue; // Reçetesi yoksa iş emri verilemez
+
+      const totalQty = ipData.totalQty;
+      let roundedQty = totalQty;
+      if (isDiscreteUnit(item.birim || 'Adet')) {
+        roundedQty = Math.ceil(totalQty);
+      }
+
+      // Bu ürünün doğrudan bileşenlerini kontrol et
+      const blockers = [];
+      let allComponentsReady = true;
 
       for (const bom of boms) {
         const compId = bom.bilesenStokId;
         const compItem = stockMap.get(compId);
         if (!compItem) continue;
 
+        const baseQty = parseFloat(bom.bazMiktar || 1) || 1;
+        const unitReq = parseFloat(bom.gerekliMiktar || 1) / baseQty;
         const scrapRate = parseFloat(bom.fireOrani || 0);
         const scrapMultiplier = 1 + (scrapRate / 100);
-        const baseQty = parseFloat(bom.bazMiktar || 1) || 1;
-        const unitReq = (parseFloat(bom.gerekliMiktar || 1) / baseQty);
-        const compGrossReq = requiredQty * unitReq * scrapMultiplier;
-
-        // Global requirement aggregation
-        if (!globalRequirementsMap.has(compId)) {
-          globalRequirementsMap.set(compId, {
-            item: compItem,
-            grossRequirement: 0,
-            currentStock: parseFloat(compItem.mevcutStok || 0),
-            openReqQty: openReqQtyMap.get(compId) || 0,
-            unit: compItem.birim || 'Adet',
-            references: new Set(),
-            procurementMethod: compItem.tedarikYontemi || ((compItem.kategori === 'Mamul' || compItem.kategori === 'Yarı_Mamul' || compItem.kategori === 'Yari_Mamul') ? 'Üretim' : 'Satın Alma')
-          });
-        }
-        const gEntry = globalRequirementsMap.get(compId);
-        gEntry.grossRequirement += compGrossReq;
-        gEntry.references.add(parentPath ? `${parentPath} ➔ [${compItem.stokKodu}]` : `[${compItem.stokKodu}]`);
-
-        // Recurse child tree
-        const childPath = parentPath ? `${parentPath} ➔ ${compItem.stokKodu}` : `${parentItem.stokKodu} ➔ ${compItem.stokKodu}`;
-        const childSubTree = analyzeSubTree(compId, compGrossReq, depth + 1, currentVisited, childPath);
+        const neededQty = totalQty * unitReq * scrapMultiplier;
 
         const currentStock = parseFloat(compItem.mevcutStok || 0);
-        const isStockSufficient = currentStock >= compGrossReq;
-        if (!isStockSufficient) {
-          directComponentsReady = false;
-        }
 
-        children.push({
-          stockId: compId,
-          stockCode: compItem.stokKodu,
-          name: compItem.ad,
-          category: compItem.kategori,
-          procurementMethod: compItem.tedarikYontemi || 'Satın Alma',
-          unit: compItem.birim,
-          unitRecipeQty: parseFloat(unitReq.toFixed(4)),
-          scrapRate: scrapRate,
-          grossRequiredQty: parseFloat(compGrossReq.toFixed(4)),
-          currentStock: currentStock,
-          isStockSufficient: isStockSufficient,
-          shortageQty: isStockSufficient ? 0 : parseFloat((compGrossReq - currentStock).toFixed(4)),
-          subTree: childSubTree
-        });
+        // Bileşen yeterli mi?
+        if (currentStock < neededQty) {
+          allComponentsReady = false;
+          const isSemiOrFinished = ['Yari_Mamul', 'Yarı_Mamul', 'Mamul'].includes(compItem.kategori);
+          blockers.push({
+            stockId: compId,
+            stockCode: compItem.stokKodu,
+            name: compItem.ad,
+            category: compItem.kategori,
+            needed: parseFloat(neededQty.toFixed(2)),
+            available: currentStock,
+            shortage: parseFloat((neededQty - currentStock).toFixed(2)),
+            blockerType: isSemiOrFinished ? 'production' : 'purchase',
+            blockerLabel: isSemiOrFinished
+              ? `🏭 Önce "${compItem.ad}" üretilmeli`
+              : `🛒 "${compItem.ad}" satın alınmalı`
+          });
+        }
       }
 
-      const routings = routingsByStock[parentStockId] || [];
-      const primaryWorkCenter = routings.length > 0 ? (routings[0].isMerkezi || 'İstasyon-1 (Genel Montaj)') : 'İstasyon-1 (Genel Montaj)';
+      // Rota bilgisi
+      const routings = routingsByStock[stokId] || [];
+      const primaryWorkCenter = routings.length > 0
+        ? (routings[0].isMerkezi || 'Genel Üretim')
+        : 'Genel Üretim';
+
       let estimatedHours = 0;
       if (routings.length > 0) {
         estimatedHours = routings.reduce((sum, r) => {
           const setupMins = parseFloat(r.hazirlikSuresiDakika || 0);
           const unitMins = parseFloat(r.calismaSuresiDakikaBirim || 0);
-          return sum + ((setupMins + (unitMins * requiredQty)) / 60);
+          return sum + ((setupMins + (unitMins * roundedQty)) / 60);
         }, 0);
-      } else {
-        estimatedHours = Math.max(1, Math.round(requiredQty * 1.5));
       }
 
-      return {
-        stockId: parentStockId,
-        stockCode: parentItem.stokKodu,
-        name: parentItem.ad,
-        category: parentItem.kategori,
-        procurementMethod: parentItem.tedarikYontemi || 'Üretim',
-        demandedQty: parseFloat(requiredQty.toFixed(4)),
-        unit: parentItem.birim || 'Adet',
-        hasBOM: boms.length > 0,
-        directComponentsReady: boms.length > 0 ? directComponentsReady : true,
-        primaryWorkCenter: primaryWorkCenter,
-        estimatedHours: parseFloat(estimatedHours.toFixed(1)),
-        children: children
-      };
-    };
+      const demandSourceRefs = ipData.demandSources
+        .map(s => s.demandRef)
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .join(', ');
 
-    // 5. Analyze each demand and collect recommendations
-    for (const demand of demandList) {
-      const rootTree = analyzeSubTree(demand.stockId, demand.quantity, 1, new Set(), demand.stockCode);
-      orderAnalysisTrees.push({
-        demand,
-        tree: rootTree
+      const isTopLevel = ipData.isTopLevel;
+      const depth = isTopLevel ? 0 : 1; // 0 = mamul, 1 = yarı mamul
+
+      suggestions.push({
+        stockId: stokId,
+        stockCode: item.stokKodu,
+        name: item.ad,
+        category: item.kategori,
+        quantity: roundedQty,
+        unit: item.birim || 'Adet',
+        status: allComponentsReady ? 'Active' : 'Passive',
+        statusLabel: allComponentsReady
+          ? '🟢 Bileşenler Hazır — İş Emri Açılabilir'
+          : '🟡 Beklemede — Alt Bileşen Eksik',
+        isTopLevel,
+        depth,
+        blockers,
+        workCenter: primaryWorkCenter,
+        estimatedHours: parseFloat(estimatedHours.toFixed(1)),
+        demandSources: demandSourceRefs,
+        priority: ipData.demandSources.length > 0 ? 'Normal' : 'Low'
       });
     }
 
-    // Helper: Traverse tree and extract actionable recommendations
-    const processedNodeKeys = new Set();
+    // Sırala: önce alt seviyeler (depth DESC → yarı mamuller önce), sonra üst seviyeler
+    suggestions.sort((a, b) => {
+      if (a.depth !== b.depth) return b.depth - a.depth; // Yarı mamuller önce
+      return a.name.localeCompare(b.name, 'tr');
+    });
 
-    const collectRecommendations = (node, demand) => {
-      if (!node) return;
+    // Öncelik numarası ata (1 = en önce yapılacak)
+    suggestions.forEach((s, idx) => {
+      s.priorityOrder = idx + 1;
+    });
 
-      const nodeKey = `${demand.sourceNo}-${node.stockId}-${node.demandedQty}`;
-      if (processedNodeKeys.has(nodeKey)) return;
-      processedNodeKeys.add(nodeKey);
-
-      if (node.procurementMethod === 'Üretim') {
-        if (node.directComponentsReady && node.hasBOM) {
-          workOrderSuggestions.push({
-            demandSource: demand.sourceRef,
-            sourceNo: demand.sourceNo,
-            customerName: demand.customerName,
-            stockId: node.stockId,
-            stockCode: node.stockCode,
-            name: node.name,
-            category: node.category,
-            suggestedQty: node.demandedQty,
-            unit: node.unit,
-            targetWorkCenter: node.primaryWorkCenter,
-            estimatedHours: node.estimatedHours,
-            deliveryDate: demand.deliveryDate,
-            priority: demand.priority,
-            status: 'Ready_For_Production',
-            statusText: '🟢 Bileşenler Tam - İş Emri Açılabilir',
-            notes: `[MRP Önerisi] ${demand.sourceRef} için tüm bileşenler stokta hazır.`
-          });
-        } else if (!node.directComponentsReady) {
-          const missing = (node.children || []).filter(c => !c.isStockSufficient);
-          const missingSummary = missing.map(c => `[${c.stockCode}] ${c.name} (-${c.shortageQty} ${c.unit})`).join(', ');
-          productionRequisitionSuggestions.push({
-            demandSource: demand.sourceRef,
-            sourceNo: demand.sourceNo,
-            customerName: demand.customerName,
-            stockId: node.stockId,
-            stockCode: node.stockCode,
-            name: node.name,
-            category: node.category,
-            suggestedQty: node.demandedQty,
-            unit: node.unit,
-            targetWorkCenter: node.primaryWorkCenter,
-            deliveryDate: demand.deliveryDate,
-            priority: demand.priority,
-            status: 'Gated_Waiting_Components',
-            statusText: '🟡 Kanat Durduruldu - Alt Bileşen Eksik',
-            missingComponentsSummary: missingSummary,
-            notes: `[MRP Kanat Durdurma] Alt bileşen eksikliği nedeniyle iş emri verilemez. Eksikler: ${missingSummary}`
-          });
-        }
-      }
-
-      if (node.children) {
-        for (const child of node.children) {
-          if (child.subTree) {
-            collectRecommendations(child.subTree, demand);
-          }
-        }
-      }
-    };
-
-    for (const item of orderAnalysisTrees) {
-      collectRecommendations(item.tree, item.demand);
-    }
-
-    // 6. Aggregate Purchase Requisitions & flat mrpResults
-    const mrpResults = [];
-
-    for (const [compId, data] of globalRequirementsMap.entries()) {
-      const stockItem = data.item;
-      const currentStock = data.currentStock;
-      const openReqQty = data.openReqQty;
-      const totalAvailable = currentStock + openReqQty;
-      const grossReq = data.grossRequirement;
-      const netRequirement = Math.max(0, grossReq - totalAvailable);
-
-      let urgency = 'Normal';
-      if (currentStock <= 0 && netRequirement > 0) {
-        urgency = 'Critical';
-      } else if (netRequirement > (currentStock * 0.5)) {
-        urgency = 'High';
-      }
-
-      const referencesText = Array.from(data.references).join(', ');
-
-      const mrpRow = {
-        stockItemId: compId,
-        stockId: compId,
-        stockCode: stockItem.stokKodu,
-        stokKodu: stockItem.stokKodu,
-        name: stockItem.ad,
-        ad: stockItem.ad,
-        category: stockItem.kategori,
-        kategori: stockItem.kategori,
-        procurementMethod: data.procurementMethod,
-        tedarikYontemi: data.procurementMethod,
-        unit: data.unit,
-        birim: data.unit,
-        currentStock: parseFloat(currentStock.toFixed(2)),
-        openReqQty: parseFloat(openReqQty.toFixed(2)),
-        grossRequirement: parseFloat(grossReq.toFixed(2)),
-        totalAvailable: parseFloat(totalAvailable.toFixed(2)),
-        netRequirement: parseFloat(netRequirement.toFixed(2)),
-        urgency: urgency,
-        references: referencesText,
-        suggestedSupplier: stockItem.tedarikci || 'Ana Tedarikçi'
-      };
-
-      mrpResults.push(mrpRow);
-
-      if (data.procurementMethod === 'Satın Alma' && netRequirement > 0) {
-        purchaseRequisitionSuggestions.push({
-          stockId: compId,
-          stockCode: stockItem.stokKodu,
-          name: stockItem.ad,
-          category: stockItem.kategori,
-          unit: data.unit,
-          currentStock: parseFloat(currentStock.toFixed(2)),
-          openReqQty: parseFloat(openReqQty.toFixed(2)),
-          grossRequirement: parseFloat(grossReq.toFixed(2)),
-          netShortage: parseFloat(netRequirement.toFixed(2)),
-          suggestedSupplier: stockItem.tedarikci || 'Ana Tedarikçi',
-          urgency: urgency,
-          references: referencesText
-        });
-      }
-    }
-
-    // 7. Calculate KPI summary
-    const kpiSummary = {
-      totalDemandsCount: demandList.length,
-      readyWorkOrdersCount: workOrderSuggestions.length,
-      gatedProductionReqsCount: productionRequisitionSuggestions.length,
-      purchaseReqsCount: purchaseRequisitionSuggestions.length,
-      totalNetShortageItemsCount: mrpResults.filter(i => i.netRequirement > 0).length
-    };
-
-    return {
-      demandsAnalyzed: demandList,
-      orderAnalysisTrees,
-      workOrderSuggestions,
-      productionRequisitionSuggestions,
-      purchaseRequisitionSuggestions,
-      mrpResults,
-      kpiSummary
-    };
+    return suggestions;
   }
 
   /**
-   * Executes recommendations generated by MRP:
-   * Creates Purchase Requisitions in SatinAlmaTalebi and/or Work Orders in UretimEmri.
+   * Boş sonuç döndür (talep yokken)
    */
+  _emptyResult() {
+    const emptyKpi = {
+      totalDemandsCount: 0,
+      totalMaterialTypesCount: 0,
+      sufficientMaterialsCount: 0,
+      shortMaterialsCount: 0,
+      purchaseSuggestionsCount: 0,
+      productionReqSuggestionsCount: 0,
+      activeWorkOrdersCount: 0,
+      passiveWorkOrdersCount: 0,
+      totalWorkOrdersCount: 0
+    };
+    return {
+      demandsAnalyzed: [],
+      demandAnalyses: [],
+      materialRequirements: [],
+      purchaseSuggestions: [],
+      productionReqSuggestions: [],
+      workOrderSuggestions: [],
+      kpiSummary: emptyKpi,
+      mrpResults: [],
+      orderAnalysisTrees: [],
+      purchaseRequisitionSuggestions: [],
+      productionRequisitionSuggestions: []
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MRP Önerilerini Uygula (Satın Alma Talebi / İş Emri Oluştur)
+  // ═══════════════════════════════════════════════════════════════
   async executeMRPRecommendations(options = {}, currentUser = null, ipAddress = null) {
     const { createPurchaseReqs = true, createWorkOrders = false, selectedStockIds = null } = options;
     const mrpData = await this.runMRP();
@@ -419,9 +525,9 @@ class MRPService {
       workOrders: []
     };
 
-    // 1. Generate Purchase Requisitions
-    if (createPurchaseReqs && mrpData.purchaseRequisitionSuggestions.length > 0) {
-      for (const item of mrpData.purchaseRequisitionSuggestions) {
+    // 1. Satın Alma Talepleri Oluştur
+    if (createPurchaseReqs && mrpData.purchaseSuggestions.length > 0) {
+      for (const item of mrpData.purchaseSuggestions) {
         if (selectedStockIds && !selectedStockIds.includes(item.stockId)) continue;
 
         const nextReqNo = `TAL-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
@@ -432,9 +538,9 @@ class MRPService {
           stokId: item.stockId,
           talepEdilenMiktar: item.netShortage,
           birim: item.unit,
-          aciliyet: item.urgency === 'Critical' ? 'Urgent' : (item.urgency === 'High' ? 'High' : 'Normal'),
+          aciliyet: 'Normal',
           durum: 'Approved',
-          notlar: `[Otomatik MRP] Net Eksik İhtiyaç: ${item.netShortage} ${item.unit} (Brüt: ${item.grossRequirement}, Stok: ${item.currentStock}). Kaynak: ${item.references}`,
+          notlar: `[Otomatik MRP] Net Eksik: ${item.netShortage} ${item.unit} (Brüt İhtiyaç: ${item.grossRequirement}, Stok: ${item.currentStock}). Kaynak Talepler: ${item.demandSources}`,
           olusturanId: currentUser ? currentUser.id : null
         });
 
@@ -444,7 +550,7 @@ class MRPService {
           islem: 'CREATE',
           varlik: 'SatinAlmaTalebi',
           varlikId: req.id,
-          detaylar: { talepNo: req.talepNo, stokId: req.stokId, miktar: req.talepEdilenMiktar, kaynak: 'MRP_EXECUTION' },
+          detaylar: { talepNo: req.talepNo, stokId: req.stokId, miktar: req.talepEdilenMiktar, kaynak: 'MRP_V2' },
           ipAdresi: ipAddress
         });
 
@@ -452,11 +558,12 @@ class MRPService {
       }
     }
 
-    // 2. Generate Work Orders for ready suggestions if requested
+    // 2. İş Emirleri Oluştur
     if (createWorkOrders && mrpData.workOrderSuggestions.length > 0) {
       const year = new Date().getFullYear();
       for (const item of mrpData.workOrderSuggestions) {
         if (selectedStockIds && !selectedStockIds.includes(item.stockId)) continue;
+        if (item.status !== 'Active') continue; // Sadece aktif iş emri önerilerini oluştur
 
         const prefix = `ISEMRI-${year}-`;
         const lastOrder = await UretimEmri.findOne({
@@ -471,29 +578,26 @@ class MRPService {
         const workOrderNo = `${prefix}${String(nextSeq).padStart(4, '0')}`;
 
         const todayStr = new Date().toISOString().split('T')[0];
-        let deliveryDateStr = item.deliveryDate ? new Date(item.deliveryDate).toISOString().split('T')[0] : null;
-        if (!deliveryDateStr) {
-          const d = new Date();
-          d.setDate(d.getDate() + 7);
-          deliveryDateStr = d.toISOString().split('T')[0];
-        }
+        const deliveryDate = new Date();
+        deliveryDate.setDate(deliveryDate.getDate() + 7);
+        const deliveryDateStr = deliveryDate.toISOString().split('T')[0];
 
         const wo = await UretimEmri.create({
           isEmriNo: workOrderNo,
-          uretimBasligi: `🏭 [MRP İş Emri] ${item.name} (${item.suggestedQty} ${item.unit})`,
+          uretimBasligi: `🏭 [MRP İş Emri] ${item.name} (${item.quantity} ${item.unit})`,
           stokId: item.stockId,
-          planlananMiktar: item.suggestedQty,
+          planlananMiktar: item.quantity,
           tamamlananMiktar: 0,
           fireMiktari: 0,
           birim: item.unit,
           durum: 'Approved',
           oncelik: item.priority || 'Normal',
-          isMerkezi: item.targetWorkCenter || 'İstasyon-1 (Genel Montaj)',
+          isMerkezi: item.workCenter || 'Genel Üretim',
           planlananBaslangicTarihi: todayStr,
           planlananBitisTarihi: deliveryDateStr,
           tahminiSaat: item.estimatedHours || 4,
-          receteNotlari: `Kaynak: ${item.demandSource}`,
-          notlar: `[MRP İş Emri Oluşturma] ${item.demandSource} için bileşenleri tam olan ürünün iş emridir.`,
+          receteNotlari: `Kaynak Talepler: ${item.demandSources}`,
+          notlar: `[MRP v2 İş Emri] Bileşenleri tam olan ürünün iş emridir. Öncelik sırası: #${item.priorityOrder}`,
           olusturanId: currentUser ? currentUser.id : null
         });
 
@@ -503,7 +607,7 @@ class MRPService {
           islem: 'CREATE',
           varlik: 'UretimEmri',
           varlikId: wo.id,
-          detaylar: { isEmriNo: wo.isEmriNo, stokId: wo.stokId, miktar: wo.planlananMiktar, kaynak: 'MRP_EXECUTION' },
+          detaylar: { isEmriNo: wo.isEmriNo, stokId: wo.stokId, miktar: wo.planlananMiktar, kaynak: 'MRP_V2' },
           ipAdresi: ipAddress
         });
 
@@ -514,7 +618,7 @@ class MRPService {
     return createdRecords;
   }
 
-  // Preserved backwards compatibility method
+  // Geriye dönük uyumluluk
   async generateRequisitions(mrpResults, currentUser = null) {
     return await this.executeMRPRecommendations({ createPurchaseReqs: true }, currentUser);
   }

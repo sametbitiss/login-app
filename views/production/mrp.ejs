@@ -34,6 +34,39 @@
     .badge-count--amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
     .badge-count--rose { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
     .badge-count--indigo { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+    .badge-count--slate { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .kpi-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .kpi-icon--indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .kpi-icon--emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .kpi-icon--amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .kpi-icon--rose { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .kpi-icon--cyan { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .kpi-icon--purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    .kpi-info { display: flex; flex-direction: column; }
+    .kpi-label { font-size: 0.78rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-value { font-size: 1.25rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #f8fafc; margin-top: 2px; }
 
     .tree-card {
       background: rgba(15, 23, 42, 0.65); border: 1.5px solid rgba(255, 255, 255, 0.08);
@@ -69,6 +102,20 @@
       cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
     }
     .btn-quick-action:hover { background: rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+
+    .priority-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 8px; font-weight: 900;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+    }
+    .priority-badge--top { background: rgba(99, 102, 241, 0.25); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.5); }
+    .priority-badge--normal { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+    .blocker-tag {
+      font-size: 0.75rem; color: #fb7185; background: rgba(244, 63, 94, 0.12);
+      padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(244, 63, 94, 0.25);
+      margin-top: 4px; display: inline-block;
+    }
   </style>
   <script src="/sidebar.js" defer></script>
 </head>
@@ -123,7 +170,7 @@
             <span>⚡ Malzeme İhtiyaç Planlaması (MRP Engine)</span>
           </h1>
           <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
-            Satış siparişleri ve üretim taleplerine göre çok seviyeli reçete (BOM) patlatması, fire oranları ve depo stoğuna göre dinamik iş emri ve tedarik öneri motoru.
+            Aktif üretim taleplerine göre çok seviyeli hiyerarşik reçete (BOM) patlatması, küsürat yuvarlaması, fiziksel stok kontrolü ve aşağıdan yukarı iş emri planlama motoru.
           </p>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -146,34 +193,48 @@
         </div>
       <% } %>
 
-      <!-- KPI METRIC STRIP -->
-      <div class="kpi-strip" style="margin-bottom: 24px;">
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--indigo">📋</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Analiz Edilen Talep</span>
-            <span class="kpi-chip-value" style="font-family: 'JetBrains Mono', monospace;"><%= kpiSummary.totalDemandsCount %> Sipariş</span>
+      <!-- KPI METRIC GRID -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-icon--indigo">📋</div>
+          <div class="kpi-info">
+            <span class="kpi-label">Analiz Edilen Talep</span>
+            <span class="kpi-value"><%= kpiSummary.totalDemandsCount || 0 %> Talep</span>
           </div>
         </div>
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--emerald">🟢</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Hazır İş Emirleri</span>
-            <span class="kpi-chip-value" style="color: #34d399; font-family: 'JetBrains Mono', monospace;"><%= kpiSummary.readyWorkOrdersCount %> Öneri</span>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-icon--emerald">🟢</div>
+          <div class="kpi-info">
+            <span class="kpi-label">Hazır İş Emirleri</span>
+            <span class="kpi-value" style="color: #34d399;"><%= kpiSummary.activeWorkOrdersCount || 0 %> Öneri</span>
           </div>
         </div>
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--amber">🟡</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Durdurulan Kanatlar</span>
-            <span class="kpi-chip-value" style="color: #fbbf24; font-family: 'JetBrains Mono', monospace;"><%= kpiSummary.gatedProductionReqsCount %> İmalat</span>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-icon--amber">🟡</div>
+          <div class="kpi-info">
+            <span class="kpi-label">Bekleyen / Pasif İş Emri</span>
+            <span class="kpi-value" style="color: #fbbf24;"><%= kpiSummary.passiveWorkOrdersCount || 0 %> Beklemede</span>
           </div>
         </div>
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--rose">🔴</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Satın Alma İhtiyaçları</span>
-            <span class="kpi-chip-value" style="color: #fb7185; font-family: 'JetBrains Mono', monospace;"><%= kpiSummary.purchaseReqsCount %> Kalem</span>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-icon--rose">🛒</div>
+          <div class="kpi-info">
+            <span class="kpi-label">Satın Alma İhtiyacı</span>
+            <span class="kpi-value" style="color: #fb7185;"><%= kpiSummary.purchaseSuggestionsCount || 0 %> Kalem</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-icon--purple">🏭</div>
+          <div class="kpi-info">
+            <span class="kpi-label">Üretim Talebi İhtiyacı</span>
+            <span class="kpi-value" style="color: #c084fc;"><%= kpiSummary.productionReqSuggestionsCount || 0 %> Kalem</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-icon--cyan">📦</div>
+          <div class="kpi-info">
+            <span class="kpi-label">Toplam Malzeme Türü</span>
+            <span class="kpi-value" style="color: #22d3ee;"><%= kpiSummary.totalMaterialTypesCount || 0 %> Kalem</span>
           </div>
         </div>
       </div>
@@ -181,39 +242,42 @@
       <!-- MRP TABS NAVIGATION -->
       <nav class="mrp-tabs-nav">
         <button type="button" class="mrp-tab-btn active" onclick="switchMRPTab('tab-work-orders', event)">
-          <span>📋 1. İş Emri Önerileri</span>
+          <span>📋 1. İş Emri Önerileri (Hiyerarşik Sıralı)</span>
           <span class="badge-count badge-count--green"><%= workOrderSuggestions.length %></span>
         </button>
-        <button type="button" class="mrp-tab-btn" onclick="switchMRPTab('tab-gated-production', event)">
-          <span>🟡 2. Durdurulan İmalat Kanatları</span>
-          <span class="badge-count badge-count--amber"><%= productionRequisitionSuggestions.length %></span>
-        </button>
         <button type="button" class="mrp-tab-btn" onclick="switchMRPTab('tab-purchase-reqs', event)">
-          <span>🛒 3. Satın Alma Talebi Önerileri</span>
-          <span class="badge-count badge-count--rose"><%= purchaseRequisitionSuggestions.length %></span>
+          <span>🛒 2. Satın Alma Talebi Önerileri</span>
+          <span class="badge-count badge-count--rose"><%= purchaseSuggestions.length %></span>
+        </button>
+        <button type="button" class="mrp-tab-btn" onclick="switchMRPTab('tab-production-reqs', event)">
+          <span>🏭 3. Üretim Talebi Önerileri</span>
+          <span class="badge-count badge-count--amber"><%= productionReqSuggestions.length %></span>
         </button>
         <button type="button" class="mrp-tab-btn" onclick="switchMRPTab('tab-tree-view', event)">
           <span>🌳 4. Hiyerarşik Reçete & İhtiyaç Ağacı</span>
-          <span class="badge-count badge-count--indigo"><%= orderAnalysisTrees.length %></span>
+          <span class="badge-count badge-count--indigo"><%= demandAnalyses.length %></span>
         </button>
         <button type="button" class="mrp-tab-btn" onclick="switchMRPTab('tab-raw-components', event)">
-          <span>📦 5. Tüm Bileşenler & Stok Dengesi</span>
-          <span class="badge-count badge-count--indigo"><%= mrpResults.length %></span>
+          <span>📦 5. Toplam Malzeme İhtiyaç & Stok Dengesi</span>
+          <span class="badge-count badge-count--slate"><%= materialRequirements.length %></span>
         </button>
       </nav>
 
-      <!-- TAB 1: İŞ EMRİ ÖNERİLERİ (Bileşenleri %100 Tam - Üretime Hazır) -->
+      <!-- TAB 1: İŞ EMRİ ÖNERİLERİ (Aşağıdan Yukarı Bağımlılık Hiyerarşisi) -->
       <div id="tab-work-orders" class="mrp-tab-content active">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <div>
-            <h3 style="font-size: 1rem; font-weight: 800; color: #34d399; margin: 0;">🟢 Üretime Hazır İş Emri Önerileri</h3>
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Reçetesindeki tüm doğrudan bileşenleri depoda mevcut olan ve derhal imalata başlanabilecek mamul/yarı mamuller.</p>
+            <h3 style="font-size: 1rem; font-weight: 800; color: #34d399; margin: 0;">📋 İş Emri Önerileri (Aşağıdan Yukarı Planlama)</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">
+              Önce alt seviye yarı mamullerin iş emirleri, ardından alt bileşenleri tam olan mamullerin iş emirleri listelenir. Alt bileşeni eksik olan üst seviye mamuller "Pasif / Beklemede" olarak işaretlenir.
+            </p>
           </div>
-          <% if (workOrderSuggestions.length > 0) { %>
+          <% const activeWOs = workOrderSuggestions.filter(w => w.status === 'Active'); %>
+          <% if (activeWOs.length > 0) { %>
             <form action="/production/mrp/execute" method="POST">
               <input type="hidden" name="actionType" value="create_work_orders">
               <button type="submit" class="btn-quick-action" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
-                ⚡ Tüm Hazır İş Emirlerini Başlat (<%= workOrderSuggestions.length %> Adet)
+                ⚡ Tüm Hazır İş Emirlerini Başlat (<%= activeWOs.length %> Adet)
               </button>
             </form>
           <% } %>
@@ -223,43 +287,79 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th style="width: 50px; text-align: center;">Sıra</th>
                 <th>Kaynak Talep / Sipariş</th>
                 <th>Ürün Kodu & Adı</th>
-                <th>Kategori</th>
-                <th>Önerilen Miktar</th>
+                <th>Seviye / Tür</th>
+                <th>Planlanan Miktar</th>
                 <th>Hedef İş İstasyonu</th>
                 <th>Tahmini Süre</th>
-                <th>Bileşen Durumu</th>
+                <th>Bileşen & Bağımlılık Durumu</th>
                 <th style="text-align: right;">Aksiyon</th>
               </tr>
             </thead>
             <tbody>
               <% if (workOrderSuggestions.length === 0) { %>
-                <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Şu anda üretime hazır bekleyen iş emri önerisi bulunmamaktadır (veya tüm bileşenler eksiksiz üretilmiştir).</td></tr>
+                <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Şu anda aktif üretim talebi veya reçeteli ürün bulunmamaktadır.</td></tr>
               <% } else { %>
-                <% workOrderSuggestions.forEach((wo, idx) => { %>
-                  <tr>
+                <% workOrderSuggestions.forEach((wo) => { %>
+                  <tr style="<%= wo.status === 'Passive' ? 'opacity: 0.85; background: rgba(245, 158, 11, 0.03);' : '' %>">
+                    <td style="text-align: center;">
+                      <span class="priority-badge <%= wo.status === 'Active' ? 'priority-badge--top' : 'priority-badge--normal' %>">
+                        #<%= wo.priorityOrder %>
+                      </span>
+                    </td>
                     <td>
-                      <strong style="color: #818cf8;"><%= wo.demandSource %></strong>
-                      <div style="font-size: 0.75rem; color: var(--text-muted);"><%= wo.customerName %></div>
+                      <strong style="color: #818cf8;"><%= wo.demandSources || '—' %></strong>
                     </td>
                     <td>
                       <strong style="color: var(--text-primary);"><%= wo.name %></strong>
                       <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #94a3b8;">[<%= wo.stockCode %>]</div>
                     </td>
-                    <td><span class="status-pill status-approved"><%= wo.category %></span></td>
-                    <td><strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: #f8fafc;"><%= wo.suggestedQty %> <%= wo.unit %></strong></td>
-                    <td style="font-size: 0.825rem; color: #cbd5e1;"><%= wo.targetWorkCenter %></td>
+                    <td>
+                      <% if (wo.isTopLevel) { %>
+                        <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.3);">🔷 Mamul (Üst Seviye)</span>
+                      <% } else { %>
+                        <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; border: 1px solid rgba(245, 158, 11, 0.3);">🔶 Yarı Mamul (Öncelikli)</span>
+                      <% } %>
+                    </td>
+                    <td><strong style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: #f8fafc;"><%= wo.quantity %> <%= wo.unit %></strong></td>
+                    <td style="font-size: 0.825rem; color: #cbd5e1;"><%= wo.workCenter %></td>
                     <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: #fbbf24;"><%= wo.estimatedHours %> Saat</td>
-                    <td><span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(16, 185, 129, 0.3);">✓ %100 Hazır</span></td>
+                    <td>
+                      <% if (wo.status === 'Active') { %>
+                        <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 4px;">
+                          🟢 Bileşenler Hazır — İş Emri Açılabilir
+                        </span>
+                      <% } else { %>
+                        <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(245, 158, 11, 0.3); display: inline-flex; align-items: center; gap: 4px;">
+                          🟡 Beklemede — Alt Bileşen Eksik
+                        </span>
+                        <% if (wo.blockers && wo.blockers.length > 0) { %>
+                          <div>
+                            <% wo.blockers.forEach(b => { %>
+                              <div class="blocker-tag">
+                                ⛔ <%= b.blockerLabel %> (Eksik: <%= b.shortage %> <%= b.name %>)
+                              </div>
+                            <% }); %>
+                          </div>
+                        <% } %>
+                      <% } %>
+                    </td>
                     <td style="text-align: right;">
-                      <form action="/production/mrp/execute" method="POST" style="display: inline-block;">
-                        <input type="hidden" name="actionType" value="create_work_orders">
-                        <input type="hidden" name="stockId" value="<%= wo.stockId %>">
-                        <button type="submit" class="btn-quick-action" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">
-                          ➕ İş Emri Aç
+                      <% if (wo.status === 'Active') { %>
+                        <form action="/production/mrp/execute" method="POST" style="display: inline-block;">
+                          <input type="hidden" name="actionType" value="create_work_orders">
+                          <input type="hidden" name="stockId" value="<%= wo.stockId %>">
+                          <button type="submit" class="btn-quick-action" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+                            ➕ İş Emri Aç
+                          </button>
+                        </form>
+                      <% } else { %>
+                        <button type="button" class="btn-quick-action" style="background: rgba(255, 255, 255, 0.04); color: #64748b; border-color: rgba(255, 255, 255, 0.08); cursor: not-allowed;" title="Alt bileşenleri tamamlanmadan iş emri açılamaz" disabled>
+                          🔒 Bağımlılık Bekliyor
                         </button>
-                      </form>
+                      <% } %>
                     </td>
                   </tr>
                 <% }); %>
@@ -269,70 +369,18 @@
         </div>
       </div>
 
-      <!-- TAB 2: DURDURULAN İMALAT KANATLARI (Alt Bileşen Eksik / Üretim Beklemede) -->
-      <div id="tab-gated-production" class="mrp-tab-content">
-        <div style="margin-bottom: 14px;">
-          <h3 style="font-size: 1rem; font-weight: 800; color: #fbbf24; margin: 0;">🟡 Durdurulan İmalat Kanatları (Alt Bileşen Eksikliği)</h3>
-          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Tedarik yöntemi Üretim olan ancak kendi alt reçetesindeki hammadde/yarı mamuller eksik olduğu için iş emri verilmeyen durdurulmuş üretim dalları.</p>
-        </div>
-
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Kaynak Talep</th>
-                <th>Yarı Mamul / Ürün</th>
-                <th>Kategori</th>
-                <th>Talep Miktarı</th>
-                <th>İmalat Engeli (Eksik Bileşenler)</th>
-                <th>Hedef İstasyon</th>
-                <th>Durum</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (productionRequisitionSuggestions.length === 0) { %>
-                <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Alt bileşen eksiği nedeniyle durdurulan imalat kanadı bulunmamaktadır. 🎉</td></tr>
-              <% } else { %>
-                <% productionRequisitionSuggestions.forEach((pr, idx) => { %>
-                  <tr>
-                    <td><strong style="color: #818cf8;"><%= pr.demandSource %></strong></td>
-                    <td>
-                      <strong style="color: var(--text-primary);"><%= pr.name %></strong>
-                      <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #94a3b8;">[<%= pr.stockCode %>]</div>
-                    </td>
-                    <td><span class="status-pill status-pending"><%= pr.category %></span></td>
-                    <td><strong style="font-family: 'JetBrains Mono', monospace;"><%= pr.suggestedQty %> <%= pr.unit %></strong></td>
-                    <td>
-                      <div style="font-size: 0.8rem; color: #fb7185; background: rgba(244, 63, 94, 0.1); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(244, 63, 94, 0.25);">
-                        ⚠️ <%= pr.missingComponentsSummary %>
-                      </div>
-                    </td>
-                    <td style="font-size: 0.825rem; color: #cbd5e1;"><%= pr.targetWorkCenter %></td>
-                    <td>
-                      <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(245, 158, 11, 0.3);">
-                        🔒 İmalat Beklemede
-                      </span>
-                    </td>
-                  </tr>
-                <% }); %>
-              <% } %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB 3: SATIN ALMA TALEBİ ÖNERİLERİ -->
+      <!-- TAB 2: SATIN ALMA TALEBİ ÖNERİLERİ (Eksik Hammaddeler) -->
       <div id="tab-purchase-reqs" class="mrp-tab-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <div>
             <h3 style="font-size: 1rem; font-weight: 800; color: #fb7185; margin: 0;">🛒 Satın Alma Talebi Önerileri (Eksik Hammaddeler)</h3>
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Üretim planının aksamaması için tedarik yöntemi Satın Alma olan ve depo stoğu yetersiz kalan malzemeler.</p>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Tedarik yöntemi Satın Alma olan ve fiziksel depo stoğu toplam brüt ihtiyacı karşılamayan hammaddeler.</p>
           </div>
-          <% if (purchaseRequisitionSuggestions.length > 0) { %>
+          <% if (purchaseSuggestions.length > 0) { %>
             <form action="/production/mrp/execute" method="POST">
               <input type="hidden" name="actionType" value="create_purchase_reqs">
               <button type="submit" class="btn-quick-action" style="background: rgba(244, 63, 94, 0.2); color: #fb7185; border-color: rgba(244, 63, 94, 0.4);">
-                🛒 Otomatik Satın Alma Talepleri Aç (<%= purchaseRequisitionSuggestions.length %> Kalem)
+                🛒 Tüm Satın Alma Taleplerini Oluştur (<%= purchaseSuggestions.length %> Kalem)
               </button>
             </form>
           <% } %>
@@ -346,41 +394,31 @@
                 <th>Malzeme Adı</th>
                 <th>Kategori</th>
                 <th>Depo Stoğu</th>
-                <th>Açık Talepler</th>
-                <th>Brüt İhtiyaç (Fireli)</th>
+                <th>Brüt İhtiyaç (Fireli & Yuvarlanmış)</th>
                 <th>Net Eksik Miktar</th>
-                <th>Öncelik</th>
-                <th>Kaynak Reçete Yolları</th>
+                <th>Önerilen Tedarikçi</th>
+                <th>Kaynak Talepler</th>
                 <th style="text-align: right;">Aksiyon</th>
               </tr>
             </thead>
             <tbody>
-              <% if (purchaseRequisitionSuggestions.length === 0) { %>
-                <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Depoda eksik hammadde bulunmamaktadır. Tüm satın alma stokları yeterli! 🎉</td></tr>
+              <% if (purchaseSuggestions.length === 0) { %>
+                <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Depoda eksik hammadde bulunmamaktadır. Tüm satın alma stokları yeterli! 🎉</td></tr>
               <% } else { %>
-                <% purchaseRequisitionSuggestions.forEach((pr, idx) => { %>
+                <% purchaseSuggestions.forEach((pr) => { %>
                   <tr>
                     <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">[<%= pr.stockCode %>]</strong></td>
                     <td><strong style="color: var(--text-primary);"><%= pr.name %></strong></td>
                     <td><span class="status-pill status-approved"><%= pr.category %></span></td>
                     <td><strong style="font-family: 'JetBrains Mono', monospace;"><%= pr.currentStock %> <%= pr.unit %></strong></td>
-                    <td style="font-family: 'JetBrains Mono', monospace;"><%= pr.openReqQty %> <%= pr.unit %></td>
                     <td><strong style="font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= pr.grossRequirement %> <%= pr.unit %></strong></td>
                     <td>
                       <strong style="font-family: 'JetBrains Mono', monospace; color: #fb7185; font-size: 1rem;">
                         🚨 +<%= pr.netShortage %> <%= pr.unit %>
                       </strong>
                     </td>
-                    <td>
-                      <% if (pr.urgency === 'Critical') { %>
-                        <span class="status-pill status-rejected">🚨 KRİTİK (Stok 0)</span>
-                      <% } else if (pr.urgency === 'High') { %>
-                        <span class="status-pill status-pending">⚡ Yüksek</span>
-                      <% } else { %>
-                        <span class="status-pill status-approved">Normal</span>
-                      <% } %>
-                    </td>
-                    <td style="font-size: 0.75rem; color: var(--text-muted); max-width: 260px;"><%= pr.references %></td>
+                    <td style="font-size: 0.85rem; color: #cbd5e1;"><%= pr.suggestedSupplier %></td>
+                    <td style="font-size: 0.75rem; color: var(--text-muted); max-width: 260px;"><%= pr.demandSources %></td>
                     <td style="text-align: right;">
                       <form action="/production/mrp/execute" method="POST" style="display: inline-block;">
                         <input type="hidden" name="actionType" value="create_purchase_reqs">
@@ -398,31 +436,82 @@
         </div>
       </div>
 
+      <!-- TAB 3: ÜRETİM TALEBİ ÖNERİLERİ (Eksik Yarı Mamuller) -->
+      <div id="tab-production-reqs" class="mrp-tab-content">
+        <div style="margin-bottom: 14px;">
+          <h3 style="font-size: 1rem; font-weight: 800; color: #c084fc; margin: 0;">🏭 Üretim Talebi Önerileri (Eksik Yarı Mamuller)</h3>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Tedarik yöntemi Üretim olan ancak depo stoğu brüt ihtiyacı karşılamadığı için imalatı gereken yarı mamuller.</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ürün Kodu</th>
+                <th>Yarı Mamul / Ürün Adı</th>
+                <th>Kategori</th>
+                <th>Mevcut Depo Stoğu</th>
+                <th>Brüt İhtiyaç</th>
+                <th>Net Eksik Miktar</th>
+                <th>Kaynak Talepler</th>
+                <th style="text-align: right;">Aksiyon / Durum</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (productionReqSuggestions.length === 0) { %>
+                <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Tüm yarı mamullerin depo stoğu yeterlidir. Üretim talebi açılması gereken eksik yarı mamul bulunmamaktadır. 🎉</td></tr>
+              <% } else { %>
+                <% productionReqSuggestions.forEach((pr) => { %>
+                  <tr>
+                    <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">[<%= pr.stockCode %>]</strong></td>
+                    <td><strong style="color: var(--text-primary);"><%= pr.name %></strong></td>
+                    <td><span class="status-pill status-pending"><%= pr.category %></span></td>
+                    <td><strong style="font-family: 'JetBrains Mono', monospace;"><%= pr.currentStock %> <%= pr.unit %></strong></td>
+                    <td><strong style="font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= pr.grossRequirement %> <%= pr.unit %></strong></td>
+                    <td>
+                      <strong style="font-family: 'JetBrains Mono', monospace; color: #c084fc; font-size: 1rem;">
+                        🚨 +<%= pr.netShortage %> <%= pr.unit %>
+                      </strong>
+                    </td>
+                    <td style="font-size: 0.75rem; color: var(--text-muted);"><%= pr.demandSources %></td>
+                    <td style="text-align: right;">
+                      <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(168, 85, 247, 0.3);">
+                        🏭 İş Emri Planına Dahil Edildi
+                      </span>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- TAB 4: HİYERARŞİK REÇETE & İHTİYAÇ AĞACI (Interactive Tree) -->
       <div id="tab-tree-view" class="mrp-tab-content">
         <div style="margin-bottom: 14px;">
-          <h3 style="font-size: 1rem; font-weight: 800; color: #818cf8; margin: 0;">🌳 Çok Seviyeli İhtiyaç & Reçete Ağacı</h3>
-          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Satış siparişi bazında mamulden en alt hammaddeye kadar fire oranları, birim katsayılar ve depo yeterlilik haritası.</p>
+          <h3 style="font-size: 1rem; font-weight: 800; color: #818cf8; margin: 0;">🌳 Hiyerarşik Reçete & İhtiyaç Patlatma Ağacı</h3>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Üretim talebi bazında mamulden en alt hammaddeye kadar fire oranları, çarpanlar ve depo stok yeterliliği.</p>
         </div>
 
-        <% if (orderAnalysisTrees.length === 0) { %>
+        <% if (demandAnalyses.length === 0) { %>
           <div class="tree-card" style="text-align: center; color: var(--text-muted); padding: 3rem;">
-            Analiz edilecek açık satış siparişi veya üretim talebi bulunmamaktadır.
+            Analiz edilecek aktif üretim talebi bulunmamaktadır.
           </div>
         <% } else { %>
-          <% orderAnalysisTrees.forEach((ot, otIdx) => { %>
+          <% demandAnalyses.forEach((ot, otIdx) => { %>
             <div class="tree-card">
               <div class="tree-header" onclick="toggleTree('tree-body-<%= otIdx %>')">
                 <div style="display: flex; align-items: center; gap: 12px;">
                   <span style="font-size: 1.2rem;">🏭</span>
                   <div>
-                    <strong style="color: #f8fafc; font-size: 1rem;"><%= ot.demand.sourceRef %></strong>
-                    <span style="font-size: 0.8rem; color: #94a3b8; margin-left: 8px;">Müşteri: <%= ot.demand.customerName %></span>
+                    <strong style="color: #f8fafc; font-size: 1rem;"><%= ot.demand.demandRef %>: <%= ot.demand.productName %></strong>
+                    <span style="font-size: 0.8rem; color: #94a3b8; margin-left: 8px;">(Miktar: <%= ot.demand.quantity %> <%= ot.demand.unit %> • Öncelik: <%= ot.demand.priority %>)</span>
                   </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                  <span class="status-pill status-approved" style="font-family: 'JetBrains Mono', monospace;"><%= ot.demand.quantity %> <%= ot.demand.unit %> <%= ot.demand.productName %></span>
-                  <span style="font-size: 0.8rem; color: #818cf8;">▼ Detaylar</span>
+                  <span class="status-pill status-approved" style="font-family: 'JetBrains Mono', monospace;"><%= ot.demand.quantity %> <%= ot.demand.unit %></span>
+                  <span style="font-size: 0.8rem; color: #818cf8;">▼ Ağacı Göster / Gizle</span>
                 </div>
               </div>
 
@@ -431,20 +520,21 @@
                   <% ot.tree.children.forEach(c1 => { %>
                     <div class="tree-node-row tree-level-1">
                       <div>
-                        <span style="font-weight: 700; color: #f8fafc;">[<%= c1.stockCode %>] <%= c1.name %></span>
-                        <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 8px;">(<%= c1.category %> • Tedarik: <%= c1.procurementMethod %>)</span>
+                        <% const c1Icon = c1.category === 'Hammadde' ? '🟦' : (['Yari_Mamul', 'Yarı_Mamul'].includes(c1.category) ? '🟧' : '🟥'); %>
+                        <span style="font-weight: 700; color: #f8fafc;"><%= c1Icon %> [<%= c1.stockCode %>] <%= c1.name %></span>
+                        <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 8px;">(<%= c1.category %> • <%= c1.procurementMethod %>)</span>
                         <% if (c1.scrapRate > 0) { %>
                           <span style="font-size: 0.72rem; color: #fbbf24; background: rgba(245, 158, 11, 0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Fire: %<%= c1.scrapRate %></span>
                         <% } %>
                       </div>
                       <div style="display: flex; align-items: center; gap: 12px;">
                         <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #e2e8f0;">
-                          İhtiyaç: <strong><%= c1.grossRequiredQty %> <%= c1.unit %></strong> | Depo: <strong><%= c1.currentStock %> <%= c1.unit %></strong>
+                          İhtiyaç: <strong><%= c1.grossRequired %> <%= c1.unit %></strong> | Depo: <strong><%= c1.currentStock %> <%= c1.unit %></strong>
                         </span>
-                        <% if (c1.isStockSufficient) { %>
+                        <% if (c1.currentStock >= c1.grossRequired) { %>
                           <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">✓ Yeterli</span>
                         <% } else { %>
-                          <span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">🚨 Eksik: -<%= c1.shortageQty %></span>
+                          <span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">🚨 Eksik: -<%= (c1.grossRequired - c1.currentStock).toFixed(2) %></span>
                         <% } %>
                       </div>
                     </div>
@@ -453,20 +543,21 @@
                       <% c1.subTree.children.forEach(c2 => { %>
                         <div class="tree-node-row tree-level-2">
                           <div>
-                            <span style="font-weight: 700; color: #cbd5e1;">↳ [<%= c2.stockCode %>] <%= c2.name %></span>
-                            <span style="font-size: 0.75rem; color: #64748b; margin-left: 8px;">(<%= c2.category %> • Tedarik: <%= c2.procurementMethod %>)</span>
+                            <% const c2Icon = c2.category === 'Hammadde' ? '🟦' : (['Yari_Mamul', 'Yarı_Mamul'].includes(c2.category) ? '🟧' : '🟥'); %>
+                            <span style="font-weight: 700; color: #cbd5e1;">↳ <%= c2Icon %> [<%= c2.stockCode %>] <%= c2.name %></span>
+                            <span style="font-size: 0.75rem; color: #64748b; margin-left: 8px;">(<%= c2.category %> • <%= c2.procurementMethod %>)</span>
                             <% if (c2.scrapRate > 0) { %>
                               <span style="font-size: 0.72rem; color: #fbbf24; background: rgba(245, 158, 11, 0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Fire: %<%= c2.scrapRate %></span>
                             <% } %>
                           </div>
                           <div style="display: flex; align-items: center; gap: 12px;">
                             <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #cbd5e1;">
-                              İhtiyaç: <strong><%= c2.grossRequiredQty %> <%= c2.unit %></strong> | Depo: <strong><%= c2.currentStock %> <%= c2.unit %></strong>
+                              İhtiyaç: <strong><%= c2.grossRequired %> <%= c2.unit %></strong> | Depo: <strong><%= c2.currentStock %> <%= c2.unit %></strong>
                             </span>
-                            <% if (c2.isStockSufficient) { %>
+                            <% if (c2.currentStock >= c2.grossRequired) { %>
                               <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">✓ Yeterli</span>
                             <% } else { %>
-                              <span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">🚨 Eksik: -<%= c2.shortageQty %></span>
+                              <span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">🚨 Eksik: -<%= (c2.grossRequired - c2.currentStock).toFixed(2) %></span>
                             <% } %>
                           </div>
                         </div>
@@ -475,17 +566,18 @@
                           <% c2.subTree.children.forEach(c3 => { %>
                             <div class="tree-node-row tree-level-3">
                               <div>
-                                <span style="font-weight: 700; color: #94a3b8;">↳↳ [<%= c3.stockCode %>] <%= c3.name %></span>
-                                <span style="font-size: 0.75rem; color: #64748b; margin-left: 8px;">(<%= c3.category %> • Tedarik: <%= c3.procurementMethod %>)</span>
+                                <% const c3Icon = c3.category === 'Hammadde' ? '🟦' : (['Yari_Mamul', 'Yarı_Mamul'].includes(c3.category) ? '🟧' : '🟥'); %>
+                                <span style="font-weight: 700; color: #94a3b8;">↳↳ <%= c3Icon %> [<%= c3.stockCode %>] <%= c3.name %></span>
+                                <span style="font-size: 0.75rem; color: #64748b; margin-left: 8px;">(<%= c3.category %> • <%= c3.procurementMethod %>)</span>
                               </div>
                               <div style="display: flex; align-items: center; gap: 12px;">
                                 <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #94a3b8;">
-                                  İhtiyaç: <strong><%= c3.grossRequiredQty %> <%= c3.unit %></strong> | Depo: <strong><%= c3.currentStock %> <%= c3.unit %></strong>
+                                  İhtiyaç: <strong><%= c3.grossRequired %> <%= c3.unit %></strong> | Depo: <strong><%= c3.currentStock %> <%= c3.unit %></strong>
                                 </span>
-                                <% if (c3.isStockSufficient) { %>
+                                <% if (c3.currentStock >= c3.grossRequired) { %>
                                   <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">✓ Yeterli</span>
                                 <% } else { %>
-                                  <span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">🚨 Eksik: -<%= c3.shortageQty %></span>
+                                  <span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">🚨 Eksik: -<%= (c3.grossRequired - c3.currentStock).toFixed(2) %></span>
                                 <% } %>
                               </div>
                             </div>
@@ -505,11 +597,13 @@
         <% } %>
       </div>
 
-      <!-- TAB 5: TÜM BİLEŞENLER & STOK DENGESİ -->
+      <!-- TAB 5: TOPLAM MALZEME İHTİYAÇ & STOK DENGESİ -->
       <div id="tab-raw-components" class="mrp-tab-content">
         <div style="margin-bottom: 14px;">
-          <h3 style="font-size: 1rem; font-weight: 800; color: #818cf8; margin: 0;">📦 Tüm Bileşenler & Stok Dengesi Tablosu</h3>
-          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Tüm açık imalat ve satış siparişlerinin toplam brüt ihtiyaçları ve net açık durumları.</p>
+          <h3 style="font-size: 1rem; font-weight: 800; color: #818cf8; margin: 0;">📦 Toplam Malzeme İhtiyaç & Stok Dengesi Tablosu (Aggregated)</h3>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">
+            Tüm üretim taleplerinden ve alt reçetelerden gelen ortak malzemelerin toplam brüt ihtiyaçları, yuvarlanmış miktarları ve fiziksel stok dengesi.
+          </p>
         </div>
 
         <div class="table-wrapper">
@@ -520,44 +614,52 @@
                 <th>Bileşen / Malzeme Adı</th>
                 <th>Kategori</th>
                 <th>Tedarik Yöntemi</th>
-                <th>Depo Stoğu</th>
-                <th>Açık Talepler</th>
-                <th>Brüt İhtiyaç</th>
-                <th>Net İhtiyaç</th>
-                <th>Öncelik</th>
-                <th>Kaynak Siparişler</th>
+                <th>Birim</th>
+                <th>Fiziksel Depo Stoğu</th>
+                <th>Brüt İhtiyaç (Fireli & Yuvarlanmış)</th>
+                <th>Net Eksik Miktar</th>
+                <th>Stok Yeterliliği</th>
+                <th>Kaynak Talepler</th>
               </tr>
             </thead>
             <tbody>
-              <% if (mrpResults.length === 0) { %>
+              <% if (materialRequirements.length === 0) { %>
                 <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Analiz edilecek bileşen kaydı bulunmamaktadır.</td></tr>
               <% } else { %>
-                <% mrpResults.forEach(item => { %>
+                <% materialRequirements.forEach(item => { %>
                   <tr>
                     <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= item.stockCode %></strong></td>
                     <td><strong style="color: var(--text-primary);"><%= item.name %></strong></td>
-                    <td><span class="status-pill status-approved"><%= item.category %></span></td>
-                    <td><span class="status-pill status-pending"><%= item.procurementMethod %></span></td>
+                    <td>
+                      <% if (item.category === 'Hammadde') { %>
+                        <span class="status-pill status-approved">🟦 Hammadde</span>
+                      <% } else if (['Yari_Mamul', 'Yarı_Mamul'].includes(item.category)) { %>
+                        <span class="status-pill status-pending">🟧 Yarı Mamul</span>
+                      <% } else { %>
+                        <span class="status-pill status-completed">🟥 Mamul</span>
+                      <% } %>
+                    </td>
+                    <td><span class="status-pill <%= item.procurementMethod === 'Satın Alma' ? 'status-approved' : 'status-pending' %>"><%= item.procurementMethod %></span></td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"><%= item.unit %></td>
                     <td><strong style="font-family: 'JetBrains Mono', monospace;"><%= item.currentStock %> <%= item.unit %></strong></td>
-                    <td style="font-family: 'JetBrains Mono', monospace;"><%= item.openReqQty %> <%= item.unit %></td>
                     <td><strong style="font-family: 'JetBrains Mono', monospace; color: #fbbf24;"><%= item.grossRequirement %> <%= item.unit %></strong></td>
                     <td>
-                      <% if (item.netRequirement > 0) { %>
-                        <strong style="font-family: 'JetBrains Mono', monospace; color: #fb7185; font-size: 0.95rem;">🚨 +<%= item.netRequirement %> <%= item.unit %></strong>
+                      <% if (item.netShortage > 0) { %>
+                        <strong style="font-family: 'JetBrains Mono', monospace; color: #fb7185; font-size: 0.95rem;">🚨 +<%= item.netShortage %> <%= item.unit %></strong>
                       <% } else { %>
-                        <span style="color: #34d399; font-weight: 700;">✓ Yeterli (0)</span>
+                        <span style="color: #34d399; font-weight: 700;">0 <%= item.unit %></span>
                       <% } %>
                     </td>
                     <td>
-                      <% if (item.urgency === 'Critical') { %>
-                        <span class="status-pill status-rejected">🚨 KRİTİK</span>
-                      <% } else if (item.urgency === 'High') { %>
-                        <span class="status-pill status-pending">⚡ Yüksek</span>
+                      <% if (item.isStockSufficient) { %>
+                        <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.3);">✓ Yeterli</span>
                       <% } else { %>
-                        <span class="status-pill status-approved">Normal</span>
+                        <span style="background: rgba(244, 63, 94, 0.15); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; border: 1px solid rgba(244, 63, 94, 0.3);">🚨 Eksik</span>
                       <% } %>
                     </td>
-                    <td style="font-size: 0.75rem; color: var(--text-muted); max-width: 250px;"><%= item.references %></td>
+                    <td style="font-size: 0.75rem; color: var(--text-muted); max-width: 250px;">
+                      <%= (item.sources || []).map(s => s.demandRef).filter((v, i, a) => a.indexOf(v) === i).join(', ') %>
+                    </td>
                   </tr>
                 <% }); %>
               <% } %>
