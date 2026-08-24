@@ -83,7 +83,7 @@ class ProductionRepository {
       birim: orderData.birim || orderData.unit || 'Adet',
       durum: orderData.durum || orderData.status || 'Planned',
       oncelik: orderData.oncelik || orderData.priority || 'Normal',
-      isMerkezi: orderData.isMerkezi || orderData.workCenter || 'İstasyon-1 (Genel Montaj)',
+      isMerkezi: orderData.isMerkezi || orderData.workCenter || null,
       planlananBaslangicTarihi: orderData.planlananBaslangicTarihi || orderData.plannedStartDate,
       planlananBitisTarihi: orderData.planlananBitisTarihi || orderData.plannedEndDate,
       gerceklesenBaslangicTarihi: orderData.gerceklesenBaslangicTarihi || orderData.actualStartDate,

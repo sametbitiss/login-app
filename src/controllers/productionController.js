@@ -386,7 +386,7 @@ class ProductionController {
       birim: unit || targetProduct.birim || 'Adet',
       durum: 'Approved',
       oncelik: priority || 'Normal',
-      isMerkezi: workCenter || 'İstasyon-1 (Genel Montaj)',
+      isMerkezi: workCenter || null,
       planlananBaslangicTarihi: plannedStartDate || new Date().toISOString().split('T')[0],
       planlananBitisTarihi: plannedEndDate || new Date().toISOString().split('T')[0],
       tahminiSaat: parseFloat(estimatedHours) || 0,

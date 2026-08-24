@@ -165,7 +165,7 @@ class SaleRepository {
               birim: item.birim || 'Adet',
               durum: 'Planned',
               oncelik: isUrgent ? 'Urgent' : 'Normal',
-              isMerkezi: 'İstasyon-1 (Kesim & Büküm)',
+              isMerkezi: null,
               planlananBaslangicTarihi: todayStr,
               planlananBitisTarihi: deliveryDateStr,
               tahminiSaat: Math.max(1, Math.round(qty * 1.5)),

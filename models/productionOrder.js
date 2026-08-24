@@ -55,8 +55,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     isMerkezi: {
       type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: 'İstasyon-1 (Genel Montaj)'
+      allowNull: true,
+      defaultValue: null
     },
     planlananBaslangicTarihi: {
       type: DataTypes.DATEONLY,
