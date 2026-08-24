@@ -569,30 +569,6 @@
     let currentModalCategory = 'all';
     let tempModalSelectedId = null;
 
-    // Helper: Determine allowed routing steps for a specific row based on hierarchy
-    function getAllowedStepsForRow(idx) {
-      if (!routingOperations || routingOperations.length === 0) return [];
-      
-      // Row 0: Strictly the first step (e.g. #10)
-      if (idx === 0) {
-        return [routingOperations[0]];
-      }
-      
-      // Subsequent row: Can be either the same step as previous row or immediate next step
-      const prevOpCode = componentsData[idx - 1] ? componentsData[idx - 1].operasyonKodu : null;
-      const prevIdx = routingOperations.findIndex(r => String(r.operasyonSira) === String(prevOpCode) || String(r.operasyonKodu) === String(prevOpCode));
-      
-      if (prevIdx === -1) {
-        return [routingOperations[0]];
-      }
-      
-      const allowed = [routingOperations[prevIdx]];
-      if (prevIdx + 1 < routingOperations.length) {
-        allowed.push(routingOperations[prevIdx + 1]);
-      }
-      return allowed;
-    }
-
     // Initialize Component Rows
     if (existingBOMList && existingBOMList.length > 0) {
       componentsData = existingBOMList.map(b => ({
@@ -602,21 +578,12 @@
         bilesenAdi: b.bilesenUrun ? b.bilesenUrun.ad : '',
         gerekliMiktar: b.gerekliMiktar !== undefined && b.gerekliMiktar !== null ? b.gerekliMiktar : '',
         birim: b.birim || (b.bilesenUrun ? b.bilesenUrun.birim : (b.kalemTuru === 'Labor' ? 'Saat' : 'Adet')),
-        fireOrani: b.fireOrani !== undefined ? b.fireOrani : 0.0,
-        operasyonKodu: b.operasyonKodu || (routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : ''),
+        fireOrani: b.fireOrani !== undefined && b.fireOrani !== null ? b.fireOrani : 0.0,
+        operasyonKodu: (b.operasyonKodu !== undefined && b.operasyonKodu !== null && String(b.operasyonKodu).trim()) ? String(b.operasyonKodu).trim() : (routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : ''),
         notlar: b.notlar || ''
       }));
-
-      // Ensure initial loaded rows adhere to hierarchy
-      for (let k = 0; k < componentsData.length; k++) {
-        const allowed = getAllowedStepsForRow(k);
-        const isAllowed = allowed.some(r => String(r.operasyonSira) === String(componentsData[k].operasyonKodu));
-        if (!isAllowed && allowed.length > 0) {
-          componentsData[k].operasyonKodu = String(allowed[0].operasyonSira);
-        }
-      }
     } else {
-      // Initialize with 1 clean empty component row with step #10
+      // Initialize with 1 clean empty component row
       componentsData = [
         {
           kalemTuru: 'Material',
@@ -674,14 +641,8 @@
       container.innerHTML = componentsData.map((comp, idx) => {
         const isLabor = comp.kalemTuru === 'Labor';
         const hasSelection = comp.bilesenStokId && comp.bilesenKodu;
-        const allowedSteps = getAllowedStepsForRow(idx);
 
-        // Ensure current value is valid
-        if (allowedSteps.length > 0 && !allowedSteps.some(r => String(r.operasyonSira) === String(comp.operasyonKodu))) {
-          comp.operasyonKodu = String(allowedSteps[0].operasyonSira);
-        }
-
-        const allowedOptionsHtml = allowedSteps.map(r => {
+        const optionsHtml = (routingOperations || []).map(r => {
           const isSelected = String(comp.operasyonKodu) === String(r.operasyonSira);
           return `<option value="${r.operasyonSira}" ${isSelected ? 'selected' : ''}>[Adım #${r.operasyonSira}] ${escapeHtml(r.operasyonAdi)}</option>`;
         }).join('');
@@ -825,16 +786,13 @@
               <!-- ROW 2: ROUTING OPERATION & PRODUCTION NOTES -->
               <div style="display: grid; grid-template-columns: 1.2fr 2fr; gap: 14px;" class="grid-responsive-row2">
                 
-                <!-- 5. Rota Adımı Numarası (Hiyerarşik Sıralama) -->
+                <!-- 5. Rota Adımı Numarası -->
                 <div class="input-group">
                   <label>
                     <span>${isLabor ? 'İşletileceği Rota Adımı' : '5. Kullanılacağı Rota Adımı'} <span style="color: #f43f5e;">*</span></span>
-                    <span style="font-size: 0.72rem; color: #818cf8; font-weight: 600;">
-                      ${idx === 0 ? '🔒 1. Adım (#10) Zorunlu' : '🔗 Sıralı Hiyerarşi'}
-                    </span>
                   </label>
                   <select required class="comp-input-op" data-index="${idx}" onchange="onStepChange(${idx}, this.value)" style="font-weight: 700; color: #818cf8;">
-                    ${allowedOptionsHtml}
+                    ${optionsHtml}
                   </select>
                 </div>
 
@@ -861,24 +819,13 @@
       if (componentsData[idx]) {
         componentsData[idx].operasyonKodu = newStepVal;
       }
-      
-      // Cascade-adjust subsequent rows to ensure no hierarchy breach
-      for (let k = idx + 1; k < componentsData.length; k++) {
-        const allowedForK = getAllowedStepsForRow(k);
-        const isCurrentKAllowed = allowedForK.some(r => String(r.operasyonSira) === String(componentsData[k].operasyonKodu));
-        if (!isCurrentKAllowed && allowedForK.length > 0) {
-          componentsData[k].operasyonKodu = String(allowedForK[0].operasyonSira);
-        }
-      }
-      
-      renderComponentCards();
     }
 
     function addNewComponentRow() {
       const lastRowIdx = componentsData.length - 1;
       let defaultStep = routingOperations.length > 0 ? String(routingOperations[0].operasyonSira) : '';
       if (lastRowIdx >= 0 && componentsData[lastRowIdx].operasyonKodu) {
-        defaultStep = componentsData[lastRowIdx].operasyonKodu; // Inherit previous row's step
+        defaultStep = componentsData[lastRowIdx].operasyonKodu;
       }
 
       componentsData.push({
@@ -897,19 +844,9 @@
 
     function removeComponentRow(index) {
       if (componentsData.length <= 1) {
-        if (!confirm('Bu son bileşen kalemini silmek istediğinize emin misiniz? Reçetede en az 1 kalem bulunmalıdır.')) return;
+        if (!confirm('Bu son reçete kalemini silmek istediğinize emin misiniz? Reçetede en az 1 kalem bulunmalıdır.')) return;
       }
       componentsData.splice(index, 1);
-
-      // Re-evaluate subsequent steps after deletion
-      for (let k = 0; k < componentsData.length; k++) {
-        const allowed = getAllowedStepsForRow(k);
-        const isAllowed = allowed.some(r => String(r.operasyonSira) === String(componentsData[k].operasyonKodu));
-        if (!isAllowed && allowed.length > 0) {
-          componentsData[k].operasyonKodu = String(allowed[0].operasyonSira);
-        }
-      }
-
       renderComponentCards();
     }
 
@@ -1042,7 +979,7 @@
       window.location.href = `/production/bom/edit/${productId}`;
     }
 
-    // Strict Validation on Form Submission (Including Hierarchical Step Numbers)
+    // Validation on Form Submission
     const form = document.getElementById('bomForm');
     if (form) {
       form.addEventListener('submit', function(e) {
@@ -1075,7 +1012,7 @@
 
         const stepNumbers = (routingOperations || []).map(r => parseInt(r.operasyonSira, 10));
 
-        // Validate all fields & step hierarchy
+        // Validate each item
         for (let i = 0; i < componentsData.length; i++) {
           const comp = componentsData[i];
           const isLabor = comp.kalemTuru === 'Labor';
@@ -1115,43 +1052,18 @@
             }
           }
 
-          if (!comp.operasyonKodu || !comp.operasyonKodu.trim()) {
+          if (!comp.operasyonKodu || !String(comp.operasyonKodu).trim()) {
             e.preventDefault();
             alert(`⚠️ Kalem #${i + 1}: Lütfen bu kalemin kullanılacağı / işletileceği Rota Adımını seçiniz.`);
             return false;
           }
 
-          // Step Hierarchy Check
           if (stepNumbers.length > 0) {
             const opNum = parseInt(comp.operasyonKodu, 10);
-            const stepIdx = stepNumbers.indexOf(opNum);
-
-            if (stepIdx === -1) {
+            if (!stepNumbers.includes(opNum)) {
               e.preventDefault();
-              alert(`⚠️ Kalem #${i + 1}: Seçilen rota adımı geçerli rotada bulunamadı.`);
+              alert(`⚠️ Kalem #${i + 1}: Seçilen rota adımı (#${comp.operasyonKodu}) ürünün geçerli rotasında bulunamadı.`);
               return false;
-            }
-
-            if (i === 0) {
-              if (stepIdx !== 0) {
-                e.preventDefault();
-                alert(`⚠️ Kalem #1: İlk kalemin rota adımı mutlaka ürünün ilk adımı (#${stepNumbers[0]}) olmak zorundadır.`);
-                return false;
-              }
-            } else {
-              const prevOpNum = parseInt(componentsData[i - 1].operasyonKodu, 10);
-              const prevStepIdx = stepNumbers.indexOf(prevOpNum);
-
-              if (stepIdx < prevStepIdx) {
-                e.preventDefault();
-                alert(`⚠️ Kalem #${i + 1}: Rota adımı (#${opNum}), bir önceki kalemin rota adımından (#${prevOpNum}) daha küçük olamaz (hiyerarşik sıralama geriye gidemez).`);
-                return false;
-              }
-              if (stepIdx > prevStepIdx + 1) {
-                e.preventDefault();
-                alert(`⚠️ Kalem #${i + 1}: Rota adımı sırası atlayamaz. Bir önceki kalem Adım #${prevOpNum} olduğu için bu kalem sadece Adım #${prevOpNum} veya Adım #${stepNumbers[prevStepIdx + 1]} olabilir.`);
-                return false;
-              }
             }
           }
         }

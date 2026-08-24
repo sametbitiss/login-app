@@ -401,7 +401,7 @@ class ProductionController {
           include: [
             { model: StokKarti, as: 'bilesenUrun' }
           ],
-          order: [['seviye', 'ASC'], ['id', 'ASC']]
+          order: [['id', 'ASC']]
         });
 
         if (existingBOMItems && existingBOMItems.length > 0) {
