@@ -20,7 +20,8 @@ class ProductionController {
   showAnalytics = asyncHandler(async (req, res) => {
     const orders = await productionRepository.findAll();
     const stats = await productionRepository.getStats();
-    const capacityReport = await mrpService.calculateCapacityLoad();
+    const capacityData = await mrpService.calculateCapacityLoad();
+    const capacityReport = capacityData.report || capacityData;
     const mrpData = await mrpService.runMRP();
 
     res.render('production/analytics', {
@@ -809,11 +810,14 @@ class ProductionController {
 
   // 5. CAPACITY PLANNING
   listCapacity = asyncHandler(async (req, res) => {
-    const capacityReport = await mrpService.calculateCapacityLoad();
+    const capacityData = await mrpService.calculateCapacityLoad();
+    const capacityReport = capacityData.report || capacityData;
+    const allEmployees = capacityData.allEmployees || [];
 
     res.render('production/capacity', {
       user: req.user,
       capacityReport,
+      allEmployees,
       ALL_ROLES,
       activeSubTab: 'capacity',
       success: req.query.success || null,
@@ -851,6 +855,51 @@ class ProductionController {
     await wc.save();
 
     res.redirect('/production/capacity?success=' + encodeURIComponent(`[${wc.isMerkeziKodu}] başarıyla boşaltıldı ve serbest bırakıldı.`));
+  });
+
+  assignShiftPersonnel = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { IsMerkezi, Kullanici } = require('../../models');
+    const wc = await IsMerkezi.findByPk(id);
+    if (!wc) {
+      throw new NotFoundError('İş merkezi kaydı bulunamadı.');
+    }
+
+    let rawIds = req.body.personnelIds;
+    if (typeof rawIds === 'string') {
+      try {
+        rawIds = JSON.parse(rawIds);
+      } catch (_) {
+        rawIds = rawIds.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    if (!Array.isArray(rawIds)) {
+      rawIds = rawIds ? [rawIds] : [];
+    }
+    const cleanIds = rawIds.map(Number).filter(n => !isNaN(n) && n > 0);
+
+    const requiredCount = parseInt(wc.varsayilanIsciSayisi, 10) || 1;
+    if (cleanIds.length !== requiredCount) {
+      throw new ValidationError(`Bu iş merkezi için tam olarak ${requiredCount} personel seçilmelidir. (Seçilen: ${cleanIds.length})`);
+    }
+
+    // Validate all are valid Employee users
+    const validEmployees = await Kullanici.findAll({
+      where: {
+        id: cleanIds,
+        rol: 'Employee'
+      }
+    });
+
+    if (validEmployees.length !== cleanIds.length) {
+      throw new ValidationError('Seçilen personellerden bazıları sistemde kayıtlı geçerli personel rolünde bulunamadı.');
+    }
+
+    wc.atananPersonelIds = cleanIds;
+    await wc.save();
+
+    const names = validEmployees.map(e => e.ad ? `${e.ad} ${e.soyad || ''}`.trim() : e.kullaniciAdi).join(', ');
+    res.redirect('/production/capacity?success=' + encodeURIComponent(`[${wc.isMerkeziKodu}] için ${requiredCount} vardiya personeli atandı: ${names}`));
   });
 
   // 6. MES & PRODUCTION TRACKING

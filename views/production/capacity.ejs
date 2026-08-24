@@ -278,16 +278,53 @@
     .queue-item:last-child { margin-bottom: 0; }
 
     /* Personnel & Workers info */
-    .wc-personnel-row {
+    .wc-personnel-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1.5px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .wc-supervisor-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 0.825rem;
-      color: #cbd5e1;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .wc-shift-workers-box {
+      cursor: pointer;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1.5px dashed rgba(99, 102, 241, 0.3);
       border-radius: 10px;
       padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .wc-shift-workers-box:hover {
+      background: rgba(99, 102, 241, 0.16);
+      border-color: rgba(99, 102, 241, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .worker-chip {
+      background: rgba(99, 102, 241, 0.2);
+      color: #cbd5e1;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     /* Actions Footer */
@@ -339,6 +376,44 @@
     .btn-action-cap--release:hover {
       background: rgba(148, 163, 184, 0.25);
       color: #fff;
+    }
+
+    /* Modal styling */
+    .personnel-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(14px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .personnel-modal-window {
+      background: #0f172a;
+      border: 1.5px solid rgba(99, 102, 241, 0.3);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .modal-user-row {
+      cursor: pointer;
+      transition: background 0.15s ease;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .modal-user-row:hover {
+      background: rgba(99, 102, 241, 0.08);
+    }
+    .modal-user-row.selected-row {
+      background: rgba(99, 102, 241, 0.18);
     }
   </style>
   <script src="/sidebar.js" defer></script>
@@ -394,7 +469,7 @@
             <span>⚙️ İş Merkezi Kapasite Planlaması & İstasyon Yük Dengesi</span>
           </h1>
           <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">
-            Sistemdeki tüm iş merkezlerinin anlık çalışma statüleri, aktif iş emirleri, sırasını bekleyen kuyruklar ve vardiya doluluk oranları (5 Günlük Vade).
+            Sistemdeki tüm iş merkezlerinin anlık çalışma statüleri, aktif iş emirleri, sırasını bekleyen kuyruklar, vardiya personeli atamaları ve doluluk oranları.
           </p>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -419,7 +494,6 @@
         const busyCenters = capacityReport.filter(c => c.operationalStatus === 'Busy').length;
         const idleCenters = capacityReport.filter(c => c.operationalStatus === 'Idle').length;
         const maintCenters = capacityReport.filter(c => c.operationalStatus === 'Maintenance').length;
-        const bottleneckCount = capacityReport.filter(c => c.isBottleneck).length;
         const totalAllocatedHours = capacityReport.reduce((sum, c) => sum + c.allocatedHours, 0).toFixed(1);
         const totalHorizonHours = capacityReport.reduce((sum, c) => sum + c.horizonCapacityHours, 0).toFixed(1);
         const avgLoad = totalHorizonHours > 0 ? Math.round((totalAllocatedHours / totalHorizonHours) * 100) : 0;
@@ -484,7 +558,7 @@
                   <div class="wc-workshop-sub">
                     <span>🏢 <%= c.atolyeName %></span>
                     <span>•</span>
-                    <span>👥 <%= c.workersCount %> Operatör Kapasiteli</span>
+                    <span>👥 <%= c.workersCount %> Personel Kapasiteli</span>
                   </div>
                 </div>
 
@@ -619,26 +693,53 @@
                 <% } %>
               </div>
 
-              <!-- 5. PERSONEL & OPERATÖR BİLGİSİ -->
-              <div class="wc-personnel-row">
-                <div>
-                  <span style="color: #64748b; font-size: 0.75rem; display: block; font-weight: 700; text-transform: uppercase;">
-                    👤 İstasyon / Atölye Sorumlusu
-                  </span>
-                  <span style="font-weight: 800; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
-                    <strong style="color: #818cf8;"><%= c.stationSupervisor || c.activePersonnel || 'Tanımlı Sorumlu Yok' %></strong>
-                    <% if (c.activeRunningOrder && c.activeRunningOrder.uretimYonetici && c.activeRunningOrder.uretimYonetici !== c.stationSupervisor) { %>
-                      <span style="font-size: 0.75rem; color: #34d399; font-weight: 600;">(Operatör: <%= c.activeRunningOrder.uretimYonetici %>)</span>
-                    <% } %>
-                  </span>
+              <!-- 5. PERSONEL, SORUMLU & VARDİYA PERSONELİ BİLGİSİ (Açılır Modal Eventli) -->
+              <div class="wc-personnel-card">
+                <!-- Sorumlu Bilgisi -->
+                <div class="wc-supervisor-row">
+                  <div>
+                    <span style="color: #64748b; font-size: 0.74rem; display: block; font-weight: 700; text-transform: uppercase;">
+                      👤 İstasyon / Atölye Sorumlusu
+                    </span>
+                    <strong style="color: #818cf8; font-size: 0.9rem;"><%= c.stationSupervisor || 'Tanımlı Sorumlu Yok' %></strong>
+                  </div>
+                  <% if (c.activeRunningOrder && c.activeRunningOrder.uretimYonetici && c.activeRunningOrder.uretimYonetici !== c.stationSupervisor) { %>
+                    <div style="text-align: right;">
+                      <span style="color: #64748b; font-size: 0.74rem; display: block; font-weight: 700; text-transform: uppercase;">
+                        ⚡ Aktif Operatör
+                      </span>
+                      <span style="color: #34d399; font-weight: 700; font-size: 0.85rem;"><%= c.activeRunningOrder.uretimYonetici %></span>
+                    </div>
+                  <% } %>
                 </div>
-                <div style="text-align: right;">
-                  <span style="color: #64748b; font-size: 0.75rem; display: block; font-weight: 700; text-transform: uppercase;">
-                    👥 Vardiya Personeli
-                  </span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #a5b4fc;">
-                    <%= c.workersCount %> Kişi
-                  </span>
+
+                <!-- Vardiya Personeli Box (Tıklanabilir Event) -->
+                <div class="wc-shift-workers-box" onclick="openShiftPersonnelModal('<%= c.id %>', '<%= c.workCenterCode %>', '<%= c.workCenterName.replace(/'/g, "\\'") %>', <%= c.workersCount %>, <%= JSON.stringify(c.assignedPersonnelIds || []) %>)" title="Vardiya personeli atamak veya düzenlemek için tıklayınız">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #94a3b8; font-size: 0.76rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                      <span>👥 Vardiya Personeli:</span>
+                      <span style="color: <%= (c.assignedPersonnelList.length === c.workersCount) ? '#34d399' : '#fbbf24' %>; font-family: 'JetBrains Mono', monospace;">
+                        <%= c.assignedPersonnelList.length %> / <%= c.workersCount %> Personel
+                      </span>
+                    </span>
+                    <span style="font-size: 0.74rem; color: #818cf8; font-weight: 700; background: rgba(99, 102, 241, 0.15); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                      ⚙️ <%= c.assignedPersonnelList.length > 0 ? 'Personelleri Düzenle' : 'Personel Ata' %> ➔
+                    </span>
+                  </div>
+
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+                    <% if (c.assignedPersonnelList && c.assignedPersonnelList.length > 0) { %>
+                      <% c.assignedPersonnelList.forEach(p => { %>
+                        <span class="worker-chip">
+                          <span>👤</span> <%= p.fullName %>
+                        </span>
+                      <% }); %>
+                    <% } else { %>
+                      <span style="font-size: 0.78rem; color: #94a3b8; font-style: italic;">
+                        ⚠️ Henüz vardiya personeli atanmadı. Atamak için tıklayınız (<%= c.workersCount %> personel gereklidir).
+                      </span>
+                    <% } %>
+                  </div>
                 </div>
               </div>
 
@@ -673,6 +774,92 @@
     </main>
   </div>
 
+  <!-- ======================================================================= -->
+  <!-- VARDİYA PERSONELİ ATAMA MODALI (ÇOKLU SEÇİM & KESİN SINIR KURALI)       -->
+  <!-- ======================================================================= -->
+  <div id="shiftPersonnelModal" class="personnel-modal-backdrop">
+    <div class="personnel-modal-window">
+      
+      <!-- Modal Header -->
+      <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.95);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.5rem; background: rgba(99, 102, 241, 0.15); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(99, 102, 241, 0.3);">👥</span>
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">
+              [<span id="modalWcCode" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"></span>] 
+              <span id="modalWcName"></span> — Vardiya Personeli Seçimi
+            </h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+              İstasyon Kapasitesi: <strong style="color: #fbbf24;" id="modalRequiredCountBadge">0 Personel</strong> • 
+              Lütfen listeden <strong>tam olarak <span id="modalRequiredCountText">0</span> personel</strong> seçiniz (Daha az veya daha fazla seçilemez).
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="closeShiftPersonnelModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">✕</button>
+      </div>
+
+      <!-- Search & Sort Controls -->
+      <div style="padding: 14px 24px; background: rgba(30, 41, 59, 0.5); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+        <div style="flex: 1; min-width: 260px; position: relative;">
+          <input type="text" id="modalPersonnelSearch" oninput="renderModalPersonnelList()" placeholder="🔍 Personel adı, kullanıcı adı veya departman ara..." style="width: 100%; padding: 10px 14px 10px 38px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: #fff; font-size: 0.875rem; outline: none; box-sizing: border-box;">
+          <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;">🔍</span>
+        </div>
+
+        <div style="width: 280px;">
+          <select id="modalPersonnelSort" onchange="renderModalPersonnelList()" style="width: 100%; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: #fff; font-size: 0.85rem; outline: none; font-weight: 600;">
+            <option value="name_asc" selected>🔤 İsme Göre: A'dan Z'ye</option>
+            <option value="name_desc">🔤 İsme Göre: Z'den A'ya</option>
+            <option value="dept_asc">🏢 Departmana Göre: A-Z</option>
+            <option value="uname_asc">👤 Kullanıcı Adına Göre: A-Z</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Personnel Table List -->
+      <div style="flex: 1; overflow-y: auto; padding: 16px 24px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;">
+          <thead>
+            <tr style="background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; position: sticky; top: 0; z-index: 10;">
+              <th style="padding: 12px 14px; width: 60px; text-align: center;">Seç</th>
+              <th style="padding: 12px 14px;">Personel Adı Soyadı</th>
+              <th style="padding: 12px 14px; width: 180px;">Kullanıcı Adı</th>
+              <th style="padding: 12px 14px; width: 220px;">Departman</th>
+              <th style="padding: 12px 14px; width: 160px;">Unvan / Görev</th>
+            </tr>
+          </thead>
+          <tbody id="modalPersonnelTbody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding: 16px 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div id="modalSelectionStatusText" style="font-size: 0.88rem; font-weight: 800;">
+          <!-- Dynamic status -->
+        </div>
+
+        <form id="shiftPersonnelForm" method="POST" action="" style="display: flex; gap: 12px; margin: 0;">
+          <input type="hidden" name="personnelIds" id="modalPersonnelIdsInput" value="[]">
+          
+          <button type="button" class="btn btn-secondary" onclick="closeShiftPersonnelModal()" style="padding: 10px 20px; border-radius: 10px; font-weight: 600;">
+            İptal
+          </button>
+          
+          <button type="submit" id="btnSaveShiftPersonnel" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 800; padding: 10px 26px; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35); cursor: pointer; transition: all 0.2s;">
+            ✅ Vardiya Personellerini Kaydet
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Master Employees JSON Data -->
+  <script id="allEmployeesCatalogData" type="application/json">
+    <%- JSON.stringify(allEmployees || []) %>
+  </script>
+
   <script>
     function updateClock() { 
       const now = new Date(); 
@@ -681,6 +868,191 @@
     }
     updateClock(); 
     setInterval(updateClock, 1000);
+
+    const employeesCatalog = JSON.parse(document.getElementById('allEmployeesCatalogData').textContent || '[]');
+
+    let activeWcId = null;
+    let activeWcRequiredCount = 1;
+    let selectedPersonnelSet = new Set();
+    let initialAssignedSet = new Set();
+
+    function openShiftPersonnelModal(wcId, wcCode, wcName, requiredCount, currentAssignedIds) {
+      activeWcId = wcId;
+      activeWcRequiredCount = parseInt(requiredCount, 10) || 1;
+      
+      const modal = document.getElementById('shiftPersonnelModal');
+      if (!modal) return;
+
+      document.getElementById('modalWcCode').textContent = wcCode;
+      document.getElementById('modalWcName').textContent = wcName;
+      document.getElementById('modalRequiredCountBadge').textContent = activeWcRequiredCount + ' Personel';
+      document.getElementById('modalRequiredCountText').textContent = activeWcRequiredCount;
+      document.getElementById('shiftPersonnelForm').action = '/production/capacity/' + wcId + '/personnel';
+
+      document.getElementById('modalPersonnelSearch').value = '';
+      document.getElementById('modalPersonnelSort').value = 'name_asc';
+
+      // Load currently assigned IDs
+      selectedPersonnelSet = new Set();
+      initialAssignedSet = new Set();
+      if (Array.isArray(currentAssignedIds)) {
+        currentAssignedIds.forEach(id => {
+          selectedPersonnelSet.add(Number(id));
+          initialAssignedSet.add(Number(id));
+        });
+      }
+
+      modal.style.display = 'flex';
+      renderModalPersonnelList();
+
+      setTimeout(() => {
+        const inp = document.getElementById('modalPersonnelSearch');
+        if (inp) inp.focus();
+      }, 100);
+    }
+
+    function closeShiftPersonnelModal() {
+      const modal = document.getElementById('shiftPersonnelModal');
+      if (modal) modal.style.display = 'none';
+      activeWcId = null;
+    }
+
+    function togglePersonnelSelection(empId) {
+      empId = Number(empId);
+      if (selectedPersonnelSet.has(empId)) {
+        selectedPersonnelSet.delete(empId);
+      } else {
+        if (selectedPersonnelSet.size >= activeWcRequiredCount) {
+          alert('⚠️ Bu iş merkezi için tanımlı kapasite sınırı (' + activeWcRequiredCount + ' personel) dolmuştur!\nYeni bir personel eklemek için lütfen önce seçili personellerden birini kaldırınız.');
+          return;
+        }
+        selectedPersonnelSet.add(empId);
+      }
+      renderModalPersonnelList();
+    }
+
+    function renderModalPersonnelList() {
+      const tbody = document.getElementById('modalPersonnelTbody');
+      if (!tbody) return;
+
+      const searchVal = (document.getElementById('modalPersonnelSearch')?.value || '').toLowerCase().trim();
+      const sortVal = document.getElementById('modalPersonnelSort')?.value || 'name_asc';
+
+      // 1. Filter by search query
+      let filtered = (employeesCatalog || []).filter(p => {
+        const fullName = (p.fullName || (p.ad ? p.ad + ' ' + (p.soyad || '') : p.kullaniciAdi)).toLowerCase();
+        const username = (p.kullaniciAdi || '').toLowerCase();
+        const dept = (p.departman || '').toLowerCase();
+        const title = (p.unvan || '').toLowerCase();
+
+        return fullName.includes(searchVal) || username.includes(searchVal) || dept.includes(searchVal) || title.includes(searchVal);
+      });
+
+      // 2. Sort: Assigned personnel on TOP, then according to sortVal
+      filtered.sort((a, b) => {
+        const aSelected = selectedPersonnelSet.has(Number(a.id));
+        const bSelected = selectedPersonnelSet.has(Number(b.id));
+
+        // Selected items always go to TOP
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+
+        const nameA = (a.fullName || a.kullaniciAdi).toLowerCase();
+        const nameB = (b.fullName || b.kullaniciAdi).toLowerCase();
+        const deptA = (a.departman || '').toLowerCase();
+        const deptB = (b.departman || '').toLowerCase();
+        const unameA = (a.kullaniciAdi || '').toLowerCase();
+        const unameB = (b.kullaniciAdi || '').toLowerCase();
+
+        if (sortVal === 'name_desc') return nameB.localeCompare(nameA, 'tr');
+        if (sortVal === 'dept_asc') return deptA.localeCompare(deptB, 'tr');
+        if (sortVal === 'uname_asc') return unameA.localeCompare(unameB, 'tr');
+        return nameA.localeCompare(nameB, 'tr');
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="padding: 36px; text-align: center; color: var(--text-muted);">
+              🔍 Arama kriterlerine uygun personel kaydı bulunamadı.
+            </td>
+          </tr>
+        `;
+        updateModalSelectionUI();
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => {
+        const isSelected = selectedPersonnelSet.has(Number(p.id));
+        const isPreviouslyAssigned = initialAssignedSet.has(Number(p.id));
+
+        return `
+          <tr class="modal-user-row ${isSelected ? 'selected-row' : ''}" onclick="togglePersonnelSelection(${p.id})">
+            <td style="padding: 12px 14px; text-align: center;">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer; accent-color: #6366f1;" onclick="event.stopPropagation(); togglePersonnelSelection(${p.id})">
+            </td>
+            <td style="padding: 12px 14px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: ${isSelected ? '#6366f1' : 'rgba(255,255,255,0.08)'}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">
+                  ${(p.ad ? p.ad.charAt(0) : p.kullaniciAdi.charAt(0)).toUpperCase()}
+                </div>
+                <div>
+                  <strong style="color: #fff; font-size: 0.9rem;">${p.fullName}</strong>
+                  ${isPreviouslyAssigned ? '<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.7rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; margin-left: 6px;">⭐ Mevcut Atanmış</span>' : ''}
+                </div>
+              </div>
+            </td>
+            <td style="padding: 12px 14px; font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 700;">
+              @${p.kullaniciAdi}
+            </td>
+            <td style="padding: 12px 14px; color: #cbd5e1;">
+              🏢 ${p.departman || 'Genel Personel'}
+            </td>
+            <td style="padding: 12px 14px; color: #94a3b8;">
+              👤 ${p.unvan || 'Personel'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      updateModalSelectionUI();
+    }
+
+    function updateModalSelectionUI() {
+      const statusEl = document.getElementById('modalSelectionStatusText');
+      const saveBtn = document.getElementById('btnSaveShiftPersonnel');
+      const hiddenInput = document.getElementById('modalPersonnelIdsInput');
+
+      const count = selectedPersonnelSet.size;
+      const req = activeWcRequiredCount;
+
+      hiddenInput.value = JSON.stringify(Array.from(selectedPersonnelSet));
+
+      if (count === req) {
+        statusEl.innerHTML = `<span style="color: #34d399;">✓ Tam ${req} personel seçildi (${count}/${req} Personel)</span>`;
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+        saveBtn.style.cursor = 'pointer';
+      } else if (count < req) {
+        const remaining = req - count;
+        statusEl.innerHTML = `<span style="color: #fbbf24;">⚠️ ${remaining} personel daha seçmelisiniz (${count}/${req} Personel)</span>`;
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+        saveBtn.style.cursor = 'not-allowed';
+      } else {
+        statusEl.innerHTML = `<span style="color: #fb7185;">🚨 Kapasite aşıldı! En fazla ${req} personel seçebilirsiniz (${count}/${req})</span>`;
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+        saveBtn.style.cursor = 'not-allowed';
+      }
+    }
+
+    document.getElementById('shiftPersonnelForm').addEventListener('submit', function(e) {
+      if (selectedPersonnelSet.size !== activeWcRequiredCount) {
+        e.preventDefault();
+        alert('⚠️ Bu iş merkezi için tam olarak ' + activeWcRequiredCount + ' personel seçilmelidir!\nŞu an ' + selectedPersonnelSet.size + ' personel seçili.');
+      }
+    });
   </script>
 </body>
 </html>

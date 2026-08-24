@@ -45,6 +45,7 @@ router.post('/routing/delete/:stockItemId', productionController.deleteRouting);
 router.get('/capacity', productionController.listCapacity);
 router.post('/capacity/:id/maintenance', productionController.toggleWorkCenterMaintenance);
 router.post('/capacity/:id/release', productionController.releaseWorkCenter);
+router.post('/capacity/:id/personnel', productionController.assignShiftPersonnel);
 
 // 6. MES Shop Floor Tracking Routes
 router.get('/mes', productionController.listMES);

@@ -669,7 +669,13 @@ class MRPService {
       order: [['isMerkeziKodu', 'ASC'], ['id', 'ASC']]
     });
 
-    // 2. Fetch all active/pending/in-production production orders from DB with stock item and user
+    // 2. Fetch all eligible employees (rol = 'Employee')
+    const allEmployees = await Kullanici.findAll({
+      where: { rol: 'Employee' },
+      order: [['ad', 'ASC'], ['kullaniciAdi', 'ASC']]
+    });
+
+    // 3. Fetch all active/pending/in-production production orders from DB with stock item and user
     const allProductionOrders = await UretimEmri.findAll({
       where: {
         durum: { [Op.in]: ['Planned', 'Approved', 'In_Production', 'Quality_Check'] }
@@ -684,7 +690,7 @@ class MRPService {
       ]
     });
 
-    // 3. Process each work center
+    // 4. Process each work center
     const report = dbWorkCenters.map(wc => {
       const dailyCapacityHours = parseFloat(wc.gunlukCalismaSaati || 8);
       const horizonCapacityHours = dailyCapacityHours * 5;
@@ -752,6 +758,23 @@ class MRPService {
         ? (activeRunningOrder.uretimYonetici || (activeRunningOrder.olusturan ? `${activeRunningOrder.olusturan.ad} ${activeRunningOrder.olusturan.soyad || ''}`.trim() : atolyeSorumlu))
         : atolyeSorumlu;
 
+      // Assigned shift personnel objects
+      let rawPersonnelIds = wc.atananPersonelIds;
+      if (typeof rawPersonnelIds === 'string') {
+        try { rawPersonnelIds = JSON.parse(rawPersonnelIds); } catch (_) { rawPersonnelIds = []; }
+      }
+      const assignedIds = Array.isArray(rawPersonnelIds) ? rawPersonnelIds.map(Number).filter(Boolean) : [];
+
+      const assignedPersonnelList = allEmployees.filter(e => assignedIds.includes(Number(e.id))).map(e => ({
+        id: e.id,
+        ad: e.ad,
+        soyad: e.soyad,
+        fullName: e.ad ? `${e.ad} ${e.soyad || ''}`.trim() : e.kullaniciAdi,
+        kullaniciAdi: e.kullaniciAdi,
+        departman: e.departman || 'Genel Personel',
+        unvan: e.unvan || 'Personel'
+      }));
+
       return {
         id: wc.id,
         workCenterCode: wc.isMerkeziKodu,
@@ -770,13 +793,26 @@ class MRPService {
         activeOrdersCount: stationOrders.length,
         isBottleneck,
         workersCount: wc.varsayilanIsciSayisi || 1,
+        assignedPersonnelIds: assignedIds,
+        assignedPersonnelList,
         activeRunningOrder,
         queuedOrders,
         activePersonnel
       };
     });
 
-    return report;
+    return {
+      report,
+      allEmployees: allEmployees.map(e => ({
+        id: e.id,
+        ad: e.ad,
+        soyad: e.soyad,
+        fullName: e.ad ? `${e.ad} ${e.soyad || ''}`.trim() : e.kullaniciAdi,
+        kullaniciAdi: e.kullaniciAdi,
+        departman: e.departman || 'Genel Personel',
+        unvan: e.unvan || 'Personel'
+      }))
+    };
   }
 }
 
