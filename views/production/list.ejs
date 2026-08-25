@@ -614,22 +614,34 @@
                     <% } %>
                   </td>
 
-                  <!-- 8. Aksiyonlar -->
+                  <!-- 8. Aksiyonlar (Otomatik Durum & MES Bağlantısı) -->
                   <td style="text-align: right;">
                     <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
-                      <button type="button" class="btn" onclick="openOrderModal(<%= JSON.stringify(o) %>)" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;" title="Detaylı İncele">
-                        Detay ➔
+                      <button type="button" class="btn" onclick="openOrderModal(<%= JSON.stringify(o) %>)" style="background: rgba(255, 255, 255, 0.08); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;" title="Detaylı Rota ve Operasyon Adımlarını Gör">
+                        🔍 Detay
                       </button>
 
-                      <form action="/production/orders/<%= o.id %>/status" method="POST" style="display: inline; margin: 0;">
-                        <select name="status" onchange="this.form.submit()" class="filter-select" style="padding: 5px 8px; font-size: 0.76rem; border-radius: 8px;">
-                          <option value="Approved" <%= status === 'Approved' || status === 'Planned' ? 'selected' : '' %>>Onaylı</option>
-                          <option value="In_Production" <%= status === 'In_Production' ? 'selected' : '' %>>Üretime Al</option>
-                          <option value="Quality_Check" <%= status === 'Quality_Check' ? 'selected' : '' %>>Kaliteye Gönder</option>
-                          <option value="Completed" <%= status === 'Completed' ? 'selected' : '' %>>Tamamla</option>
-                          <option value="Cancelled" <%= status === 'Cancelled' ? 'selected' : '' %>>İptal Et</option>
-                        </select>
-                      </form>
+                      <% if (status === 'In_Production') { %>
+                        <a href="/production/mes" class="btn" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" title="MES Terminalinde İşlemi Yönet">
+                          ⚡ MES Takip
+                        </a>
+                      <% } else if (status === 'Approved' || status === 'Planned') { %>
+                        <a href="/production/mes" class="btn" style="background: rgba(99, 102, 241, 0.18); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.35); padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" title="MES İstasyon Kuyruğuna Git">
+                          📱 MES Sırasında
+                        </a>
+                      <% } else if (status === 'Quality_Check') { %>
+                        <a href="/quality" class="btn" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" title="Kalite Kontrol">
+                          🔍 Kalite Kontrol
+                        </a>
+                      <% } else if (status === 'Completed') { %>
+                        <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                          ✓ Tamamlandı
+                        </span>
+                      <% } else if (status === 'Cancelled') { %>
+                        <span style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                          ⛔ İptal
+                        </span>
+                      <% } %>
                     </div>
                   </td>
                 </tr>

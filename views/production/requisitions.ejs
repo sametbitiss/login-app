@@ -76,11 +76,14 @@
 
     <main class="module-content">
 
-      <div class="page-header">
+      <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div>
           <h1>📩 Üretim Talepleri</h1>
           <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Depodan gelen acil imalat ve kritik stok uyarısı talepleri ile satış siparişlerinden gelen üretim ihtiyaçları.</p>
         </div>
+        <a href="/production/mrp" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+          <span>⚡ MRP İle Toplu Planla & Çalıştır ➔</span>
+        </a>
       </div>
 
       <% const stockAlertsCount = productionRequisitions.filter(o => ((o.uretimBasligi && o.uretimBasligi.includes('Kritik Stok')) || (o.productionTitle && o.productionTitle.includes('Kritik Stok'))) && (o.durum === 'Planned' || o.status === 'Planned')).length; %>
@@ -123,7 +126,7 @@
               <th>Talep Eden</th>
               <th>Durum</th>
               <th>Tarih</th>
-              <th style="text-align: right;">Aksiyon</th>
+              <th style="text-align: right;">Planlama Durumu</th>
             </tr>
           </thead>
           <tbody>
@@ -150,7 +153,6 @@
                     else if (creatorObj.kullaniciAdi || creatorObj.username) creatorDisplay = creatorObj.kullaniciAdi || creatorObj.username;
                   }
                   const status = o.durum || o.status || 'Planned';
-                  const sId = o.stokId || o.stockItemId;
                 %>
                 <tr>
                   <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= isEmriNo %></strong></td>
@@ -183,17 +185,25 @@
                     <% } else if (status === 'Cancelled') { %>
                       <span class="badge-status badge-no-bom" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">✕ İptal Edildi</span>
                     <% } else { %>
-                      <span class="badge-status badge-no-bom" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">● Bekliyor</span>
+                      <span class="badge-status badge-no-bom" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">● Talep Bekliyor</span>
                     <% } %>
                   </td>
                   <td style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(o.createdAt).toLocaleDateString('tr-TR') %></td>
                   <td style="text-align: right;">
                     <% if (status === 'Planned') { %>
-                      <a href="/production/orders/add?stockId=<%= sId %>&plannedQty=<%= o.planlananMiktar || 1 %>&priority=<%= encodeURIComponent(o.oncelik || 'Normal') %>&requisitionNo=<%= encodeURIComponent(o.isEmriNo || '') %>" class="btn-action-bom">
-                        📋 İş Emri Aç & İncele
-                      </a>
+                      <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        ⚡ MRP Havuzunda
+                      </span>
+                    <% } else if (status === 'In_Production') { %>
+                      <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        ⚡ İmalata Alındı
+                      </span>
+                    <% } else if (status === 'Completed') { %>
+                      <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        ✓ Tamamlandı
+                      </span>
                     <% } else { %>
-                      <span style="color: var(--text-muted); font-size: 0.82rem;">İşlem Yapıldı</span>
+                      <span style="color: var(--text-muted); font-size: 0.82rem;">İşlem Gördü</span>
                     <% } %>
                   </td>
                 </tr>
