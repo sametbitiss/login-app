@@ -1,4 +1,4 @@
-const { UretimEmri, StokKarti, UrunRecetesi, RotaOperasyon, Kullanici, StokHareketi, sequelize } = require('../../models');
+const { UretimEmri, UretimEmriOperasyon, IsMerkezi, StokKarti, UrunRecetesi, RotaOperasyon, Kullanici, StokHareketi, sequelize } = require('../../models');
 const logService = require('../services/logService');
 const { Op } = require('sequelize');
 
@@ -57,7 +57,12 @@ class ProductionRepository {
       where,
       include: [
         { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
-        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim', 'mevcutStok'] }
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim', 'mevcutStok'] },
+        { 
+          model: UretimEmriOperasyon, 
+          as: 'operasyonlar',
+          include: [{ model: IsMerkezi, as: 'isMerkeziKarti' }]
+        }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -67,7 +72,12 @@ class ProductionRepository {
     return await UretimEmri.findByPk(id, {
       include: [
         { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
-        { model: StokKarti, as: 'stokKarti' }
+        { model: StokKarti, as: 'stokKarti' },
+        { 
+          model: UretimEmriOperasyon, 
+          as: 'operasyonlar',
+          include: [{ model: IsMerkezi, as: 'isMerkeziKarti' }]
+        }
       ]
     });
   }

@@ -611,38 +611,39 @@
                 </div>
               </div>
 
-              <!-- 3. AKTİF ÇALIŞAN İŞ EMRİ / OPERASYON BÖLÜMÜ -->
+              <!-- 3. AKTİF ÇALIŞAN İŞ ADIMI / OPERASYON BÖLÜMÜ -->
               <div>
                 <div style="font-size: 0.76rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
                   ⚡ Aktif Çalışan İş Adımı / Operasyon
                 </div>
 
                 <% if (c.activeRunningOrder) { %>
+                  <% const ao = c.activeRunningOrder; %>
                   <div class="active-order-box">
                     <div class="active-order-title">
                       <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #34d399;">
-                        📋 <%= c.activeRunningOrder.isEmriNo %>
+                        📋 <%= ao.isEmriNo || ao.workOrderNo %>
                       </span>
                       <span class="status-pill status-completed" style="font-size: 0.72rem; padding: 2px 8px;">
-                        ⚡ <%= c.activeRunningOrder.oncelik || 'Normal' %> Öncelikli
+                        ⚡ <%= ao.oncelik || ao.priority || 'Normal' %> Öncelikli
                       </span>
                     </div>
 
                     <div class="active-order-body">
                       <div>
                         <div class="active-order-name">
-                          <% if (c.activeRunningOrder.operasyonAdi) { %>
-                            🛠️ <%= c.activeRunningOrder.operasyonAdi %> <span style="color: #94a3b8; font-weight: 400; font-size: 0.8rem;">(Adım #<%= c.activeRunningOrder.operasyonSira %>)</span> •
+                          <% if (ao.operasyonAdi || ao.operationName) { %>
+                            🛠️ <%= ao.operasyonAdi || ao.operationName %> <span style="color: #94a3b8; font-weight: 400; font-size: 0.8rem;">(Adım #<%= ao.operasyonSira || ao.operationSeq || 10 %>)</span> •
                           <% } %>
-                          [<%= c.activeRunningOrder.stokKarti ? c.activeRunningOrder.stokKarti.stokKodu : '—' %>] 
-                          <%= c.activeRunningOrder.stokKarti ? c.activeRunningOrder.stokKarti.ad : c.activeRunningOrder.uretimBasligi %>
+                          [<%= ao.stokKarti?.stokKodu || ao.stokKodu || ao.stockCode || '—' %>] 
+                          <%= ao.stokKarti?.ad || ao.stokAdi || ao.stockName || ao.uretimBasligi %>
                         </div>
                         <div class="active-order-meta">
-                          <span>Miktar: <strong style="color: #f8fafc;"><%= parseFloat(c.activeRunningOrder.tamamlananMiktar || 0) %> / <%= parseFloat(c.activeRunningOrder.planlananMiktar) %> <%= c.activeRunningOrder.birim %></strong></span>
+                          <span>Miktar: <strong style="color: #f8fafc;"><%= parseFloat(ao.tamamlananMiktar !== undefined ? ao.tamamlananMiktar : (ao.completedQuantity || 0)) %> / <%= parseFloat(ao.planlananMiktar || ao.plannedQuantity || 1) %> <%= ao.birim || ao.unit || 'Adet' %></strong></span>
                           <span>•</span>
-                          <span>Tahmini: <strong style="color: #fbbf24;"><%= c.activeRunningOrder.tahminiSaat || 0 %> Saat</strong></span>
+                          <span>Tahmini: <strong style="color: #fbbf24;"><%= ao.tahminiSaat || ao.estimatedHours || 1 %> Saat</strong></span>
                           <span>•</span>
-                          <span>Termin: <strong style="color: #cbd5e1;"><%= c.activeRunningOrder.planlananBitisTarihi || '—' %></strong></span>
+                          <span>Termin: <strong style="color: #cbd5e1;"><%= ao.planlananBitisTarihi || '—' %></strong></span>
                         </div>
                       </div>
                     </div>
@@ -677,7 +678,7 @@
                           </span>
                           <div>
                             <div style="display: flex; align-items: center; gap: 6px;">
-                              <strong style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;"><%= qo.isEmriNo %></strong>
+                              <strong style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;"><%= qo.isEmriNo || qo.workOrderNo %></strong>
                               <% if (qo.isLocked) { %>
                                 <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; font-size: 0.65rem; font-weight: 800; padding: 1px 5px; border-radius: 4px;">🔒 Beklemede</span>
                               <% } else { %>
@@ -685,18 +686,18 @@
                               <% } %>
                             </div>
                             <div style="font-size: 0.75rem; color: #f1f5f9; margin-top: 2px;">
-                              🛠️ <%= qo.operasyonAdi || 'Genel Operasyon' %> • <%= qo.stokKarti ? qo.stokKarti.ad : qo.uretimBasligi %> (<%= parseFloat(qo.planlananMiktar) %> <%= qo.birim %>)
+                              🛠️ <%= qo.operasyonAdi || qo.operationName || 'Genel Operasyon' %> <span style="color: #94a3b8; font-size: 0.7rem;">(Adım #<%= qo.operasyonSira || qo.operationSeq || 10 %>)</span> • <%= qo.stokKarti?.ad || qo.stokAdi || qo.stockName || qo.uretimBasligi %> (<%= parseFloat(qo.planlananMiktar || qo.plannedQuantity || 1) %> <%= qo.birim || qo.unit || 'Adet' %>)
                             </div>
-                            <% if (qo.isLocked && qo.lockReason) { %>
+                            <% if (qo.isLocked && (qo.lockReason || qo.prevOpName)) { %>
                               <div style="font-size: 0.7rem; color: #fbbf24; margin-top: 2px;">
-                                ⚠️ <%= qo.lockReason %>
+                                ⚠️ <%= qo.lockReason || ('Önceki Adım: "' + qo.prevOpName + '" Bekleniyor') %>
                               </div>
                             <% } %>
                           </div>
                         </div>
                         <div style="text-align: right; min-width: 55px;">
                           <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #fbbf24; font-weight: 700;">
-                            <%= qo.tahminiSaat || 0 %> Sa
+                            <%= qo.tahminiSaat || qo.estimatedHours || 0 %> Sa
                           </span>
                         </div>
                       </div>

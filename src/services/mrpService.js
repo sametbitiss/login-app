@@ -800,44 +800,77 @@ class MRPService {
         unvan: e.unvan || 'Personel'
       }));
 
-      // Active running order formatted for capacity view
-      const formattedActiveOrder = activeRunningOp ? {
-        id: activeRunningOp.id,
-        workOrderId: activeRunningOp.uretimEmriId,
-        workOrderNo: activeRunningOp.isEmriNo,
-        productionTitle: activeRunningOp.uretimEmri ? activeRunningOp.uretimEmri.uretimBasligi : activeRunningOp.operasyonAdi,
-        operationName: activeRunningOp.operasyonAdi,
-        operationSeq: activeRunningOp.operasyonSira,
-        operationCode: activeRunningOp.operasyonKodu,
-        stockName: activeRunningOp.stokKarti ? activeRunningOp.stokKarti.ad : (activeRunningOp.uretimEmri?.stokKarti?.ad || 'Mamul'),
-        plannedQuantity: activeRunningOp.planlananMiktar,
-        completedQuantity: activeRunningOp.tamamlananMiktar,
-        unit: activeRunningOp.birim,
-        status: activeRunningOp.durum,
-        operatorName: activeRunningOp.operatorAdi || 'Operatör',
-        plannedStartDate: activeRunningOp.uretimEmri?.planlananBaslangicTarihi || new Date().toISOString().split('T')[0],
-        plannedEndDate: activeRunningOp.uretimEmri?.planlananBitisTarihi || new Date().toISOString().split('T')[0]
-      } : null;
+      // Helper to format operation for capacity cards with complete dual-language and nested structures
+      const formatOperationForCapacity = (op) => {
+        if (!op) return null;
+        const plannedQty = parseFloat(op.planlananMiktar || 1);
+        const completedQty = parseFloat(op.tamamlananMiktar || 0);
+        const remainingQty = Math.max(0, plannedQty - completedQty);
+        const setupMin = parseFloat(op.hazirlikSuresiDakika || 15);
+        const unitRunMin = parseFloat(op.calismaSuresiDakikaBirim || 5);
+        const totalEstMin = Math.round(setupMin + (unitRunMin * plannedQty));
+        const remainingMin = Math.round(setupMin + (unitRunMin * remainingQty));
+        const estHours = parseFloat((totalEstMin / 60).toFixed(2));
+        const remainingHours = parseFloat((remainingMin / 60).toFixed(2));
 
-      const formattedQueuedOrders = queuedOps.map(op => ({
-        id: op.id,
-        workOrderId: op.uretimEmriId,
-        workOrderNo: op.isEmriNo,
-        productionTitle: op.uretimEmri ? op.uretimEmri.uretimBasligi : op.operasyonAdi,
-        operationName: op.operasyonAdi,
-        operationSeq: op.operasyonSira,
-        operationCode: op.operasyonKodu,
-        stockName: op.stokKarti ? op.stokKarti.ad : (op.uretimEmri?.stokKarti?.ad || 'Mamul'),
-        plannedQuantity: op.planlananMiktar,
-        completedQuantity: op.tamamlananMiktar,
-        unit: op.birim,
-        status: op.durum,
-        isReady: op.durum === 'Ready',
-        isLocked: op.durum === 'Waiting_Previous_Op',
-        prevOpName: op.oncekiOperasyon ? op.oncekiOperasyon.operasyonAdi : null,
-        plannedStartDate: op.uretimEmri?.planlananBaslangicTarihi || new Date().toISOString().split('T')[0],
-        plannedEndDate: op.uretimEmri?.planlananBitisTarihi || new Date().toISOString().split('T')[0]
-      }));
+        const stock = op.stokKarti || op.uretimEmri?.stokKarti;
+        const stockCode = stock ? stock.stokKodu : '—';
+        const stockName = stock ? stock.ad : (op.uretimEmri ? op.uretimEmri.uretimBasligi : 'Mamul');
+        const prevOp = op.oncekiOperasyon;
+        const isLocked = op.durum === 'Waiting_Previous_Op';
+        const lockReason = isLocked 
+          ? (prevOp ? `Önceki Adım: "${prevOp.operasyonAdi}" (#${prevOp.operasyonSira}) Bekleniyor` : 'Önceki Operasyonun Tamamlanması Bekleniyor')
+          : null;
+
+        return {
+          id: op.id,
+          operationId: op.id,
+          workOrderId: op.uretimEmriId,
+          isEmriNo: op.isEmriNo,
+          workOrderNo: op.isEmriNo,
+          uretimBasligi: op.uretimEmri ? op.uretimEmri.uretimBasligi : op.operasyonAdi,
+          productionTitle: op.uretimEmri ? op.uretimEmri.uretimBasligi : op.operasyonAdi,
+          operasyonAdi: op.operasyonAdi,
+          operationName: op.operasyonAdi,
+          operasyonKodu: op.operasyonKodu,
+          operationCode: op.operasyonKodu,
+          operasyonSira: op.operasyonSira,
+          operationSeq: op.operasyonSira,
+          stokId: op.stokId,
+          stokKodu: stockCode,
+          stockCode: stockCode,
+          stokAdi: stockName,
+          stockName: stockName,
+          stokKarti: stock ? { id: stock.id, stokKodu: stockCode, ad: stockName } : { id: op.stokId, stokKodu: stockCode, ad: stockName },
+          planlananMiktar: plannedQty,
+          plannedQuantity: plannedQty,
+          tamamlananMiktar: completedQty,
+          completedQuantity: completedQty,
+          kalanMiktar: remainingQty,
+          remainingQuantity: remainingQty,
+          birim: op.birim || 'Adet',
+          unit: op.birim || 'Adet',
+          durum: op.durum,
+          status: op.durum,
+          oncelik: op.uretimEmri ? op.uretimEmri.oncelik : 'Normal',
+          priority: op.uretimEmri ? op.uretimEmri.oncelik : 'Normal',
+          tahminiSaat: estHours,
+          estimatedHours: estHours,
+          tahminiDakika: totalEstMin,
+          kalanSaat: remainingHours,
+          kalanDakika: remainingMin,
+          isReady: op.durum === 'Ready',
+          isLocked,
+          lockReason,
+          operatorAdi: op.operatorAdi || 'Operatör',
+          operatorName: op.operatorAdi || 'Operatör',
+          planlananBaslangicTarihi: op.uretimEmri?.planlananBaslangicTarihi || new Date().toISOString().split('T')[0],
+          planlananBitisTarihi: op.uretimEmri?.planlananBitisTarihi || new Date().toISOString().split('T')[0]
+        };
+      };
+
+      const formattedActiveOrder = formatOperationForCapacity(activeRunningOp);
+      const formattedQueuedOrders = queuedOps.map(formatOperationForCapacity);
 
       return {
         id: wc.id,

@@ -141,6 +141,11 @@ class ProductionService {
         createdOps.push(defaultOp);
       }
 
+      if (createdOps.length > 0) {
+        const totalDurationHours = createdOps.reduce((sum, o) => sum + (parseFloat(o.toplamTahminiDakika || 0) / 60), 0);
+        await order.update({ tahminiSaat: parseFloat(totalDurationHours.toFixed(2)) }, { transaction: t });
+      }
+
       return createdOps;
     };
 

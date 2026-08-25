@@ -1017,7 +1017,10 @@ class ProductionController {
         }
       }
 
-      const estMinutes = Math.round(parseFloat(op.toplamTahminiDakika || 60)) || 60;
+      const setupMin = parseFloat(op.hazirlikSuresiDakika !== undefined ? op.hazirlikSuresiDakika : 15);
+      const unitRunMin = parseFloat(op.calismaSuresiDakikaBirim !== undefined ? op.calismaSuresiDakikaBirim : 5);
+      const calculatedTotalMins = setupMin + (unitRunMin * plannedQty);
+      const estMinutes = Math.round(parseFloat(op.toplamTahminiDakika || calculatedTotalMins)) || Math.round(calculatedTotalMins);
       const estHours = parseFloat((estMinutes / 60).toFixed(2));
 
       // Get full route sequence of the parent work order
@@ -1083,8 +1086,10 @@ class ProductionController {
           sira: op.operasyonSira,
           kod: op.operasyonKodu,
           ad: op.operasyonAdi,
-          hazirlikDk: parseFloat(op.hazirlikSuresiDakika || 15),
-          birimDk: parseFloat(op.calismaSuresiDakikaBirim || 5)
+          hazirlikDk: setupMin,
+          birimDk: unitRunMin,
+          toplamDk: estMinutes,
+          toplamSaat: estHours
         },
         routeTimeline,
         components

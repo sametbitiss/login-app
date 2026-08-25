@@ -3,9 +3,284 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Üretim İş Emirleri — Enterprise ERP</title>
+  <title>Üretim İş Emirleri & Operasyon Takibi — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* KPI Summary Cards */
+    .order-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .order-kpi-card {
+      background: rgba(30, 41, 59, 0.45);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .order-kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+    .order-kpi-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .order-kpi-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .order-kpi-val {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #f8fafc;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Filter Toolbar */
+    .orders-filter-bar {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      backdrop-filter: blur(14px);
+    }
+    .filter-controls-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .filter-search-box {
+      position: relative;
+      min-width: 260px;
+      flex: 1;
+    }
+    .filter-search-input {
+      width: 100%;
+      background: #090e1a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      padding: 10px 16px 10px 38px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      outline: none;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+    .filter-search-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+    }
+    .filter-search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      pointer-events: none;
+    }
+    .filter-select {
+      background: #090e1a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .filter-select:focus { border-color: #6366f1; }
+
+    /* Orders Table */
+    .orders-table-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+    }
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+    .orders-table th {
+      background: rgba(30, 41, 59, 0.85);
+      color: #94a3b8;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 14px 16px;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+    .orders-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+      color: #cbd5e1;
+    }
+    .orders-table tr:last-child td { border-bottom: none; }
+    .orders-table tr:hover td {
+      background: rgba(99, 102, 241, 0.04);
+    }
+
+    /* Stepper Badges in Table */
+    .order-route-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .route-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .route-pill--completed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .route-pill--active {
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      animation: pulsePill 2s infinite;
+    }
+    .route-pill--ready {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .route-pill--locked {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+      border: 1px dashed rgba(245, 158, 11, 0.3);
+    }
+    @keyframes pulsePill {
+      0%, 100% { box-shadow: 0 0 6px rgba(99, 102, 241, 0.2); }
+      50% { box-shadow: 0 0 12px rgba(99, 102, 241, 0.5); }
+    }
+
+    /* Progress bar */
+    .order-progress-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 110px;
+    }
+    .order-progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .order-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* Status badges */
+    .status-badge-lg {
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .status--approved { background: rgba(99, 102, 241, 0.18); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); }
+    .status--in_prod { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status--qc { background: rgba(59, 130, 246, 0.18); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .status--completed { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .status--cancelled { background: rgba(244, 63, 94, 0.18); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+
+    /* Modal Backdrop */
+    .order-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .order-modal-window {
+      background: #0f172a;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      max-width: 780px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+    }
+    .order-modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .order-modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .order-modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.5);
+    }
+  </style>
   <script src="/sidebar.js" defer></script>
 </head>
 <body class="module-body">
@@ -51,77 +326,311 @@
 
     <main class="module-content">
 
-      <div class="page-header">
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
         <div>
-          <h1>Üretim İş Emirleri Listesi</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Fabrika imalat emirleri, başlama/bitiş tarihleri ve durum takibi.</p>
+          <div style="font-size: 0.82rem; color: #818cf8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">
+            🏭 İMALAT & SAHA OPERASYON KONTROLÜ
+          </div>
+          <h1 style="display: flex; align-items: center; gap: 10px; margin: 0;">
+            <span>📋 Üretim İş Emirleri Listesi</span>
+          </h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+            Onaylanmış aktif iş emirleri, rota operasyon adımları, MES istasyon durumları ve imalat ilerleme çizelgeleri.
+          </p>
         </div>
-        <a href="/production/mrp" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          ⚡ MRP ile İş Emri Planla
-        </a>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="/production/mes" class="btn" style="background: rgba(99, 102, 241, 0.18); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); font-weight: 800; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
+            <span>📱 MES Saha Terminali</span>
+          </a>
+          <a href="/production/capacity" class="btn" style="background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 800; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
+            <span>🏭 Kapasite Planlaması</span>
+          </a>
+          <a href="/production/mrp" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+            <span>⚡ MRP ile Yeni İş Emri Planla</span>
+          </a>
+        </div>
       </div>
 
-      <div class="table-wrapper">
-        <table class="data-table">
+      <!-- KPI Summary Cards -->
+      <%
+        const totalCount = orders.length;
+        const inProdCount = orders.filter(o => (o.durum || o.status) === 'In_Production').length;
+        const approvedCount = orders.filter(o => ['Approved', 'Planned'].includes(o.durum || o.status)).length;
+        const qcCount = orders.filter(o => (o.durum || o.status) === 'Quality_Check').length;
+        const completedCount = orders.filter(o => (o.durum || o.status) === 'Completed').length;
+        const totalPlannedQty = orders.reduce((sum, o) => sum + parseFloat(o.planlananMiktar || o.plannedQuantity || 0), 0);
+        const totalCompletedQty = orders.reduce((sum, o) => sum + parseFloat(o.tamamlananMiktar || o.completedQuantity || 0), 0);
+      %>
+      <div class="order-kpi-grid">
+        <div class="order-kpi-card">
+          <div class="order-kpi-icon" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">📋</div>
+          <div>
+            <div class="order-kpi-label">Toplam İş Emri</div>
+            <div class="order-kpi-val"><%= totalCount %> <span style="font-size: 0.85rem; color: #94a3b8;">Kayıt</span></div>
+          </div>
+        </div>
+
+        <div class="order-kpi-card">
+          <div class="order-kpi-icon" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">⚡</div>
+          <div>
+            <div class="order-kpi-label">Aktif İmalatta</div>
+            <div class="order-kpi-val" style="color: #fbbf24;"><%= inProdCount %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
+          </div>
+        </div>
+
+        <div class="order-kpi-card">
+          <div class="order-kpi-icon" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc;">⏳</div>
+          <div>
+            <div class="order-kpi-label">Onaylı / Sırada</div>
+            <div class="order-kpi-val" style="color: #a5b4fc;"><%= approvedCount %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
+          </div>
+        </div>
+
+        <div class="order-kpi-card">
+          <div class="order-kpi-icon" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">🔍</div>
+          <div>
+            <div class="order-kpi-label">Kalite Kontrolde</div>
+            <div class="order-kpi-val" style="color: #60a5fa;"><%= qcCount %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
+          </div>
+        </div>
+
+        <div class="order-kpi-card">
+          <div class="order-kpi-icon" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">✅</div>
+          <div>
+            <div class="order-kpi-label">Tamamlanan</div>
+            <div class="order-kpi-val" style="color: #34d399;"><%= completedCount %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
+          </div>
+        </div>
+
+        <div class="order-kpi-card">
+          <div class="order-kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">📦</div>
+          <div>
+            <div class="order-kpi-label">İmalat İlerlemesi</div>
+            <div class="order-kpi-val" style="font-size: 1.15rem; color: #f8fafc;">
+              <%= totalCompletedQty %> / <%= totalPlannedQty %> <span style="font-size: 0.75rem; color: #94a3b8;">Adet</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Toolbar -->
+      <form action="/production/orders" method="GET" class="orders-filter-bar">
+        <div class="filter-controls-group">
+          <!-- Search -->
+          <div class="filter-search-box">
+            <svg class="filter-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" name="search" value="<%= filterSearch || '' %>" placeholder="İş emri no, ürün kodu, başlık veya istasyon ara..." class="filter-search-input">
+          </div>
+
+          <!-- Status Filter -->
+          <select name="status" class="filter-select" onchange="this.form.submit()">
+            <option value="">Tüm Durumlar</option>
+            <option value="Approved" <%= filterStatus === 'Approved' ? 'selected' : '' %>>🟢 Onaylandı / Sıraya Alındı</option>
+            <option value="In_Production" <%= filterStatus === 'In_Production' ? 'selected' : '' %>>⚡ Üretimde</option>
+            <option value="Quality_Check" <%= filterStatus === 'Quality_Check' ? 'selected' : '' %>>🔍 Kalite Kontrolde</option>
+            <option value="Completed" <%= filterStatus === 'Completed' ? 'selected' : '' %>>✅ Tamamlandı</option>
+            <option value="Cancelled" <%= filterStatus === 'Cancelled' ? 'selected' : '' %>>⛔ İptal Edildi</option>
+          </select>
+
+          <!-- Priority Filter -->
+          <select name="priority" class="filter-select" onchange="this.form.submit()">
+            <option value="">Tüm Öncelikler</option>
+            <option value="Urgent" <%= filterPriority === 'Urgent' ? 'selected' : '' %>>🚨 Çok Acil (Urgent)</option>
+            <option value="High" <%= filterPriority === 'High' ? 'selected' : '' %>>⚡ Yüksek (High)</option>
+            <option value="Normal" <%= filterPriority === 'Normal' ? 'selected' : '' %>>Normal (Standart)</option>
+            <option value="Low" <%= filterPriority === 'Low' ? 'selected' : '' %>>Düşük (Low)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn" style="background: rgba(99, 102, 241, 0.25); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); font-weight: 700; padding: 10px 18px; border-radius: 10px; cursor: pointer;">
+            Filtrele
+          </button>
+          <% if (filterSearch || filterStatus || filterPriority) { %>
+            <a href="/production/orders" class="btn" style="background: rgba(255, 255, 255, 0.08); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.1); font-weight: 700; padding: 10px 16px; border-radius: 10px; text-decoration: none;">
+              Sıfırla
+            </a>
+          <% } %>
+        </div>
+      </form>
+
+      <!-- Main Orders Table Card -->
+      <div class="orders-table-card">
+        <table class="orders-table">
           <thead>
             <tr>
-              <th>İş Emri No</th>
-              <th>Üretim Başlığı / Ürün</th>
-              <th>Planlanan Miktar</th>
-              <th>Üretilen / Fire</th>
-              <th>İş İstasyonu</th>
-              <th>Öncelik</th>
-              <th>Planlanan Tarih</th>
-              <th>Durum</th>
-              <th>Aksiyon</th>
+              <th style="width: 140px;">İş Emri No</th>
+              <th>Hedef İmalat Ürünü</th>
+              <th style="width: 140px;">İlerleme & Miktar</th>
+              <th>Operasyon Adımları & İstasyon Rotaları</th>
+              <th style="width: 110px;">Öncelik</th>
+              <th style="width: 140px;">Termin / Süre</th>
+              <th style="width: 130px;">Durum</th>
+              <th style="width: 120px; text-align: right;">Aksiyon</th>
             </tr>
           </thead>
           <tbody>
             <% if (orders.length === 0) { %>
-              <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">Kayıtlı üretim iş emri bulunmamaktadır.</td></tr>
+              <tr>
+                <td colspan="8" style="text-align: center; color: #94a3b8; padding: 3rem 1rem;">
+                  <div style="font-size: 2rem; margin-bottom: 8px;">📋</div>
+                  <div style="font-size: 1rem; font-weight: 800; color: #fff;">Kayıtlı Üretim İş Emri Bulunamadı</div>
+                  <p style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
+                    Arama kriterlerinizi değiştirebilir veya MRP üzerinden yeni bir iş emri oluşturabilirsiniz.
+                  </p>
+                  <a href="/production/mrp" class="btn" style="margin-top: 14px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
+                    ⚡ MRP Ekranına Git
+                  </a>
+                </td>
+              </tr>
             <% } else { %>
-              <% orders.forEach(o => { %>
+              <% orders.forEach(o => { 
+                const orderNo = o.isEmriNo || o.workOrderNo || `ISEMRI-${o.id}`;
+                const title = o.uretimBasligi || o.productionTitle || 'İmalat İş Emri';
+                const stockCode = o.stokKarti ? o.stokKarti.stokKodu : (o.stockItem ? o.stockItem.stockCode : '—');
+                const stockName = o.stokKarti ? o.stokKarti.ad : (o.stockItem ? o.stockItem.name : title);
+                const plannedQty = parseFloat(o.planlananMiktar !== undefined ? o.planlananMiktar : (o.plannedQuantity || 1));
+                const completedQty = parseFloat(o.tamamlananMiktar !== undefined ? o.tamamlananMiktar : (o.completedQuantity || 0));
+                const scrapQty = parseFloat(o.fireMiktari !== undefined ? o.fireMiktari : (o.scrapQuantity || 0));
+                const unit = o.birim || o.unit || 'Adet';
+                const status = o.durum || o.status || 'Approved';
+                const priority = o.oncelik || o.priority || 'Normal';
+                const estHours = parseFloat(o.tahminiSaat !== undefined ? o.tahminiSaat : (o.estimatedHours || 0));
+                const ops = o.operasyonlar || [];
+                const pct = plannedQty > 0 ? Math.min(100, Math.round((completedQty / plannedQty) * 100)) : 0;
+              %>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.workOrderNo %></strong></td>
+                  <!-- 1. İş Emri No & Kaynak -->
                   <td>
-                    <strong style="color: var(--text-primary);"><%= o.productionTitle %></strong>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= o.stockItem ? o.stockItem.name : '—' %></div>
-                  </td>
-                  <td><strong><%= o.plannedQuantity %> <%= o.unit %></strong></td>
-                  <td><strong style="color: var(--emerald);"><%= o.completedQuantity %></strong> / <span style="color: var(--rose);"><%= o.scrapQuantity %></span></td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= o.workCenter %></td>
-                  <td>
-                    <% if (o.priority === 'Urgent') { %>
-                      <span class="status-pill status-rejected">🚨 Acil</span>
-                    <% } else if (o.priority === 'High') { %>
-                      <span class="status-pill status-pending">⚡ Yüksek</span>
-                    <% } else { %>
-                      <span class="status-pill status-approved">Normal</span>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-weight: 900; color: #818cf8; font-size: 0.92rem; letter-spacing: 0.5px;">
+                      <%= orderNo %>
+                    </div>
+                    <% if (o.receteNotlari && o.receteNotlari.includes('Kaynak:')) { %>
+                      <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">
+                        <%= o.receteNotlari %>
+                      </div>
                     <% } %>
                   </td>
-                  <td style="font-size: 0.8rem; color: var(--text-muted);"><%= o.plannedStartDate %> → <%= o.plannedEndDate %></td>
+
+                  <!-- 2. Hedef Ürün -->
                   <td>
-                    <% if (o.status === 'Completed') { %>
-                      <span class="status-pill status-active">● Tamamlandı</span>
-                    <% } else if (o.status === 'In_Production') { %>
-                      <span class="status-pill status-pending">● Üretimde</span>
-                    <% } else if (o.status === 'Quality_Check') { %>
-                      <span class="status-pill status-approved">● Kalite Kontrolde</span>
+                    <div style="font-weight: 800; color: #ffffff; font-size: 0.95rem;">
+                      <span style="color: #34d399; font-family: 'JetBrains Mono', monospace;">[<%= stockCode %>]</span> <%= stockName %>
+                    </div>
+                    <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">
+                      <%= title %>
+                    </div>
+                  </td>
+
+                  <!-- 3. İlerleme & Miktar -->
+                  <td>
+                    <div class="order-progress-wrapper">
+                      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;">
+                        <span style="color: #34d399; font-weight: 800;"><%= completedQty %> <%= unit %></span>
+                        <span style="color: #94a3b8;">/ <%= plannedQty %> <%= unit %></span>
+                      </div>
+                      <div class="order-progress-track">
+                        <div class="order-progress-fill" style="width: <%= pct %>%; background: <%= pct === 100 ? '#10b981' : (pct > 0 ? '#6366f1' : '#334155') %>;"></div>
+                      </div>
+                      <div style="font-size: 0.72rem; color: #94a3b8; display: flex; justify-content: space-between;">
+                        <span>%<%= pct %></span>
+                        <% if (scrapQty > 0) { %>
+                          <span style="color: #fb7185;">Fire: <%= scrapQty %></span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- 4. Operasyon Adımları & İstasyon Rotaları -->
+                  <td>
+                    <% if (ops.length === 0) { %>
+                      <div style="font-size: 0.8rem; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
+                        <span>⚙️ <%= o.isMerkezi || 'Genel İstasyon' %></span>
+                      </div>
                     <% } else { %>
-                      <span class="status-pill status-approved">● <%= o.status %></span>
+                      <div class="order-route-pills">
+                        <% ops.forEach((op, opIdx) => { 
+                          let pillClass = 'route-pill--ready';
+                          let icon = '🟢';
+                          if (op.durum === 'Completed') {
+                            pillClass = 'route-pill--completed';
+                            icon = '✓';
+                          } else if (op.durum === 'In_Production' || op.durum === 'Paused') {
+                            pillClass = 'route-pill--active';
+                            icon = '⚡';
+                          } else if (op.durum === 'Waiting_Previous_Op') {
+                            pillClass = 'route-pill--locked';
+                            icon = '🔒';
+                          }
+                        %>
+                          <span class="route-pill <%= pillClass %>" title="[<%= op.isMerkezi %>] <%= op.operasyonAdi %> (<%= op.durum %>)">
+                            <span><%= icon %></span>
+                            <span>#<%= op.operasyonSira %>: <%= op.operasyonAdi %></span>
+                          </span>
+                          <% if (opIdx < ops.length - 1) { %>
+                            <span style="color: #475569; font-size: 0.7rem;">➔</span>
+                          <% } %>
+                        <% }); %>
+                      </div>
                     <% } %>
                   </td>
+
+                  <!-- 5. Öncelik -->
                   <td>
-                    <form action="/production/orders/<%= o.id %>/status" method="POST" style="display: inline;">
-                      <select name="status" onchange="this.form.submit()" class="filter-select" style="padding: 4px 8px; font-size: 0.8rem;">
-                        <option value="Planned" <%= o.status === 'Planned' ? 'selected' : '' %>>Planlandı</option>
-                        <option value="In_Production" <%= o.status === 'In_Production' ? 'selected' : '' %>>Üretime Al</option>
-                        <option value="Quality_Check" <%= o.status === 'Quality_Check' ? 'selected' : '' %>>Kaliteye Gönder</option>
-                        <option value="Completed" <%= o.status === 'Completed' ? 'selected' : '' %>>Tamamla (Stokla)</option>
-                        <option value="Cancelled" <%= o.status === 'Cancelled' ? 'selected' : '' %>>İptal Et</option>
-                      </select>
-                    </form>
+                    <% if (priority === 'Urgent') { %>
+                      <span class="status-pill status-rejected" style="font-size: 0.75rem; padding: 3px 8px;">🚨 Çok Acil</span>
+                    <% } else if (priority === 'High') { %>
+                      <span class="status-pill status-pending" style="font-size: 0.75rem; padding: 3px 8px;">⚡ Yüksek</span>
+                    <% } else if (priority === 'Low') { %>
+                      <span class="status-pill" style="font-size: 0.75rem; padding: 3px 8px; background: rgba(148, 163, 184, 0.15); color: #94a3b8;">Düşük</span>
+                    <% } else { %>
+                      <span class="status-pill status-approved" style="font-size: 0.75rem; padding: 3px 8px;">Normal</span>
+                    <% } %>
+                  </td>
+
+                  <!-- 6. Termin & Süre -->
+                  <td>
+                    <div style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">
+                      <%= o.planlananBitisTarihi || o.plannedEndDate || '—' %>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
+                      ⏱️ <%= estHours %> Saat
+                    </div>
+                  </td>
+
+                  <!-- 7. Durum -->
+                  <td>
+                    <% if (status === 'Completed') { %>
+                      <span class="status-badge-lg status--completed">✅ Tamamlandı</span>
+                    <% } else if (status === 'In_Production') { %>
+                      <span class="status-badge-lg status--in_prod">⚡ Üretimde</span>
+                    <% } else if (status === 'Quality_Check') { %>
+                      <span class="status-badge-lg status--qc">🔍 Kalite Kontrol</span>
+                    <% } else if (status === 'Cancelled') { %>
+                      <span class="status-badge-lg status--cancelled">⛔ İptal</span>
+                    <% } else { %>
+                      <span class="status-badge-lg status--approved">🟢 Onaylandı</span>
+                    <% } %>
+                  </td>
+
+                  <!-- 8. Aksiyonlar -->
+                  <td style="text-align: right;">
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                      <button type="button" class="btn" onclick="openOrderModal(<%= JSON.stringify(o) %>)" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;" title="Detaylı İncele">
+                        Detay ➔
+                      </button>
+
+                      <form action="/production/orders/<%= o.id %>/status" method="POST" style="display: inline; margin: 0;">
+                        <select name="status" onchange="this.form.submit()" class="filter-select" style="padding: 5px 8px; font-size: 0.76rem; border-radius: 8px;">
+                          <option value="Approved" <%= status === 'Approved' || status === 'Planned' ? 'selected' : '' %>>Onaylı</option>
+                          <option value="In_Production" <%= status === 'In_Production' ? 'selected' : '' %>>Üretime Al</option>
+                          <option value="Quality_Check" <%= status === 'Quality_Check' ? 'selected' : '' %>>Kaliteye Gönder</option>
+                          <option value="Completed" <%= status === 'Completed' ? 'selected' : '' %>>Tamamla</option>
+                          <option value="Cancelled" <%= status === 'Cancelled' ? 'selected' : '' %>>İptal Et</option>
+                        </select>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               <% }); %>
@@ -129,12 +638,170 @@
           </tbody>
         </table>
       </div>
+
     </main>
   </div>
 
+  <!-- İŞ EMRİ DETAY VE ROTA ÇİZELGESİ MODALI -->
+  <div id="orderDetailModal" class="order-modal-backdrop">
+    <div class="order-modal-window">
+      
+      <div class="order-modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.5rem; background: rgba(99, 102, 241, 0.15); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(99, 102, 241, 0.3);">📋</span>
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">
+              İş Emri Detayları: <span id="mOrderNo" style="color: #34d399; font-family: 'JetBrains Mono', monospace;"></span>
+            </h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+              İmalat Durumu: <strong style="color: #818cf8;" id="mOrderStatus"></strong>
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="closeOrderModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">✕</button>
+      </div>
+
+      <div class="order-modal-body">
+        
+        <!-- Ürün & Miktar Özeti -->
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+          <div>
+            <span style="font-size: 0.74rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; display: block;">Üretilen Mamul</span>
+            <strong style="color: #fff; font-size: 0.95rem;" id="mProductName"></strong>
+          </div>
+          <div>
+            <span style="font-size: 0.74rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; display: block;">Planlanan & Tamamlanan</span>
+            <strong style="color: #34d399; font-size: 1.05rem; font-family: 'JetBrains Mono', monospace;" id="mQtySummary"></strong>
+          </div>
+          <div>
+            <span style="font-size: 0.74rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; display: block;">Termin & Tahmini Süre</span>
+            <strong style="color: #fbbf24; font-size: 0.92rem;" id="mDatesSummary"></strong>
+          </div>
+        </div>
+
+        <!-- Rota ve Operasyon Adımları Tablosu -->
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            <span>🛠️ İmalat Rota Adımları ve İş Merkezi Sıralaması</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; overflow: hidden;">
+            <thead>
+              <tr style="background: rgba(30, 41, 59, 0.8); color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase;">
+                <th style="padding: 10px 12px;">Sıra</th>
+                <th style="padding: 10px 12px;">Operasyon Adı</th>
+                <th style="padding: 10px 12px;">Hedef İstasyon</th>
+                <th style="padding: 10px 12px; text-align: right;">Standart Süre</th>
+                <th style="padding: 10px 12px; text-align: center;">Durum</th>
+              </tr>
+            </thead>
+            <tbody id="mOpsTbody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Saha & Mühendislik Notları -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 14px 16px;">
+          <span style="font-size: 0.74rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 4px;">📝 İmalat Notları</span>
+          <p style="font-size: 0.85rem; color: #cbd5e1; margin: 0; line-height: 1.5;" id="mOrderNotes"></p>
+        </div>
+
+      </div>
+
+      <div class="order-modal-footer">
+        <a href="/production/mes" class="btn" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 10px 18px; border-radius: 10px; font-weight: 700; text-decoration: none;">
+          📱 MES Terminaline Git
+        </a>
+        <button type="button" class="btn btn-secondary" onclick="closeOrderModal()" style="padding: 10px 20px; border-radius: 10px; font-weight: 700;">
+          Kapat
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <script>
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    function openOrderModal(order) {
+      const modal = document.getElementById('orderDetailModal');
+      if (!modal || !order) return;
+
+      const orderNo = order.isEmriNo || order.workOrderNo || `ISEMRI-${order.id}`;
+      const stock = order.stokKarti || order.stockItem;
+      const stockName = stock ? `[${stock.stokKodu || stock.stockCode}] ${stock.ad || stock.name}` : (order.uretimBasligi || order.productionTitle);
+      const plannedQty = parseFloat(order.planlananMiktar !== undefined ? order.planlananMiktar : (order.plannedQuantity || 1));
+      const completedQty = parseFloat(order.tamamlananMiktar !== undefined ? order.tamamlananMiktar : (order.completedQuantity || 0));
+      const unit = order.birim || order.unit || 'Adet';
+      const status = order.durum || order.status || 'Approved';
+
+      document.getElementById('mOrderNo').textContent = orderNo;
+      document.getElementById('mOrderStatus').textContent = status === 'In_Production' ? '⚡ Üretimde' : (status === 'Completed' ? '✅ Tamamlandı' : status);
+      document.getElementById('mProductName').textContent = stockName;
+      document.getElementById('mQtySummary').textContent = `${completedQty} / ${plannedQty} ${unit}`;
+      document.getElementById('mDatesSummary').textContent = `${order.planlananBitisTarihi || order.plannedEndDate || '—'} (${order.tahminiSaat || order.estimatedHours || 0} Sa)`;
+      document.getElementById('mOrderNotes').textContent = order.notlar || order.receteNotlari || 'Kayıtlı not bulunmamaktadır.';
+
+      const tbody = document.getElementById('mOpsTbody');
+      const ops = order.operasyonlar || [];
+
+      if (ops.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="padding: 16px; text-align: center; color: var(--text-muted);">
+              Bu iş emri için ayrıştırılmış rota adımı bulunamadı. Genel montaj istasyonunda işlem görmektedir.
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = ops.map(op => {
+          let statusBadge = '<span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">🟢 Başlatılabilir</span>';
+          if (op.durum === 'Completed') {
+            statusBadge = '<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">✓ Tamamlandı</span>';
+          } else if (op.durum === 'In_Production') {
+            statusBadge = '<span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">⚡ Üretimde</span>';
+          } else if (op.durum === 'Waiting_Previous_Op') {
+            statusBadge = '<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">🔒 Beklemede</span>';
+          }
+
+          const wcName = op.isMerkeziKarti ? `[${op.isMerkeziKarti.isMerkeziKodu}] ${op.isMerkeziKarti.isMerkeziAdi}` : (op.isMerkezi || 'İstasyon');
+          const estMin = Math.round(parseFloat(op.toplamTahminiDakika || (parseFloat(op.hazirlikSuresiDakika || 15) + parseFloat(op.calismaSuresiDakikaBirim || 5) * plannedQty)));
+
+          return `
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <td style="padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8;">
+                #${op.operasyonSira}
+              </td>
+              <td style="padding: 10px 12px; color: #fff; font-weight: 700;">
+                ${op.operasyonAdi}
+              </td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">
+                🏢 ${wcName}
+              </td>
+              <td style="padding: 10px 12px; text-align: right; font-family: 'JetBrains Mono', monospace; color: #fbbf24; font-weight: 700;">
+                ${estMin} Dk (${(estMin/60).toFixed(2)} Sa)
+              </td>
+              <td style="padding: 10px 12px; text-align: center;">
+                ${statusBadge}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeOrderModal() {
+      const modal = document.getElementById('orderDetailModal');
+      if (modal) modal.style.display = 'none';
+    }
   </script>
 </body>
 </html>
