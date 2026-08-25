@@ -360,6 +360,7 @@
       <!-- MAIN FORM -->
       <form action="/production/orders/add" method="POST" id="workOrderForm">
         <input type="hidden" name="stockId" value="<%= targetProduct.id %>">
+        <input type="hidden" name="stockItemId" value="<%= targetProduct.id %>">
         <input type="hidden" name="demandRef" value="<%= effectiveDemandRef %>">
         <input type="hidden" name="workCenter" value="<%= primaryWorkCenter %>">
 

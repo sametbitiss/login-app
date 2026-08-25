@@ -1,33 +1,38 @@
 const validateProductionOrderCreate = (req) => {
-  const { productionTitle, stockItemId, plannedQuantity, workCenter, plannedStartDate, plannedEndDate } = req.body || {};
+  const { 
+    productionTitle, 
+    uretimBasligi, 
+    stockItemId, 
+    stockId, 
+    plannedQuantity, 
+    miktar, 
+    plannedStartDate, 
+    planlananBaslangicTarihi, 
+    plannedEndDate, 
+    planlananBitisTarihi 
+  } = req.body || {};
   const errors = [];
 
-  if (!productionTitle || productionTitle.trim().length < 3) {
+  const title = uretimBasligi || productionTitle;
+  // If title is missing, it will be auto-generated in controller, but if provided, must be valid
+  if (title && title.trim().length > 0 && title.trim().length < 3) {
     errors.push('Üretim başlığı en az 3 karakter olmalıdır.');
   }
 
-  if (!stockItemId) {
+  const targetStockId = stockId || stockItemId;
+  if (!targetStockId) {
     errors.push('Üretilecek nihai ürün / stok kartı seçimi zorunludur.');
   }
 
-  const qty = parseFloat(plannedQuantity);
+  const qty = parseFloat(plannedQuantity || miktar);
   if (isNaN(qty) || qty <= 0) {
     errors.push('Planlanan üretim miktarı 0\'dan büyük bir sayı olmalıdır.');
   }
 
-  if (!workCenter || workCenter.trim().length === 0) {
-    errors.push('İş merkezi / istasyon seçimi zorunludur.');
-  }
+  const startDate = plannedStartDate || planlananBaslangicTarihi;
+  const endDate = plannedEndDate || planlananBitisTarihi;
 
-  if (!plannedStartDate) {
-    errors.push('Planlanan başlama tarihi zorunludur.');
-  }
-
-  if (!plannedEndDate) {
-    errors.push('Planlanan bitiş tarihi zorunludur.');
-  }
-
-  if (plannedStartDate && plannedEndDate && new Date(plannedStartDate) > new Date(plannedEndDate)) {
+  if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
     errors.push('Planlanan başlama tarihi, bitiş tarihinden sonra olamaz.');
   }
 
