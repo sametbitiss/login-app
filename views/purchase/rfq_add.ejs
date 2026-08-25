@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,12 +7,12 @@
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* World-Class Design System Extensions */
-    .rfq-add-hero {
+    /* Hero Banner */
+    .rfq-hero {
       background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 20px;
-      padding: 22px 28px;
+      padding: 24px 30px;
       margin-bottom: 24px;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
       display: flex;
@@ -22,14 +21,14 @@
       position: relative;
       overflow: hidden;
     }
-    .rfq-add-hero::before {
+    .rfq-hero::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 4px;
-      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #d946ef 75%, #10b981 100%);
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
     }
     .rfq-hero-badge {
       display: inline-flex;
@@ -59,7 +58,7 @@
       margin-top: 4px;
     }
 
-    /* World-Class Glass Pill Tab Nav */
+    /* Tabs Navigation */
     .tab-nav {
       display: flex;
       gap: 10px;
@@ -98,23 +97,25 @@
       box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
       transform: translateY(-1px);
     }
-    .tab-pane { display: none; }
-    .tab-pane.active { display: block; animation: tabFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    @keyframes tabFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .tab-pane.active {
+      display: block;
+    }
 
-    /* Ultra Glass Form Cards */
+    /* Form Cards */
     .glass-form-card {
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.88) 100%);
-      backdrop-filter: blur(20px);
-      border-radius: 22px;
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
-      padding: 2.25rem;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      margin-bottom: 2rem;
-      position: relative;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+      margin-bottom: 24px;
     }
     .section-title {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 800;
       color: #f8fafc;
       margin-bottom: 20px;
@@ -125,152 +126,247 @@
       padding-bottom: 12px;
     }
     .section-title-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      background: rgba(99, 102, 241, 0.2);
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
+      font-size: 1.25rem;
     }
 
-    /* Input & Select Styling - High-End Elegance */
-    .form-grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
+    /* Input Aesthetics */
+    .aesthetic-group {
       margin-bottom: 20px;
     }
-    @media (max-width: 1100px) {
-      .form-grid-4 { grid-template-columns: repeat(2, 1fr); }
-    }
-    .aesthetic-group {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 4px;
-    }
     .aesthetic-label {
-      font-size: 0.72rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      font-size: 0.84rem;
+      font-weight: 700;
       color: #94a3b8;
       margin-bottom: 8px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 4px;
     }
     .aesthetic-input {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      padding: 12px 16px;
-      color: #f8fafc;
-      font-size: 0.9rem;
-      font-weight: 600;
       width: 100%;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      outline: none;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
-      font-family: inherit;
+      background: #0f172a;
+      border: 1.5px solid #1e293b;
+      color: #f8fafc;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      padding: 12px 16px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
     }
     .aesthetic-input:focus {
-      border-color: #818cf8;
-      background: rgba(30, 41, 59, 0.9);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.22), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-      transform: translateY(-1px);
+      outline: none;
+      border-color: #6366f1;
+      background: #090e1a;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
     }
-    select.aesthetic-input {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23818cf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 42px;
+    .aesthetic-input[readonly] {
+      background: #090d16;
+      border-color: #334155;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+    .aesthetic-input.readonly-highlight {
+      color: #818cf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
     }
 
-    /* Premium Data Table */
-    .table-wrapper {
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-    .data-table {
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+    /* Items Table */
+    .items-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.88rem;
     }
-    .data-table th {
-      background: rgba(30, 41, 59, 0.8);
+    .items-table th {
+      background: rgba(15, 23, 42, 0.9);
       color: #94a3b8;
       font-weight: 800;
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 14px 16px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .data-table td {
+      letter-spacing: 0.5px;
       padding: 12px 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 2px solid #334155;
+    }
+    .items-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       vertical-align: middle;
     }
-    .data-table tr:hover td {
+    .items-table tr:hover td {
       background: rgba(255, 255, 255, 0.02);
     }
 
-    /* Totals Summary Panel */
-    .summary-card-panel {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.95) 100%);
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
+    .table-input {
+      width: 100%;
+      background: #090e1a;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      font-size: 0.88rem;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+    .table-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    }
+    .table-input[readonly] {
+      background: rgba(15, 23, 42, 0.5);
+      border-color: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+    .table-input.input-invalid {
+      border-color: #ef4444 !important;
+      background: rgba(239, 68, 68, 0.15) !important;
+      color: #fca5a5 !important;
+    }
+
+    /* Modal Overlay & Card */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-card {
+      background: #0f172a;
+      border: 1.5px solid #334155;
       border-radius: 20px;
+      width: 94%;
+      max-width: 980px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 22px 28px 16px 28px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .modal-close-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close-btn:hover {
+      color: #fff;
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+    .modal-search-wrap {
+      padding: 16px 28px 12px 28px;
+      display: flex;
+      gap: 12px;
+    }
+    .modal-body-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 28px 20px 28px;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-top: 1px solid #1e293b;
+      background: #090e1a;
+    }
+
+    /* Financial Summary Card */
+    .summary-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
       padding: 24px;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
     .summary-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.92rem;
-      color: #94a3b8;
-      margin-bottom: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.95rem;
+      color: #cbd5e1;
     }
     .summary-row.total-row {
-      font-size: 1.3rem;
-      font-weight: 900;
-      color: #34d399;
-      border-top: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-top: 2px solid #6366f1;
+      border-bottom: none;
+      margin-top: 10px;
       padding-top: 14px;
-      margin-top: 14px;
-      margin-bottom: 0;
-      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #ffffff;
     }
 
+    /* Navigation Buttons */
     .tab-footer-nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 24px;
-      padding-top: 18px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
     }
-    .min-stock-warning {
-      font-size: 0.72rem;
-      color: #fbbf24;
+    .btn-nav-secondary {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      padding: 12px 24px;
+      border-radius: 12px;
       font-weight: 700;
-      margin-top: 4px;
-      display: inline-flex;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-nav-secondary:hover {
+      color: #fff;
+      background: #334155;
+    }
+    .btn-submit-glow {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 14px 34px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 6px 25px rgba(16, 185, 129, 0.45);
+      transition: all 0.2s ease;
+      display: flex;
       align-items: center;
-      gap: 4px;
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.25);
-      padding: 2px 8px;
-      border-radius: 6px;
+      gap: 8px;
+    }
+    .btn-submit-glow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6);
     }
   </style>
   <script src="/sidebar.js" defer></script>
@@ -278,27 +374,40 @@
 
 <body class="module-body">
   <aside class="module-sidebar">
-    <div class="module-sidebar-brand"><a href="/" class="msb-logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><span>Enterprise ERP</span></a></div>
+    <div class="module-sidebar-brand">
+      <a href="/" class="msb-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#bGrad)"/><path d="M8 12h16M8 16h12M8 20h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="bGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+        <span>Enterprise ERP</span>
+      </a>
+    </div>
+
     <div class="module-sidebar-section">
       <div class="mss-label">🛒 SATIN ALMA YÖNETİMİ</div>
-      <div class="mss-group-title">📊 DASHBOARD & ONAY</div>
+      <div class="mss-group-title">📊 DASHBOARD & TALEP</div>
       <div class="mss-sub">
-        <a href="/purchase/analytics" class="mss-sub-link">📊 Satın Alma Analitiği</a>
-        <a href="/purchase/approvals" class="mss-sub-link">⚡ Yönetsel Onaylar</a>
+        <a href="/purchase" class="mss-sub-link">📊 Satın Alma Paneli</a>
+        <a href="/purchase/requisitions" class="mss-sub-link">📋 Satın Alma Talepleri</a>
       </div>
-      <div class="mss-group-title">📋 SATIN ALMA OPERASYONLARI</div>
+
+      <div class="mss-group-title">📑 TEKLİF & SİPARİŞ</div>
       <div class="mss-sub">
-        <a href="/purchase/requisitions" class="mss-sub-link active">📩 Satın Alma Talepleri</a>
-        <a href="/purchase/rfq" class="mss-sub-link">📨 Teklif Yönetimi (RFQ)</a>
+        <a href="/purchase/rfq" class="mss-sub-link active">📨 Teklif Talepleri (RFQ)</a>
         <a href="/purchase/orders" class="mss-sub-link">📦 Satın Alma Siparişleri</a>
-        <a href="/purchase/goods-receipt" class="mss-sub-link">🚛 Mal Kabul (GRN)</a>
       </div>
-      <div class="mss-group-title">🏭 TEDARİKÇİ YÖNETİMİ</div>
-      <div class="mss-sub"><a href="/purchase/suppliers" class="mss-sub-link">🏢 Tedarikçi Kartları</a></div>
+
+      <div class="mss-group-title">🏢 TEDARİKÇİ İLİŞKİLERİ</div>
+      <div class="mss-sub">
+        <a href="/purchase/suppliers" class="mss-sub-link">🏢 Tedarikçi Kartları</a>
+        <a href="/purchase/analytics" class="mss-sub-link">📈 Harcama & Performans</a>
+      </div>
     </div>
+
     <div class="module-sidebar-user">
       <div class="msu-avatar"><%= user.username.charAt(0).toUpperCase() %></div>
-      <div class="msu-meta"><strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong><span><%= user.role %></span></div>
+      <div class="msu-meta">
+        <strong><%= user.firstName ? user.firstName + ' ' + user.lastName : user.username %></strong>
+        <span><%= user.role %></span>
+      </div>
     </div>
   </aside>
 
@@ -307,26 +416,33 @@
       <div class="mt-left">
         <a href="/" class="mt-link">Ana Sayfa</a>
         <% if (user.role === 'Admin') { %><a href="/admin" class="mt-link">Sistem Yönetimi</a><% } %>
-        <a href="/stock" class="mt-link">Stok & Depo</a><a href="/sales" class="mt-link">Satış Yönetimi</a><a href="/purchase" class="mt-link active">Satın Alma</a>
+        <a href="/stock" class="mt-link">Stok & Depo</a>
+        <a href="/sales" class="mt-link">Satış Yönetimi</a>
+        <a href="/purchase" class="mt-link active">Satın Alma</a>
         <% if (user.role === 'Admin' || user.role === 'Production_Manager') { %><a href="/production" class="mt-link">Üretim Planlama</a><% } %>
         <% if (user.role === 'Admin' || user.role === 'Quality_Manager' || user.role === 'Production_Manager' || user.role === 'Stock_Manager' || user.role === 'Purchase_Manager') { %><a href="/quality" class="mt-link">Kalite Kontrol</a><% } %>
       </div>
-      <div class="mt-right"><span class="mt-time" id="liveTime"></span><a href="/logout" class="mt-logout" title="Çıkış"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div>
+      <div class="mt-right">
+        <span class="mt-time" id="liveTime"></span>
+        <a href="/logout" class="mt-logout" title="Çıkış">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </div>
     </header>
 
     <main class="module-content">
 
       <!-- Hero Header -->
-      <div class="rfq-add-hero">
+      <div class="rfq-hero">
         <div>
-          <div class="rfq-hero-badge">✨ SATIN ALMA RFQ SİSTEMİ</div>
-          <h1 class="rfq-hero-title">Talebe Tedarikçi Teklifi Ekle</h1>
-          <p class="rfq-hero-desc">Tedarikçi teklif detaylarını sekmeler üzerinden tanımlayın, F/P skoruna göre değerlendirin.</p>
+          <div class="rfq-hero-badge">✨ SATIN ALMA TEKLİF YÖNETİMİ</div>
+          <h1 class="rfq-hero-title">Satın Alma Talebine Teklif Ekle</h1>
+          <p class="rfq-hero-desc">Tedarikçi teklif detaylarını sekmeler üzerinden girin, aynı anda birden fazla talebi tek teklifte toplayın.</p>
         </div>
         <a href="/purchase/requisitions" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;">← Talepler Listesine Dön</a>
       </div>
 
-      <% if (error) { %>
+      <% if (typeof error !== 'undefined' && error) { %>
         <div style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1.5px solid rgba(244,63,94,0.3); padding: 16px 22px; border-radius: 16px; margin-bottom: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(244,63,94,0.2);">
           <span style="font-size: 1.2rem;">⚠️</span> <%= error %>
         </div>
@@ -334,569 +450,922 @@
 
       <!-- TAB MENU BUTTONS -->
       <div class="tab-nav">
-        <button type="button" class="tab-btn active" onclick="switchTab('tab-general')" id="btn-tab-general">
-          <span>📝</span> 1. Teklif Genel Bilgileri
+        <button type="button" class="tab-btn active" onclick="switchTab(1)" id="tabBtn-1">
+          <span>📋</span> 1. Teklif & Tedarikçi Bilgileri
         </button>
-        <button type="button" class="tab-btn" onclick="switchTab('tab-items')" id="btn-tab-items">
+        <button type="button" class="tab-btn" onclick="switchTab(2)" id="tabBtn-2">
           <span>📦</span> 2. Teklif Kalemleri (Ürünler)
         </button>
-        <button type="button" class="tab-btn" onclick="switchTab('tab-totals')" id="btn-tab-totals">
-          <span>💰</span> 3. Toplamlar & Onay
+        <button type="button" class="tab-btn" onclick="switchTab(3)" id="tabBtn-3">
+          <span>📑</span> 3. Teslimat, Ticari Şartlar & Özet
         </button>
       </div>
 
-      <form action="/purchase/rfq/add" method="POST" id="rfqForm" novalidate>
+      <form action="/purchase/rfq/add" method="POST" id="rfqForm" onsubmit="return validateFormBeforeSubmit()">
 
-        <!-- TAB 1: GENEL BİLGİLER -->
-        <div class="tab-pane active" id="tab-general">
+        <!-- ==================== TAB 1: TEKLİF & TEDARİKÇİ BİLGİLERİ ==================== -->
+        <div class="tab-pane active" id="tabPane-1">
           <div class="glass-form-card">
             <div class="section-title">
-              <span class="section-title-icon">📝</span> 1. Teklif Genel Bilgileri
+              <span class="section-title-icon">📋</span> 1. Teklif ve Tedarikçi Kimlik Bilgileri
             </div>
 
-            <div class="form-grid-4">
+            <div class="form-grid-3">
+              <!-- 1. Teklif Numarası -->
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Teklif No (Otomatik)</label>
-                <input type="text" name="rfqNo" value="<%= nextRfqNo %>" class="aesthetic-input" readonly style="font-family: 'JetBrains Mono', monospace; color: #818cf8;">
+                <label class="aesthetic-label">
+                  <span>1. Teklif Numarası *</span>
+                  <span style="color: #6366f1; font-size: 0.72rem;">🔒 OTOMATİK / READONLY</span>
+                </label>
+                <input type="text" name="rfqNo" value="<%= nextRfqNo %>" class="aesthetic-input readonly-highlight" readonly>
               </div>
 
+              <!-- 2. Talep ID -->
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Tedarikçi Firma *</label>
-                <select name="supplierId" id="supplierSelect" class="aesthetic-input">
-                  <option value="">-- Tedarikçi Seçin --</option>
+                <label class="aesthetic-label">
+                  <span>2. İlgili Talep ID / Ref *</span>
+                  <span style="color: #818cf8; font-size: 0.72rem;">🔒 REFERANS TALEP</span>
+                </label>
+                <input type="text" id="displayPrimaryReq" value="<%= primaryRequisition ? ('#' + primaryRequisition.id + ' — ' + primaryRequisition.talepNo) : 'Seçili Talep Yok' %>" class="aesthetic-input readonly-highlight" readonly>
+                <input type="hidden" name="primaryRequisitionId" id="primaryRequisitionId" value="<%= primaryRequisition ? primaryRequisition.id : '' %>">
+              </div>
+
+              <!-- 19. Teklif Durumu -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>19. Teklif Durumu *</span>
+                  <span style="color: #fbbf24; font-size: 0.72rem;">🔒 BAŞLANGIÇ DURUMU</span>
+                </label>
+                <input type="text" value="⏳ Beklemede (Teklif Alındı)" class="aesthetic-input" readonly style="color: #fbbf24; font-weight: 700;">
+                <input type="hidden" name="status" value="Received">
+              </div>
+            </div>
+
+            <div class="section-title" style="margin-top: 10px;">
+              <span class="section-title-icon">🏢</span> Tedarikçi Firma Bilgileri
+            </div>
+
+            <div class="form-grid-3">
+              <!-- 3. Tedarikçi Adı -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>3. Tedarikçi Firma *</span>
+                  <span style="color: #34d399; font-size: 0.72rem;">🏢 SEÇİLEBİLİR</span>
+                </label>
+                <select name="supplierId" id="supplierSelect" class="aesthetic-input" onchange="onSupplierChange(this)" required style="cursor: pointer;">
+                  <option value="">-- Tedarikçi Seçiniz --</option>
                   <% suppliers.forEach(sup => { %>
-                    <option value="<%= sup.id %>" data-name="<%= sup.companyName %>"><%= sup.supplierCode %> — <%= sup.companyName %></option>
+                    <% 
+                      const isDefault = defaultSupplier && (defaultSupplier.id === sup.id);
+                    %>
+                    <option value="<%= sup.id %>" <%= isDefault ? 'selected' : '' %>>
+                      [<%= sup.tedarikciKodu %>] <%= sup.ticariAd || sup.firmaAdi %>
+                    </option>
                   <% }); %>
                 </select>
-                <input type="hidden" name="supplierName" id="supplierNameInput" value="">
+                <input type="hidden" name="supplierName" id="inputSupplierName" value="<%= defaultSupplier ? (defaultSupplier.ticariAd || defaultSupplier.firmaAdi) : '' %>">
               </div>
 
+              <!-- 4. Vergi Numarası & Dairesi -->
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Teklif Tarihi *</label>
-                <input type="date" name="rfqDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input">
+                <label class="aesthetic-label">
+                  <span>4. Vergi Dairesi / No</span>
+                  <span style="color: #94a3b8; font-size: 0.72rem;">OPSİYONEL</span>
+                </label>
+                <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px;">
+                  <input type="text" name="taxOffice" id="inputTaxOffice" value="<%= defaultSupplier ? (defaultSupplier.vergiDairesi || '') : '' %>" placeholder="Vergi Dairesi" class="aesthetic-input">
+                  <input type="text" name="taxNo" id="inputTaxNo" value="<%= defaultSupplier ? (defaultSupplier.vergiNo || '') : '' %>" placeholder="Vergi Numarası" class="aesthetic-input">
+                </div>
               </div>
 
+              <!-- 5. İlgili Satış Temsilcisi -->
               <div class="aesthetic-group">
-                <label class="aesthetic-label">Geçerlilik Tarihi</label>
-                <input type="date" name="validUntil" class="aesthetic-input">
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Para Birimi *</label>
-                <select name="currency" id="currencySelect" class="aesthetic-input">
-                  <option value="TRY">TRY (₺)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                </select>
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Ödeme Koşulu *</label>
-                <select name="paymentTerm" class="aesthetic-input">
-                  <option value="Pesin">Peşin Ödeme</option>
-                  <option value="Vadeli_30" selected>30 Gün Vadeli</option>
-                  <option value="Vadeli_60">60 Gün Vadeli</option>
-                  <option value="Vadeli_90">90 Gün Vadeli</option>
-                  <option value="Kredi_Karti">Kredi Kartı</option>
-                </select>
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Teslimat Süresi (Gün)</label>
-                <input type="number" name="deliveryDays" value="5" min="1" class="aesthetic-input" placeholder="Örn: 5">
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Teslim Edilecek Depo (Stok & Depo Modülü) *</label>
-                <select name="deliveryPlace" id="deliveryPlaceSelect" class="aesthetic-input" required>
-                  <option value="">-- Teslim Alınacak Depoyu Seçiniz --</option>
-                  <% if (typeof warehouses !== 'undefined' && warehouses && warehouses.length > 0) { %>
-                    <% warehouses.forEach((wh, idx) => { %>
-                      <option value="<%= wh.name %>" <%= (formData && formData.deliveryPlace === wh.name) ? 'selected' : (!formData && idx === 0 ? 'selected' : '') %>>🏬 <%= wh.warehouseCode ? wh.warehouseCode + ' — ' : '' %><%= wh.name %> (<%= wh.type || 'Depo' %><% if (wh.city) { %> | <%= wh.city %><% } %>)</option>
-                    <% }); %>
-                  <% } else { %>
-                    <option value="Ana Hammadde & Üretim Ambarı" selected>🏬 Ana Hammadde & Üretim Ambarı</option>
-                    <option value="Gebze Sevkiyat & Lojistik Deposu">🏬 Gebze Sevkiyat & Lojistik Deposu</option>
-                    <option value="Ankara Bölge Sevkiyat Ambarı">🏬 Ankara Bölge Sevkiyat Ambarı</option>
-                    <option value="İzmir Hammadde & Üretim Ambarı">🏬 İzmir Hammadde & Üretim Ambarı</option>
-                  <% } %>
-                </select>
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Nakliye Durumu</label>
-                <select name="shippingStatus" class="aesthetic-input">
-                  <option value="Tedarikçi Karşılar">Tedarikçi Karşılar (Ücretsiz)</option>
-                  <option value="Alıcı Karşılar">Alıcı Karşılar (Nakliye Alıcıya Ait)</option>
-                  <option value="Dahil">Fiyata Dahil</option>
-                </select>
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">KDV Durumu</label>
-                <select name="vatStatus" class="aesthetic-input">
-                  <option value="Hariç" selected>Fiyatlara KDV Hariçtir</option>
-                  <option value="Dahil">Fiyatlara KDV Dahildir</option>
-                </select>
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Teklif Durumu</label>
-                <select name="status" class="aesthetic-input">
-                  <option value="Received" selected>Teklif Alındı</option>
-                  <option value="Draft">Taslak</option>
-                  <option value="Sent">Gönderildi</option>
-                </select>
-              </div>
-
-              <div class="aesthetic-group">
-                <label class="aesthetic-label">Teklif Belgesi Ref / No</label>
-                <input type="text" name="documentRef" class="aesthetic-input" placeholder="Örn: PDF-TEKLIF-2026-04.pdf">
+                <label class="aesthetic-label">
+                  <span>5. İlgili Satış Temsilcisi</span>
+                  <span style="color: #94a3b8; font-size: 0.72rem;">OPSİYONEL</span>
+                </label>
+                <input type="text" name="contactPerson" id="inputContactPerson" value="<%= defaultSupplier ? (defaultSupplier.ilgiliKisi || '') : '' %>" placeholder="Örn: Ahmet Yılmaz (Satış Müdürü)" class="aesthetic-input">
               </div>
             </div>
 
-            <div class="aesthetic-group" style="margin-top: 6px;">
-              <label class="aesthetic-label">Teklif Açıklaması / Özel Şartlar</label>
-              <input type="text" name="notes" class="aesthetic-input" placeholder="Örn: TSE sertifikalı ürün teklifidir. 30 gün geçerlidir.">
+            <div class="form-grid-3">
+              <!-- Teklif Tarihi -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">Teklif Alma Tarihi *</label>
+                <input type="date" name="rfqDate" value="<%= new Date().toISOString().split('T')[0] %>" class="aesthetic-input" required>
+              </div>
+
+              <!-- 18. Teklifin Geçerlilik Tarihi -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>18. Teklifin Geçerlilik Tarihi *</span>
+                  <span style="color: #f43f5e; font-size: 0.72rem;">📅 ZORUNLU</span>
+                </label>
+                <% 
+                  const defaultValidDate = new Date();
+                  defaultValidDate.setDate(defaultValidDate.getDate() + 30);
+                  const validDateStr = defaultValidDate.toISOString().split('T')[0];
+                %>
+                <input type="date" name="validUntil" value="<%= validDateStr %>" class="aesthetic-input" required>
+              </div>
+
+              <div class="aesthetic-group" style="display: flex; align-items: flex-end;">
+                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 10px 16px; width: 100%; box-sizing: border-box;">
+                  <div style="font-size: 0.78rem; color: #818cf8; font-weight: 700;">💡 BİLGİLENDİRME</div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 2px;">Tedarikçi değiştirildiğinde vade, termin ve vergi bilgileri otomatik güncellenir.</div>
+                </div>
+              </div>
             </div>
 
             <div class="tab-footer-nav">
               <div></div>
-              <button type="button" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; padding: 12px 28px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);" onclick="switchTab('tab-items')">
+              <button type="button" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; padding: 12px 28px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);" onclick="switchTab(2)">
                 İleri: Teklif Kalemleri →
               </button>
             </div>
           </div>
         </div>
 
-        <!-- TAB 2: KALEMLER -->
-        <div class="tab-pane" id="tab-items">
+        <!-- ==================== TAB 2: TEKLİF EDİLEN ÜRÜNLER (KALEMLER) ==================== -->
+        <div class="tab-pane" id="tabPane-2">
           <div class="glass-form-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px;">
-              <div class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
-                <span class="section-title-icon">📦</span> 2. Teklif Kalemleri (Talep Edilen Ürünler)
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px;">
+              <div>
+                <div class="section-title" style="margin-bottom: 2px; border: none; padding: 0;">
+                  <span class="section-title-icon">📦</span> 2. Teklif Kalemleri ve Fiyatlandırma Tablosu
+                </div>
+                <div style="font-size: 0.82rem; color: #94a3b8;">
+                  Ana talep ürünü kilitlidir ve silinemez. Dilerseniz modal ile başka satın alma taleplerini de bu teklife ekleyebilirsiniz.
+                </div>
               </div>
-              <button type="button" class="btn btn-sm" id="addRowBtn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; border: none; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4); cursor: pointer;">
-                ➕ Kalem Ekle
+
+              <!-- ÜRÜN SEÇİM MODALI BUTONU -->
+              <button type="button" onclick="openProductSelectModal()" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; border: none; padding: 11px 22px; border-radius: 12px; box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45); cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <span>➕</span> Satın Alma Talepli Ürün Ekle (Modal)
               </button>
             </div>
 
-            <div style="background: rgba(99, 102, 241, 0.08); border: 1.5px solid rgba(99, 102, 241, 0.25); color: #818cf8; padding: 14px 18px; border-radius: 14px; margin-bottom: 22px; font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.1rem;">🔒</span> <span><strong>Kural Uyarısı:</strong> Ürünler talep oluşturulmuş ürünler arasından seçilebilir. Sipariş adedi default olarak o ürünün minimum stok seviyesi gelir ve <strong>altına inilemez</strong>!</span>
-            </div>
-
-            <div class="table-wrapper">
-              <table class="data-table" id="itemsTable">
+            <!-- TABLO -->
+            <div style="overflow-x: auto; border: 1px solid #1e293b; border-radius: 14px; background: #090e1a;">
+              <table class="items-table" id="itemsTable">
                 <thead>
                   <tr>
-                    <th style="width: 25%;">Ürün (Talep Oluşturulmuş) *</th>
-                    <th style="width: 12%;">Talep Ref</th>
-                    <th style="width: 12%;">Miktar *</th>
-                    <th style="width: 8%;">Birim</th>
-                    <th style="width: 11%;">Birim Fiyat *</th>
-                    <th style="width: 8%;">İskonto %</th>
-                    <th style="width: 8%;">KDV %</th>
-                    <th style="width: 12%;">Net Tutar</th>
-                    <th style="width: 4%;"></th>
+                    <th style="width: 40px; text-align: center;">Durum</th>
+                    <th style="min-width: 120px;">Talep No</th>
+                    <th style="min-width: 200px;">6. Malzeme Kodu & Adı</th>
+                    <th style="min-width: 100px;">7. Talep Miktarı</th>
+                    <th style="min-width: 120px;">8. Teklif Miktarı *</th>
+                    <th style="min-width: 70px;">9. Birim</th>
+                    <th style="min-width: 110px;">10. Birim Fiyat *</th>
+                    <th style="min-width: 90px;">12. İskonto %</th>
+                    <th style="min-width: 90px;">13. KDV %</th>
+                    <th style="min-width: 130px; text-align: right;">14. Net Tutar</th>
+                    <th style="width: 50px; text-align: center;">İşlem</th>
                   </tr>
                 </thead>
                 <tbody id="itemsTableBody">
-                  <!-- Lines injected dynamically by JavaScript -->
+                  <!-- Rendered dynamically by JS -->
                 </tbody>
               </table>
             </div>
 
+            <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-size: 0.82rem; color: #818cf8; font-weight: 600;">
+                ⚠️ <strong>Kural:</strong> Teklif edilen miktar, satın alma talebindeki miktardan az veya eşit olabilir, <u>fazla olamaz</u>!
+              </div>
+              <div style="font-size: 0.9rem; color: #f8fafc; font-weight: 700;">
+                Kalem Sayısı: <span id="itemCountBadge" style="color: #6366f1; font-family: 'JetBrains Mono', monospace;">0</span>
+              </div>
+            </div>
+
             <div class="tab-footer-nav">
-              <button type="button" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;" onclick="switchTab('tab-general')">
-                ← Geri: Genel Bilgiler
-              </button>
-              <button type="button" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; padding: 12px 28px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);" onclick="switchTab('tab-totals')">
-                İleri: Toplamlar & Onay →
+              <button type="button" class="btn-nav-secondary" onclick="switchTab(1)">← Önceki Adım</button>
+              <button type="button" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; padding: 12px 28px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);" onclick="switchTab(3)">
+                İleri: Ticari Şartlar & Özet →
               </button>
             </div>
           </div>
         </div>
 
-        <!-- TAB 3: TOPLAMLAR -->
-        <div class="tab-pane" id="tab-totals">
+        <!-- ==================== TAB 3: TESLİMAT, TİCARİ ŞARTLAR & ÖZET ==================== -->
+        <div class="tab-pane" id="tabPane-3">
           <div class="glass-form-card">
             <div class="section-title">
-              <span class="section-title-icon">💰</span> 3. Teklif Toplamları & Onay
+              <span class="section-title-icon">📑</span> 3. Teslimat, Ticari Şartlar ve Finansal Özet
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 26px; align-items: start;">
-              <div>
-                <p style="color: #94a3b8; font-size: 0.92rem; line-height: 1.7; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px;">
-                  Girilen teklif kalemleri ve genel bilgiler kontrol edildi.<br>
-                  Aynı satın alma talebi için farklı tedarikçilerden <strong>istediğiniz kadar teklif ekleyebilirsiniz</strong>.<br>
-                  Hesaplanan tutarlar seçtiğiniz para birimi cinsinden gösterilmektedir.
-                </p>
+            <div class="form-grid-3">
+              <!-- 11. Para Birimi -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>11. Para Birimi *</span>
+                  <span style="color: #fbbf24; font-size: 0.72rem;">DÖVİZ CİNSİ</span>
+                </label>
+                <select name="currency" id="currencySelect" class="aesthetic-input" onchange="onCurrencyChange()" style="cursor: pointer;">
+                  <option value="TRY" <%= defaultSupplier && defaultSupplier.paraBirimi === 'TRY' ? 'selected' : '' %>>TRY (₺ — Türk Lirası)</option>
+                  <option value="USD" <%= defaultSupplier && defaultSupplier.paraBirimi === 'USD' ? 'selected' : '' %>>USD ($ — ABD Doları)</option>
+                  <option value="EUR" <%= defaultSupplier && defaultSupplier.paraBirimi === 'EUR' ? 'selected' : '' %>>EUR (€ — Euro)</option>
+                </select>
               </div>
 
-              <div class="summary-card-panel">
-                <div class="summary-row">
-                  <span>Ara Toplam:</span>
-                  <strong id="displaySubtotal" style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: #f8fafc;">0.00 TL</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Toplam İskonto (-):</span>
-                  <strong id="displayDiscount" style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: #fb7185;">0.00 TL</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Toplam KDV (+):</span>
-                  <strong id="displayTax" style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: #fbbf24;">0.00 TL</strong>
-                </div>
-                <div class="summary-row total-row">
-                  <span>Genel Toplam:</span>
-                  <strong id="displayGrandTotal">0.00 TL</strong>
-                </div>
+              <!-- 13. KDV Durumu -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>13. KDV Dahil / Hariç Durumu *</span>
+                  <span style="color: #34d399; font-size: 0.72rem;">ZORUNLU</span>
+                </label>
+                <select name="vatStatus" id="vatStatusSelect" class="aesthetic-input" onchange="recalcAllTotals()" style="cursor: pointer;">
+                  <option value="Hariç" selected>Fiyatlara KDV Hariçtir (+ KDV Eklenecek)</option>
+                  <option value="Dahil">Fiyatlara KDV Dahildir (İç KDV)</option>
+                </select>
+              </div>
+
+              <!-- 15. Teslim Süresi -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>15. Teslim Süresi (Termin / Gün) *</span>
+                  <span style="color: #818cf8; font-size: 0.72rem;">⏱️ ZORUNLU</span>
+                </label>
+                <input type="number" name="deliveryDays" id="inputDeliveryDays" value="<%= defaultSupplier ? (defaultSupplier.terminSuresi || 5) : 5 %>" min="1" class="aesthetic-input" required>
               </div>
             </div>
 
-            <!-- Hidden Summary Inputs -->
-            <input type="hidden" name="subtotal" id="inputSubtotal" value="0">
-            <input type="hidden" name="totalDiscount" id="inputTotalDiscount" value="0">
-            <input type="hidden" name="totalTax" id="inputTotalTax" value="0">
-            <input type="hidden" name="offeredTotalPrice" id="inputGrandTotal" value="0">
+            <div class="form-grid-2">
+              <!-- 16. Malların Teslim Yeri (Depo) -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>16. Malların Teslim Yeri (Hedef Depo) *</span>
+                  <span style="color: #6366f1; font-size: 0.72rem;">🔒 OTOMATİK / READONLY</span>
+                </label>
+                <input type="text" name="deliveryPlace" id="inputDeliveryPlace" value="<%= defaultDeliveryPlace %>" class="aesthetic-input readonly-highlight" readonly>
+              </div>
 
-            <div class="tab-footer-nav" style="margin-top: 32px;">
-              <button type="button" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;" onclick="switchTab('tab-items')">
-                ← Geri: Teklif Kalemleri
-              </button>
-              <button type="submit" id="submitBtn" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 1.05rem; font-weight: 800; padding: 16px 42px; border-radius: 14px; border: none; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45); cursor: pointer; transition: all 0.25s ease;">
-                💾 Teklifi Sisteme Kaydet
+              <!-- 17. Ödeme Tipi / Vadesi -->
+              <div class="aesthetic-group">
+                <label class="aesthetic-label">
+                  <span>17. Ödeme Tipi / Vadesi *</span>
+                  <span style="color: #38bdf8; font-size: 0.72rem;">ZORUNLU</span>
+                </label>
+                <select name="paymentTerm" id="paymentTermSelect" class="aesthetic-input" required style="cursor: pointer;">
+                  <option value="Pesin" <%= defaultSupplier && defaultSupplier.odemeVadesi === 'Pesin' ? 'selected' : '' %>>Peşin Ödeme</option>
+                  <option value="Vadeli_30" <%= defaultSupplier && defaultSupplier.odemeVadesi === 'Vadeli_30' ? 'selected' : (!defaultSupplier ? 'selected' : '') %>>30 Gün Vadeli</option>
+                  <option value="Vadeli_60" <%= defaultSupplier && defaultSupplier.odemeVadesi === 'Vadeli_60' ? 'selected' : '' %>>60 Gün Vadeli</option>
+                  <option value="Vadeli_90" <%= defaultSupplier && defaultSupplier.odemeVadesi === 'Vadeli_90' ? 'selected' : '' %>>90 Gün Vadeli</option>
+                  <option value="Kredi_Karti" <%= defaultSupplier && defaultSupplier.odemeVadesi === 'Kredi_Karti' ? 'selected' : '' %>>Kredi Kartı ile Ödeme</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 20. Teklif Notu / Açıklama -->
+            <div class="aesthetic-group">
+              <label class="aesthetic-label">
+                <span>20. Teklif Notu / Özel Açıklamalar</span>
+                <span style="color: #94a3b8; font-size: 0.72rem;">OPSİYONEL</span>
+              </label>
+              <textarea name="notes" rows="3" class="aesthetic-input" placeholder="Tedarikçi özel şartları, nakliye detayları, garanti koşulları veya diğer açıklamalar..."></textarea>
+            </div>
+
+            <!-- FİNANSAL ÖZET KARTI -->
+            <div class="summary-card" style="margin-top: 24px;">
+              <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span>💰</span> Teklif Genel Finansal Özeti
+              </div>
+
+              <div class="summary-row">
+                <span>Ara Toplam (Kalem Toplamları):</span>
+                <strong id="summarySubtotal" style="font-family: 'JetBrains Mono', monospace;">0.00 TRY</strong>
+              </div>
+              <div class="summary-row">
+                <span>Toplam İskonto / İndirim:</span>
+                <strong id="summaryDiscount" style="color: #fb7185; font-family: 'JetBrains Mono', monospace;">-0.00 TRY</strong>
+              </div>
+              <div class="summary-row">
+                <span>Toplam KDV Tutarı:</span>
+                <strong id="summaryVat" style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">+0.00 TRY</strong>
+              </div>
+              <div class="summary-row total-row">
+                <span>GENEL TOPLAM TUTAR:</span>
+                <strong id="summaryGrandTotal" style="color: #34d399; font-family: 'JetBrains Mono', monospace;">0.00 TRY</strong>
+              </div>
+            </div>
+
+            <div class="tab-footer-nav">
+              <button type="button" class="btn-nav-secondary" onclick="switchTab(2)">← Önceki Adım</button>
+              <button type="submit" class="btn-submit-glow">
+                <span>📨</span> Teklifi Kaydet ve Sisteme Ekle
               </button>
             </div>
           </div>
         </div>
+
       </form>
+
+      <!-- ==================== SATIN ALMA TALEPLİ ÜRÜN SEÇİM MODALI ==================== -->
+      <div id="productSelectModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <div>
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                <span>📦</span> Satın Alma Talebi Bulunan Ürünleri Seç
+              </h2>
+              <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">
+                Sadece sistemde aktif satın alma talebi açılmış olan ürünler listelenmektedir. Teklife eklemek istediğiniz talepleri işaretleyin.
+              </p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeProductSelectModal()">✕</button>
+          </div>
+
+          <!-- Modal Search & Filter -->
+          <div class="modal-search-wrap">
+            <input type="text" id="modalSearchInput" class="aesthetic-input" placeholder="🔍 Talep no, malzeme kodu, ürün adı veya depoya göre ara..." oninput="filterModalRequisitions(this.value)">
+            <select id="modalSortSelect" class="aesthetic-input" style="max-width: 220px; cursor: pointer;" onchange="sortModalRequisitions(this.value)">
+              <option value="date_desc">Tarihe Göre (En Yeni)</option>
+              <option value="name_asc">Ürün Adına Göre (A-Z)</option>
+              <option value="qty_desc">Talep Miktarına Göre (Azalan)</option>
+            </select>
+          </div>
+
+          <!-- Modal Table -->
+          <div class="modal-body-scroll">
+            <div style="overflow-x: auto; border: 1px solid #1e293b; border-radius: 12px; background: #090e1a;">
+              <table class="items-table" id="modalRequisitionsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 40px; text-align: center;">
+                      <input type="checkbox" id="modalSelectAllChk" onchange="toggleSelectAllModal(this)" style="cursor: pointer; width: 16px; height: 16px; accent-color: #6366f1;">
+                    </th>
+                    <th>Talep No</th>
+                    <th>Malzeme Kodu & Adı</th>
+                    <th>Kategori</th>
+                    <th>Talep Edilen Miktar</th>
+                    <th>Hedef Depo</th>
+                    <th>Önerilen Tedarikçi</th>
+                    <th>Durum</th>
+                  </tr>
+                </thead>
+                <tbody id="modalRequisitionsTbody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer">
+            <div id="modalSelectedCountBadge" style="font-size: 0.88rem; color: #94a3b8; font-weight: 600;">
+              0 talep seçildi
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <button type="button" class="btn-nav-secondary" onclick="closeProductSelectModal()">İptal</button>
+              <button type="button" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 800; padding: 11px 24px; border-radius: 12px; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);" onclick="addSelectedModalItemsToForm()">
+                ✓ Seçilen Talepleri Teklife Ekle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
-  <!-- Requisitioned Products Data embedded for JS -->
   <script>
-    const REQUISITIONED_PRODUCTS = <%- JSON.stringify(requisitionedProducts) %>;
-    const ACCEPTED_STOCK_ITEM_IDS = <%- JSON.stringify(typeof acceptedStockItemIds !== 'undefined' ? acceptedStockItemIds : []) %>;
-    const TARGET_REQ_ID = <%= targetReqId ? targetReqId : 'null' %>;
-    const TARGET_STOCK_ITEM_ID = <%= typeof targetStockItemId !== 'undefined' && targetStockItemId ? targetStockItemId : 'null' %>;
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-
-      const targetPane = document.getElementById(tabId);
-      const targetBtn = document.getElementById('btn-' + tabId);
-
-      if (targetPane) targetPane.classList.add('active');
-      if (targetBtn) targetBtn.classList.add('active');
+    // Live Clock
+    function updateClock() {
+      const el = document.getElementById('liveTime');
+      if (el) {
+        const now = new Date();
+        el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      }
     }
+    updateClock();
+    setInterval(updateClock, 1000);
 
-    const supplierSelect = document.getElementById('supplierSelect');
-    const supplierNameInput = document.getElementById('supplierNameInput');
-    const currencySelect = document.getElementById('currencySelect');
-    const itemsTableBody = document.getElementById('itemsTableBody');
-    const addRowBtn = document.getElementById('addRowBtn');
+    // --- DATA STORE ---
+    const allSuppliers = <%- JSON.stringify(typeof suppliers !== 'undefined' && suppliers ? suppliers : []) %>;
+    const allAvailableRequisitions = <%- JSON.stringify(typeof availableRequisitions !== 'undefined' && availableRequisitions ? availableRequisitions : []) %>;
+    const initialPrimaryReq = <%- JSON.stringify(typeof primaryRequisition !== 'undefined' && primaryRequisition ? primaryRequisition : null) %>;
 
-    if (supplierSelect) {
-      supplierSelect.addEventListener('change', function () {
-        const opt = this.options[this.selectedIndex];
-        supplierNameInput.value = opt ? (opt.getAttribute('data-name') || '') : '';
-      });
-    }
+    // Currently added items in the form table
+    let formItems = [];
 
-    let rowCount = 0;
-
-    function getCurrentlySelectedStockItemIds() {
-      const selected = [];
-      document.querySelectorAll('input[name="itemStockItemId"]').forEach(input => {
-        if (input.value) {
-          const val = parseInt(input.value, 10);
-          if (!isNaN(val)) selected.push(val);
+    // --- TAB SWITCHING ---
+    let currentTab = 1;
+    function switchTab(tabIndex) {
+      currentTab = tabIndex;
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById(`tabBtn-${i}`);
+        const pane = document.getElementById(`tabPane-${i}`);
+        if (i === tabIndex) {
+          btn.classList.add('active');
+          pane.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+          pane.classList.remove('active');
         }
-      });
-      return selected;
+      }
+      recalcAllTotals();
     }
 
-    function refreshAllProductSelectOptions() {
-      const currentlySelected = getCurrentlySelectedStockItemIds();
-
-      document.querySelectorAll('#itemsTableBody tr').forEach(tr => {
-        const selectEl = tr.querySelector('.item-stock-select');
-        if (!selectEl || selectEl.disabled) return;
-
-        const hiddenInput = tr.querySelector('input[name="itemStockItemId"]');
-        const activeVal = hiddenInput && hiddenInput.value ? parseInt(hiddenInput.value, 10) : (selectEl.value ? parseInt(selectEl.value, 10) : null);
-
-        let productOptions = '<option value="">-- Talep Edilen Ürün Seçin --</option>';
-        REQUISITIONED_PRODUCTS.forEach(p => {
-          const pId = parseInt(p.stockItemId, 10);
-          const isAccepted = ACCEPTED_STOCK_ITEM_IDS.includes(pId);
-          const isSelectedForThisRow = activeVal && (activeVal === pId);
-
-          if (isAccepted && !isSelectedForThisRow) return;
-          if (currentlySelected.includes(pId) && !isSelectedForThisRow) return;
-
-          const isSel = isSelectedForThisRow ? 'selected' : '';
-          productOptions += `<option value="${p.stockItemId}" data-stockcode="${p.stockCode}" data-name="${p.name}" data-unit="${p.unit}" data-minstock="${p.minStock}" data-price="${p.purchasePrice}" data-reqno="${p.requisitionNo}" ${isSel}>${p.stockCode} — ${p.name} (Min: ${p.minStock} ${p.unit})</option>`;
+    // --- INITIALIZE PRIMARY ITEM ---
+    window.addEventListener('DOMContentLoaded', () => {
+      if (initialPrimaryReq) {
+        const st = initialPrimaryReq.stokKarti || {};
+        formItems.push({
+          reqId: initialPrimaryReq.id,
+          reqNo: initialPrimaryReq.talepNo,
+          stockId: initialPrimaryReq.stokId || st.id,
+          stockCode: st.stokKodu || 'STK-0001',
+          name: st.ad || 'Demir Profil 40x40',
+          category: st.kategori || 'Hammadde',
+          requestedQty: parseFloat(initialPrimaryReq.talepEdilenMiktar) || 1,
+          offeredQty: parseFloat(initialPrimaryReq.talepEdilenMiktar) || 1,
+          unit: initialPrimaryReq.birim || st.birim || 'Adet',
+          unitPrice: parseFloat(st.alisFiyati) || 120,
+          discountRate: 0,
+          vatRate: 20,
+          isPrimary: true
         });
-
-        selectEl.innerHTML = productOptions;
-      });
-    }
-
-    function addRow(preselectedStockItemId = null, isLockedRow = false) {
-      rowCount++;
-      const tr = document.createElement('tr');
-      tr.id = `row-${rowCount}`;
-
-      const isFirstRow = (rowCount === 1) || isLockedRow;
-      const currentlySelectedIds = getCurrentlySelectedStockItemIds();
-
-      let productOptions = '<option value="">-- Talep Edilen Ürün Seçin --</option>';
-      REQUISITIONED_PRODUCTS.forEach(p => {
-        const pId = parseInt(p.stockItemId, 10);
-        const isAccepted = ACCEPTED_STOCK_ITEM_IDS.includes(pId);
-        const isPreselected = preselectedStockItemId && (parseInt(preselectedStockItemId, 10) === pId);
-
-        // 1. Teklif kabul/sipariş edilmiş olan ürünler 2. ve sonraki kalem seçeneklerinden çıkartılıyor!
-        if (isAccepted && !isPreselected) {
-          return;
-        }
-
-        // 2. Default/Ana ürün ve tablodaki diğer satırlarda seçili olan ürünler de seçeneklerden çıkartılıyor!
-        if (currentlySelectedIds.includes(pId) && !isPreselected) {
-          return;
-        }
-
-        const isSel = isPreselected ? 'selected' : '';
-        productOptions += `<option value="${p.stockItemId}" data-stockcode="${p.stockCode}" data-name="${p.name}" data-unit="${p.unit}" data-minstock="${p.minStock}" data-price="${p.purchasePrice}" data-reqno="${p.requisitionNo}" ${isSel}>${p.stockCode} — ${p.name} (Min: ${p.minStock} ${p.unit})</option>`;
-      });
-
-      const selectDisabledAttr = isFirstRow ? 'disabled style="font-size: 0.85rem; cursor: not-allowed; opacity: 0.85; background: rgba(15, 23, 42, 0.6); pointer-events: none;"' : 'style="font-size: 0.85rem;"';
-
-      tr.innerHTML = `
-        <td>
-          <select class="aesthetic-input item-stock-select" onchange="onProductSelect(this, ${rowCount})" ${selectDisabledAttr}>
-            ${productOptions}
-          </select>
-          <input type="hidden" name="itemStockItemId" id="itemStockItemIdHidden-${rowCount}" value="${preselectedStockItemId || ''}">
-          <input type="hidden" name="itemStockCode" id="itemStockCode-${rowCount}" value="">
-          <input type="hidden" name="itemProductName" id="itemProductName-${rowCount}" value="">
-        </td>
-        <td>
-          <input type="text" name="itemRequisitionNo" id="itemRequisitionNo-${rowCount}" class="aesthetic-input" readonly style="font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #818cf8;">
-        </td>
-        <td>
-          <input type="number" name="itemQuantity" id="itemQuantity-${rowCount}" class="aesthetic-input item-qty" oninput="validateMinStock(this, ${rowCount})" onchange="validateMinStock(this, ${rowCount})" step="0.01" style="font-weight: 800; color: #34d399; font-family: 'JetBrains Mono', monospace;">
-          <div class="min-stock-warning" id="minWarn-${rowCount}">🔒 Min: <span id="minVal-${rowCount}">0</span></div>
-        </td>
-        <td>
-          <input type="text" name="itemUnit" id="itemUnit-${rowCount}" class="aesthetic-input" readonly style="font-size: 0.8rem; text-align: center;">
-        </td>
-        <td>
-          <input type="number" name="itemUnitPrice" id="itemUnitPrice-${rowCount}" class="aesthetic-input item-price" oninput="calculateTotals()" step="0.01" value="0.00" style="font-family: 'JetBrains Mono', monospace;">
-        </td>
-        <td>
-          <input type="number" name="itemDiscountRate" id="itemDiscountRate-${rowCount}" class="aesthetic-input item-disc" oninput="calculateTotals()" min="0" max="100" step="0.01" value="0" style="font-family: 'JetBrains Mono', monospace; color: #fb7185;">
-        </td>
-        <td>
-          <select name="itemVatRate" id="itemVatRate-${rowCount}" class="aesthetic-input item-vat" onchange="calculateTotals()">
-            <option value="20" selected>%20</option>
-            <option value="10">%10</option>
-            <option value="1">%1</option>
-            <option value="0">%0</option>
-          </select>
-        </td>
-        <td>
-          <input type="text" name="itemNetAmount" id="itemNetAmount-${rowCount}" class="aesthetic-input item-net" readonly style="font-weight: 800; color: #34d399; font-family: 'JetBrains Mono', monospace;">
-        </td>
-        <td style="text-align: center;">
-          ${isFirstRow
-          ? `<span title="Ana talep ürünü tekliften çıkarılamaz ve değiştirilemez" style="color: #64748b; font-size: 1.1rem; cursor: not-allowed;" aria-label="Kilitli">🔒</span>`
-          : `<button type="button" onclick="removeRow(${rowCount})" style="background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 800; transition: all 0.2s ease;">✕</button>`}
-        </td>
-      `;
-
-      itemsTableBody.appendChild(tr);
-
-      // Trigger change if preselected
-      const selectEl = tr.querySelector('.item-stock-select');
-      if (selectEl && selectEl.value) {
-        onProductSelect(selectEl, rowCount);
-      }
-    }
-
-    function onProductSelect(selectEl, rId) {
-      const opt = selectEl.options[selectEl.selectedIndex];
-      if (!opt || !opt.value) return;
-
-      const hiddenStockId = document.getElementById(`itemStockItemIdHidden-${rId}`);
-      if (hiddenStockId) hiddenStockId.value = opt.value;
-
-      const minStock = parseFloat(opt.getAttribute('data-minstock')) || 10;
-      const unit = opt.getAttribute('data-unit') || 'Adet';
-      const price = parseFloat(opt.getAttribute('data-price')) || 0;
-      const reqNo = opt.getAttribute('data-reqno') || '—';
-      const code = opt.getAttribute('data-stockcode') || '';
-      const pName = opt.getAttribute('data-name') || '';
-
-      document.getElementById(`itemStockCode-${rId}`).value = code;
-      document.getElementById(`itemProductName-${rId}`).value = pName;
-      document.getElementById(`itemRequisitionNo-${rId}`).value = reqNo;
-      document.getElementById(`itemUnit-${rId}`).value = unit;
-      document.getElementById(`minVal-${rId}`).textContent = `${minStock} ${unit}`;
-
-      const qtyInput = document.getElementById(`itemQuantity-${rId}`);
-      qtyInput.setAttribute('data-minstock', minStock);
-      qtyInput.setAttribute('min', minStock);
-      if (!qtyInput.value || parseFloat(qtyInput.value) === 0) {
-        qtyInput.value = minStock;
+      } else if (allAvailableRequisitions.length > 0) {
+        const first = allAvailableRequisitions[0];
+        formItems.push({
+          reqId: first.id,
+          reqNo: first.requisitionNo,
+          stockId: first.stockItemId,
+          stockCode: first.stockCode,
+          name: first.name,
+          category: first.category,
+          requestedQty: first.requestedQuantity,
+          offeredQty: first.requestedQuantity,
+          unit: first.unit,
+          unitPrice: first.purchasePrice || 100,
+          discountRate: 0,
+          vatRate: 20,
+          isPrimary: true
+        });
       }
 
-      const priceInput = document.getElementById(`itemUnitPrice-${rId}`);
-      if (parseFloat(priceInput.value) === 0 && price > 0) {
-        priceInput.value = price.toFixed(2);
-      }
-
-      calculateTotals();
-      refreshAllProductSelectOptions();
-    }
-
-    function validateMinStock(inputEl, rId) {
-      const minStock = parseFloat(inputEl.getAttribute('data-minstock')) || 0;
-      let val = parseFloat(inputEl.value);
-
-      if (isNaN(val) || val < minStock) {
-        alert(`⚠️ UYARI: Bu ürünün minimum stok miktarı ${minStock} birimdir. Sipariş miktarı bu değerin altına düşürülemez!`);
-        inputEl.value = minStock;
-      }
-      calculateTotals();
-    }
-
-    function removeRow(rId) {
-      const tr = document.getElementById(`row-${rId}`);
-      if (tr) {
-        tr.remove();
-        calculateTotals();
-        refreshAllProductSelectOptions();
-      }
-    }
-
-    function calculateTotals() {
-      let subtotal = 0;
-      let totalDiscount = 0;
-      let totalTax = 0;
-
-      const rows = itemsTableBody.querySelectorAll('tr');
-      rows.forEach(tr => {
-        const qtyEl = tr.querySelector('.item-qty');
-        const priceEl = tr.querySelector('.item-price');
-        const discEl = tr.querySelector('.item-disc');
-        const vatEl = tr.querySelector('.item-vat');
-        const netEl = tr.querySelector('.item-net');
-
-        if (qtyEl && priceEl && netEl) {
-          const qty = parseFloat(qtyEl.value) || 0;
-          const price = parseFloat(priceEl.value) || 0;
-          const discRate = parseFloat(discEl ? discEl.value : 0) || 0;
-          const vatRate = parseFloat(vatEl ? vatEl.value : 20) || 0;
-
-          const rawTotal = qty * price;
-          const discAmt = rawTotal * (discRate / 100);
-          const afterDisc = rawTotal - discAmt;
-          const taxAmt = afterDisc * (vatRate / 100);
-          const net = afterDisc + taxAmt;
-
-          netEl.value = net.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-          subtotal += rawTotal;
-          totalDiscount += discAmt;
-          totalTax += taxAmt;
-        }
-      });
-
-      const grandTotal = subtotal - totalDiscount + totalTax;
-      const curr = currencySelect ? currencySelect.value : 'TRY';
-      const currSymbol = curr === 'USD' ? '$' : (curr === 'EUR' ? '€' : 'TL');
-
-      document.getElementById('displaySubtotal').textContent = `${subtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currSymbol}`;
-      document.getElementById('displayDiscount').textContent = `${totalDiscount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currSymbol}`;
-      document.getElementById('displayTax').textContent = `${totalTax.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currSymbol}`;
-      document.getElementById('displayGrandTotal').textContent = `${grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currSymbol}`;
-
-      document.getElementById('inputSubtotal').value = subtotal.toFixed(4);
-      document.getElementById('inputTotalDiscount').value = totalDiscount.toFixed(4);
-      document.getElementById('inputTotalTax').value = totalTax.toFixed(4);
-      document.getElementById('inputGrandTotal').value = grandTotal.toFixed(4);
-    }
-
-    addRowBtn.addEventListener('click', () => addRow());
-
-    // Initialize first row
-    let defaultStockItemId = null;
-    if (TARGET_STOCK_ITEM_ID) {
-      const targetByStock = REQUISITIONED_PRODUCTS.find(p => parseInt(p.stockItemId, 10) === parseInt(TARGET_STOCK_ITEM_ID, 10));
-      if (targetByStock) defaultStockItemId = targetByStock.stockItemId;
-    }
-    if (!defaultStockItemId && TARGET_REQ_ID) {
-      const targetByReq = REQUISITIONED_PRODUCTS.find(p => parseInt(p.requisitionId, 10) === parseInt(TARGET_REQ_ID, 10));
-      if (targetByReq) defaultStockItemId = targetByReq.stockItemId;
-    }
-    if (!defaultStockItemId && REQUISITIONED_PRODUCTS.length > 0) {
-      defaultStockItemId = REQUISITIONED_PRODUCTS[0].stockItemId;
-    }
-
-    addRow(defaultStockItemId, true);
-
-    // FORM SUBMISSION EVENT LISTENER & VALIDATION
-    document.getElementById('rfqForm').addEventListener('submit', function(e) {
-      const sSelect = document.getElementById('supplierSelect');
-      const sNameInput = document.getElementById('supplierNameInput');
-
-      if (sSelect && sSelect.value) {
-        const opt = sSelect.options[sSelect.selectedIndex];
-        if (opt) sNameInput.value = opt.getAttribute('data-name') || opt.text || '';
-      }
-
-      if (!sSelect || !sSelect.value) {
-        e.preventDefault();
-        alert('⚠️ Lütfen 1. Sekmeden Tedarikçi Firma seçiniz!');
-        switchTab('tab-general');
-        sSelect.focus();
-        return false;
-      }
-
-      const rows = itemsTableBody.querySelectorAll('tr');
-      if (rows.length === 0) {
-        e.preventDefault();
-        alert('⚠️ Teklife en az 1 ürün kalemi eklemelisiniz!');
-        switchTab('tab-items');
-        return false;
-      }
-
-      let hasValidItem = false;
-      rows.forEach(tr => {
-        const sel = tr.querySelector('.item-stock-select');
-        const qty = tr.querySelector('.item-qty');
-        if (sel && sel.value && qty && parseFloat(qty.value) > 0) {
-          hasValidItem = true;
-        }
-      });
-
-      if (!hasValidItem) {
-        e.preventDefault();
-        alert('⚠️ Lütfen 2. Sekmeden geçerli bir ürün ve miktar giriniz!');
-        switchTab('tab-items');
-        return false;
-      }
-
-      calculateTotals();
-      return true;
+      renderItemsTable();
     });
 
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    // --- RENDER MAIN FORM ITEMS TABLE ---
+    function renderItemsTable() {
+      const tbody = document.getElementById('itemsTableBody');
+      const badge = document.getElementById('itemCountBadge');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+      badge.textContent = formItems.length;
+
+      if (formItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #94a3b8; padding: 2rem;">Teklife eklenmiş ürün bulunmamaktadır. Lütfen modal üzerinden talep seçiniz.</td></tr>`;
+        recalcAllTotals();
+        return;
+      }
+
+      formItems.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+          <!-- Durum / Kilit -->
+          <td style="text-align: center;">
+            ${item.isPrimary ? 
+              '<span title="Ana Talep Ürünü (Silinemez)" style="font-size: 1rem; cursor: help;">🔒</span>' : 
+              '<span title="Ek Talep Ürünü" style="font-size: 0.9rem; color: #34d399;">➕</span>'}
+          </td>
+
+          <!-- Talep No & ID -->
+          <td>
+            <input type="text" class="table-input" value="${item.reqNo ? item.reqNo : ('TALEP-#' + item.reqId)}" readonly style="color: #818cf8; font-weight: 700;">
+            <input type="hidden" name="itemRequisitionId" value="${item.reqId || ''}">
+            <input type="hidden" name="itemRequisitionNo" value="${item.reqNo || ''}">
+          </td>
+
+          <!-- Malzeme Kodu & Adı -->
+          <td>
+            <div style="font-weight: 800; color: #f8fafc;">${item.name}</div>
+            <div style="font-size: 0.75rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;">[${item.stockCode}]</div>
+            <input type="hidden" name="itemStockItemId" value="${item.stockId}">
+            <input type="hidden" name="itemStockCode" value="${item.stockCode}">
+            <input type="hidden" name="itemProductName" value="${item.name}">
+          </td>
+
+          <!-- Talep Edilen Miktar -->
+          <td>
+            <input type="number" class="table-input" value="${item.requestedQty}" readonly style="font-weight: 700;">
+            <input type="hidden" name="itemRequestedQty" value="${item.requestedQty}">
+          </td>
+
+          <!-- Teklif Edilen Miktar (ZORUNLU - TALEP MİKTARINI AŞAMAZ) -->
+          <td>
+            <input type="number" 
+                   class="table-input" 
+                   name="itemOfferedQty" 
+                   id="offeredQty_${index}"
+                   value="${item.offeredQty}" 
+                   min="0.01" 
+                   max="${item.requestedQty}" 
+                   step="0.01" 
+                   required
+                   oninput="onOfferedQtyChange(${index}, this)">
+            <div id="qtyError_${index}" style="display: none; color: #ef4444; font-size: 0.72rem; font-weight: 700; margin-top: 2px;">
+              ⚠️ Maks: ${item.requestedQty}
+            </div>
+          </td>
+
+          <!-- Birim -->
+          <td>
+            <input type="text" class="table-input" name="itemUnit" value="${item.unit}" readonly style="text-align: center;">
+          </td>
+
+          <!-- Birim Fiyat -->
+          <td>
+            <input type="number" 
+                   class="table-input" 
+                   name="itemUnitPrice" 
+                   id="unitPrice_${index}"
+                   value="${item.unitPrice || 0}" 
+                   min="0.01" 
+                   step="0.01" 
+                   required
+                   placeholder="0.00"
+                   oninput="onItemPriceChange(${index}, this)">
+          </td>
+
+          <!-- İskonto % -->
+          <td>
+            <input type="number" 
+                   class="table-input" 
+                   name="itemDiscountRate" 
+                   id="discountRate_${index}"
+                   value="${item.discountRate || 0}" 
+                   min="0" 
+                   max="100" 
+                   step="0.1" 
+                   required
+                   oninput="onItemDiscountChange(${index}, this)">
+          </td>
+
+          <!-- KDV % -->
+          <td>
+            <select class="table-input" name="itemVatRate" id="vatRate_${index}" onchange="onItemVatChange(${index}, this)" style="cursor: pointer;">
+              <option value="20" ${item.vatRate == 20 ? 'selected' : ''}>%20</option>
+              <option value="10" ${item.vatRate == 10 ? 'selected' : ''}>%10</option>
+              <option value="1" ${item.vatRate == 1 ? 'selected' : ''}>%1</option>
+              <option value="0" ${item.vatRate == 0 ? 'selected' : ''}>%0</option>
+            </select>
+          </td>
+
+          <!-- Net Satır Tutarı -->
+          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #34d399;" id="lineTotal_${index}">
+            0.00
+          </td>
+
+          <!-- Silme Butonu -->
+          <td style="text-align: center;">
+            ${item.isPrimary ? 
+              '<span style="color: #64748b; font-size: 0.75rem; font-weight: 700; cursor: not-allowed;" title="Ana talep silinemez">🔒 Kilit</span>' : 
+              `<button type="button" onclick="removeItemFromForm(${index})" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: 8px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Kalemi Sil">✕</button>`}
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      recalcAllTotals();
+    }
+
+    // --- QUANTITY VALIDATION (CANNOT EXCEED REQUESTED QTY) ---
+    function onOfferedQtyChange(index, inputEl) {
+      const item = formItems[index];
+      if (!item) return;
+
+      const val = parseFloat(inputEl.value) || 0;
+      const errorEl = document.getElementById(`qtyError_${index}`);
+
+      if (val > item.requestedQty) {
+        inputEl.classList.add('input-invalid');
+        if (errorEl) errorEl.style.display = 'block';
+        item.offeredQty = item.requestedQty;
+        inputEl.value = item.requestedQty; // clamp to max requested quantity
+      } else if (val <= 0) {
+        inputEl.classList.add('input-invalid');
+        if (errorEl) errorEl.style.display = 'block';
+        item.offeredQty = 0;
+      } else {
+        inputEl.classList.remove('input-invalid');
+        if (errorEl) errorEl.style.display = 'none';
+        item.offeredQty = val;
+      }
+
+      recalcAllTotals();
+    }
+
+    function onItemPriceChange(index, inputEl) {
+      const item = formItems[index];
+      if (!item) return;
+      item.unitPrice = parseFloat(inputEl.value) || 0;
+      recalcAllTotals();
+    }
+
+    function onItemDiscountChange(index, inputEl) {
+      const item = formItems[index];
+      if (!item) return;
+      item.discountRate = parseFloat(inputEl.value) || 0;
+      recalcAllTotals();
+    }
+
+    function onItemVatChange(index, selectEl) {
+      const item = formItems[index];
+      if (!item) return;
+      item.vatRate = parseFloat(selectEl.value) || 0;
+      recalcAllTotals();
+    }
+
+    function removeItemFromForm(index) {
+      const item = formItems[index];
+      if (item && item.isPrimary) {
+        alert('Ana talep ürünü tekliften silinemez veya kaldırılamaz!');
+        return;
+      }
+      formItems.splice(index, 1);
+      renderItemsTable();
+    }
+
+    // --- RECALCULATE ALL TOTALS ---
+    function recalcAllTotals() {
+      let subtotal = 0;
+      let totalDiscount = 0;
+      let totalVat = 0;
+      let grandTotal = 0;
+
+      const isVatIncluded = document.getElementById('vatStatusSelect')?.value === 'Dahil';
+      const curr = document.getElementById('currencySelect')?.value || 'TRY';
+
+      formItems.forEach((item, index) => {
+        const qty = parseFloat(item.offeredQty) || 0;
+        const price = parseFloat(item.unitPrice) || 0;
+        const discRate = parseFloat(item.discountRate) || 0;
+        const vatRate = parseFloat(item.vatRate) || 0;
+
+        const raw = qty * price;
+        const disc = raw * (discRate / 100);
+        const discTotal = raw - disc;
+        let vatAmt = 0;
+        let lineNet = 0;
+
+        if (isVatIncluded) {
+          vatAmt = discTotal - (discTotal / (1 + (vatRate / 100)));
+          lineNet = discTotal;
+        } else {
+          vatAmt = discTotal * (vatRate / 100);
+          lineNet = discTotal + vatAmt;
+        }
+
+        subtotal += raw;
+        totalDiscount += disc;
+        totalVat += vatAmt;
+        grandTotal += lineNet;
+
+        const lineEl = document.getElementById(`lineTotal_${index}`);
+        if (lineEl) {
+          lineEl.textContent = lineNet.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + curr;
+        }
+      });
+
+      // Update Summary Cards
+      const subEl = document.getElementById('summarySubtotal');
+      const discEl = document.getElementById('summaryDiscount');
+      const vatEl = document.getElementById('summaryVat');
+      const grandEl = document.getElementById('summaryGrandTotal');
+
+      if (subEl) subEl.textContent = subtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + curr;
+      if (discEl) discEl.textContent = '-' + totalDiscount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + curr;
+      if (vatEl) vatEl.textContent = '+' + totalVat.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + curr;
+      if (grandEl) grandEl.textContent = grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + curr;
+    }
+
+    function onCurrencyChange() {
+      recalcAllTotals();
+    }
+
+    // --- SUPPLIER SELECTION SYNC ---
+    function onSupplierChange(selectEl) {
+      const sId = parseInt(selectEl.value, 10);
+      if (!sId) return;
+
+      const sup = allSuppliers.find(s => s.id === sId);
+      if (!sup) return;
+
+      const nameInput = document.getElementById('inputSupplierName');
+      const taxOfficeInput = document.getElementById('inputTaxOffice');
+      const taxNoInput = document.getElementById('inputTaxNo');
+      const contactInput = document.getElementById('inputContactPerson');
+      const currSelect = document.getElementById('currencySelect');
+      const daysInput = document.getElementById('inputDeliveryDays');
+      const termSelect = document.getElementById('paymentTermSelect');
+
+      if (nameInput) nameInput.value = sup.ticariAd || sup.firmaAdi;
+      if (taxOfficeInput) taxOfficeInput.value = sup.vergiDairesi || '';
+      if (taxNoInput) taxNoInput.value = sup.vergiNo || '';
+      if (contactInput) contactInput.value = sup.ilgiliKisi || '';
+      if (currSelect && sup.paraBirimi) currSelect.value = sup.paraBirimi;
+      if (daysInput && sup.terminSuresi) daysInput.value = sup.terminSuresi;
+      if (termSelect && sup.odemeVadesi) termSelect.value = sup.odemeVadesi;
+
+      recalcAllTotals();
+    }
+
+    // --- MODAL: SATIN ALMA TALEPLİ ÜRÜN SEÇİMİ ---
+    let modalFilteredList = [...allAvailableRequisitions];
+
+    function openProductSelectModal() {
+      const modal = document.getElementById('productSelectModal');
+      if (!modal) return;
+
+      document.getElementById('modalSearchInput').value = '';
+      document.getElementById('modalSelectAllChk').checked = false;
+      modalFilteredList = [...allAvailableRequisitions];
+      modal.style.display = 'flex';
+      renderModalRequisitions();
+    }
+
+    function closeProductSelectModal() {
+      const modal = document.getElementById('productSelectModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function filterModalRequisitions(query) {
+      const q = (query || '').toLowerCase().trim();
+      if (!q) {
+        modalFilteredList = [...allAvailableRequisitions];
+      } else {
+        modalFilteredList = allAvailableRequisitions.filter(r => 
+          (r.requisitionNo && r.requisitionNo.toLowerCase().includes(q)) ||
+          (r.stockCode && r.stockCode.toLowerCase().includes(q)) ||
+          (r.name && r.name.toLowerCase().includes(q)) ||
+          (r.deliveryPlace && r.deliveryPlace.toLowerCase().includes(q)) ||
+          (r.supplierName && r.supplierName.toLowerCase().includes(q))
+        );
+      }
+      renderModalRequisitions();
+    }
+
+    function sortModalRequisitions(sortVal) {
+      if (sortVal === 'name_asc') {
+        modalFilteredList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      } else if (sortVal === 'qty_desc') {
+        modalFilteredList.sort((a, b) => b.requestedQuantity - a.requestedQuantity);
+      } else {
+        modalFilteredList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      }
+      renderModalRequisitions();
+    }
+
+    function renderModalRequisitions() {
+      const tbody = document.getElementById('modalRequisitionsTbody');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+
+      if (modalFilteredList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">Sistemde açık veya aramayla eşleşen satın alma talebi bulunamadı.</td></tr>`;
+        updateModalSelectedCount();
+        return;
+      }
+
+      modalFilteredList.forEach(r => {
+        const tr = document.createElement('tr');
+        const alreadyInForm = formItems.some(item => item.reqId === r.id || (item.stockId === r.stockItemId && item.isPrimary));
+
+        tr.innerHTML = `
+          <td style="text-align: center;">
+            ${alreadyInForm ? 
+              '<span title="Teklife Zaten Ekli" style="color: #10b981; font-weight: 800; font-size: 0.9rem;">✓</span>' : 
+              `<input type="checkbox" class="modal-req-chk" data-req-id="${r.id}" onchange="updateModalSelectedCount()" style="cursor: pointer; width: 16px; height: 16px; accent-color: #6366f1;">`}
+          </td>
+          <td><strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;">${r.requisitionNo}</strong></td>
+          <td>
+            <div style="font-weight: 800; color: #f8fafc;">${r.name}</div>
+            <div style="font-size: 0.75rem; color: #818cf8; font-family: 'JetBrains Mono', monospace;">[${r.stockCode}]</div>
+          </td>
+          <td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 0.74rem;">${r.category}</span></td>
+          <td><strong style="font-family: 'JetBrains Mono', monospace; color: #f8fafc;">${r.requestedQuantity.toLocaleString('tr-TR')} ${r.unit}</strong></td>
+          <td><span style="font-size: 0.78rem; color: #94a3b8;">${r.deliveryPlace}</span></td>
+          <td><span style="font-size: 0.78rem; color: #34d399; font-weight: 600;">${r.supplierName || '—'}</span></td>
+          <td>
+            ${alreadyInForm ? 
+              '<span class="status-pill status-active" style="font-size: 0.72rem;">● Teklifte Ekli</span>' : 
+              '<span class="status-pill status-pending" style="font-size: 0.72rem;">● Beklemede</span>'}
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      updateModalSelectedCount();
+    }
+
+    function toggleSelectAllModal(masterChk) {
+      const checkboxes = document.querySelectorAll('.modal-req-chk');
+      checkboxes.forEach(chk => chk.checked = masterChk.checked);
+      updateModalSelectedCount();
+    }
+
+    function updateModalSelectedCount() {
+      const checkedBoxes = document.querySelectorAll('.modal-req-chk:checked');
+      const badge = document.getElementById('modalSelectedCountBadge');
+      if (badge) {
+        badge.textContent = `${checkedBoxes.length} talep seçildi`;
+      }
+    }
+
+    function addSelectedModalItemsToForm() {
+      const checkedBoxes = document.querySelectorAll('.modal-req-chk:checked');
+      if (checkedBoxes.length === 0) {
+        alert('Lütfen teklife eklemek için en az bir talep işaretleyiniz.');
+        return;
+      }
+
+      checkedBoxes.forEach(chk => {
+        const reqId = parseInt(chk.getAttribute('data-req-id'), 10);
+        const reqObj = allAvailableRequisitions.find(r => r.id === reqId);
+        if (!reqObj) return;
+
+        // Check if already in formItems
+        const exists = formItems.some(item => item.reqId === reqId);
+        if (!exists) {
+          formItems.push({
+            reqId: reqObj.id,
+            reqNo: reqObj.requisitionNo,
+            stockId: reqObj.stockItemId,
+            stockCode: reqObj.stockCode,
+            name: reqObj.name,
+            category: reqObj.category,
+            requestedQty: reqObj.requestedQuantity,
+            offeredQty: reqObj.requestedQuantity,
+            unit: reqObj.unit,
+            unitPrice: reqObj.purchasePrice || 0,
+            discountRate: 0,
+            vatRate: 20,
+            isPrimary: false
+          });
+        }
+      });
+
+      closeProductSelectModal();
+      renderItemsTable();
+      switchTab(2);
+    }
+
+    // --- FORM VALIDATION BEFORE SUBMISSION ---
+    function validateFormBeforeSubmit() {
+      const sSelect = document.getElementById('supplierSelect');
+      if (!sSelect || !sSelect.value) {
+        alert('Lütfen teklifi veren tedarikçi firmayı seçiniz.');
+        switchTab(1);
+        return false;
+      }
+
+      if (formItems.length === 0) {
+        alert('Teklifte en az bir adet satın alma talepli ürün bulunmalıdır.');
+        switchTab(2);
+        return false;
+      }
+
+      for (let i = 0; i < formItems.length; i++) {
+        const item = formItems[i];
+        if (!item.offeredQty || item.offeredQty <= 0) {
+          alert(`[${item.stockCode}] ${item.name} için geçerli bir teklif miktarı girilmelidir.`);
+          switchTab(2);
+          document.getElementById(`offeredQty_${i}`)?.focus();
+          return false;
+        }
+
+        if (item.offeredQty > item.requestedQty) {
+          alert(`[${item.stockCode}] ${item.name} için teklif edilen miktar (${item.offeredQty}), talep edilen miktardan (${item.requestedQty}) fazla olamaz!`);
+          switchTab(2);
+          document.getElementById(`offeredQty_${i}`)?.focus();
+          return false;
+        }
+
+        if (!item.unitPrice || item.unitPrice <= 0) {
+          alert(`[${item.stockCode}] ${item.name} için birim fiyat zorunludur ve 0'dan büyük olmalıdır.`);
+          switchTab(2);
+          document.getElementById(`unitPrice_${i}`)?.focus();
+          return false;
+        }
+      }
+
+      const daysInput = document.getElementById('inputDeliveryDays');
+      if (!daysInput || parseInt(daysInput.value, 10) < 1) {
+        alert('Lütfen geçerli bir teslimat süresi (gün) giriniz.');
+        switchTab(3);
+        return false;
+      }
+
+      return true;
+    }
   </script>
 </body>
-
 </html>

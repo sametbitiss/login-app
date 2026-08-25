@@ -7,6 +7,7 @@ const supplierRepository = require('../repositories/supplierRepository');
 const rfqRepository = require('../repositories/rfqRepository');
 const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const asyncHandler = require('../utils/asyncHandler');
+const { ValidationError } = require('../utils/appError');
 const { StokKarti, SatinAlmaSiparisi, Tedarikci, SatinAlmaTalebi, SatinAlmaTeklifTalebi, SatinAlmaFaturasi, MalKabul, Depo } = require('../../models');
 const { Op } = require('sequelize');
 
@@ -404,111 +405,95 @@ class PurchaseController {
 
   renderAddRfq = asyncHandler(async (req, res) => {
     const nextRfqNo = await purchaseService.getNextRfqNo();
-    const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
-
-    let requisitions = [];
-    try {
-      requisitions = await SatinAlmaTalebi.findAll({
-        where: { durum: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
-        include: [{ model: StokKarti, as: 'stokKarti' }],
-        order: [['createdAt', 'DESC']]
-      });
-    } catch (e) {
-      console.error('Error fetching requisitions in renderAddRfq:', e);
-    }
-
-    const reqMap = new Map();
-    requisitions.forEach(reqItem => {
-      if (reqItem.stokKarti && !reqMap.has(reqItem.stokKarti.id)) {
-        const minStockVal = parseFloat(reqItem.stokKarti.asgariStok) || 10;
-        reqMap.set(reqItem.stokKarti.id, {
-          stockItemId: reqItem.stokKarti.id,
-          stockCode: reqItem.stokKarti.stokKodu,
-          name: reqItem.stokKarti.ad,
-          category: reqItem.stokKarti.kategori,
-          unit: reqItem.stokKarti.birim || 'Adet',
-          minStock: minStockVal > 0 ? minStockVal : 10,
-          purchasePrice: parseFloat(reqItem.stokKarti.alisFiyati) || 0,
-          requisitionNo: reqItem.talepNo,
-          requisitionId: reqItem.id,
-          requestedQuantity: parseFloat(reqItem.talepEdilenMiktar) || minStockVal || 10
-        });
-      }
+    const suppliers = await Tedarikci.findAll({
+      where: { durum: 'Active' },
+      order: [['firmaAdi', 'ASC']]
     });
 
-    let requisitionedProducts = Array.from(reqMap.values());
-
-    if (requisitionedProducts.length === 0) {
-      const allItems = await StokKarti.findAll({ where: { durum: 'Active' }, order: [['ad', 'ASC']] });
-      requisitionedProducts = allItems.map(item => {
-        const minStockVal = parseFloat(item.asgariStok) || 10;
-        return {
-          stockItemId: item.id,
-          stockCode: item.stokKodu,
-          name: item.ad,
-          category: item.kategori,
-          unit: item.birim || 'Adet',
-          minStock: minStockVal > 0 ? minStockVal : 10,
-          purchasePrice: parseFloat(item.alisFiyati) || 0,
-          requisitionNo: 'TAL-GENEL',
-          requisitionId: 0,
-          requestedQuantity: minStockVal || 10
-        };
-      });
-    }
+    const requisitions = await SatinAlmaTalebi.findAll({
+      where: { durum: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
+      include: [
+        {
+          model: StokKarti,
+          as: 'stokKarti',
+          include: [{ model: Tedarikci, as: 'tedarikciKarti' }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
 
     const targetReqId = req.query.requisitionId ? parseInt(req.query.requisitionId, 10) : null;
     let targetStockItemId = req.query.stockItemId ? parseInt(req.query.stockItemId, 10) : null;
 
-    if (targetReqId && !targetStockItemId) {
-      try {
-        const reqObj = await SatinAlmaTalebi.findByPk(targetReqId);
-        if (reqObj && reqObj.stokId) {
-          targetStockItemId = reqObj.stokId;
-        }
-      } catch (e) {
-        console.error('Error finding target requisition:', e);
+    let primaryRequisition = null;
+    if (targetReqId) {
+      primaryRequisition = requisitions.find(r => r.id === targetReqId);
+      if (!primaryRequisition) {
+        primaryRequisition = await SatinAlmaTalebi.findByPk(targetReqId, {
+          include: [
+            {
+              model: StokKarti,
+              as: 'stokKarti',
+              include: [{ model: Tedarikci, as: 'tedarikciKarti' }]
+            }
+          ]
+        });
       }
     }
 
-    if (targetStockItemId) {
-      const existingIdx = requisitionedProducts.findIndex(p => parseInt(p.stockItemId, 10) === targetStockItemId);
-      if (existingIdx > 0) {
-        const [targetProd] = requisitionedProducts.splice(existingIdx, 1);
-        requisitionedProducts.unshift(targetProd);
-      } else if (existingIdx < 0) {
-        const targetItem = await StokKarti.findByPk(targetStockItemId);
-        if (targetItem) {
-          const minStockVal = parseFloat(targetItem.asgariStok) || 10;
-          requisitionedProducts.unshift({
-            stockItemId: targetItem.id,
-            stockCode: targetItem.stokKodu,
-            name: targetItem.ad,
-            category: targetItem.kategori,
-            unit: targetItem.birim || 'Adet',
-            minStock: minStockVal > 0 ? minStockVal : 10,
-            purchasePrice: parseFloat(targetItem.alisFiyati) || 0,
-            requisitionNo: targetReqId ? `TALEP-#${targetReqId}` : 'TAL-GENEL',
-            requisitionId: targetReqId || 0,
-            requestedQuantity: minStockVal || 10
-          });
-        }
+    if (!primaryRequisition && targetStockItemId) {
+      primaryRequisition = requisitions.find(r => r.stokId === targetStockItemId);
+    }
+
+    if (!primaryRequisition && requisitions.length > 0) {
+      primaryRequisition = requisitions[0];
+    }
+
+    const availableRequisitions = requisitions.map(r => {
+      const st = r.stokKarti;
+      const sup = st ? st.tedarikciKarti : null;
+      return {
+        id: r.id,
+        requisitionNo: r.talepNo,
+        stockItemId: r.stokId,
+        stockCode: st ? st.stokKodu : '',
+        name: st ? st.ad : '',
+        category: st ? st.kategori : 'Hammadde',
+        unit: r.birim || (st ? st.birim : 'Adet'),
+        requestedQuantity: parseFloat(r.talepEdilenMiktar) || 0,
+        purchasePrice: parseFloat(st ? st.alisFiyati : 0) || 0,
+        deliveryPlace: r.girisDeposu || (st ? st.depoLokasyonu : '') || 'Ana Hammadde & Üretim Ambarı',
+        supplierId: sup ? sup.id : (st ? st.tedarikciId : null),
+        supplierName: sup ? (sup.ticariAd || sup.firmaAdi) : (st ? st.tedarikci : ''),
+        taxNo: sup ? sup.vergiNo : '',
+        taxOffice: sup ? sup.vergiDairesi : '',
+        contactPerson: sup ? sup.ilgiliKisi : '',
+        currency: sup ? sup.paraBirimi : (st ? st.paraBirimi : 'TRY'),
+        leadTime: sup ? sup.terminSuresi : 5,
+        paymentTerm: sup ? sup.odemeVadesi : 'Vadeli_30',
+        urgency: r.aciliyet || 'Normal',
+        createdAt: r.createdAt
+      };
+    });
+
+    let defaultSupplier = null;
+    let defaultDeliveryPlace = 'Ana Hammadde & Üretim Ambarı';
+
+    if (primaryRequisition && primaryRequisition.stokKarti) {
+      const st = primaryRequisition.stokKarti;
+      defaultDeliveryPlace = primaryRequisition.girisDeposu || st.depoLokasyonu || 'Ana Hammadde & Üretim Ambarı';
+      if (st.tedarikciKarti) {
+        defaultSupplier = st.tedarikciKarti;
+      } else if (st.tedarikciId) {
+        defaultSupplier = suppliers.find(s => s.id === st.tedarikciId);
+      } else if (st.tedarikci) {
+        defaultSupplier = suppliers.find(s => s.firmaAdi === st.tedarikci || s.ticariAd === st.tedarikci);
       }
     }
 
-    const acceptedRfqs = await SatinAlmaTeklifTalebi.findAll({
-      where: { durum: 'Accepted' }
-    });
-    const acceptedStockItemIds = new Set();
-    acceptedRfqs.forEach(rfq => {
-      const items = (rfq.kalemlerVerisi && Array.isArray(rfq.kalemlerVerisi)) ? rfq.kalemlerVerisi : [];
-      items.forEach(item => {
-        if (item.stokId || item.stockItemId) acceptedStockItemIds.add(parseInt(item.stokId || item.stockItemId, 10));
-      });
-      if (items.length === 0 && rfq.stokId) {
-        acceptedStockItemIds.add(parseInt(rfq.stokId, 10));
-      }
-    });
+    if (!defaultSupplier && suppliers.length > 0) {
+      defaultSupplier = suppliers[0];
+    }
 
     const warehouses = await Depo.findAll({
       where: { durum: 'Active' },
@@ -520,10 +505,10 @@ class PurchaseController {
       error: null,
       nextRfqNo,
       suppliers,
-      requisitionedProducts,
-      acceptedStockItemIds: Array.from(acceptedStockItemIds),
-      targetReqId,
-      targetStockItemId,
+      availableRequisitions,
+      primaryRequisition,
+      defaultSupplier,
+      defaultDeliveryPlace,
       warehouses,
       formData: {}
     });
@@ -536,138 +521,170 @@ class PurchaseController {
 
       if (supplierId) {
         const supObj = await Tedarikci.findByPk(supplierId);
-        if (supObj) supplierName = supObj.firmaAdi;
+        if (supObj) {
+          supplierName = supObj.firmaAdi;
+        }
+      }
+
+      if (!supplierName) {
+        throw new ValidationError('Lütfen teklifi veren tedarikçi firmayı seçiniz.');
       }
 
       let itemsData = [];
-      if (Array.isArray(req.body.itemStockItemId)) {
-        for (let i = 0; i < req.body.itemStockItemId.length; i++) {
-          const sId = parseInt(req.body.itemStockItemId[i], 10);
-          if (!sId) continue;
-          const qty = parseFloat(req.body.itemQuantity[i]) || 1;
-          const price = parseFloat(req.body.itemUnitPrice[i]) || 0;
-          const disc = parseFloat(req.body.itemDiscountRate[i]) || 0;
-          const vat = parseFloat(req.body.itemVatRate[i]) || 20;
+      const itemStockIds = Array.isArray(req.body.itemStockItemId) ? req.body.itemStockItemId : (req.body.itemStockItemId ? [req.body.itemStockItemId] : []);
+      const itemReqIds = Array.isArray(req.body.itemRequisitionId) ? req.body.itemRequisitionId : (req.body.itemRequisitionId ? [req.body.itemRequisitionId] : []);
+      const itemReqNos = Array.isArray(req.body.itemRequisitionNo) ? req.body.itemRequisitionNo : (req.body.itemRequisitionNo ? [req.body.itemRequisitionNo] : []);
+      const itemCodes = Array.isArray(req.body.itemStockCode) ? req.body.itemStockCode : (req.body.itemStockCode ? [req.body.itemStockCode] : []);
+      const itemNames = Array.isArray(req.body.itemProductName) ? req.body.itemProductName : (req.body.itemProductName ? [req.body.itemProductName] : []);
+      const itemReqQtys = Array.isArray(req.body.itemRequestedQty) ? req.body.itemRequestedQty : (req.body.itemRequestedQty ? [req.body.itemRequestedQty] : []);
+      const itemOfferedQtys = Array.isArray(req.body.itemOfferedQty) ? req.body.itemOfferedQty : (req.body.itemOfferedQty ? [req.body.itemOfferedQty] : []);
+      const itemUnits = Array.isArray(req.body.itemUnit) ? req.body.itemUnit : (req.body.itemUnit ? [req.body.itemUnit] : []);
+      const itemPrices = Array.isArray(req.body.itemUnitPrice) ? req.body.itemUnitPrice : (req.body.itemUnitPrice ? [req.body.itemUnitPrice] : []);
+      const itemDiscounts = Array.isArray(req.body.itemDiscountRate) ? req.body.itemDiscountRate : (req.body.itemDiscountRate ? [req.body.itemDiscountRate] : []);
+      const itemVats = Array.isArray(req.body.itemVatRate) ? req.body.itemVatRate : (req.body.itemVatRate ? [req.body.itemVatRate] : []);
 
-          const rawTotal = qty * price;
-          const discAmt = rawTotal * (disc / 100);
-          const taxAmt = (rawTotal - discAmt) * (vat / 100);
-          const net = rawTotal - discAmt + taxAmt;
-
-          itemsData.push({
-            stokId: sId,
-            stokKodu: req.body.itemStockCode[i] || '',
-            ad: req.body.itemProductName[i] || '',
-            requisitionNo: req.body.itemRequisitionNo[i] || '',
-            miktar: qty,
-            birim: req.body.itemUnit[i] || 'Adet',
-            birimFiyat: price,
-            iskontoOrani: disc,
-            kdvOrani: vat,
-            netAmount: net,
-            notlar: req.body.itemNotes ? (req.body.itemNotes[i] || '') : ''
-          });
-        }
-      } else if (req.body.itemStockItemId) {
-        const sId = parseInt(req.body.itemStockItemId, 10);
-        if (sId) {
-          const qty = parseFloat(req.body.itemQuantity) || 1;
-          const price = parseFloat(req.body.itemUnitPrice) || 0;
-          const disc = parseFloat(req.body.itemDiscountRate) || 0;
-          const vat = parseFloat(req.body.itemVatRate) || 20;
-
-          const rawTotal = qty * price;
-          const discAmt = rawTotal * (disc / 100);
-          const taxAmt = (rawTotal - discAmt) * (vat / 100);
-          const net = rawTotal - discAmt + taxAmt;
-
-          itemsData.push({
-            stokId: sId,
-            stokKodu: req.body.itemStockCode || '',
-            ad: req.body.itemProductName || '',
-            requisitionNo: req.body.itemRequisitionNo || '',
-            miktar: qty,
-            birim: req.body.itemUnit || 'Adet',
-            birimFiyat: price,
-            iskontoOrani: disc,
-            kdvOrani: vat,
-            netAmount: net,
-            notlar: req.body.itemNotes || ''
-          });
-        }
+      if (itemStockIds.length === 0) {
+        throw new ValidationError('Teklifte en az bir adet satın alma talepli ürün bulunmalıdır.');
       }
 
-      const subtotal = parseFloat(req.body.subtotal || req.body.araToplam) || 0;
-      const totalDiscount = parseFloat(req.body.totalDiscount || req.body.toplamIskonto) || 0;
-      const totalTax = parseFloat(req.body.totalTax || req.body.toplamKdv) || 0;
-      const offeredTotalPrice = parseFloat(req.body.offeredTotalPrice || req.body.teklifEdilenToplamFiyat) || (subtotal - totalDiscount + totalTax);
+      let subtotal = 0;
+      let totalDiscount = 0;
+      let totalTax = 0;
+      let netTotal = 0;
+      const isVatIncluded = req.body.vatStatus === 'Dahil' || req.body.kdvDurumu === 'Dahil';
+
+      for (let i = 0; i < itemStockIds.length; i++) {
+        const sId = parseInt(itemStockIds[i], 10);
+        if (!sId) continue;
+
+        const reqQty = parseFloat(itemReqQtys[i]) || 1;
+        const offQty = parseFloat(itemOfferedQtys[i]) || 0;
+        const price = parseFloat(itemPrices[i]) || 0;
+        const disc = parseFloat(itemDiscounts[i]) || 0;
+        const vat = parseFloat(itemVats[i]) !== undefined && itemVats[i] !== '' ? parseFloat(itemVats[i]) : 20;
+
+        if (offQty <= 0) {
+          throw new ValidationError(`[${itemCodes[i] || 'Ürün'}] için geçerli bir teklif miktarı girilmelidir (0'dan büyük olmalıdır).`);
+        }
+
+        if (offQty > reqQty) {
+          throw new ValidationError(`[${itemCodes[i] || 'Ürün'}] için teklif edilen miktar (${offQty}), talep edilen miktardan (${reqQty}) fazla olamaz!`);
+        }
+
+        if (price <= 0) {
+          throw new ValidationError(`[${itemCodes[i] || 'Ürün'}] için birim fiyatı zorunludur ve 0'dan büyük olmalıdır.`);
+        }
+
+        const rawTotal = offQty * price;
+        const discAmt = rawTotal * (disc / 100);
+        const discTotal = rawTotal - discAmt;
+        let taxAmt = 0;
+        let lineNet = 0;
+
+        if (isVatIncluded) {
+          taxAmt = discTotal - (discTotal / (1 + (vat / 100)));
+          lineNet = discTotal;
+        } else {
+          taxAmt = discTotal * (vat / 100);
+          lineNet = discTotal + taxAmt;
+        }
+
+        subtotal += rawTotal;
+        totalDiscount += discAmt;
+        totalTax += taxAmt;
+        netTotal += lineNet;
+
+        itemsData.push({
+          talepId: parseInt(itemReqIds[i], 10) || null,
+          talepNo: itemReqNos[i] || '',
+          stokId: sId,
+          stokKodu: itemCodes[i] || '',
+          ad: itemNames[i] || '',
+          talepEdilenMiktar: reqQty,
+          teklifEdilenMiktar: offQty,
+          birim: itemUnits[i] || 'Adet',
+          birimFiyat: price,
+          iskontoOrani: disc,
+          kdvOrani: vat,
+          iskontoTutari: discAmt,
+          kdvTutari: taxAmt,
+          netAmount: lineNet,
+          isPrimary: i === 0
+        });
+      }
 
       const firstItem = itemsData[0] || {};
+      const nextRfqNo = req.body.teklifTalepNo || req.body.rfqNo || await purchaseService.getNextRfqNo();
 
       await purchaseService.createRfq({
-        teklifTalepNo: req.body.teklifTalepNo || req.body.rfqNo,
+        teklifTalepNo: nextRfqNo,
         tedarikciId: supplierId,
         tedarikciAdi: supplierName,
         stokId: firstItem.stokId || 1,
-        talepEdilenMiktar: firstItem.miktar || 1,
+        talepEdilenMiktar: firstItem.teklifEdilenMiktar || firstItem.talepEdilenMiktar || 1,
         teklifEdilenBirimFiyat: firstItem.birimFiyat || 0,
-        teklifEdilenToplamFiyat: offeredTotalPrice,
+        teklifEdilenToplamFiyat: netTotal,
         araToplam: subtotal,
         toplamIskonto: totalDiscount,
         toplamKdv: totalTax,
         kalemlerVerisi: itemsData,
-        paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY',
-        odemeVadesi: req.body.odemeVadesi || req.body.paymentTerm || 'Pesin',
-        teslimSuresiGun: req.body.teslimSuresiGun || req.body.deliveryDays ? parseInt(req.body.teslimSuresiGun || req.body.deliveryDays, 10) : null,
-        teslimYeri: req.body.teslimYeri || req.body.deliveryPlace || null,
-        sevkiyatDurumu: req.body.sevkiyatDurumu || req.body.shippingStatus || null,
-        kdvDurumu: req.body.kdvDurumu || req.body.vatStatus || null,
-        belgeReferansi: req.body.belgeReferansi || req.body.documentRef || null,
-        gecerlilikBitis: req.body.gecerlilikBitis || req.body.validUntil || null,
-        teklifTalepTarihi: req.body.teklifTalepTarihi || req.body.rfqDate || new Date().toISOString().split('T')[0],
-        durum: req.body.durum || req.body.status || 'Received',
-        talepEden: req.body.talepEden || (req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi),
-        notlar: req.body.notlar || req.body.notes || null
+        paraBirimi: req.body.currency || req.body.paraBirimi || 'TRY',
+        odemeVadesi: req.body.paymentTerm || req.body.odemeVadesi || 'Vadeli_30',
+        teslimSuresiGun: req.body.deliveryDays || req.body.teslimSuresiGun ? parseInt(req.body.deliveryDays || req.body.teslimSuresiGun, 10) : 5,
+        teslimYeri: req.body.deliveryPlace || req.body.teslimYeri || 'Ana Hammadde & Üretim Ambarı',
+        kdvDurumu: isVatIncluded ? 'Dahil' : 'Hariç',
+        gecerlilikBitis: req.body.validUntil || req.body.gecerlilikBitis || null,
+        teklifTalepTarihi: req.body.rfqDate || req.body.teklifTalepTarihi || new Date().toISOString().split('T')[0],
+        durum: 'Received',
+        talepEden: req.user.ad ? `${req.user.ad} ${req.user.soyad}` : req.user.kullaniciAdi,
+        notlar: req.body.notes || req.body.notlar || null
       }, req.user, req.ip);
 
-      res.redirect('/purchase/rfq');
+      res.redirect('/purchase/rfq?success=created');
     } catch (err) {
       console.error('addRfq Error:', err);
       const nextRfqNo = await purchaseService.getNextRfqNo();
-      const suppliers = await purchaseService.getAllSuppliers({ status: 'Active' });
+      const suppliers = await Tedarikci.findAll({ where: { durum: 'Active' }, order: [['firmaAdi', 'ASC']] });
       const requisitions = await SatinAlmaTalebi.findAll({
         where: { durum: { [Op.in]: ['Pending', 'Approved', 'Ordered'] } },
-        include: [{ model: StokKarti, as: 'stokKarti' }]
+        include: [{ model: StokKarti, as: 'stokKarti', include: [{ model: Tedarikci, as: 'tedarikciKarti' }] }],
+        order: [['createdAt', 'DESC']]
       });
 
-      const reqMap = new Map();
-      requisitions.forEach(reqItem => {
-        if (reqItem.stokKarti && !reqMap.has(reqItem.stokKarti.id)) {
-          const minStockVal = parseFloat(reqItem.stokKarti.asgariStok) || 10;
-          reqMap.set(reqItem.stokKarti.id, {
-            stockItemId: reqItem.stokKarti.id,
-            stockCode: reqItem.stokKarti.stokKodu,
-            name: reqItem.stokKarti.ad,
-            category: reqItem.stokKarti.kategori,
-            unit: reqItem.stokKarti.birim || 'Adet',
-            minStock: minStockVal > 0 ? minStockVal : 10,
-            purchasePrice: parseFloat(reqItem.stokKarti.alisFiyati) || 0,
-            requisitionNo: reqItem.talepNo,
-            requisitionId: reqItem.id,
-            requestedQuantity: parseFloat(reqItem.talepEdilenMiktar) || minStockVal || 10
-          });
-        }
-      });
+      const availableRequisitions = requisitions.map(r => ({
+        id: r.id,
+        requisitionNo: r.talepNo,
+        stockItemId: r.stokId,
+        stockCode: r.stokKarti ? r.stokKarti.stokKodu : '',
+        name: r.stokKarti ? r.stokKarti.ad : '',
+        category: r.stokKarti ? r.stokKarti.kategori : 'Hammadde',
+        unit: r.birim || (r.stokKarti ? r.stokKarti.birim : 'Adet'),
+        requestedQuantity: parseFloat(r.talepEdilenMiktar) || 0,
+        purchasePrice: parseFloat(r.stokKarti ? r.stokKarti.alisFiyati : 0) || 0,
+        deliveryPlace: r.girisDeposu || (r.stokKarti ? r.stokKarti.depoLokasyonu : '') || 'Ana Hammadde & Üretim Ambarı',
+        supplierId: r.stokKarti?.tedarikciId || (r.stokKarti?.tedarikciKarti ? r.stokKarti.tedarikciKarti.id : null),
+        supplierName: r.stokKarti?.tedarikciKarti?.firmaAdi || r.stokKarti?.tedarikci || '',
+        taxNo: r.stokKarti?.tedarikciKarti?.vergiNo || '',
+        taxOffice: r.stokKarti?.tedarikciKarti?.vergiDairesi || '',
+        contactPerson: r.stokKarti?.tedarikciKarti?.ilgiliKisi || '',
+        currency: r.stokKarti?.tedarikciKarti?.paraBirimi || (r.stokKarti ? r.stokKarti.paraBirimi : 'TRY'),
+        leadTime: r.stokKarti?.tedarikciKarti?.terminSuresi || 5,
+        paymentTerm: r.stokKarti?.tedarikciKarti?.odemeVadesi || 'Vadeli_30',
+        urgency: r.aciliyet || 'Normal',
+        createdAt: r.createdAt
+      }));
 
       const warehouses = await Depo.findAll({ where: { durum: 'Active' }, order: [['ad', 'ASC']] });
 
       res.render('purchase/rfq_add', {
         user: req.user,
-        error: err.message || 'Teklif kaydedilirken hata oluştu.',
+        error: err.message,
         nextRfqNo,
         suppliers,
-        requisitionedProducts: Array.from(reqMap.values()),
-        targetReqId: null,
+        availableRequisitions,
+        primaryRequisition: requisitions[0] || null,
+        defaultSupplier: suppliers[0] || null,
+        defaultDeliveryPlace: 'Ana Hammadde & Üretim Ambarı',
         warehouses,
         formData: req.body
       });
