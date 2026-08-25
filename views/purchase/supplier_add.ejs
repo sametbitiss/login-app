@@ -323,10 +323,10 @@
               <!-- 17. Durum -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>17. Tedarikçi Durumu <span class="req">*</span></span>
+                  <span>17. Tedarikçi Durumu</span>
                   <span class="badge-tip">Aktif / Pasif</span>
                 </label>
-                <select id="durum" name="durum" class="aesthetic-input" style="cursor: pointer;" required>
+                <select id="durum" name="durum" class="aesthetic-input" style="cursor: pointer;">
                   <option value="Active" <%= (formData.durum === 'Active' || !formData.durum) ? 'selected' : '' %>>● Aktif Tedarikçi</option>
                   <option value="Inactive" <%= formData.durum === 'Inactive' ? 'selected' : '' %>>● Pasif Tedarikçi</option>
                 </select>
@@ -343,23 +343,24 @@
                 <input type="text" id="firmaAdi" name="firmaAdi" value="<%= formData.firmaAdi || formData.companyName || '' %>" placeholder="Örn: Demir Grup Taşımacılık San. ve Tic. A.Ş." class="aesthetic-input" required minlength="2">
               </div>
 
-              <!-- 3. Ticari Ad -->
+              <!-- 3. Ticari Ad (Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>3. Ticari Ad (Kısa Ad) <span class="req">*</span></span>
-                  <span class="badge-tip">Kartta görünecek kısa ad</span>
+                  <span>3. Ticari Ad (Kısa Ad)</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
-                <input type="text" id="ticariAd" name="ticariAd" value="<%= formData.ticariAd || formData.commercialName || '' %>" placeholder="Örn: Demir Grup" class="aesthetic-input" required>
+                <input type="text" id="ticariAd" name="ticariAd" value="<%= formData.ticariAd || formData.commercialName || '' %>" placeholder="Örn: Demir Grup" class="aesthetic-input">
               </div>
             </div>
 
             <div class="form-grid-3">
-              <!-- 4. Tedarikçi Grubu / Kategori -->
+              <!-- 4. Tedarikçi Grubu / Kategori (Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>4. Tedarikçi Grubu / Kategori <span class="req">*</span></span>
+                  <span>4. Tedarikçi Grubu / Kategori</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
-                <select id="kategori" name="kategori" class="aesthetic-input" style="cursor: pointer;" required>
+                <select id="kategori" name="kategori" class="aesthetic-input" style="cursor: pointer;">
                   <option value="Hammadde" <%= (formData.kategori === 'Hammadde' || !formData.kategori) ? 'selected' : '' %>>🔩 Hammadde Tedarikçisi</option>
                   <option value="Yari_Mamul" <%= formData.kategori === 'Yari_Mamul' ? 'selected' : '' %>>⚙️ Yarı Mamul Tedarikçisi</option>
                   <option value="Hizmet" <%= formData.kategori === 'Hizmet' ? 'selected' : '' %>>🛠️ Fasoncu / Hizmet Sağlayıcı</option>
@@ -391,16 +392,16 @@
           <!-- TAB 2: İLETİŞİM & FATURA ADRESİ -->
           <div id="tab-contact" class="tab-pane">
             <div class="form-grid-3">
-              <!-- 10. İlgili Satış Temsilcisi -->
+              <!-- 10. İlgili Satış Temsilcisi (Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>10. İlgili Satış Temsilcisi <span class="req">*</span></span>
-                  <span class="badge-tip">Yetkili Kişi</span>
+                  <span>10. İlgili Satış Temsilcisi</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
-                <input type="text" id="ilgiliKisi" name="ilgiliKisi" value="<%= formData.ilgiliKisi || formData.contactPerson || '' %>" placeholder="Örn: Mehmet Kaplan" class="aesthetic-input" required>
+                <input type="text" id="ilgiliKisi" name="ilgiliKisi" value="<%= formData.ilgiliKisi || formData.contactPerson || '' %>" placeholder="Örn: Mehmet Kaplan" class="aesthetic-input">
               </div>
 
-              <!-- 11. E-Posta Adresi -->
+              <!-- 11. E-Posta Adresi (Zorunlu) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
                   <span>11. E-Posta Adresi <span class="req">*</span></span>
@@ -408,50 +409,55 @@
                 <input type="email" id="eposta" name="eposta" value="<%= formData.eposta || formData.email || '' %>" placeholder="siparis@demirgrup.com" class="aesthetic-input" required>
               </div>
 
-              <!-- 13. Web Sitesi -->
+              <!-- 13. Web Sitesi (Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>13. Web Sitesi <span class="req">*</span></span>
+                  <span>13. Web Sitesi</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
-                <input type="text" id="webSitesi" name="webSitesi" value="<%= formData.webSitesi || formData.website || '' %>" placeholder="https://www.demirgrup.com" class="aesthetic-input" required>
+                <input type="text" id="webSitesi" name="webSitesi" value="<%= formData.webSitesi || formData.website || '' %>" placeholder="https://www.demirgrup.com" class="aesthetic-input">
               </div>
             </div>
 
             <div class="form-grid-2">
-              <!-- 12. Telefon (Sabit) -->
+              <!-- 12. Telefon (Sabit - Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>12. Sabit Telefon Numarası <span class="req">*</span></span>
+                  <span>12. Sabit Telefon Numarası</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
-                <input type="text" id="telefon" name="telefon" value="<%= formData.telefon || formData.phone || '' %>" placeholder="+90 (212) 555 0000" class="aesthetic-input" required>
+                <input type="text" id="telefon" name="telefon" value="<%= formData.telefon || formData.phone || '' %>" placeholder="+90 (212) 555 0000" class="aesthetic-input">
               </div>
 
-              <!-- 12. GSM / Cep Numarası -->
+              <!-- 12. GSM / Cep Numarası (Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>12. GSM / Cep Telefon Numarası <span class="req">*</span></span>
+                  <span>12. GSM / Cep Telefon Numarası</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
-                <input type="text" id="gsm" name="gsm" value="<%= formData.gsm || formData.mobilePhone || '' %>" placeholder="+90 (532) 123 4567" class="aesthetic-input" required>
+                <input type="text" id="gsm" name="gsm" value="<%= formData.gsm || formData.mobilePhone || '' %>" placeholder="+90 (532) 123 4567" class="aesthetic-input">
               </div>
             </div>
 
             <div class="form-grid-3">
-              <!-- 6. Fatura Adresi -->
+              <!-- 6. Fatura Adresi (Opsiyonel) -->
               <div class="aesthetic-group" style="grid-column: span 2;">
                 <label class="aesthetic-label">
-                  <span>6. Fatura & Merkez Şirket Adresi <span class="req">*</span></span>
+                  <span>6. Fatura & Merkez Şirket Adresi</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
-                <input type="text" id="adres" name="adres" value="<%= formData.adres || formData.address || '' %>" placeholder="Örn: İkitelli OSB, Metal İş Sanayi Sitesi 12. Blok No:45" class="aesthetic-input" required>
+                <input type="text" id="adres" name="adres" value="<%= formData.adres || formData.address || '' %>" placeholder="Örn: İkitelli OSB, Metal İş Sanayi Sitesi 12. Blok No:45" class="aesthetic-input">
               </div>
 
-              <!-- 6. Şehir & Ülke -->
+              <!-- 6. Şehir & Ülke (Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>6. Şehir / Ülke <span class="req">*</span></span>
+                  <span>6. Şehir / Ülke</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
                 <div style="display: flex; gap: 8px;">
-                  <input type="text" id="sehir" name="sehir" value="<%= formData.sehir || formData.city || 'İstanbul' %>" placeholder="İstanbul" class="aesthetic-input" style="flex: 1;" required>
-                  <input type="text" id="ulke" name="ulke" value="<%= formData.ulke || formData.country || 'Türkiye' %>" placeholder="Türkiye" class="aesthetic-input" style="width: 90px;" required>
+                  <input type="text" id="sehir" name="sehir" value="<%= formData.sehir || formData.city || 'İstanbul' %>" placeholder="İstanbul" class="aesthetic-input" style="flex: 1;">
+                  <input type="text" id="ulke" name="ulke" value="<%= formData.ulke || formData.country || 'Türkiye' %>" placeholder="Türkiye" class="aesthetic-input" style="width: 90px;">
                 </div>
               </div>
             </div>
@@ -463,21 +469,22 @@
               <!-- 8. Varsayılan Para Birimi -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>8. Varsayılan Para Birimi <span class="req">*</span></span>
+                  <span>8. Varsayılan Para Birimi</span>
                 </label>
-                <select id="paraBirimi" name="paraBirimi" class="aesthetic-input" style="cursor: pointer;" required>
+                <select id="paraBirimi" name="paraBirimi" class="aesthetic-input" style="cursor: pointer;">
                   <option value="TRY" <%= (formData.paraBirimi === 'TRY' || !formData.paraBirimi) ? 'selected' : '' %>>₺ TRY - Türk Lirası</option>
                   <option value="USD" <%= formData.paraBirimi === 'USD' ? 'selected' : '' %>>$ USD - Amerikan Doları</option>
                   <option value="EUR" <%= formData.paraBirimi === 'EUR' ? 'selected' : '' %>>€ EUR - Euro</option>
                 </select>
               </div>
 
-              <!-- 9. Varsayılan Ödeme Vadesi -->
+              <!-- 9. Varsayılan Ödeme Vadesi (Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>9. Varsayılan Ödeme Vadesi <span class="req">*</span></span>
+                  <span>9. Varsayılan Ödeme Vadesi</span>
+                  <span class="badge-tip">Opsiyonel</span>
                 </label>
-                <select id="odemeVadesi" name="odemeVadesi" class="aesthetic-input" style="cursor: pointer;" required>
+                <select id="odemeVadesi" name="odemeVadesi" class="aesthetic-input" style="cursor: pointer;">
                   <option value="Vadeli_30" <%= (formData.odemeVadesi === 'Vadeli_30' || !formData.odemeVadesi) ? 'selected' : '' %>>30 Gün Vadeli</option>
                   <option value="Vadeli_15" <%= formData.odemeVadesi === 'Vadeli_15' ? 'selected' : '' %>>15 Gün Vadeli</option>
                   <option value="Vadeli_45" <%= formData.odemeVadesi === 'Vadeli_45' ? 'selected' : '' %>>45 Gün Vadeli</option>
@@ -488,13 +495,13 @@
                 </select>
               </div>
 
-              <!-- 14. Varsayılan Teslimat Şekli -->
+              <!-- 14. Varsayılan Teslimat Şekli (Opsiyonel) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>14. Varsayılan Teslimat Şekli <span class="req">*</span></span>
-                  <span class="badge-tip">Incoterms</span>
+                  <span>14. Varsayılan Teslimat Şekli</span>
+                  <span class="badge-tip">Opsiyonel (Incoterms)</span>
                 </label>
-                <select id="teslimatSekli" name="teslimatSekli" class="aesthetic-input" style="cursor: pointer;" required>
+                <select id="teslimatSekli" name="teslimatSekli" class="aesthetic-input" style="cursor: pointer;">
                   <option value="DAP - Adrese / Fabrikaya Teslim" <%= (formData.teslimatSekli === 'DAP - Adrese / Fabrikaya Teslim' || !formData.teslimatSekli) ? 'selected' : '' %>>DAP - Adrese / Fabrikaya Teslim</option>
                   <option value="EXW - Fabrika / Ambar Çıkışı" <%= formData.teslimatSekli === 'EXW - Fabrika / Ambar Çıkışı' ? 'selected' : '' %>>EXW - Fabrika / Ambar Çıkışı</option>
                   <option value="CIF - Sigorta ve Navlun Dahil" <%= formData.teslimatSekli === 'CIF - Sigorta ve Navlun Dahil' ? 'selected' : '' %>>CIF - Sigorta ve Navlun Dahil</option>
@@ -504,13 +511,13 @@
               </div>
             </div>
 
-            <!-- 7. Banka Hesap Bilgileri -->
+            <!-- 7. Banka Hesap Bilgileri (Opsiyonel) -->
             <div class="aesthetic-group">
               <label class="aesthetic-label">
-                <span>7. Banka Hesap Bilgileri (Banka Adı, IBAN & Hesap No) <span class="req">*</span></span>
-                <span class="badge-tip">Ödeme havaleleri için kullanılacak</span>
+                <span>7. Banka Hesap Bilgileri (Banka Adı, IBAN & Hesap No)</span>
+                <span class="badge-tip">Opsiyonel</span>
               </label>
-              <textarea id="bankaBilgileri" name="bankaBilgileri" class="aesthetic-input" rows="2" placeholder="Örn: Garanti BBVA - TR12 0006 2000 0001 2345 6789 01 / İkitelli Şubesi (Hesap Sahibi: Demir Grup A.Ş.)" required><%= formData.bankaBilgileri || '' %></textarea>
+              <textarea id="bankaBilgileri" name="bankaBilgileri" class="aesthetic-input" rows="2" placeholder="Örn: Garanti BBVA - TR12 0006 2000 0001 2345 6789 01 / İkitelli Şubesi (Hesap Sahibi: Demir Grup A.Ş.)"><%= formData.bankaBilgileri || '' %></textarea>
             </div>
           </div>
 
@@ -529,26 +536,33 @@
                 </div>
               </div>
 
-              <!-- 16. Kalite / Performans Puanı -->
+              <!-- 16. Kalite / Performans Puanı (Otomatik Sistem Başlangıç Puanı) -->
               <div class="aesthetic-group">
                 <label class="aesthetic-label">
-                  <span>16. Kalite / Performans Puanı (100 Üzerinden) <span class="req">*</span></span>
-                  <span class="badge-tip">0 - 100 Puan Arası</span>
+                  <span>16. Kalite / Performans Puanı</span>
+                  <span class="badge-tip">🚀 Sistem Başlangıç Puanı (85 / 100)</span>
                 </label>
-                <div class="score-range-wrap">
-                  <input type="range" id="perfRange" class="score-slider" min="0" max="100" value="<%= formData.performansSkoru || 85 %>" oninput="updateScoreVal(this.value)">
-                  <input type="hidden" id="performansSkoru" name="performansSkoru" value="<%= formData.performansSkoru || 85 %>">
-                  <div class="score-badge" id="scoreDisplay">⭐ <%= formData.performansSkoru || 85 %> / 100</div>
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1.5px solid rgba(245, 158, 11, 0.35); padding: 12px 16px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
+                  <div>
+                    <div style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; display: flex; align-items: center; gap: 6px;">
+                      <span>⭐</span> 85.0 / 100 Puan (Başlangıç)
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                      Tedarikçiden sipariş verildikçe ve gününde/kaliteli mal kabul yapıldıkça sistem puanı otomatik artırır veya düşürür.
+                    </div>
+                  </div>
+                  <input type="hidden" id="performansSkoru" name="performansSkoru" value="85">
                 </div>
               </div>
             </div>
 
-            <!-- Özel Notlar -->
+            <!-- Özel Notlar (Opsiyonel) -->
             <div class="aesthetic-group">
               <label class="aesthetic-label">
-                <span>Özel Notlar & Tedarikçi Değerlendirmesi <span class="req">*</span></span>
+                <span>Özel Notlar & Tedarikçi Değerlendirmesi</span>
+                <span class="badge-tip">Opsiyonel</span>
               </label>
-              <textarea id="notlar" name="notlar" class="aesthetic-input" rows="3" placeholder="Sözleşme şartları, kalite sertifikaları (ISO 9001 vb.), ambar kabul kuralları ve tedarikçi değerlendirme notları..." required><%= formData.notlar || '' %></textarea>
+              <textarea id="notlar" name="notlar" class="aesthetic-input" rows="3" placeholder="Sözleşme şartları, kalite sertifikaları (ISO 9001 vb.), ambar kabul kuralları ve tedarikçi değerlendirme notları..."><%= formData.notlar || '' %></textarea>
             </div>
           </div>
 
@@ -598,13 +612,8 @@
       }
     }
 
-    function updateScoreVal(val) {
-      document.getElementById('performansSkoru').value = val;
-      document.getElementById('scoreDisplay').textContent = '⭐ ' + val + ' / 100';
-    }
-
     function validateSupplierForm() {
-      // 1. Tedarikçi Kodu
+      // 1. Tedarikçi Kodu (Zorunlu)
       const tedarikciKodu = document.getElementById('tedarikciKodu').value.trim();
       if (!tedarikciKodu) {
         alert('Tedarikçi Kodu zorunludur.');
@@ -613,7 +622,7 @@
         return false;
       }
 
-      // 2. Firma Unvanı
+      // 2. Firma Unvanı (Zorunlu)
       const firmaAdi = document.getElementById('firmaAdi').value.trim();
       if (!firmaAdi || firmaAdi.length < 2) {
         alert('Lütfen geçerli bir Firma Resmi Unvanı giriniz (en az 2 karakter zorunludur).');
@@ -622,25 +631,7 @@
         return false;
       }
 
-      // 3. Ticari Ad
-      const ticariAd = document.getElementById('ticariAd').value.trim();
-      if (!ticariAd) {
-        alert('Ticari Ad / Kısa Ad alanı zorunludur.');
-        switchSupplierTab('tab-general');
-        document.getElementById('ticariAd').focus();
-        return false;
-      }
-
-      // 4. Kategori
-      const kategori = document.getElementById('kategori').value.trim();
-      if (!kategori) {
-        alert('Tedarikçi Grubu / Kategori seçimi zorunludur.');
-        switchSupplierTab('tab-general');
-        document.getElementById('kategori').focus();
-        return false;
-      }
-
-      // 5. Vergi Dairesi
+      // 5. Vergi Dairesi (Zorunlu)
       const vergiDairesi = document.getElementById('vergiDairesi').value.trim();
       if (!vergiDairesi) {
         alert('Vergi Dairesi alanı zorunludur.');
@@ -649,7 +640,7 @@
         return false;
       }
 
-      // 5. Vergi Numarası
+      // 5. Vergi Numarası (Zorunlu)
       const vergiNo = document.getElementById('vergiNo').value.trim();
       if (!vergiNo) {
         alert('Vergi Numarası / TCKN alanı zorunludur.');
@@ -664,16 +655,7 @@
         return false;
       }
 
-      // 10. İlgili Satış Temsilcisi
-      const ilgiliKisi = document.getElementById('ilgiliKisi').value.trim();
-      if (!ilgiliKisi) {
-        alert('İlgili Satış Temsilcisi / Yetkili Kişi alanı zorunludur.');
-        switchSupplierTab('tab-contact');
-        document.getElementById('ilgiliKisi').focus();
-        return false;
-      }
-
-      // 11. E-Posta
+      // 11. E-Posta (Zorunlu)
       const eposta = document.getElementById('eposta').value.trim();
       if (!eposta) {
         alert('E-Posta Adresi alanı zorunludur.');
@@ -688,118 +670,12 @@
         return false;
       }
 
-      // 13. Web Sitesi
-      const webSitesi = document.getElementById('webSitesi').value.trim();
-      if (!webSitesi) {
-        alert('Web Sitesi alanı zorunludur.');
-        switchSupplierTab('tab-contact');
-        document.getElementById('webSitesi').focus();
-        return false;
-      }
-
-      // 12. Telefon
-      const telefon = document.getElementById('telefon').value.trim();
-      if (!telefon) {
-        alert('Sabit Telefon Numarası alanı zorunludur.');
-        switchSupplierTab('tab-contact');
-        document.getElementById('telefon').focus();
-        return false;
-      }
-
-      // 12. GSM
-      const gsm = document.getElementById('gsm').value.trim();
-      if (!gsm) {
-        alert('GSM / Cep Telefon Numarası alanı zorunludur.');
-        switchSupplierTab('tab-contact');
-        document.getElementById('gsm').focus();
-        return false;
-      }
-
-      // 6. Fatura Adresi
-      const adres = document.getElementById('adres').value.trim();
-      if (!adres) {
-        alert('Fatura & Merkez Şirket Adresi alanı zorunludur.');
-        switchSupplierTab('tab-contact');
-        document.getElementById('adres').focus();
-        return false;
-      }
-
-      // 6. Şehir & Ülke
-      const sehir = document.getElementById('sehir').value.trim();
-      if (!sehir) {
-        alert('Şehir bilgisi zorunludur.');
-        switchSupplierTab('tab-contact');
-        document.getElementById('sehir').focus();
-        return false;
-      }
-      const ulke = document.getElementById('ulke').value.trim();
-      if (!ulke) {
-        alert('Ülke bilgisi zorunludur.');
-        switchSupplierTab('tab-contact');
-        document.getElementById('ulke').focus();
-        return false;
-      }
-
-      // 8. Para Birimi
-      const paraBirimi = document.getElementById('paraBirimi').value.trim();
-      if (!paraBirimi) {
-        alert('Varsayılan Para Birimi seçimi zorunludur.');
-        switchSupplierTab('tab-commercial');
-        document.getElementById('paraBirimi').focus();
-        return false;
-      }
-
-      // 9. Ödeme Vadesi
-      const odemeVadesi = document.getElementById('odemeVadesi').value.trim();
-      if (!odemeVadesi) {
-        alert('Varsayılan Ödeme Vadesi seçimi zorunludur.');
-        switchSupplierTab('tab-commercial');
-        document.getElementById('odemeVadesi').focus();
-        return false;
-      }
-
-      // 14. Teslimat Şekli
-      const teslimatSekli = document.getElementById('teslimatSekli').value.trim();
-      if (!teslimatSekli) {
-        alert('Varsayılan Teslimat Şekli seçimi zorunludur.');
-        switchSupplierTab('tab-commercial');
-        document.getElementById('teslimatSekli').focus();
-        return false;
-      }
-
-      // 7. Banka Hesap Bilgileri
-      const bankaBilgileri = document.getElementById('bankaBilgileri').value.trim();
-      if (!bankaBilgileri) {
-        alert('Banka Hesap Bilgileri (IBAN & Banka Adı) alanı zorunludur.');
-        switchSupplierTab('tab-commercial');
-        document.getElementById('bankaBilgileri').focus();
-        return false;
-      }
-
-      // 15. Termin Süresi
+      // 15. Termin Süresi (Zorunlu)
       const termin = parseInt(document.getElementById('terminSuresi').value, 10);
       if (isNaN(termin) || termin < 1) {
         alert('Varsayılan termin süresi zorunludur ve en az 1 gün olmalıdır.');
         switchSupplierTab('tab-performance');
         document.getElementById('terminSuresi').focus();
-        return false;
-      }
-
-      // 16. Performans Skoru
-      const perfSkoru = parseFloat(document.getElementById('performansSkoru').value);
-      if (isNaN(perfSkoru) || perfSkoru < 0 || perfSkoru > 100) {
-        alert('Performans / Kalite Puanı 0 - 100 arasında olmalıdır.');
-        switchSupplierTab('tab-performance');
-        document.getElementById('perfRange').focus();
-        return false;
-      }
-
-      // Notlar
-      const notlar = document.getElementById('notlar').value.trim();
-      if (!notlar) {
-        alert('Özel Notlar & Tedarikçi Değerlendirmesi alanı zorunludur.');
-        switchSupplierTab('tab-performance');
-        document.getElementById('notlar').focus();
         return false;
       }
 

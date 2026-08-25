@@ -109,6 +109,11 @@ class GoodsReceiptRepository {
       }
     }
 
+    if (grn.tedarikciId) {
+      const supplierRepository = require('./supplierRepository');
+      supplierRepository.recalculatePerformance(grn.tedarikciId).catch(() => {});
+    }
+
     await logService.logCrud({
       kullaniciId: currentUser ? currentUser.id : null,
       kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
@@ -127,6 +132,11 @@ class GoodsReceiptRepository {
     if (!grn) return null;
 
     await grn.update(data);
+
+    if (grn.tedarikciId) {
+      const supplierRepository = require('./supplierRepository');
+      supplierRepository.recalculatePerformance(grn.tedarikciId).catch(() => {});
+    }
 
     await logService.logCrud({
       kullaniciId: currentUser ? currentUser.id : null,

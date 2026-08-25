@@ -150,6 +150,88 @@ class SupplierRepository {
       ]
     });
   }
+
+  async recalculatePerformance(supplierId) {
+    if (!supplierId) return null;
+    const supplier = await Tedarikci.findByPk(supplierId);
+    if (!supplier) return null;
+
+    const { MalKabul } = require('../../models');
+
+    // 1. Sipariş geçmişi
+    const orders = await SatinAlmaSiparisi.findAll({
+      where: { tedarikciId: supplierId, durum: { [Op.ne]: 'Cancelled' } }
+    });
+
+    const totalOrders = orders.length;
+    const totalSpend = orders.reduce((sum, o) => sum + (parseFloat(o.toplamTutar) || 0), 0);
+
+    // 2. Mal kabul (Teslimat ve Kalite) geçmişi
+    const receipts = await MalKabul.findAll({
+      where: { tedarikciId: supplierId },
+      include: [{ model: SatinAlmaSiparisi, as: 'satinAlmaSiparisi' }]
+    });
+
+    let onTimeScore = 90.0;
+    let qualityScore = 90.0;
+
+    if (receipts.length > 0) {
+      let onTimeCount = 0;
+      let qualitySum = 0;
+
+      receipts.forEach(r => {
+        // Zamanında teslimat kontrolü
+        const expDate = r.satinAlmaSiparisi?.beklenenTeslimTarihi;
+        const actualDate = r.kabulTarihi || (r.createdAt ? r.createdAt.toISOString().split('T')[0] : null);
+        if (expDate && actualDate) {
+          if (actualDate <= expDate) {
+            onTimeCount += 1;
+          } else {
+            const diffDays = Math.ceil((new Date(actualDate) - new Date(expDate)) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 2) onTimeCount += 0.75;
+            else if (diffDays <= 5) onTimeCount += 0.50;
+            else onTimeCount += 0.20;
+          }
+        } else {
+          onTimeCount += 1;
+        }
+
+        // Kalite kontrolü
+        if (r.kaliteDurumu === 'Approved') {
+          const accepted = parseFloat(r.kabulMiktari) || parseFloat(r.teslimMiktari) || 0;
+          const received = parseFloat(r.teslimMiktari) || accepted || 1;
+          const qRate = Math.min(100, Math.max(0, (accepted / received) * 100));
+          qualitySum += qRate;
+        } else if (r.kaliteDurumu === 'Rejected') {
+          qualitySum += 20;
+        } else if (r.kaliteDurumu === 'Conditional_Accept') {
+          qualitySum += 75;
+        } else {
+          qualitySum += 85;
+        }
+      });
+
+      onTimeScore = Math.min(100, Math.max(0, (onTimeCount / receipts.length) * 100));
+      qualityScore = Math.min(100, Math.max(0, qualitySum / receipts.length));
+    }
+
+    // Ağırlıklı puan: %60 Zamanında Teslimat + %40 Kalite Uygunluğu
+    let overallScore = (onTimeScore * 0.6) + (qualityScore * 0.4);
+    if (totalOrders === 0 && receipts.length === 0) {
+      overallScore = 85.0; // Yeni kayıtlı tedarikçiler için varsayılan başlangıç puanı
+    }
+    overallScore = parseFloat(overallScore.toFixed(1));
+
+    await supplier.update({
+      performansSkoru: overallScore,
+      kaliteSkoru: parseFloat(qualityScore.toFixed(1)),
+      zamanindaTeslimatOrani: parseFloat(onTimeScore.toFixed(1)),
+      toplamSiparisSayisi: totalOrders,
+      toplamHarcama: parseFloat(totalSpend.toFixed(2))
+    });
+
+    return supplier;
+  }
 }
 
 module.exports = new SupplierRepository();
