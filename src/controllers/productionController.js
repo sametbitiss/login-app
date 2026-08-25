@@ -24,25 +24,12 @@ class ProductionController {
     const capacityReport = capacityData.report || capacityData;
     const mrpData = await mrpService.runMRP();
 
-    // Sadece gerçekten net eksik olan malzemeleri filtrele
-    const shortMaterials = (mrpData.materialRequirements || [])
-      .filter(m => !m.isStockSufficient && (parseFloat(m.netShortage || m.netRequirement || 0) > 0))
-      .slice(0, 8);
-
-    // Son onaylanan / üretimdeki iş emirleri (Ham talep olan Planned hariç)
-    const recentOrders = orders
-      .filter(o => (o.durum || o.status) !== 'Planned')
-      .slice(0, 8);
-
     res.render('production/analytics', {
       user: req.user,
-      orders: recentOrders.length > 0 ? recentOrders : orders.slice(0, 8),
-      allOrders: orders,
+      orders,
       stats,
       capacityReport,
-      mrpResults: shortMaterials,
-      mrpShortages: shortMaterials,
-      mrpKPI: mrpData.kpiSummary || {},
+      mrpResults: (mrpData.materialRequirements || []).slice(0, 5),
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'analytics'
@@ -203,7 +190,7 @@ class ProductionController {
       }
 
       // Match operation in routing
-      const matchingOp = routingOperations.find(r => 
+      const matchingOp = routingOperations.find(r =>
         (bom.operasyonKodu && (r.operasyonKodu === bom.operasyonKodu || String(r.operasyonSira) === String(bom.operasyonKodu)))
       );
 
@@ -298,31 +285,31 @@ class ProductionController {
       ? `${totalDurationMins.toFixed(1)} Dk (${totalHoursInt} Sa ${totalMinsRem} Dk / ${totalDurationHours} Saat)`
       : `${totalDurationMins.toFixed(1)} Dk (${totalDurationHours} Saat)`;
 
-        // 8. Delivery Date & Delay Check
-        if (effectiveDemandRef) {
-          const srcDemand = await UretimEmri.findOne({ where: { isEmriNo: effectiveDemandRef } });
-          if (srcDemand && srcDemand.planlananBitisTarihi) {
-            deliveryDate = srcDemand.planlananBitisTarihi;
-            hasDeliveryDate = true;
-          } else {
-            const srcSale = await SatisSiparisi.findOne({ where: { siparisNo: effectiveDemandRef } });
-            if (srcSale && (srcSale.teslimTarihi || srcSale.siparisTarihi)) {
-              deliveryDate = srcSale.teslimTarihi || srcSale.siparisTarihi;
-              hasDeliveryDate = true;
-            }
-          }
-
-          if (hasDeliveryDate && deliveryDate) {
-            const projectedEndTs = new Date(projectedEndDate).getTime();
-            const deliveryTs = new Date(deliveryDate).getTime();
-            if (projectedEndTs > deliveryTs) {
-              isDeliveryDelayed = true;
-              delayDays = Math.ceil((projectedEndTs - deliveryTs) / (1000 * 60 * 60 * 24));
-            }
-          }
+    // 8. Delivery Date & Delay Check
+    if (effectiveDemandRef) {
+      const srcDemand = await UretimEmri.findOne({ where: { isEmriNo: effectiveDemandRef } });
+      if (srcDemand && srcDemand.planlananBitisTarihi) {
+        deliveryDate = srcDemand.planlananBitisTarihi;
+        hasDeliveryDate = true;
+      } else {
+        const srcSale = await SatisSiparisi.findOne({ where: { siparisNo: effectiveDemandRef } });
+        if (srcSale && (srcSale.teslimTarihi || srcSale.siparisTarihi)) {
+          deliveryDate = srcSale.teslimTarihi || srcSale.siparisTarihi;
+          hasDeliveryDate = true;
         }
+      }
 
-        routingOperations = processedOps;
+      if (hasDeliveryDate && deliveryDate) {
+        const projectedEndTs = new Date(projectedEndDate).getTime();
+        const deliveryTs = new Date(deliveryDate).getTime();
+        if (projectedEndTs > deliveryTs) {
+          isDeliveryDelayed = true;
+          delayDays = Math.ceil((projectedEndTs - deliveryTs) / (1000 * 60 * 60 * 24));
+        }
+      }
+    }
+
+    routingOperations = processedOps;
 
     const nextWorkOrderNo = await productionRepository.generateWorkOrderNo();
 
@@ -938,8 +925,8 @@ class ProductionController {
     // 1. Fetch all real Work Centers from DB
     const allWorkCenters = await IsMerkezi.findAll({
       include: [
-        { 
-          model: Atolye, 
+        {
+          model: Atolye,
           as: 'atolye',
           include: [{ model: Kullanici, as: 'sorumlu' }]
         },
@@ -959,8 +946,8 @@ class ProductionController {
         durum: { [Op.in]: ['Ready', 'Waiting_Previous_Op', 'In_Production', 'Paused'] }
       },
       include: [
-        { 
-          model: UretimEmri, 
+        {
+          model: UretimEmri,
           as: 'uretimEmri',
           include: [{ model: Kullanici, as: 'olusturan' }]
         },
@@ -1112,7 +1099,7 @@ class ProductionController {
     // 5. Build enriched work centers list
     const workCentersReport = allWorkCenters.map(wc => {
       // Station supervisor
-      const atolyeSorumlu = wc.atolye && wc.atolye.sorumlu 
+      const atolyeSorumlu = wc.atolye && wc.atolye.sorumlu
         ? (wc.atolye.sorumlu.ad ? `${wc.atolye.sorumlu.ad} ${wc.atolye.sorumlu.soyad || ''}`.trim() : wc.atolye.sorumlu.kullaniciAdi)
         : null;
 

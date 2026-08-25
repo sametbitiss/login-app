@@ -208,7 +208,7 @@
           <div class="analytics-kpi-icon" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">📋</div>
           <div>
             <div class="analytics-kpi-label">Toplam İş Emri</div>
-            <div class="analytics-kpi-val"><%= stats.totalOrders %> <span style="font-size: 0.85rem; color: #94a3b8;">Kayıt</span></div>
+            <div class="analytics-kpi-val"><%= stats.totalOrders || 0 %> <span style="font-size: 0.85rem; color: #94a3b8;">Kayıt</span></div>
           </div>
         </div>
 
@@ -216,7 +216,7 @@
           <div class="analytics-kpi-icon" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc;">⏳</div>
           <div>
             <div class="analytics-kpi-label">Planlanan / Onaylı</div>
-            <div class="analytics-kpi-val" style="color: #a5b4fc;"><%= stats.plannedOrders %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
+            <div class="analytics-kpi-val" style="color: #a5b4fc;"><%= stats.plannedOrders || 0 %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
           </div>
         </div>
 
@@ -224,7 +224,7 @@
           <div class="analytics-kpi-icon" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">⚡</div>
           <div>
             <div class="analytics-kpi-label">Aktif İmalatta</div>
-            <div class="analytics-kpi-val" style="color: #fbbf24;"><%= stats.inProductionOrders %> <span style="font-size: 0.85rem; color: #94a3b8;">İş</span></div>
+            <div class="analytics-kpi-val" style="color: #fbbf24;"><%= stats.inProductionOrders || 0 %> <span style="font-size: 0.85rem; color: #94a3b8;">İş</span></div>
           </div>
         </div>
 
@@ -232,7 +232,7 @@
           <div class="analytics-kpi-icon" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">✅</div>
           <div>
             <div class="analytics-kpi-label">Tamamlanan İşler</div>
-            <div class="analytics-kpi-val" style="color: #34d399;"><%= stats.completedOrders %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
+            <div class="analytics-kpi-val" style="color: #34d399;"><%= stats.completedOrders || 0 %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
           </div>
         </div>
 
@@ -240,7 +240,7 @@
           <div class="analytics-kpi-icon" style="background: rgba(244, 63, 94, 0.18); color: #fb7185;">🚨</div>
           <div>
             <div class="analytics-kpi-label">MRP Eksik Kalem</div>
-            <div class="analytics-kpi-val" style="color: #fb7185;"><%= mrpResults.length %> <span style="font-size: 0.85rem; color: #94a3b8;">Malzeme</span></div>
+            <div class="analytics-kpi-val" style="color: #fb7185;"><%= (mrpResults || []).length %> <span style="font-size: 0.85rem; color: #94a3b8;">Malzeme</span></div>
           </div>
         </div>
       </div>
@@ -295,7 +295,7 @@
             </a>
           </div>
 
-          <% if (mrpResults.length === 0) { %>
+          <% if (!mrpResults || mrpResults.length === 0) { %>
             <div style="background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 2.5rem 1.5rem; text-align: center;">
               <div style="font-size: 2rem; margin-bottom: 6px;">🎉</div>
               <strong style="color: #34d399; font-size: 0.98rem; display: block;">Tüm Malzeme ve Hammaddeler Yeterli!</strong>
@@ -319,7 +319,7 @@
                 <% mrpResults.forEach(item => { 
                   const gross = parseFloat(item.grossRequirement || item.grossQty || 0);
                   const curr = parseFloat(item.currentStock || 0);
-                  const shortage = parseFloat(item.netShortage || item.netRequirement || Math.max(0, gross - curr));
+                  const shortage = parseFloat(item.netShortage !== undefined ? item.netShortage : (item.netRequirement || Math.max(0, gross - curr)));
                   const unit = item.unit || 'Adet';
                   const isPurchase = (item.procurementMethod === 'Satın Alma' || item.procurementMethod === 'Purchase');
                 %>
@@ -372,7 +372,7 @@
             </a>
           </div>
 
-          <% if (orders.length === 0) { %>
+          <% if (!orders || orders.length === 0) { %>
             <div style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 2.5rem;">
               Henüz onaylanmış veya aktif üretimde olan iş emri bulunmamaktadır.
             </div>
@@ -396,7 +396,7 @@
                   const status = o.durum || o.status || 'Approved';
                   const ops = o.operasyonlar || [];
                   const activeOp = ops.find(op => op.durum === 'In_Production' || op.durum === 'Paused') || (ops.length > 0 ? ops[0] : null);
-                  const stationName = activeOp ? activeOp.isMerkezi : (o.isMerkezi || 'İstasyon');
+                  const stationName = activeOp ? activeOp.isMerkezi : (o.isMerkezi || 'Genel İstasyon');
                 %>
                   <tr>
                     <td>
