@@ -551,7 +551,7 @@
                         <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; display: block;">
                           <%= ao.isPaused ? '⏸️ KRONOMETRE DONDURULDU (' + ao.pauseReason + ')' : '⏱️ İŞ KRONOMETRESİ & KALAN SÜRE' %>
                         </span>
-                        <span class="mes-timer-clock <%= ao.isPaused ? 'mes-timer-clock--paused' : '' %>" id="timerClock_<%= ao.id %>" data-minutes="<%= ao.tahminiDakika %>" data-paused="<%= ao.isPaused %>" data-order-id="<%= ao.id %>" data-wc-id="<%= wc.id %>">
+                        <span class="mes-timer-clock <%= ao.isPaused ? 'mes-timer-clock--paused' : '' %>" id="timerClock_<%= ao.id %>" data-minutes="<%= ao.tahminiDakika %>" data-paused="<%= ao.isPaused %>" data-order-id="<%= ao.id %>" data-wc-id="<%= wc.id %>" data-start-time="<%= ao.gerceklesenBaslangicTarihi ? new Date(ao.gerceklesenBaslangicTarihi).toISOString() : '' %>">
                           --:--:--
                         </span>
                       </div>
@@ -934,7 +934,7 @@
     setInterval(updateClock, 1000);
 
     // =========================================================================
-    // KRONOMETRE VE COUNTDOWN MOTORU
+    // KRONOMETRE VE CONTINUOUS REAL-TIME COUNTDOWN MOTORU
     // =========================================================================
     const timers = {};
 
@@ -944,40 +944,68 @@
         const orderId = clock.getAttribute('data-order-id');
         const wcId = clock.getAttribute('data-wc-id');
         const totalMinutes = parseFloat(clock.getAttribute('data-minutes')) || 60;
+        const totalSeconds = Math.round(totalMinutes * 60);
         const isPaused = clock.getAttribute('data-paused') === 'true';
+        const serverStartTimeStr = clock.getAttribute('data-start-time');
 
-        // Set initial countdown seconds based on estimate
-        let remainingSeconds = Math.round(totalMinutes * 60);
+        // Determine starting timestamp (from backend DB start time or persistent local storage)
+        let startTimestamp = null;
+        if (serverStartTimeStr && !isNaN(new Date(serverStartTimeStr).getTime())) {
+          startTimestamp = new Date(serverStartTimeStr).getTime();
+        } else {
+          const storedStart = localStorage.getItem('mes_timer_start_' + orderId);
+          if (storedStart) {
+            startTimestamp = parseInt(storedStart, 10);
+          } else {
+            startTimestamp = Date.now();
+            localStorage.setItem('mes_timer_start_' + orderId, startTimestamp);
+          }
+        }
 
-        // Check if there is stored timestamp in localStorage for continuous countdown
-        const storageKey = 'mes_timer_' + orderId;
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-          const parsed = parseInt(stored, 10);
-          if (!isNaN(parsed) && parsed > 0) remainingSeconds = parsed;
+        let remainingSeconds = totalSeconds;
+        if (isPaused) {
+          // If paused, read frozen seconds from storage or estimate
+          const pausedRemaining = localStorage.getItem('mes_timer_paused_rem_' + orderId);
+          if (pausedRemaining) {
+            remainingSeconds = parseInt(pausedRemaining, 10);
+          } else {
+            const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+            remainingSeconds = Math.max(0, totalSeconds - elapsed);
+            localStorage.setItem('mes_timer_paused_rem_' + orderId, remainingSeconds);
+          }
+        } else {
+          // Running: calculate true elapsed seconds from start timestamp
+          localStorage.removeItem('mes_timer_paused_rem_' + orderId);
+          const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+          remainingSeconds = Math.max(0, totalSeconds - elapsed);
         }
 
         timers[orderId] = {
           clockEl: clock,
           wcId: wcId,
+          startTimestamp: startTimestamp,
+          totalSeconds: totalSeconds,
           remainingSeconds: remainingSeconds,
-          isPaused: isPaused
+          isPaused: isPaused,
+          hasAutoTriggered: false
         };
 
         renderTimerString(clock, remainingSeconds);
       });
 
-      // Ticker interval
+      // Ticker interval using real timestamp delta
       setInterval(() => {
+        const now = Date.now();
         Object.keys(timers).forEach(orderId => {
           const t = timers[orderId];
-          if (t && !t.isPaused && t.remainingSeconds > 0) {
-            t.remainingSeconds--;
-            localStorage.setItem('mes_timer_' + orderId, t.remainingSeconds);
+          if (t && !t.isPaused) {
+            const elapsed = Math.floor((now - t.startTimestamp) / 1000);
+            t.remainingSeconds = Math.max(0, t.totalSeconds - elapsed);
             renderTimerString(t.clockEl, t.remainingSeconds);
 
-            // If timer reaches 0: auto open complete modal!
-            if (t.remainingSeconds === 0) {
+            // If timer reaches 0: auto open complete modal once!
+            if (t.remainingSeconds === 0 && !t.hasAutoTriggered) {
+              t.hasAutoTriggered = true;
               const activeBox = t.clockEl.closest('.mes-active-box');
               const orderCodeEl = activeBox?.querySelector('.mes-order-code');
               const orderNo = orderCodeEl ? orderCodeEl.textContent.replace('📋', '').trim() : orderId;

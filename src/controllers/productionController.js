@@ -24,12 +24,25 @@ class ProductionController {
     const capacityReport = capacityData.report || capacityData;
     const mrpData = await mrpService.runMRP();
 
+    // Sadece gerçekten net eksik olan malzemeleri filtrele
+    const shortMaterials = (mrpData.materialRequirements || [])
+      .filter(m => !m.isStockSufficient && (parseFloat(m.netShortage || m.netRequirement || 0) > 0))
+      .slice(0, 8);
+
+    // Son onaylanan / üretimdeki iş emirleri (Ham talep olan Planned hariç)
+    const recentOrders = orders
+      .filter(o => (o.durum || o.status) !== 'Planned')
+      .slice(0, 8);
+
     res.render('production/analytics', {
       user: req.user,
-      orders,
+      orders: recentOrders.length > 0 ? recentOrders : orders.slice(0, 8),
+      allOrders: orders,
       stats,
       capacityReport,
-      mrpResults: (mrpData.materialRequirements || []).slice(0, 5),
+      mrpResults: shortMaterials,
+      mrpShortages: shortMaterials,
+      mrpKPI: mrpData.kpiSummary || {},
       WORK_CENTERS,
       ALL_ROLES,
       activeSubTab: 'analytics'

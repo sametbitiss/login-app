@@ -5,9 +5,116 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Üretim & İmalat Analitiği Dashboard — Enterprise ERP</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/sidebar.js" defer></script>
+  <style>
+    .analytics-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .analytics-kpi-card {
+      background: rgba(30, 41, 59, 0.45);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .analytics-kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+    .analytics-kpi-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .analytics-kpi-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .analytics-kpi-val {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #f8fafc;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .analytics-grid-two {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 1024px) {
+      .analytics-grid-two { grid-template-columns: 1fr; }
+    }
+
+    .analytics-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 22px 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+    }
+    .analytics-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .analytics-card-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.86rem;
+    }
+    .analytics-table th {
+      background: rgba(30, 41, 59, 0.85);
+      color: #94a3b8;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 12px 14px;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+    }
+    .analytics-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+      color: #cbd5e1;
+    }
+    .analytics-table tr:last-child td { border-bottom: none; }
+    .analytics-table tr:hover td { background: rgba(99, 102, 241, 0.04); }
+  </style>
 </head>
 <body class="module-body">
 
@@ -74,94 +181,178 @@
 
     <main class="module-content">
 
-      <div class="page-header">
+      <!-- Page Header -->
+      <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
         <div>
-          <h1>Üretim ve İmalat Yönetimi Dashboard</h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Açık iş emirleri, fabrika istasyon yükleri ve MRP ihtiyaç özetleri.</p>
+          <div style="font-size: 0.82rem; color: #818cf8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">
+            📊 FABRİKA YÖNETİMİ & VERİMLİLİK METRİKLERİ
+          </div>
+          <h1 style="margin: 0;">Üretim ve İmalat Yönetimi Dashboard</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+            Açık iş emirleri, iş istasyonu kapasite dolulukları, MRP eksik hammadde alarmları ve saha ilerleme grafikleri.
+          </p>
         </div>
-        <a href="/production/mrp" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          ⚡ MRP ile İş Emri Planla
-        </a>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="/production/mes" class="btn" style="background: rgba(99, 102, 241, 0.18); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); font-weight: 800; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
+            <span>📱 MES Saha Terminali</span>
+          </a>
+          <a href="/production/mrp" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+            <span>⚡ MRP Motorunu Çalıştır</span>
+          </a>
+        </div>
       </div>
 
       <!-- KPI Strip -->
-      <div class="kpi-strip">
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--indigo">📋</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Toplam İş Emri</span>
-            <span class="kpi-chip-value"><%= stats.totalOrders %></span>
+      <div class="analytics-kpi-grid">
+        <div class="analytics-kpi-card">
+          <div class="analytics-kpi-icon" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">📋</div>
+          <div>
+            <div class="analytics-kpi-label">Toplam İş Emri</div>
+            <div class="analytics-kpi-val"><%= stats.totalOrders %> <span style="font-size: 0.85rem; color: #94a3b8;">Kayıt</span></div>
           </div>
         </div>
 
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--amber">⏳</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Planlanan İşler</span>
-            <span class="kpi-chip-value"><%= stats.plannedOrders %></span>
+        <div class="analytics-kpi-card">
+          <div class="analytics-kpi-icon" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc;">⏳</div>
+          <div>
+            <div class="analytics-kpi-label">Planlanan / Onaylı</div>
+            <div class="analytics-kpi-val" style="color: #a5b4fc;"><%= stats.plannedOrders %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
           </div>
         </div>
 
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--cyan">⚙️</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Üretimde Olanlar</span>
-            <span class="kpi-chip-value"><%= stats.inProductionOrders %></span>
+        <div class="analytics-kpi-card">
+          <div class="analytics-kpi-icon" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">⚡</div>
+          <div>
+            <div class="analytics-kpi-label">Aktif İmalatta</div>
+            <div class="analytics-kpi-val" style="color: #fbbf24;"><%= stats.inProductionOrders %> <span style="font-size: 0.85rem; color: #94a3b8;">İş</span></div>
           </div>
         </div>
 
-        <div class="kpi-chip">
-          <div class="kpi-chip-icon kpi-chip--emerald">✅</div>
-          <div class="kpi-chip-data">
-            <span class="kpi-chip-label">Tamamlanan İşler</span>
-            <span class="kpi-chip-value"><%= stats.completedOrders %></span>
+        <div class="analytics-kpi-card">
+          <div class="analytics-kpi-icon" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">✅</div>
+          <div>
+            <div class="analytics-kpi-label">Tamamlanan İşler</div>
+            <div class="analytics-kpi-val" style="color: #34d399;"><%= stats.completedOrders %> <span style="font-size: 0.85rem; color: #94a3b8;">Emir</span></div>
+          </div>
+        </div>
+
+        <div class="analytics-kpi-card">
+          <div class="analytics-kpi-icon" style="background: rgba(244, 63, 94, 0.18); color: #fb7185;">🚨</div>
+          <div>
+            <div class="analytics-kpi-label">MRP Eksik Kalem</div>
+            <div class="analytics-kpi-val" style="color: #fb7185;"><%= mrpResults.length %> <span style="font-size: 0.85rem; color: #94a3b8;">Malzeme</span></div>
           </div>
         </div>
       </div>
 
       <!-- Charts Section -->
-      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px;">
-        <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md);">
-          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">🏭 İş İstasyonları Doluluk ve Yük Oranları (%)</h3>
-          <canvas id="capacityChart" height="130"></canvas>
+      <div class="analytics-grid-two">
+        <!-- Station Capacity Load Bar Chart -->
+        <div class="analytics-card">
+          <div class="analytics-card-header">
+            <h3 class="analytics-card-title">
+              <span>🏭</span>
+              <span>İş İstasyonları Kapasite Doluluk ve Yük Oranları (%)</span>
+            </h3>
+            <a href="/production/capacity" style="color: #818cf8; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+              Kapasite Detayı ➔
+            </a>
+          </div>
+          <div style="height: 220px; position: relative;">
+            <canvas id="capacityChart"></canvas>
+          </div>
         </div>
 
-        <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md);">
-          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">📊 İş Emri Durum Dağılımı</h3>
-          <canvas id="statusChart" height="200"></canvas>
+        <!-- Order Status Doughnut Chart -->
+        <div class="analytics-card">
+          <div class="analytics-card-header">
+            <h3 class="analytics-card-title">
+              <span>📊</span>
+              <span>İş Emri Durum Dağılımı</span>
+            </h3>
+            <a href="/production/orders" style="color: #818cf8; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+              İş Emirleri ➔
+            </a>
+          </div>
+          <div style="height: 220px; position: relative;">
+            <canvas id="statusChart"></canvas>
+          </div>
         </div>
       </div>
 
-      <!-- MRP Critical Alerts Preview & Active Orders -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-        <!-- MRP Net Requirements Preview -->
-        <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--rose);">🚨 MRP Eksik Malzeme İhtiyaçları</h3>
-            <a href="/production/mrp" style="color: var(--indigo); font-size: 0.85rem; font-weight: 600;">Tüm MRP Raporu →</a>
+      <!-- MRP Critical Alerts Preview & Active Orders Section -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        
+        <!-- 1. MRP Net Requirements Preview -->
+        <div class="analytics-card">
+          <div class="analytics-card-header">
+            <h3 class="analytics-card-title" style="color: #fb7185;">
+              <span>🚨</span>
+              <span>MRP Eksik Malzeme İhtiyaçları</span>
+            </h3>
+            <a href="/production/mrp" style="color: #818cf8; font-size: 0.84rem; font-weight: 700; text-decoration: none;">
+              Tüm MRP Raporu ➔
+            </a>
           </div>
+
           <% if (mrpResults.length === 0) { %>
-            <div style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 2rem;">Tüm malzemeler ve hammadde stokları yeterli! ⚡</div>
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 2.5rem 1.5rem; text-align: center;">
+              <div style="font-size: 2rem; margin-bottom: 6px;">🎉</div>
+              <strong style="color: #34d399; font-size: 0.98rem; display: block;">Tüm Malzeme ve Hammaddeler Yeterli!</strong>
+              <p style="color: #94a3b8; font-size: 0.82rem; margin: 4px 0 0 0;">
+                Aktif üretim emirlerinin reçetelerinde eksik veya kritik stok uyarısı veren malzeme bulunmamaktadır.
+              </p>
+            </div>
           <% } else { %>
-            <table class="data-table" style="font-size: 0.85rem;">
+            <table class="analytics-table">
               <thead>
                 <tr>
                   <th>Malzeme Kodu</th>
-                  <th>Hammadde Adı</th>
-                  <th>Gereksinim</th>
-                  <th>Mevcut Stok</th>
-                  <th>Net İhtiyaç</th>
+                  <th>Hammadde / Bileşen</th>
+                  <th style="text-align: right;">Gereksinim</th>
+                  <th style="text-align: right;">Mevcut Stok</th>
+                  <th style="text-align: right;">Net Eksik</th>
+                  <th style="text-align: center;">Tedarik</th>
                 </tr>
               </thead>
               <tbody>
-                <% mrpResults.forEach(item => { %>
+                <% mrpResults.forEach(item => { 
+                  const gross = parseFloat(item.grossRequirement || item.grossQty || 0);
+                  const curr = parseFloat(item.currentStock || 0);
+                  const shortage = parseFloat(item.netShortage || item.netRequirement || Math.max(0, gross - curr));
+                  const unit = item.unit || 'Adet';
+                  const isPurchase = (item.procurementMethod === 'Satın Alma' || item.procurementMethod === 'Purchase');
+                %>
                   <tr>
-                    <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= item.stockCode %></strong></td>
-                    <td><%= item.name %></td>
-                    <td><%= item.grossRequirement %> <%= item.unit %></td>
-                    <td><%= item.currentStock %> <%= item.unit %></td>
-                    <td><strong style="color: var(--rose);">+<%= item.netRequirement %> <%= item.unit %></strong></td>
+                    <td>
+                      <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">
+                        <%= item.stockCode %>
+                      </strong>
+                    </td>
+                    <td>
+                      <span style="font-weight: 700; color: #fff;"><%= item.name %></span>
+                      <div style="font-size: 0.72rem; color: #94a3b8;"><%= item.category || 'Hammadde' %></div>
+                    </td>
+                    <td style="text-align: right; color: #cbd5e1; font-family: 'JetBrains Mono', monospace;">
+                      <%= gross %> <%= unit %>
+                    </td>
+                    <td style="text-align: right; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">
+                      <%= curr %> <%= unit %>
+                    </td>
+                    <td style="text-align: right; font-weight: 900; color: #fb7185; font-family: 'JetBrains Mono', monospace;">
+                      +<%= shortage %> <%= unit %>
+                    </td>
+                    <td style="text-align: center;">
+                      <% if (isPurchase) { %>
+                        <span style="background: rgba(244, 63, 94, 0.15); color: #fb7185; font-size: 0.72rem; font-weight: 800; padding: 2px 7px; border-radius: 6px;">
+                          🛒 Satın Alma
+                        </span>
+                      <% } else { %>
+                        <span style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc; font-size: 0.72rem; font-weight: 800; padding: 2px 7px; border-radius: 6px;">
+                          🏭 Yarı Mamul
+                        </span>
+                      <% } %>
+                    </td>
                   </tr>
                 <% }); %>
               </tbody>
@@ -169,86 +360,178 @@
           <% } %>
         </div>
 
-        <!-- Recent Work Orders -->
-        <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">⚡ Son İş Emirleri</h3>
-            <a href="/production/orders" style="color: var(--indigo); font-size: 0.85rem; font-weight: 600;">Tüm İş Emirleri →</a>
+        <!-- 2. Recent Work Orders -->
+        <div class="analytics-card">
+          <div class="analytics-card-header">
+            <h3 class="analytics-card-title">
+              <span>⚡</span>
+              <span>Son İş Emirleri ve Saha Durumu</span>
+            </h3>
+            <a href="/production/orders" style="color: #818cf8; font-size: 0.84rem; font-weight: 700; text-decoration: none;">
+              Tüm İş Emirleri ➔
+            </a>
           </div>
-          <table class="data-table" style="font-size: 0.85rem;">
-            <thead>
-              <tr>
-                <th>İş Emri No</th>
-                <th>Üretim Başlığı</th>
-                <th>Miktar</th>
-                <th>İstasyon</th>
-                <th>Durum</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% orders.slice(0, 5).forEach(o => { %>
+
+          <% if (orders.length === 0) { %>
+            <div style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 2.5rem;">
+              Henüz onaylanmış veya aktif üretimde olan iş emri bulunmamaktadır.
+            </div>
+          <% } else { %>
+            <table class="analytics-table">
+              <thead>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.workOrderNo %></strong></td>
-                  <td><%= o.productionTitle %></td>
-                  <td><strong><%= o.plannedQuantity %> <%= o.unit %></strong></td>
-                  <td style="font-size: 0.75rem; color: var(--text-muted);"><%= (o.workCenter && typeof o.workCenter === 'string') ? o.workCenter.split(' ')[0] : (o.workCenter || 'İstasyon') %></td>
-                  <td>
-                    <% if (o.status === 'Completed') { %>
-                      <span class="status-pill status-active">● Tamamlandı</span>
-                    <% } else if (o.status === 'In_Production') { %>
-                      <span class="status-pill status-pending">● Üretimde</span>
-                    <% } else { %>
-                      <span class="status-pill status-approved">● <%= o.status %></span>
-                    <% } %>
-                  </td>
+                  <th>İş Emri No</th>
+                  <th>İmalat Başlığı</th>
+                  <th>Miktar</th>
+                  <th>İstasyon / Rota</th>
+                  <th style="text-align: right;">Durum</th>
                 </tr>
-              <% }); %>
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                <% orders.slice(0, 6).forEach(o => { 
+                  const orderNo = o.isEmriNo || o.workOrderNo || `ISEMRI-${o.id}`;
+                  const title = o.uretimBasligi || o.productionTitle || 'İş Emri';
+                  const plannedQty = parseFloat(o.planlananMiktar !== undefined ? o.planlananMiktar : (o.plannedQuantity || 1));
+                  const unit = o.birim || o.unit || 'Adet';
+                  const status = o.durum || o.status || 'Approved';
+                  const ops = o.operasyonlar || [];
+                  const activeOp = ops.find(op => op.durum === 'In_Production' || op.durum === 'Paused') || (ops.length > 0 ? ops[0] : null);
+                  const stationName = activeOp ? activeOp.isMerkezi : (o.isMerkezi || 'İstasyon');
+                %>
+                  <tr>
+                    <td>
+                      <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">
+                        <%= orderNo %>
+                      </strong>
+                    </td>
+                    <td>
+                      <span style="font-weight: 700; color: #fff;"><%= title %></span>
+                    </td>
+                    <td>
+                      <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace;"><%= plannedQty %> <%= unit %></strong>
+                    </td>
+                    <td style="font-size: 0.78rem; color: #cbd5e1;">
+                      <% if (activeOp) { %>
+                        <span>🛠️ [Adım #<%= activeOp.operasyonSira %>] <%= stationName %></span>
+                      <% } else { %>
+                        <span>🏢 <%= stationName %></span>
+                      <% } %>
+                    </td>
+                    <td style="text-align: right;">
+                      <% if (status === 'Completed') { %>
+                        <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
+                          ✓ Tamamlandı
+                        </span>
+                      <% } else if (status === 'In_Production') { %>
+                        <span style="background: rgba(245, 158, 11, 0.18); color: #fbbf24; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
+                          ⚡ Üretimde
+                        </span>
+                      <% } else if (status === 'Quality_Check') { %>
+                        <span style="background: rgba(59, 130, 246, 0.18); color: #60a5fa; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
+                          🔍 Kalite Kontrol
+                        </span>
+                      <% } else { %>
+                        <span style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
+                          🟢 Onaylandı
+                        </span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          <% } %>
         </div>
+
       </div>
+
     </main>
   </div>
 
   <script>
-    function updateClock() { const now = new Date(); const el = document.getElementById('liveTime'); if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
-    updateClock(); setInterval(updateClock, 1000);
+    function updateClock() { 
+      const now = new Date(); 
+      const el = document.getElementById('liveTime'); 
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); 
+    }
+    updateClock(); 
+    setInterval(updateClock, 1000);
 
-    // Chart 1: Capacity Load Chart
-    const capacityData = <%- JSON.stringify(capacityReport) %>;
-    new Chart(document.getElementById('capacityChart'), {
-      type: 'bar',
-      data: {
-        labels: capacityData.map(c => (c.workCenterName && typeof c.workCenterName === 'string') ? c.workCenterName.split(' ')[0] : (c.workCenterName || 'İstasyon')),
-        datasets: [{
-          label: 'Kapasite Yük Oranı (%)',
-          data: capacityData.map(c => c.loadPercentage),
-          backgroundColor: capacityData.map(c => c.isBottleneck ? '#f43f5e' : '#6366f1'),
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, max: 100 } }
-      }
-    });
+    // Chart 1: Capacity Load Bar Chart
+    const capacityData = <%- JSON.stringify(capacityReport || []) %>;
+    if (document.getElementById('capacityChart')) {
+      new Chart(document.getElementById('capacityChart'), {
+        type: 'bar',
+        data: {
+          labels: capacityData.map(c => c.workCenterName || c.workCenterCode || 'İstasyon'),
+          datasets: [{
+            label: 'Kapasite Yük Oranı (%)',
+            data: capacityData.map(c => c.loadPercentage || 0),
+            backgroundColor: capacityData.map(c => c.isBottleneck ? 'rgba(244, 63, 94, 0.8)' : (c.loadPercentage > 50 ? 'rgba(245, 158, 11, 0.8)' : 'rgba(99, 102, 241, 0.85)')),
+            borderColor: capacityData.map(c => c.isBottleneck ? '#f43f5e' : (c.loadPercentage > 50 ? '#f59e0b' : '#6366f1')),
+            borderWidth: 1.5,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return ' Kapasite Doluluğu: %' + ctx.parsed.y;
+                }
+              }
+            }
+          },
+          scales: { 
+            y: { 
+              beginAtZero: true, 
+              max: 100,
+              grid: { color: 'rgba(255, 255, 255, 0.06)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' }, callback: v => '%' + v }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#cbd5e1', font: { weight: '600', size: 11 } }
+            }
+          }
+        }
+      });
+    }
 
     // Chart 2: Status Doughnut
-    new Chart(document.getElementById('statusChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Planlanan', 'Üretimde', 'Tamamlanan'],
-        datasets: [{
-          data: [<%= stats.plannedOrders %>, <%= stats.inProductionOrders %>, <%= stats.completedOrders %>],
-          backgroundColor: ['#f59e0b', '#06b6d4', '#10b981']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'bottom' } }
-      }
-    });
+    if (document.getElementById('statusChart')) {
+      new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Onaylı / Sırada', 'Üretimde', 'Tamamlanan'],
+          datasets: [{
+            data: [<%= stats.plannedOrders || 0 %>, <%= stats.inProductionOrders || 0 %>, <%= stats.completedOrders || 0 %>],
+            backgroundColor: [
+              'rgba(99, 102, 241, 0.85)',
+              'rgba(245, 158, 11, 0.85)',
+              'rgba(16, 185, 129, 0.85)'
+            ],
+            borderColor: '#0f172a',
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { 
+              position: 'bottom',
+              labels: { color: '#cbd5e1', font: { weight: '700', size: 11 }, padding: 14 }
+            } 
+          },
+          cutout: '68%'
+        }
+      });
+    }
   </script>
 </body>
 </html>
