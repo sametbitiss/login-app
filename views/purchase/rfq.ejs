@@ -7,120 +7,7 @@
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Hero Banner */
-    .rfq-list-hero {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 20px;
-      padding: 24px 30px;
-      margin-bottom: 24px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .rfq-list-hero::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
-    }
-    .rfq-hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.35);
-      color: #818cf8;
-      font-size: 0.72rem;
-      font-weight: 800;
-      padding: 4px 12px;
-      border-radius: 20px;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .rfq-hero-title {
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: #f8fafc;
-      margin: 0;
-      letter-spacing: -0.4px;
-    }
-    .rfq-hero-desc {
-      color: #94a3b8;
-      font-size: 0.88rem;
-      margin-top: 4px;
-    }
-
-    /* KPI Strip */
-    .kpi-grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-      margin-bottom: 24px;
-    }
-    @media (max-width: 1024px) {
-      .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); }
-    }
-    .kpi-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-      transition: transform 0.2s ease;
-    }
-    .kpi-card:hover {
-      transform: translateY(-2px);
-    }
-    .kpi-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-    }
-    .kpi-icon-indigo { background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: #818cf8; }
-    .kpi-icon-amber { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; }
-    .kpi-icon-emerald { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; }
-    .kpi-icon-purple { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; }
-
-    .kpi-label { font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-    .kpi-val { font-size: 1.35rem; font-weight: 900; color: #f8fafc; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
-
-    /* Filter Bar */
-    .filter-bar {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px 20px;
-      margin-bottom: 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .search-wrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      min-width: 260px;
-    }
-
-    /* Tabs Navigation */
+    /* View Navigation Tabs */
     .view-tab-nav {
       display: flex;
       gap: 10px;
@@ -155,200 +42,255 @@
       font-weight: 800;
       box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
     }
+
     .view-pane { display: none; }
     .view-pane.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* RFQ Big Card */
-    .rfq-card {
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%);
-      border: 1.5px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
-      transition: all 0.25s ease;
+    /* Product Cards Grid — 2 per row */
+    .product-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+      margin-bottom: 2.5rem;
+    }
+    @media (max-width: 1100px) {
+      .product-cards-grid { grid-template-columns: 1fr; }
+    }
+
+    .product-box-card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.92) 100%);
+      backdrop-filter: blur(20px);
+      border-radius: 22px;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      padding: 0;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
       position: relative;
       overflow: hidden;
     }
-    .rfq-card::before {
+    .product-box-card::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 40%, #d946ef 70%, #10b981 100%);
     }
-    .rfq-card:hover {
+    .product-box-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 24px 55px rgba(0, 0, 0, 0.55);
       border-color: rgba(99, 102, 241, 0.4);
-      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.5);
-      transform: translateY(-2px);
-    }
-    .rfq-card.accepted-card::before {
-      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
     }
 
-    /* RFQ Card Header */
-    .rfq-card-header {
+    /* Product Box Header */
+    .pbc-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 16px;
-      margin-bottom: 16px;
-    }
-    .rfq-supplier-info {
-      display: flex;
       align-items: center;
-      gap: 14px;
+      padding: 20px 24px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .rfq-supplier-avatar {
-      width: 46px;
-      height: 46px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.3));
-      border: 1.5px solid rgba(99, 102, 241, 0.4);
+    .pbc-title-wrap { display: flex; align-items: center; gap: 12px; }
+    .pbc-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(99, 102, 241, 0.18);
+      border: 1px solid rgba(99, 102, 241, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.35rem;
+      font-size: 1.3rem;
     }
-    .rfq-supplier-name {
-      font-size: 1.15rem;
+    .pbc-title { font-size: 1.08rem; font-weight: 800; color: #f8fafc; margin: 0; letter-spacing: -0.3px; }
+    .pbc-code { font-size: 0.75rem; color: #818cf8; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .pbc-count-badge {
+      background: rgba(99, 102, 241, 0.18);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
       font-weight: 800;
-      color: #ffffff;
-      margin: 0 0 4px 0;
-      letter-spacing: -0.3px;
     }
-    .rfq-meta-badges {
+
+    /* Recommended Offer Banner */
+    .pbc-winner-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.2));
+      border: 1.5px solid rgba(16, 185, 129, 0.35);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin: 14px 20px 0;
+    }
+    .pbc-winner-tag { font-size: 0.7rem; color: #34d399; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+    .pbc-winner-details { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-size: 0.9rem; color: #ffffff; }
+    .pbc-winner-price { color: #34d399; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; }
+    .pbc-winner-score { font-size: 0.72rem; color: #a7f3d0; margin-top: 2px; }
+
+    /* Offers List */
+    .pbc-offers-list {
       display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px 20px 20px;
     }
 
-    /* Chips */
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.76rem;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.7);
+    /* Offer Item Card */
+    .pbc-offer-item {
+      background: rgba(30, 41, 59, 0.5);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #94a3b8;
-    }
-    .chip strong { color: #f8fafc; }
-    .chip-indigo { background: rgba(99, 102, 241, 0.12); border-color: rgba(99, 102, 241, 0.3); color: #818cf8; }
-    .chip-emerald { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); color: #34d399; }
-    .chip-amber { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24; }
-
-    /* RFQ Items Table Inside Card */
-    .rfq-items-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.86rem;
-      margin-top: 14px;
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.2s ease;
     }
-    .rfq-items-table th {
-      background: rgba(15, 23, 42, 0.9);
-      color: #64748b;
-      font-weight: 800;
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 10px 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      text-align: left;
+    .pbc-offer-item:hover {
+      border-color: rgba(99, 102, 241, 0.35);
+      background: rgba(30, 41, 59, 0.7);
     }
-    .rfq-items-table td {
-      padding: 10px 14px;
-      color: #cbd5e1;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      font-weight: 500;
-      vertical-align: middle;
+    .pbc-offer-item.is-winner {
+      background: rgba(16, 185, 129, 0.06);
+      border-color: rgba(16, 185, 129, 0.35);
     }
-    .rfq-items-table tr:last-child td { border-bottom: none; }
 
-    /* Card Footer (Totals + Actions) */
-    .rfq-card-footer {
+    /* Offer Top Row */
+    .pbc-oi-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      flex-wrap: wrap;
-      gap: 16px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
-    .rfq-totals-summary {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .rfq-totals-summary div {
-      font-size: 0.82rem;
-      color: #94a3b8;
-    }
-    .rfq-totals-summary div strong {
-      color: #f8fafc;
+    .pbc-oi-supplier { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pbc-oi-supplier-name { font-size: 0.92rem; font-weight: 800; color: #f8fafc; }
+    .pbc-oi-rfqno {
+      font-size: 0.7rem;
+      color: #818cf8;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.92rem;
-      margin-left: 4px;
+      font-weight: 600;
+      background: rgba(99, 102, 241, 0.12);
+      padding: 2px 8px;
+      border-radius: 6px;
     }
-    .rfq-grand-total {
-      font-size: 1.25rem !important;
-      font-weight: 900 !important;
-      color: #34d399 !important;
+    .pbc-winner-pill { background: #10b981; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
+    .pbc-oi-total-price {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #34d399;
       font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Buttons */
+    /* Offer Item Lines Table */
+    .offer-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .offer-items-table th {
+      background: rgba(15, 23, 42, 0.5);
+      color: #64748b;
+      font-weight: 800;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 8px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .offer-items-table td {
+      padding: 8px 14px;
+      color: #cbd5e1;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-weight: 500;
+    }
+    .offer-items-table tr:last-child td { border-bottom: none; }
+    .offer-items-table .item-price { color: #34d399; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .offer-items-table .item-discount { color: #fb7185; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .offer-items-table .item-net { color: #fbbf24; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+    /* Offer Bottom */
+    .pbc-oi-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .pbc-oi-meta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pbc-oi-meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 3px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .pbc-oi-meta-chip strong { color: #f8fafc; }
+
+    .pbc-status-pill { font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 8px; }
+
     .btn-accept-order {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: #ffffff;
+      color: #fff;
+      font-size: 0.8rem;
       font-weight: 800;
-      font-size: 0.85rem;
-      padding: 10px 22px;
+      padding: 8px 16px;
       border-radius: 10px;
       border: none;
       cursor: pointer;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
       transition: all 0.2s ease;
     }
     .btn-accept-order:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 22px rgba(16, 185, 129, 0.55);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(16, 185, 129, 0.5);
     }
-    .btn-delete-rfq {
+    .btn-delete-item {
       background: rgba(239, 68, 68, 0.12);
       border: 1px solid rgba(239, 68, 68, 0.3);
       color: #f87171;
-      font-weight: 700;
-      font-size: 0.82rem;
-      padding: 9px 16px;
-      border-radius: 10px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
       cursor: pointer;
       text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
-    .btn-delete-rfq:hover {
+    .btn-delete-item:hover {
       background: #ef4444;
       color: #fff;
+    }
+
+    /* Locked group */
+    .product-box-card.is-locked { opacity: 0.8; }
+    .product-box-card.is-locked::before {
+      background: linear-gradient(90deg, #64748b 0%, #475569 50%, #64748b 100%);
+    }
+    .locked-banner {
+      background: rgba(100, 116, 139, 0.15);
+      border: 1.5px solid rgba(100, 116, 139, 0.4);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 14px 20px 0;
+      display: flex; align-items: center; gap: 10px;
+      color: #94a3b8; font-size: 0.82rem; font-weight: 700;
+    }
+    .pbc-offer-item.is-disabled {
+      opacity: 0.45;
+      filter: grayscale(40%);
     }
   </style>
   <script src="/sidebar.js" defer></script>
@@ -411,278 +353,222 @@
 
     <main class="module-content">
 
-      <!-- Hero Header -->
-      <div class="rfq-list-hero">
+      <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <div>
-          <div class="rfq-hero-badge">✨ SATIN ALMA TEKLİF MERKEZİ</div>
-          <h1 class="rfq-hero-title">Satın Alma Teklif Yönetimi (RFQ)</h1>
-          <p class="rfq-hero-desc">Tedarikçi tekliflerini inceleyin, ürün kalemlerini değerlendirin ve tek tıkla onaylayıp siparişe dönüştürün.</p>
+          <h1 style="font-size: 1.6rem; font-weight: 900; color: #f8fafc; margin: 0; letter-spacing: -0.4px;">Satın Alma Teklif Yönetimi (RFQ)</h1>
+          <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün kutucukları üzerinden teklifler ve Fiyat/Performans değerlendirmeleri.</p>
         </div>
         <div style="display: flex; gap: 12px;">
           <a href="/purchase/requisitions" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;">
             📋 Talepler Listesi
           </a>
-          <a href="/purchase/rfq/add" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #fff; font-weight: 800; border: none; padding: 12px 22px; border-radius: 12px; box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45); text-decoration: none;">
+          <a href="/purchase/rfq/add" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; padding: 10px 20px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);">
             ➕ Yeni Teklif Ekle
           </a>
         </div>
       </div>
 
       <!-- KPI Strip -->
-      <div class="kpi-grid-4">
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-icon-indigo">📨</div>
-          <div>
-            <div class="kpi-label">Toplam Teklif</div>
-            <div class="kpi-val"><%= rfqs.length %> Teklif</div>
+      <div class="kpi-strip" style="display: flex; gap: 16px; margin-bottom: 24px;">
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--indigo">📦</div>
+          <div class="kpi-chip-data">
+            <span class="kpi-chip-label">Ürün Kart Kutucuğu</span>
+            <span class="kpi-chip-value"><%= groupedRfqs.length %> Ürün</span>
           </div>
         </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-icon-amber">⏳</div>
-          <div>
-            <div class="kpi-label">Bekleyen / İncelemede</div>
-            <div class="kpi-val"><%= rfqs.filter(r => r.status === 'Received' || r.status === 'Draft' || r.status === 'Sent' || r.status === 'Pending').length %> Teklif</div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--amber">📨</div>
+          <div class="kpi-chip-data">
+            <span class="kpi-chip-label">Toplam Gelen Teklif</span>
+            <span class="kpi-chip-value"><%= rfqs.length %> Teklif</span>
           </div>
         </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-icon-emerald">✅</div>
-          <div>
-            <div class="kpi-label">Kabul Edilen / Sipariş</div>
-            <div class="kpi-val"><%= rfqs.filter(r => r.status === 'Accepted').length %> Teklif</div>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-icon-purple">💰</div>
-          <div>
-            <div class="kpi-label">Toplam Teklif Tutarı</div>
-            <% 
-              const totalSum = rfqs.reduce((acc, r) => acc + (parseFloat(r.totalPrice) || 0), 0);
-            %>
-            <div class="kpi-val">₺ <%= totalSum.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></div>
+        <div class="kpi-chip">
+          <div class="kpi-chip-icon kpi-chip--emerald">⭐</div>
+          <div class="kpi-chip-data">
+            <span class="kpi-chip-label">Önerilen En Uygun</span>
+            <span class="kpi-chip-value"><%= groupedRfqs.filter(g => g.recommendedOffer).length %> Teklif</span>
           </div>
         </div>
       </div>
 
-      <!-- Live Search & Filter Bar -->
-      <div class="filter-bar">
-        <div class="search-wrap">
-          <input type="text" id="rfqSearchInput" oninput="filterRfqCards(this.value)" placeholder="🔍 Teklif no, tedarikçi adı veya malzeme adıyla arayın..." class="aesthetic-input" style="max-width: 420px;">
-          <select id="rfqStatusFilter" onchange="filterRfqByStatus(this.value)" class="aesthetic-input" style="max-width: 200px; cursor: pointer;">
-            <option value="all">Tüm Durumlar</option>
-            <option value="Received">⏳ Teklif Alındı (Beklemede)</option>
-            <option value="Accepted">✅ Kabul Edildi</option>
-            <option value="Rejected">❌ Reddedildi</option>
-          </select>
-        </div>
-
-        <div style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">
-          Gösterilen: <strong id="visibleRfqCount" style="color: #6366f1; font-family: 'JetBrains Mono', monospace;"><%= rfqs.length %></strong> teklif
-        </div>
-      </div>
-
-      <!-- View Switcher Tabs -->
+      <!-- View Tabs -->
       <div class="view-tab-nav">
-        <button type="button" class="view-tab-btn active" onclick="switchView('cards-view')" id="btn-cards-view">
-          📑 Detaylı Teklif Kartları (<%= rfqs.length %>)
+        <button type="button" class="view-tab-btn active" onclick="switchViewTab('grouped-view')" id="btn-grouped-view">
+          📦 Ürün Kart Kutucukları (<%= groupedRfqs.length %> Ürün)
         </button>
-        <button type="button" class="view-tab-btn" onclick="switchView('table-view')" id="btn-table-view">
-          📋 Kompakt Liste Tablosu (<%= rfqs.length %>)
+        <button type="button" class="view-tab-btn" onclick="switchViewTab('flat-view')" id="btn-flat-view">
+          📋 Tüm Teklifler (Düz Liste - <%= rfqs.length %> Teklif)
         </button>
       </div>
 
-      <!-- ==================== VIEW 1: DETAILED RFQ CARDS ==================== -->
-      <div class="view-pane active" id="cards-view">
-        <% if (rfqs.length === 0) { %>
-          <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 20px; text-align: center; padding: 4rem; color: var(--text-muted);">
-            <div style="font-size: 3rem; margin-bottom: 12px;">📨</div>
-            <h3 style="color: #f8fafc; margin-bottom: 8px;">Kayıtlı Satın Alma Teklifi Bulunamadı</h3>
-            <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 18px;">Satın alma taleplerinden birini seçerek tedarikçilerden gelen teklifleri sisteme ekleyebilirsiniz.</p>
-            <a href="/purchase/requisitions" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; padding: 12px 24px; border-radius: 12px; text-decoration: none;">
-              📋 Satın Alma Taleplerine Git →
-            </a>
+      <!-- VIEW 1: PRODUCT CARDS BOX GRID VIEW -->
+      <div class="view-pane active" id="grouped-view">
+        <% if (groupedRfqs.length === 0) { %>
+          <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 16px; text-align: center; padding: 4rem; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 12px;">📦</div>
+            Henüz kaydedilmiş ürün teklif kutucuğu bulunmamaktadır.<br>
+            <a href="/purchase/requisitions" style="color: var(--indigo); font-weight: 700; margin-top: 10px; display: inline-block;">Satın Alma Talepleri Ekranına Git →</a>
           </div>
         <% } else { %>
-          <div id="rfqCardsContainer">
-            <% rfqs.forEach((rfq, idx) => { 
-              const isAccepted = rfq.status === 'Accepted';
-              const isRejected = rfq.status === 'Rejected';
-              const itemsList = (rfq.itemsData && Array.isArray(rfq.itemsData)) ? rfq.itemsData : [];
-              const curr = rfq.currency || 'TRY';
-              const currSymbol = curr === 'USD' ? '$' : (curr === 'EUR' ? '€' : '₺');
-            %>
-              <div class="rfq-card <%= isAccepted ? 'accepted-card' : '' %>" 
-                   data-rfq-no="<%= (rfq.rfqNo || '').toLowerCase() %>" 
-                   data-supplier="<%= (rfq.supplierName || '').toLowerCase() %>" 
-                   data-status="<%= rfq.status %>">
-                
-                <!-- Card Header -->
-                <div class="rfq-card-header">
-                  <div class="rfq-supplier-info">
-                    <div class="rfq-supplier-avatar">🏢</div>
+          <div class="product-cards-grid">
+            <% groupedRfqs.forEach(group => { %>
+              <div class="product-box-card <%= group.isLocked ? 'is-locked' : '' %>">
+                <!-- Product Header -->
+                <div class="pbc-header">
+                  <div class="pbc-title-wrap">
+                    <div class="pbc-icon-box"><%= group.isLocked ? '🔒' : '📦' %></div>
                     <div>
-                      <h3 class="rfq-supplier-name"><%= rfq.supplierName %></h3>
-                      <div class="rfq-meta-badges">
-                        <span class="chip chip-indigo">📄 Teklif No: <strong><%= rfq.rfqNo %></strong></span>
-                        <% if (rfq.supplierCode) { %>
-                          <span class="chip">🏢 Kod: <strong><%= rfq.supplierCode %></strong></span>
-                        <% } %>
-                        <% if (rfq.supplierCity) { %>
-                          <span class="chip">📍 <strong><%= rfq.supplierCity %></strong></span>
-                        <% } %>
-                        <span class="chip">⭐ Tedarikçi Skoru: <strong><%= rfq.supplierRating || 85 %>/100</strong></span>
+                      <h3 class="pbc-title"><%= group.itemName %></h3>
+                      <span class="pbc-code"><%= group.stockCode %> • <%= group.unit %></span>
+                    </div>
+                  </div>
+                  <span class="pbc-count-badge"><%= group.items.length %> Teklif</span>
+                </div>
+
+                <% if (group.isLocked) { %>
+                  <div class="locked-banner">
+                    🔒 Bu ürün grubu kapatılmıştır — İlgili ürün için teklif kabul edilmiş ve sipariş oluşturulmuştur.
+                  </div>
+                <% } %>
+
+                <% if (group.recommendedOffer && !group.isLocked) { %>
+                  <div class="pbc-winner-banner">
+                    <div class="pbc-winner-tag">⭐ EN UYGUN ÖNERİLEN TEKLİF</div>
+                    <div class="pbc-winner-details">
+                      <strong><%= group.recommendedOffer.supplierName %></strong>
+                      <span class="pbc-winner-price">
+                        <%= parseFloat(group.recommendedOffer.totalPrice || group.recommendedOffer.offeredTotalPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= group.recommendedOffer.currency || 'TRY' %>
+                      </span>
+                    </div>
+                    <% if (group.recommendedOffer.fpScore) { %>
+                      <div class="pbc-winner-score">F/P Skoru: %<%= group.recommendedOffer.fpScore %></div>
+                    <% } %>
+                  </div>
+                <% } %>
+
+                <!-- Offers List -->
+                <div class="pbc-offers-list">
+                  <% group.items.forEach(item => {
+                    const itemsArr = (item.itemsData && Array.isArray(item.itemsData)) ? item.itemsData : [];
+                    const totalPrice = parseFloat(item.totalPrice || item.offeredTotalPrice || item.subtotal || 0);
+                    const curr = item.currency || 'TRY';
+                    const currSymbol = curr === 'USD' ? '$' : (curr === 'EUR' ? '€' : '₺');
+                    const isItemDisabled = group.isLocked && item.status !== 'Accepted';
+                  %>
+                    <div class="pbc-offer-item <%= item.isRecommended ? 'is-winner' : '' %> <%= isItemDisabled ? 'is-disabled' : '' %>">
+                      <!-- Supplier & Total -->
+                      <div class="pbc-oi-top">
+                        <div class="pbc-oi-supplier">
+                          <span class="pbc-oi-supplier-name"><%= item.supplierName %></span>
+                          <span class="pbc-oi-rfqno"><%= item.rfqNo %></span>
+                          <% if (item.isRecommended && !group.isLocked) { %><span class="pbc-winner-pill">⭐ Önerilen</span><% } %>
+                        </div>
+                        <div class="pbc-oi-total-price"><%= totalPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></div>
+                      </div>
+
+                      <!-- Product Items Detail Table -->
+                      <% if (itemsArr.length > 0) { %>
+                        <table class="offer-items-table">
+                          <thead>
+                            <tr>
+                              <th>Ürün Kalemi</th>
+                              <th>Miktar</th>
+                              <th>Birim Fiyat</th>
+                              <th>İskonto</th>
+                              <th>Net Tutar</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <% itemsArr.forEach(line => {
+                              const linePrice = parseFloat(line.birimFiyat || line.unitPrice || 0);
+                              const lineQty = parseFloat(line.teklifEdilenMiktar || line.miktar || line.quantity || 1);
+                              const lineDisc = parseFloat(line.iskontoOrani || line.discountRate || 0);
+                              const lineNet = parseFloat(line.netAmount || line.netTutar || (lineQty * linePrice * (1 - lineDisc / 100)));
+                            %>
+                              <tr>
+                                <td><strong style="color: #e2e8f0;"><%= line.ad || line.productName || line.stokKodu || '—' %></strong></td>
+                                <td><%= lineQty.toLocaleString('tr-TR') %> <%= line.birim || line.unit || group.unit %></td>
+                                <td class="item-price"><%= linePrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></td>
+                                <td class="item-discount"><%= lineDisc > 0 ? '%' + lineDisc.toFixed(1) : '—' %></td>
+                                <td class="item-net"><%= lineNet.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></td>
+                              </tr>
+                            <% }); %>
+                          </tbody>
+                        </table>
+                      <% } else { %>
+                        <!-- Fallback for single item -->
+                        <table class="offer-items-table">
+                          <thead>
+                            <tr>
+                              <th>Ürün Kalemi</th>
+                              <th>Miktar</th>
+                              <th>Birim Fiyat</th>
+                              <th>İskonto</th>
+                              <th>Net Tutar</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td><strong style="color: #e2e8f0;"><%= group.itemName %></strong></td>
+                              <td><%= item.itemQuantity || item.requestedQuantity || 1 %> <%= group.unit %></td>
+                              <td class="item-price"><%= parseFloat(item.itemUnitPrice || item.offeredUnitPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></td>
+                              <td class="item-discount">—</td>
+                              <td class="item-net"><%= totalPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      <% } %>
+
+                      <!-- Bottom: Meta chips + Actions -->
+                      <div class="pbc-oi-bottom">
+                        <div class="pbc-oi-meta-row">
+                          <span class="pbc-oi-meta-chip">⏱️ Teslimat: <strong><%= item.deliveryDays ? item.deliveryDays + ' Gün' : '5 Gün' %></strong></span>
+                          <span class="pbc-oi-meta-chip">💳 Vade: <strong><%= item.paymentTerm === 'Pesin' ? 'Peşin' : (item.paymentTerm === 'Vadeli_30' ? '30 Gün Vadeli' : item.paymentTerm) %></strong></span>
+                          <% if (item.fpScore) { %>
+                            <span class="pbc-oi-meta-chip">📊 F/P: <strong>%<%= item.fpScore %></strong></span>
+                          <% } %>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <% if (item.status === 'Accepted') { %>
+                            <span class="pbc-status-pill status-active">✅ Kabul Edildi</span>
+                          <% } else if (item.status === 'Rejected') { %>
+                            <span class="pbc-status-pill status-rejected">❌ Pasif (Reddedildi)</span>
+                          <% } else if (group.isLocked) { %>
+                            <span class="pbc-status-pill status-rejected">🔒 Pasif (İlgili ürünler başka teklifte kabul edildi)</span>
+                          <% } else { %>
+                            <span class="pbc-status-pill status-approved">📩 Teklif Alındı</span>
+                            <a href="/purchase/rfq/<%= item.id %>/accept" class="btn-accept-order" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">
+                              ✅ Kabul Et & Sipariş Oluştur
+                            </a>
+                            <a href="/purchase/rfq/<%= item.id %>/delete" class="btn-delete-item" onclick="return confirm('Bu teklifi silmek istediğinizden emin misiniz?');" title="Sil">
+                              🗑️
+                            </a>
+                          <% } %>
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
-                    <% if (isAccepted) { %>
-                      <span class="status-pill status-active" style="font-size: 0.85rem; padding: 6px 14px; font-weight: 800;">
-                        ✅ Kabul Edildi (Sipariş Açıldı)
-                      </span>
-                    <% } else if (isRejected) { %>
-                      <span class="status-pill status-rejected" style="font-size: 0.85rem; padding: 6px 14px; font-weight: 800;">
-                        ❌ Reddedildi
-                      </span>
-                    <% } else { %>
-                      <span class="status-pill status-pending" style="font-size: 0.85rem; padding: 6px 14px; font-weight: 800;">
-                        ⏳ Teklif Alındı (Beklemede)
-                      </span>
-                    <% } %>
-
-                    <div style="font-size: 0.78rem; color: #94a3b8;">
-                      Tarih: <strong style="color: #cbd5e1;"><%= rfq.rfqDate ? new Date(rfq.rfqDate).toLocaleDateString('tr-TR') : '—' %></strong>
-                      <% if (rfq.validUntil) { %>
-                        • Son Geçerlilik: <strong style="color: #fbbf24;"><%= new Date(rfq.validUntil).toLocaleDateString('tr-TR') %></strong>
-                      <% } %>
-                    </div>
-                  </div>
+                  <% }); %>
                 </div>
-
-                <!-- Commercial Terms Row -->
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-                  <span class="chip">⏱️ Teslim Süresi: <strong><%= rfq.deliveryDays %> Gün</strong></span>
-                  <span class="chip">💳 Ödeme Vadesi: <strong><%= rfq.paymentTerm === 'Pesin' ? 'Peşin Ödeme' : (rfq.paymentTerm === 'Vadeli_30' ? '30 Gün Vadeli' : (rfq.paymentTerm === 'Vadeli_60' ? '60 Gün Vadeli' : (rfq.paymentTerm === 'Vadeli_90' ? '90 Gün Vadeli' : rfq.paymentTerm))) %></strong></span>
-                  <span class="chip">🏬 Teslim Yeri: <strong><%= rfq.deliveryPlace %></strong></span>
-                  <span class="chip">🧾 KDV Durumu: <strong><%= rfq.vatStatus === 'Dahil' ? 'KDV Dahil' : 'KDV Hariç' %></strong></span>
-                  <% if (rfq.notes) { %>
-                    <span class="chip" title="<%= rfq.notes %>">📝 Not: <em><%= rfq.notes.length > 40 ? rfq.notes.substring(0, 40) + '...' : rfq.notes %></em></span>
-                  <% } %>
-                </div>
-
-                <!-- Items Breakdown Table -->
-                <table class="rfq-items-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 40px;">#</th>
-                      <th>Talep No</th>
-                      <th>Malzeme Kodu & Adı</th>
-                      <th style="text-align: right;">Talep Miktarı</th>
-                      <th style="text-align: right;">Teklif Miktarı</th>
-                      <th>Birim</th>
-                      <th style="text-align: right;">Birim Fiyat</th>
-                      <th style="text-align: center;">İskonto</th>
-                      <th style="text-align: center;">KDV</th>
-                      <th style="text-align: right;">Net Tutar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if (itemsList.length > 0) { %>
-                      <% itemsList.forEach((item, itemIdx) => { 
-                        const linePrice = parseFloat(item.birimFiyat || item.unitPrice || 0);
-                        const lineQty = parseFloat(item.teklifEdilenMiktar || item.miktar || item.quantity || 1);
-                        const lineReqQty = parseFloat(item.talepEdilenMiktar || item.requestedQuantity || lineQty);
-                        const lineDisc = parseFloat(item.iskontoOrani || item.discountRate || 0);
-                        const lineVat = parseFloat(item.kdvOrani || item.vatRate || 20);
-                        const lineNet = parseFloat(item.netAmount || item.netTutar || (lineQty * linePrice));
-                      %>
-                        <tr>
-                          <td><%= itemIdx + 1 %></td>
-                          <td>
-                            <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
-                              <%= item.talepNo || ('TALEP-#' + (item.talepId || '1')) %>
-                            </strong>
-                          </td>
-                          <td>
-                            <strong style="color: #f8fafc;"><%= item.ad || item.productName || 'Malzeme' %></strong>
-                            <span style="font-size: 0.74rem; color: #818cf8; font-family: 'JetBrains Mono', monospace; margin-left: 6px;">[<%= item.stokKodu || item.stockCode || 'STK' %>]</span>
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #94a3b8;"><%= lineReqQty.toLocaleString('tr-TR') %></td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #ffffff;"><%= lineQty.toLocaleString('tr-TR') %></td>
-                          <td><%= item.birim || item.unit || 'Adet' %></td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #34d399; font-weight: 700;">
-                            <%= linePrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %>
-                          </td>
-                          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: <%= lineDisc > 0 ? '#fb7185' : '#64748b' %>;">
-                            <%= lineDisc > 0 ? '%' + lineDisc : '%0' %>
-                          </td>
-                          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #818cf8;">
-                            %<%= lineVat %>
-                          </td>
-                          <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 900; color: #34d399;">
-                            <%= lineNet.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %>
-                          </td>
-                        </tr>
-                      <% }); %>
-                    <% } else if (rfq.stokKarti) { %>
-                      <tr>
-                        <td>1</td>
-                        <td><strong style="color: #818cf8;">TAL-GENEL</strong></td>
-                        <td><strong style="color: #f8fafc;"><%= rfq.stokKarti.ad %></strong> [<%= rfq.stokKarti.stokKodu %>]</td>
-                        <td style="text-align: right;"><%= parseFloat(rfq.talepEdilenMiktar || 1).toLocaleString('tr-TR') %></td>
-                        <td style="text-align: right;"><%= parseFloat(rfq.talepEdilenMiktar || 1).toLocaleString('tr-TR') %></td>
-                        <td><%= rfq.stokKarti.birim %></td>
-                        <td style="text-align: right; color: #34d399;"><%= parseFloat(rfq.teklifEdilenBirimFiyat || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %></td>
-                        <td style="text-align: center;">%0</td>
-                        <td style="text-align: center;">%20</td>
-                        <td style="text-align: right; color: #34d399;"><%= parseFloat(rfq.totalPrice || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %></td>
-                      </tr>
-                    <% } %>
-                  </tbody>
-                </table>
-
-                <!-- Card Footer (Summary + Actions) -->
-                <div class="rfq-card-footer">
-                  <div class="rfq-totals-summary">
-                    <div>Ara Toplam: <strong><%= parseFloat(rfq.subtotal || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %></strong></div>
-                    <div>İskonto: <strong style="color: #fb7185;">-<%= parseFloat(rfq.discount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %></strong></div>
-                    <div>KDV: <strong style="color: #818cf8;">+<%= parseFloat(rfq.vat || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %></strong></div>
-                    <div>GENEL TOPLAM: <strong class="rfq-grand-total"><%= parseFloat(rfq.totalPrice || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %></strong></div>
-                  </div>
-
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <% if (!isAccepted && !isRejected) { %>
-                      <a href="/purchase/rfq/<%= rfq.id %>/accept" class="btn-accept-order" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">
-                        <span>✅</span> Teklifi Kabul Et & Sipariş Oluştur
-                      </a>
-                    <% } %>
-
-                    <a href="/purchase/rfq/<%= rfq.id %>/delete" class="btn-delete-rfq" onclick="return confirm('Bu teklif kaydını silmek istediğinizden emin misiniz?');">
-                      <span>🗑️</span> Sil
-                    </a>
-                  </div>
-                </div>
-
               </div>
             <% }); %>
           </div>
         <% } %>
       </div>
 
-      <!-- ==================== VIEW 2: COMPACT TABLE VIEW ==================== -->
-      <div class="view-pane" id="table-view">
+      <!-- VIEW 2: FLAT LIST VIEW -->
+      <div class="view-pane" id="flat-view">
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
               <tr>
                 <th>Teklif No</th>
-                <th>Tedarikçi Firma</th>
+                <th>Tedarikçi</th>
                 <th>Teklif Tarihi</th>
-                <th>Kalemler / Ürünler</th>
+                <th>Kalemler / Ürün Özeti</th>
                 <th style="text-align: right;">Genel Toplam</th>
-                <th>Ödeme & Termin</th>
+                <th>Ödeme & Teslimat</th>
                 <th>KDV</th>
                 <th>Durum</th>
                 <th style="text-align: right;">Aksiyon</th>
@@ -692,74 +578,66 @@
               <% if (rfqs.length === 0) { %>
                 <tr>
                   <td colspan="9" style="text-align: center; padding: 4rem; color: var(--text-muted);">
-                    Henüz kayıtlı teklif bulunmamaktadır.
+                    <div style="font-size: 2.5rem; margin-bottom: 8px;">📨</div>
+                    Henüz verilmiş veya kaydedilmiş teklif bulunmamaktadır.
                   </td>
                 </tr>
               <% } else { %>
-                <% rfqs.forEach(rfq => { 
-                  const isAccepted = rfq.status === 'Accepted';
-                  const curr = rfq.currency || 'TRY';
-                  const currSymbol = curr === 'USD' ? '$' : (curr === 'EUR' ? '€' : '₺');
-                  const itemsList = rfq.itemsData || [];
-                %>
+                <% rfqs.forEach(rfq => { %>
                   <tr>
+                    <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.88rem;"><%= rfq.rfqNo %></strong></td>
                     <td>
-                      <strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.88rem;">
-                        <%= rfq.rfqNo %>
-                      </strong>
-                    </td>
-                    <td>
-                      <strong style="color: #f8fafc; font-size: 0.92rem;"><%= rfq.supplierName %></strong>
+                      <strong style="color: var(--text-primary); font-size: 0.925rem;"><%= rfq.supplierName %></strong>
                       <% if (rfq.supplierCode) { %>
-                        <div style="font-size: 0.74rem; color: var(--text-muted);"><%= rfq.supplierCode %></div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);"><%= rfq.supplierCode %></div>
                       <% } %>
                     </td>
                     <td style="font-size: 0.8rem; color: var(--text-muted);">
-                      <%= rfq.rfqDate ? new Date(rfq.rfqDate).toLocaleDateString('tr-TR') : '—' %>
+                      <%= rfq.rfqDate ? new Date(rfq.rfqDate).toLocaleDateString('tr-TR') : new Date(rfq.createdAt).toLocaleDateString('tr-TR') %>
                       <% if (rfq.validUntil) { %>
-                        <div style="font-size: 0.72rem; color: #fbbf24;">Son: <%= new Date(rfq.validUntil).toLocaleDateString('tr-TR') %></div>
+                        <div style="font-size: 0.725rem; color: var(--amber);">Geçerlilik: <%= new Date(rfq.validUntil).toLocaleDateString('tr-TR') %></div>
                       <% } %>
                     </td>
                     <td>
-                      <% if (itemsList.length > 0) { %>
-                        <strong style="color: #f8fafc;"><%= itemsList.length %> Kalem Malzeme</strong>
-                        <div style="font-size: 0.75rem; color: #94a3b8; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                          <%= itemsList.map(i => i.ad || i.productName || i.stokKodu).join(', ') %>
+                      <% if (rfq.itemsData && Array.isArray(rfq.itemsData) && rfq.itemsData.length > 0) { %>
+                        <strong style="color: var(--text-primary); font-size: 0.85rem;"><%= rfq.itemsData.length %> Kalem Ürün</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 220px;">
+                          <%= rfq.itemsData.map(i => i.ad || i.productName || i.stokKodu).join(', ') %>
                         </div>
                       <% } else if (rfq.stokKarti) { %>
-                        <strong style="color: #f8fafc;"><%= rfq.stokKarti.ad %></strong>
+                        <strong style="color: var(--text-primary); font-size: 0.85rem;"><%= rfq.stokKarti.ad %></strong>
                       <% } else { %>
                         <span style="color: var(--text-muted);">—</span>
                       <% } %>
                     </td>
                     <td style="text-align: right;">
-                      <strong style="color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 1rem;">
-                        <%= parseFloat(rfq.totalPrice || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= currSymbol %>
+                      <strong style="color: var(--emerald); font-size: 1rem; font-family: 'JetBrains Mono', monospace;">
+                        <%= parseFloat(rfq.totalPrice || rfq.offeredTotalPrice || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= rfq.currency || 'TRY' %>
                       </strong>
                     </td>
-                    <td style="font-size: 0.8rem;">
-                      <div>⏱️ <strong><%= rfq.deliveryDays %> Gün</strong></div>
-                      <div style="color: var(--text-muted); font-size: 0.74rem;"><%= rfq.paymentTerm === 'Pesin' ? 'Peşin' : rfq.paymentTerm %></div>
+                    <td style="font-size: 0.825rem;">
+                      <div>⏱️ <strong><%= rfq.deliveryDays ? rfq.deliveryDays + ' Gün' : '5 Gün' %></strong></div>
+                      <div style="color: var(--text-muted); font-size: 0.75rem;"><%= rfq.paymentTerm === 'Pesin' ? 'Peşin' : rfq.paymentTerm %></div>
                     </td>
-                    <td style="font-size: 0.8rem; color: #94a3b8;">
-                      <%= rfq.vatStatus || 'Hariç' %>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                      <div><%= rfq.vatStatus || 'Hariç' %></div>
                     </td>
                     <td>
-                      <% if (isAccepted) { %>
-                        <span class="status-pill status-active" style="font-size: 0.75rem;">● Kabul Edildi</span>
+                      <% if (rfq.status === 'Accepted') { %>
+                        <span class="status-pill status-active">✅ Kabul Edildi</span>
                       <% } else if (rfq.status === 'Rejected') { %>
-                        <span class="status-pill status-rejected" style="font-size: 0.75rem;">● Reddedildi</span>
+                        <span class="status-pill status-rejected">❌ Reddedildi</span>
                       <% } else { %>
-                        <span class="status-pill status-pending" style="font-size: 0.75rem;">● Beklemede</span>
+                        <span class="status-pill status-pending">⏳ Beklemede</span>
                       <% } %>
                     </td>
-                    <td style="text-align: right; white-space: nowrap;">
-                      <% if (!isAccepted && rfq.status !== 'Rejected') { %>
-                        <a href="/purchase/rfq/<%= rfq.id %>/accept" class="btn btn-sm" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700; border: none; padding: 6px 12px; border-radius: 8px;" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">
+                    <td style="white-space: nowrap; text-align: right;">
+                      <% if (rfq.status !== 'Accepted' && rfq.status !== 'Rejected') { %>
+                        <a href="/purchase/rfq/<%= rfq.id %>/accept" class="btn-accept-order" style="font-size: 0.75rem; padding: 6px 14px;" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">
                           ✅ Kabul Et
                         </a>
                       <% } %>
-                      <a href="/purchase/rfq/<%= rfq.id %>/delete" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 10px; border-radius: 8px; margin-left: 4px;" onclick="return confirm('Bu teklifi silmek istediğinizden emin misiniz?');">
+                      <a href="/purchase/rfq/<%= rfq.id %>/delete" class="btn-delete-item" onclick="return confirm('Bu teklifi silmek istediğinizden emin misiniz?');" style="margin-left: 4px;">
                         🗑️
                       </a>
                     </td>
@@ -770,24 +648,11 @@
           </table>
         </div>
       </div>
-
     </main>
   </div>
 
   <script>
-    // Live Clock
-    function updateClock() {
-      const el = document.getElementById('liveTime');
-      if (el) {
-        const now = new Date();
-        el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-      }
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    // Switch between Cards View and Table View
-    function switchView(viewId) {
+    function switchViewTab(viewId) {
       document.querySelectorAll('.view-pane').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.view-tab-btn').forEach(el => el.classList.remove('active'));
 
@@ -798,41 +663,13 @@
       if (targetBtn) targetBtn.classList.add('active');
     }
 
-    // Live search filter across cards
-    function filterRfqCards(query) {
-      const q = (query || '').toLowerCase().trim();
-      const statusFilter = document.getElementById('rfqStatusFilter')?.value || 'all';
-      applyCombinedFilter(q, statusFilter);
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('liveTime');
+      if (el) el.textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) + ' • ' + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     }
-
-    function filterRfqByStatus(statusVal) {
-      const q = (document.getElementById('rfqSearchInput')?.value || '').toLowerCase().trim();
-      applyCombinedFilter(q, statusVal);
-    }
-
-    function applyCombinedFilter(query, status) {
-      const cards = document.querySelectorAll('#rfqCardsContainer .rfq-card');
-      let visible = 0;
-
-      cards.forEach(card => {
-        const rfqNo = card.getAttribute('data-rfq-no') || '';
-        const supplier = card.getAttribute('data-supplier') || '';
-        const cardStatus = card.getAttribute('data-status') || '';
-
-        const matchesQuery = !query || rfqNo.includes(query) || supplier.includes(query);
-        const matchesStatus = (status === 'all') || (cardStatus === status);
-
-        if (matchesQuery && matchesStatus) {
-          card.style.display = 'block';
-          visible++;
-        } else {
-          card.style.display = 'none';
-        }
-      });
-
-      const countEl = document.getElementById('visibleRfqCount');
-      if (countEl) countEl.textContent = visible;
-    }
+    updateClock();
+    setInterval(updateClock, 1000);
   </script>
 </body>
 </html>
