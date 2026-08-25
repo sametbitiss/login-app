@@ -52,11 +52,11 @@ class RfqPdfService {
 
     // Left: Company Info
     doc.font('Bold').fontSize(12.5).fillColor('#000000')
-       .text('ENTERPRISE ERP SANAYİ VE TİCARET A.Ş.', startX + 14, currentY + 12, { width: 330, lineBreak: false, ellipsis: true });
+      .text('ENTERPRISE ERP SANAYİ VE TİCARET A.Ş.', startX + 14, currentY + 12, { width: 330, lineBreak: false, ellipsis: true });
     doc.font('Regular').fontSize(8.5).fillColor('#333333')
-       .text('Satın Alma, Tedarik Zinciri ve Malzeme Yönetimi Direktörlüğü', startX + 14, currentY + 30, { width: 330, lineBreak: false })
-       .text('Organize Sanayi Bölgesi 4. Cadde No:12 / İstanbul • Tel: +90 (212) 555 0100', startX + 14, currentY + 44, { width: 330, lineBreak: false })
-       .text('Vergi Dairesi: Marmara Kurumlar • VKN: 3450987612 • Web: www.enterprise-erp.com', startX + 14, currentY + 58, { width: 330, lineBreak: false });
+      .text('Satın Alma, Tedarik Zinciri ve Malzeme Yönetimi Direktörlüğü', startX + 14, currentY + 30, { width: 330, lineBreak: false })
+      .text('Organize Sanayi Bölgesi 4. Cadde No:12 / İstanbul • Tel: +90 (212) 555 0100', startX + 14, currentY + 44, { width: 330, lineBreak: false })
+      .text('Vergi Dairesi: Marmara Kurumlar • VKN: 3450987612 • Web: www.enterprise-erp.com', startX + 14, currentY + 58, { width: 330, lineBreak: false });
 
     // Vertical divider
     doc.lineWidth(1).moveTo(startX + 352, currentY).lineTo(startX + 352, currentY + headerHeight).stroke('#000000');
@@ -67,25 +67,25 @@ class RfqPdfService {
     const metaValW = (startX + pageWidth - 6) - metaValX;
 
     doc.font('Bold').fontSize(9.5).fillColor('#000000')
-       .text('SATIN ALMA TEKLİF FORMU', rightX, currentY + 8, { width: 170, align: 'center' });
+      .text('SATIN ALMA TEKLİF FORMU', rightX, currentY + 8, { width: 170, align: 'center' });
     doc.lineWidth(0.75).moveTo(rightX + 6, currentY + 22).lineTo(startX + pageWidth - 6, currentY + 22).stroke('#000000');
 
     doc.font('Bold').fontSize(8).fillColor('#000000')
-       .text('Teklif No:', rightX + 8, currentY + 27)
-       .text('Tarih:', rightX + 8, currentY + 41)
-       .text('Geçerlilik:', rightX + 8, currentY + 55)
-       .text('Durum:', rightX + 8, currentY + 69);
+      .text('Teklif No:', rightX + 8, currentY + 27)
+      .text('Tarih:', rightX + 8, currentY + 41)
+      .text('Geçerlilik:', rightX + 8, currentY + 55)
+      .text('Durum:', rightX + 8, currentY + 69);
 
     const statusLabel = rfqData.status === 'Accepted'
       ? 'KABUL EDİLDİ (SİPARİŞ)'
       : (rfqData.status === 'Rejected' ? 'REDDEDİLDİ' : 'BEKLEMEDE (ALINDI)');
 
     doc.font('Regular').fontSize(8).fillColor('#000000')
-       .text(rfqData.rfqNo || 'RFQ-2026-0001', metaValX, currentY + 27, { width: metaValW, lineBreak: false, ellipsis: true })
-       .text(rfqData.rfqDate || (rfqData.createdAt ? new Date(rfqData.createdAt).toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR')), metaValX, currentY + 41, { width: metaValW, lineBreak: false })
-       .text(rfqData.validUntil ? new Date(rfqData.validUntil).toLocaleDateString('tr-TR') : '—', metaValX, currentY + 55, { width: metaValW, lineBreak: false });
+      .text(rfqData.rfqNo || 'RFQ-2026-0001', metaValX, currentY + 27, { width: metaValW, lineBreak: false, ellipsis: true })
+      .text(rfqData.rfqDate || (rfqData.createdAt ? new Date(rfqData.createdAt).toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR')), metaValX, currentY + 41, { width: metaValW, lineBreak: false })
+      .text(rfqData.validUntil ? new Date(rfqData.validUntil).toLocaleDateString('tr-TR') : '—', metaValX, currentY + 55, { width: metaValW, lineBreak: false });
     doc.font('Bold').fontSize(8).fillColor('#000000')
-       .text(statusLabel, metaValX, currentY + 69, { width: metaValW, lineBreak: false, ellipsis: true });
+      .text(statusLabel, metaValX, currentY + 69, { width: metaValW, lineBreak: false, ellipsis: true });
 
     currentY += headerHeight + 14;
 
@@ -203,7 +203,7 @@ class RfqPdfService {
     let curX = startX;
     tableCols.forEach((col, cIdx) => {
       doc.font('Bold').fontSize(7.2).fillColor('#000000')
-         .text(col.label, curX + 2, currentY + 5, { width: col.width - 4, align: col.align, lineBreak: false });
+        .text(col.label, curX + 2, currentY + 5, { width: col.width - 4, align: col.align, lineBreak: false });
       if (cIdx > 0) {
         doc.lineWidth(0.5).moveTo(curX, currentY).lineTo(curX, currentY + thHeight).stroke('#000000');
       }
@@ -216,17 +216,17 @@ class RfqPdfService {
     const items = (rfqData.itemsData && Array.isArray(rfqData.itemsData) && rfqData.itemsData.length > 0)
       ? rfqData.itemsData
       : (rfqData.stokKarti ? [{
-          talepNo: 'TALEP-001',
-          stokKodu: rfqData.stokKarti.stokKodu,
-          ad: rfqData.stokKarti.ad,
-          talepEdilenMiktar: rfqData.talepEdilenMiktar || 1,
-          teklifEdilenMiktar: rfqData.talepEdilenMiktar || 1,
-          birim: rfqData.stokKarti.birim || 'Adet',
-          birimFiyat: rfqData.teklifEdilenBirimFiyat || 0,
-          iskontoOrani: 0,
-          kdvOrani: 20,
-          netAmount: rfqData.totalPrice || 0
-        }] : []);
+        talepNo: 'TALEP-001',
+        stokKodu: rfqData.stokKarti.stokKodu,
+        ad: rfqData.stokKarti.ad,
+        talepEdilenMiktar: rfqData.talepEdilenMiktar || 1,
+        teklifEdilenMiktar: rfqData.talepEdilenMiktar || 1,
+        birim: rfqData.stokKarti.birim || 'Adet',
+        birimFiyat: rfqData.teklifEdilenBirimFiyat || 0,
+        iskontoOrani: 0,
+        kdvOrani: 20,
+        netAmount: rfqData.totalPrice || 0
+      }] : []);
 
     const rowHeight = 24;
 
@@ -257,7 +257,7 @@ class RfqPdfService {
 
       rowVals.forEach((cell, cIdx) => {
         doc.font(cell.bold ? 'Bold' : 'Regular').fontSize(7.6).fillColor('#000000')
-           .text(cell.val, x + 2, currentY + 7, { width: cell.width - 4, align: cell.align, lineBreak: false, ellipsis: true });
+          .text(cell.val, x + 2, currentY + 7, { width: cell.width - 4, align: cell.align, lineBreak: false, ellipsis: true });
         if (cIdx > 0) {
           doc.lineWidth(0.5).moveTo(x, currentY).lineTo(x, currentY + rowHeight).stroke('#E5E7EB');
         }
@@ -277,13 +277,15 @@ class RfqPdfService {
     // Left: Notes Box
     doc.lineWidth(0.75).rect(startX, currentY, notesBoxWidth, summaryBoxHeight).stroke('#000000');
     doc.font('Bold').fontSize(8.2).fillColor('#000000')
-       .text('TEKLİF NOTLARI VE TİCARİ AÇIKLAMALAR:', startX + 8, currentY + 8);
+      .text('TEKLİF NOTLARI VE TİCARİ AÇIKLAMALAR:', startX + 8, currentY + 8);
     doc.font('Regular').fontSize(7.8).fillColor('#222222')
-       .text(rfqData.notes || 'İşbu teklif yukarıda belirtilen şartlar ve geçerlilik süresi dahilinde geçerlidir. Malzemeler ambar teslimi kabul kriterlerine uygun olarak teslim edilecektir.', startX + 8, currentY + 22, { width: notesBoxWidth - 16, height: 42 });
+      .text(rfqData.notes || 'İşbu teklif yukarıda belirtilen şartlar ve geçerlilik süresi dahilinde geçerlidir. Malzemeler ambar teslimi kabul kriterlerine uygun olarak teslim edilecektir.', startX + 8, currentY + 22, { width: notesBoxWidth - 16, height: 42 });
 
     if (rfqData.currency !== 'TRY' && rfqData.currency !== 'TL') {
+      const rateTypeLabel = rfqData.isRateLocked ? 'Kilitli Sipariş Kuru' : 'Anlık Piyasa Kuru';
+      const tryVolLabel = rfqData.isRateLocked ? 'Kilitli TL Tutarı' : 'Tahmini TL Tutarı';
       doc.font('Bold').fontSize(7.5).fillColor('#000000')
-         .text(`Kur Bilgisi: 1 ${rfqData.currency} = ${parseFloat(rfqData.exchangeRate || 1).toFixed(4)} TL | Toplam TL Hacmi: ${parseFloat(rfqData.totalPriceTRY || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL`, startX + 8, currentY + 68, { width: notesBoxWidth - 16, lineBreak: false });
+        .text(`${rateTypeLabel}: 1 ${rfqData.currency} = ${parseFloat(rfqData.exchangeRate || 1).toFixed(4)} TL | ${tryVolLabel}: ${parseFloat(rfqData.totalPriceTRY || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL`, startX + 8, currentY + 68, { width: notesBoxWidth - 16, lineBreak: false });
     }
 
     // Right: Financial Totals Box
@@ -296,20 +298,20 @@ class RfqPdfService {
     const grandTotal = parseFloat(rfqData.totalPrice || 0);
 
     doc.font('Regular').fontSize(8.2).fillColor('#000000')
-       .text('Ara Toplam:', sumX + 10, currentY + 8)
-       .text('Toplam İskonto:', sumX + 10, currentY + 25)
-       .text('Hesaplanan KDV:', sumX + 10, currentY + 42);
+      .text('Ara Toplam:', sumX + 10, currentY + 8)
+      .text('Toplam İskonto:', sumX + 10, currentY + 25)
+      .text('Hesaplanan KDV:', sumX + 10, currentY + 42);
 
     doc.font('Bold').fontSize(8.2).fillColor('#000000')
-       .text(`${subtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currDisplay}`, sumX + 100, currentY + 8, { width: 125, align: 'right', lineBreak: false })
-       .text(`-${discount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currDisplay}`, sumX + 100, currentY + 25, { width: 125, align: 'right', lineBreak: false })
-       .text(`+${vat.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currDisplay}`, sumX + 100, currentY + 42, { width: 125, align: 'right', lineBreak: false });
+      .text(`${subtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currDisplay}`, sumX + 100, currentY + 8, { width: 125, align: 'right', lineBreak: false })
+      .text(`-${discount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currDisplay}`, sumX + 100, currentY + 25, { width: 125, align: 'right', lineBreak: false })
+      .text(`+${vat.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currDisplay}`, sumX + 100, currentY + 42, { width: 125, align: 'right', lineBreak: false });
 
     // Grand Total Line
     doc.lineWidth(0.75).moveTo(sumX + 6, currentY + 58).lineTo(sumX + summaryBoxWidth - 6, currentY + 58).stroke('#000000');
     doc.font('Bold').fontSize(9.5).fillColor('#000000')
-       .text('GENEL TOPLAM:', sumX + 10, currentY + 66)
-       .text(`${grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currDisplay}`, sumX + 85, currentY + 66, { width: 140, align: 'right', lineBreak: false });
+      .text('GENEL TOPLAM:', sumX + 10, currentY + 66)
+      .text(`${grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currDisplay}`, sumX + 85, currentY + 66, { width: 140, align: 'right', lineBreak: false });
 
     currentY += summaryBoxHeight + 16;
 
@@ -338,7 +340,7 @@ class RfqPdfService {
 
       doc.font('Bold').fontSize(8.2).fillColor('#000000').text(signTitle, sBoxX + 6, currentY + 8, { width: signColWidth - 12, align: 'center', lineBreak: false });
       doc.font('Regular').fontSize(7.2).fillColor('#555555').text(signSub, sBoxX + 6, currentY + 22, { width: signColWidth - 12, align: 'center', lineBreak: false });
-      
+
       // Stamp Box & Signature Line
       doc.lineWidth(0.5).moveTo(sBoxX + 16, currentY + 76).lineTo(sBoxX + signColWidth - 16, currentY + 76).stroke('#888888');
       doc.font('Italic').fontSize(6.8).fillColor('#666666').text('Yetkili İmza & Resmi Kaşe', sBoxX + 6, currentY + 80, { width: signColWidth - 12, align: 'center', lineBreak: false });
@@ -347,7 +349,7 @@ class RfqPdfService {
     // ==================== 7. FOOTER ====================
     doc.lineWidth(0.5).moveTo(startX, 792).lineTo(startX + pageWidth, 792).stroke('#CCCCCC');
     doc.font('Regular').fontSize(7).fillColor('#555555')
-       .text(`İşbu resmi belge Enterprise ERP Kurumsal Bilgi Sistemi tarafından elektronik olarak üretilmiştir. • Belge No: ${rfqData.rfqNo} • Yazdırma Tarihi: ${new Date().toLocaleString('tr-TR')}`, startX, 797, { width: pageWidth, align: 'center', lineBreak: false });
+      .text(`İşbu resmi belge Enterprise ERP Kurumsal Bilgi Sistemi tarafından elektronik olarak üretilmiştir. • Belge No: ${rfqData.rfqNo} • Yazdırma Tarihi: ${new Date().toLocaleString('tr-TR')}`, startX, 797, { width: pageWidth, align: 'center', lineBreak: false });
 
     doc.end();
   }

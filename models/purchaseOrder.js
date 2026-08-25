@@ -130,6 +130,24 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    dovizKuru: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: true,
+      defaultValue: 1
+    },
+    toplamTutarTRY: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: true
+    },
+    kurKilitliMi: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
+    },
+    kurTarihi: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true

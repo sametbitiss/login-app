@@ -287,13 +287,18 @@ class PurchaseController {
       const rfqObj = r.toJSON ? r.toJSON() : r;
       const items = (rfqObj.kalemlerVerisi && Array.isArray(rfqObj.kalemlerVerisi)) ? rfqObj.kalemlerVerisi : [];
       const curr = (rfqObj.paraBirimi || 'TRY').toUpperCase();
-      const currentRate = liveRates[curr] || 1.0;
+      
+      const isAccepted = rfqObj.durum === 'Accepted';
+      const isLocked = isAccepted && !!rfqObj.kilitliDovizKuru;
+      const currentRate = isLocked ? parseFloat(rfqObj.kilitliDovizKuru) : (liveRates[curr] || 1.0);
       
       const totalPrice = parseFloat(rfqObj.teklifEdilenToplamFiyat || rfqObj.offeredTotalPrice || rfqObj.araToplam || 0);
       const subtotal = parseFloat(rfqObj.araToplam || rfqObj.subtotal || 0);
       const discount = parseFloat(rfqObj.toplamIskonto || rfqObj.totalDiscount || 0);
       const vat = parseFloat(rfqObj.toplamKdv || rfqObj.totalTax || 0);
-      const totalPriceTRY = currencyService.convertToTRY(totalPrice, curr, liveRates);
+      const totalPriceTRY = isLocked && rfqObj.kilitliToplamTRY 
+        ? parseFloat(rfqObj.kilitliToplamTRY) 
+        : currencyService.convertToTRY(totalPrice, curr, liveRates);
       
       return {
         ...rfqObj,
@@ -308,6 +313,7 @@ class PurchaseController {
         totalPrice,
         totalPriceTRY,
         exchangeRate: currentRate,
+        isLockedRate: isLocked,
         subtotal,
         discount,
         vat,
@@ -765,7 +771,13 @@ class PurchaseController {
     const rfqObj = rfq.toJSON ? rfq.toJSON() : rfq;
     const liveRates = await currencyService.getLiveRates();
     const curr = (rfqObj.paraBirimi || 'TRY').toUpperCase();
-    const totalPriceTRY = currencyService.convertToTRY(rfqObj.teklifEdilenToplamFiyat, curr, liveRates);
+    
+    const isAccepted = rfqObj.durum === 'Accepted';
+    const isRateLocked = isAccepted && !!rfqObj.kilitliDovizKuru;
+    const currentRate = isRateLocked ? parseFloat(rfqObj.kilitliDovizKuru) : (liveRates[curr] || 1.0);
+    const totalPriceTRY = isRateLocked && rfqObj.kilitliToplamTRY
+      ? parseFloat(rfqObj.kilitliToplamTRY)
+      : currencyService.convertToTRY(rfqObj.teklifEdilenToplamFiyat, curr, liveRates);
 
     const rfqData = {
       ...rfqObj,
@@ -786,7 +798,8 @@ class PurchaseController {
       vat: parseFloat(rfqObj.toplamKdv || 0),
       totalPrice: parseFloat(rfqObj.teklifEdilenToplamFiyat || 0),
       totalPriceTRY,
-      exchangeRate: liveRates[curr] || 1.0,
+      exchangeRate: currentRate,
+      isRateLocked,
       itemsData: rfqObj.kalemlerVerisi || [],
       notes: rfqObj.notlar || '',
       status: rfqObj.durum || 'Received',

@@ -64,6 +64,9 @@ class RfqRepository {
       toplamKdv: data.toplamKdv !== undefined ? data.toplamKdv : data.totalTax,
       kalemlerVerisi: data.kalemlerVerisi || data.itemsData,
       talepEden: data.talepEden || data.requestedBy,
+      kilitliDovizKuru: data.kilitliDovizKuru !== undefined ? data.kilitliDovizKuru : null,
+      kilitliToplamTRY: data.kilitliToplamTRY !== undefined ? data.kilitliToplamTRY : null,
+      kilitlenmeTarihi: data.kilitlenmeTarihi || null,
       olusturanId: currentUser ? currentUser.id : null
     };
 

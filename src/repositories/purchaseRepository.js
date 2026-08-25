@@ -73,6 +73,10 @@ class PurchaseRepository {
       tedarikciId: data.tedarikciId || data.supplierId,
       notlar: data.notlar || data.notes,
       kalemlerJson: data.kalemlerJson || data.itemsJson,
+      dovizKuru: data.dovizKuru !== undefined ? data.dovizKuru : 1,
+      toplamTutarTRY: data.toplamTutarTRY !== undefined ? data.toplamTutarTRY : null,
+      kurKilitliMi: data.kurKilitliMi !== undefined ? data.kurKilitliMi : true,
+      kurTarihi: data.kurTarihi || new Date(),
       olusturanId: currentUser ? currentUser.id : null
     };
 

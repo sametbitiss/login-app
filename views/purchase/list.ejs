@@ -253,7 +253,18 @@
                       <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
                     <% } %>
                   </td>
-                  <td><strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(order.totalAmount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %> <%= order.currency %></strong></td>
+                  <td>
+                    <strong style="color: var(--emerald); font-family: 'JetBrains Mono', monospace;"><%= parseFloat(order.totalAmount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %> <%= order.currency %></strong>
+                    <% if (order.currency !== 'TRY' && order.currency !== 'TL') { 
+                      const lockedTRY = order.toplamTutarTRY || (order.dovizKuru ? (parseFloat(order.totalAmount || 0) * parseFloat(order.dovizKuru)) : null);
+                    %>
+                      <% if (lockedTRY) { %>
+                        <div style="font-size: 0.72rem; color: #34d399; font-weight: 700; font-family: 'JetBrains Mono', monospace;" title="Sipariş kilitli kuru: 1 <%= order.currency %> = <%= parseFloat(order.dovizKuru || 1).toFixed(2) %> TL">
+                          🔒 <%= parseFloat(lockedTRY).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> TL (Kilitli)
+                        </div>
+                      <% } %>
+                    <% } %>
+                  </td>
                   <td style="font-size: 0.8rem;">
                     <%= order.paymentTerm === 'Pesin' ? 'Peşin' : order.paymentTerm === 'Vadeli_30' ? '30 Gün Vadeli' : order.paymentTerm === 'Vadeli_60' ? '60 Gün Vadeli' : order.paymentTerm === 'Vadeli_90' ? '90 Gün Vadeli' : 'Kredi Kartı' %>
                   </td>

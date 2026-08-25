@@ -4,6 +4,7 @@ const rfqRepository = require('../repositories/rfqRepository');
 const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const requisitionRepository = require('../repositories/requisitionRepository');
 const stockRepository = require('../repositories/stockRepository');
+const currencyService = require('./currencyService');
 const { ValidationError, NotFoundError } = require('../utils/appError');
 const { SatinAlmaSiparisi, SatinAlmaTeklifTalebi, MalKabul, Tedarikci, SatinAlmaTalebi, StokKarti, sequelize } = require('../../models');
 const { Op, fn, col, literal } = require('sequelize');
@@ -160,7 +161,28 @@ class PurchaseService {
     const rfq = await rfqRepository.findById(rfqId);
     if (!rfq) throw new NotFoundError('Teklif bulunamadı.');
 
-    await SatinAlmaTeklifTalebi.update({ durum: 'Accepted', kazananMi: true }, { where: { id: rfqId } });
+    // 1. Fetch live currency rates at the exact moment of order placement
+    const liveRates = await currencyService.getLiveRates();
+    const curr = (rfq.paraBirimi || 'TRY').toUpperCase();
+    const isForeign = curr !== 'TRY' && curr !== 'TL';
+    const lockedRate = isForeign ? (liveRates[curr] || 1) : 1;
+
+    const subtotal = parseFloat(rfq.araToplam) || parseFloat(rfq.teklifEdilenToplamFiyat) || 0;
+    const totalDiscount = parseFloat(rfq.toplamIskonto) || 0;
+    const totalTax = parseFloat(rfq.toplamKdv) || 0;
+    const grandTotal = parseFloat(rfq.teklifEdilenToplamFiyat) || (subtotal - totalDiscount + totalTax);
+
+    // Calculate permanent locked TRY amounts
+    const lockedGrandTotalTRY = currencyService.convertToTRY(grandTotal, curr, liveRates);
+
+    // 2. Lock the RFQ record permanently with the transaction rate & date
+    await SatinAlmaTeklifTalebi.update({
+      durum: 'Accepted',
+      kazananMi: true,
+      kilitliDovizKuru: lockedRate,
+      kilitliToplamTRY: lockedGrandTotalTRY,
+      kilitlenmeTarihi: new Date()
+    }, { where: { id: rfqId } });
 
     let itemsList = [];
     if (rfq.kalemlerVerisi && Array.isArray(rfq.kalemlerVerisi) && rfq.kalemlerVerisi.length > 0) {
@@ -185,11 +207,6 @@ class PurchaseService {
     }
 
     const itemsJson = JSON.stringify(itemsList);
-
-    const subtotal = parseFloat(rfq.araToplam) || parseFloat(rfq.teklifEdilenToplamFiyat) || 0;
-    const totalDiscount = parseFloat(rfq.toplamIskonto) || 0;
-    const totalTax = parseFloat(rfq.toplamKdv) || 0;
-    const grandTotal = parseFloat(rfq.teklifEdilenToplamFiyat) || (subtotal - totalDiscount + totalTax);
 
     const nextOrderNo = await this.getNextOrderNo();
     const deliveryDays = parseInt(rfq.teslimSuresiGun, 10) || 7;
@@ -223,8 +240,12 @@ class PurchaseService {
       iskontoTutari: totalDiscount,
       kdvTutari: totalTax,
       toplamTutar: grandTotal,
-      paraBirimi: rfq.paraBirimi || 'TRY',
-      notlar: rfq.notlar || `[Sözleşmeli Teklif No: ${rfq.teklifTalepNo}] Teklifi kabul edilerek otomatik oluşturulan satın alma siparişidir.`,
+      paraBirimi: curr,
+      dovizKuru: lockedRate,
+      toplamTutarTRY: lockedGrandTotalTRY,
+      kurKilitliMi: true,
+      kurTarihi: new Date(),
+      notlar: rfq.notlar || `[Sözleşmeli Teklif No: ${rfq.teklifTalepNo}] Teklifi kabul edilerek ${isForeign ? `(Kilitli Kur: 1 ${curr} = ${lockedRate.toFixed(4)} TL - Kilitli Toplam: ${lockedGrandTotalTRY.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL)` : ''} otomatik oluşturulan satın alma siparişidir.`,
       satinAlmaci: currentUser ? (currentUser.ad ? `${currentUser.ad} ${currentUser.soyad}` : currentUser.kullaniciAdi) : 'Sistem',
       kalemlerJson: itemsJson
     }, currentUser, ipAddress);

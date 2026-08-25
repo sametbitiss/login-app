@@ -119,6 +119,18 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
+    kilitliDovizKuru: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: true
+    },
+    kilitliToplamTRY: {
+      type: DataTypes.DECIMAL(15, 4),
+      allowNull: true
+    },
+    kilitlenmeTarihi: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     olusturanId: {
       type: DataTypes.INTEGER,
       allowNull: true
