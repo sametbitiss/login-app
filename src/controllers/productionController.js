@@ -1237,19 +1237,22 @@ class ProductionController {
     const { orderId, operationId, workCenterId, reason, notes } = req.body;
     const targetId = operationId || orderId;
     if (!targetId) throw new ValidationError('İş adımı / operasyon ID belirtilmedi.');
-    if (!reason || !['Mola', 'Malzeme Bekleme', 'Arıza'].includes(reason)) {
-      throw new ValidationError('Lütfen geçerli bir duraklatma sebebi seçiniz (Mola, Malzeme Bekleme, Arıza).');
-    }
-    if (!notes || !notes.trim()) {
-      throw new ValidationError('Duraklatma gerekçesi ve notlar alanı boş bırakılamaz!');
-    }
+    
+    // Geçerli duraklatma gerekçesini belirle (Tüm açılır liste seçeneklerini kabul et)
+    const effectiveReason = (reason && typeof reason === 'string' && reason.trim()) 
+      ? reason.trim() 
+      : 'Mola (Vardiya / Yemek)';
+      
+    const effectiveNotes = (notes && typeof notes === 'string' && notes.trim()) 
+      ? notes.trim() 
+      : `${effectiveReason} gerekçesiyle duraklatıldı.`;
 
-    const op = await productionService.pauseMESJob(targetId, workCenterId, reason, notes.trim(), req.user);
+    const op = await productionService.pauseMESJob(targetId, workCenterId, effectiveReason, effectiveNotes, req.user);
 
-    if (req.xhr || req.headers.accept?.includes('application/json')) {
+    if (req.xhr || req.headers?.accept?.includes('application/json')) {
       return res.json({ success: true, message: `[${op.isEmriNo}] duraklatıldı.`, op });
     }
-    res.redirect('/production/mes?success=' + encodeURIComponent(`[${op.isEmriNo}] "${op.operasyonAdi}" operasyonu duraklatıldı (${reason}).`));
+    res.redirect('/production/mes?success=' + encodeURIComponent(`[${op.isEmriNo}] "${op.operasyonAdi}" operasyonu duraklatıldı (${effectiveReason}).`));
   });
 
   completeMESJob = asyncHandler(async (req, res) => {
@@ -1271,7 +1274,7 @@ class ProductionController {
       msg += ` 🏭 Tüm adımlar tamamlandı ve ${qty} birim nihai mamul stoka eklendi!`;
     }
 
-    if (req.xhr || req.headers.accept?.includes('application/json')) {
+    if (req.xhr || req.headers?.accept?.includes('application/json')) {
       return res.json({ success: true, message: msg, result });
     }
     res.redirect('/production/mes?success=' + encodeURIComponent(msg));
