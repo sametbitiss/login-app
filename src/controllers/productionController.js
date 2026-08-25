@@ -88,7 +88,9 @@ class ProductionController {
       filterSearch: search || '',
       filterStatus: status || '',
       filterPriority: priority || '',
-      filterWorkCenter: workCenter || ''
+      filterWorkCenter: workCenter || '',
+      success: req.query.success || null,
+      error: req.query.error || null
     });
   });
 
@@ -105,6 +107,17 @@ class ProductionController {
     const targetProduct = await StokKarti.findByPk(effectiveStockId);
     if (!targetProduct) {
       return res.redirect('/production/mrp');
+    }
+
+    // Aktif veya tamamlanmış iş emri kontrolü: Daha önce iş emri açılmış ürünler için yeni iş emri açılamaz
+    const existingActiveOrder = await UretimEmri.findOne({
+      where: {
+        stokId: effectiveStockId,
+        durum: { [Op.notIn]: ['Planned', 'Cancelled'] }
+      }
+    });
+    if (existingActiveOrder) {
+      return res.redirect('/production/orders?error=' + encodeURIComponent(`⛔ "${targetProduct.ad}" ürünü için zaten sistemde aktif veya tamamlanmış bir iş emri bulunmaktadır ([${existingActiveOrder.isEmriNo}] - Durum: ${existingActiveOrder.durum}). Sadece daha önce hiç iş emri açılmamış ürünler için iş emri oluşturulabilir!`));
     }
 
     let grossQty = parseFloat(plannedQty || qty || 1) || 1;
@@ -372,6 +385,17 @@ class ProductionController {
     const targetProduct = await StokKarti.findByPk(sId);
     if (!targetProduct) {
       throw new ValidationError('Geçerli bir ürün seçilmelidir.');
+    }
+
+    // Aktif veya tamamlanmış iş emri kontrolü: Daha önce iş emri açılmış ürünler için yeni iş emri açılamaz
+    const existingActiveOrder = await UretimEmri.findOne({
+      where: {
+        stokId: sId,
+        durum: { [Op.notIn]: ['Planned', 'Cancelled'] }
+      }
+    });
+    if (existingActiveOrder) {
+      throw new ValidationError(`⛔ "${targetProduct.ad}" ürünü için zaten sistemde aktif veya tamamlanmış bir iş emri bulunmaktadır ([${existingActiveOrder.isEmriNo}] - Durum: ${existingActiveOrder.durum}). Sadece daha önce hiç iş emri açılmamış ürünler için iş emri oluşturulabilir!`);
     }
 
     const nextNo = isEmriNo || (await productionRepository.generateWorkOrderNo());

@@ -1,6 +1,7 @@
 const { UretimEmri, UretimEmriOperasyon, IsMerkezi, StokKarti, UrunRecetesi, RotaOperasyon, Kullanici, StokHareketi, sequelize } = require('../../models');
 const logService = require('../services/logService');
 const { Op } = require('sequelize');
+const { ValidationError } = require('../utils/appError');
 
 class ProductionRepository {
   async generateWorkOrderNo() {
@@ -108,6 +109,19 @@ class ProductionRepository {
 
     if (!cleanData.isEmriNo) {
       cleanData.isEmriNo = await this.generateWorkOrderNo();
+    }
+
+    // Aktif veya tamamlanmış iş emri olan ürünler için mükerrer iş emri açılmasını engelle
+    if (cleanData.stokId && !['Planned', 'Cancelled'].includes(cleanData.durum)) {
+      const existingActiveOrder = await UretimEmri.findOne({
+        where: {
+          stokId: cleanData.stokId,
+          durum: { [Op.notIn]: ['Planned', 'Cancelled'] }
+        }
+      });
+      if (existingActiveOrder) {
+        throw new ValidationError(`⛔ Bu ürün için zaten sistemde aktif veya tamamlanmış bir iş emri bulunmaktadır ([${existingActiveOrder.isEmriNo}] - Durum: ${existingActiveOrder.durum}). Sadece daha önce hiç iş emri açılmamış ürünler için iş emri oluşturulabilir!`);
+      }
     }
 
     const newOrder = await UretimEmri.create(cleanData);

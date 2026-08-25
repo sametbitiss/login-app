@@ -326,7 +326,11 @@
                     <td style="font-size: 0.825rem; color: #cbd5e1;"><%= wo.workCenter %></td>
                     <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: #fbbf24;"><%= wo.estimatedHours %> Saat</td>
                     <td>
-                      <% if (wo.status === 'Active') { %>
+                      <% if (wo.hasExistingOrder) { %>
+                        <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(245, 158, 11, 0.3); display: inline-flex; align-items: center; gap: 4px;">
+                          ⚠️ İş Emri Mevcut (<%= wo.existingWorkOrderNo %>)
+                        </span>
+                      <% } else if (wo.status === 'Active') { %>
                         <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 4px;">
                           🟢 Bileşenler Hazır — İş Emri Açılabilir
                         </span>
@@ -346,7 +350,11 @@
                       <% } %>
                     </td>
                     <td style="text-align: right;">
-                      <% if (wo.status === 'Active') { %>
+                      <% if (wo.hasExistingOrder) { %>
+                        <button type="button" class="btn-quick-action" style="background: rgba(255, 255, 255, 0.04); color: #94a3b8; border-color: rgba(255, 255, 255, 0.1); cursor: not-allowed;" title="Bu ürün için zaten sistemde aktif veya tamamlanmış bir iş emri bulunmaktadır ([<%= wo.existingWorkOrderNo %>]). Mükerrer iş emri açılamaz." disabled>
+                          🔒 İş Emri Mevcut
+                        </button>
+                      <% } else if (wo.status === 'Active') { %>
                         <a href="/production/orders/add?stockId=<%= wo.stockId %>&plannedQty=<%= wo.quantity %>&priority=<%= encodeURIComponent(wo.priority || 'Normal') %>&requisitionNo=<%= encodeURIComponent(wo.demandSources || '') %>" class="btn-quick-action" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); text-decoration: none;">
                           ➕ İş Emri Aç & İncele
                         </a>

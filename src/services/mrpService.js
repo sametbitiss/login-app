@@ -224,9 +224,20 @@ class MRPService {
     // ═══════════════════════════════════════════════════════════════
     // ADIM 7: İş Emri Önerileri (Aşağıdan Yukarı Bağımlılık Grafiği)
     // ═══════════════════════════════════════════════════════════════
+    const existingWorkOrders = await UretimEmri.findAll({
+      where: {
+        durum: { [Op.notIn]: ['Planned', 'Cancelled'] }
+      },
+      attributes: ['id', 'stokId', 'isEmriNo', 'durum']
+    });
+    const existingOrdersByStock = new Map();
+    existingWorkOrders.forEach(o => {
+      existingOrdersByStock.set(o.stokId, o);
+    });
+
     const workOrderSuggestions = this._buildWorkOrderSuggestions(
       intermediateProducts, bomsByParent, stockMap, globalRequirements,
-      materialRequirements, routingsByStock
+      materialRequirements, routingsByStock, existingOrdersByStock
     );
 
     // ═══════════════════════════════════════════════════════════════
@@ -381,7 +392,7 @@ class MRPService {
    * 6. Bir bileşen bile eksikse → Pasif iş emri önerisi (engeli belirt).
    * 7. Sırala: Önce alt seviyeler (yarı mamuller), sonra üst seviyeler (mamuller).
    */
-  _buildWorkOrderSuggestions(intermediateProducts, bomsByParent, stockMap, globalRequirements, materialRequirements, routingsByStock) {
+  _buildWorkOrderSuggestions(intermediateProducts, bomsByParent, stockMap, globalRequirements, materialRequirements, routingsByStock, existingOrdersByStock = new Map()) {
     const suggestions = [];
 
     // Shortage lookup: stokId -> netShortage (materyaller arasından)
@@ -418,6 +429,10 @@ class MRPService {
       if (isDiscreteUnit(item.birim || 'Adet')) {
         roundedQty = Math.ceil(productionQty);
       }
+
+      // Bu ürün için zaten aktif veya tamamlanmış bir iş emri var mı kontrol et
+      const existingOrder = (existingOrdersByStock && existingOrdersByStock.get(stokId)) || null;
+      const hasExistingOrder = !!existingOrder;
 
       // Bu ürünün net üretim miktarı için doğrudan bileşenlerini kontrol et
       const blockers = [];
@@ -479,6 +494,16 @@ class MRPService {
       const isTopLevel = ipData.isTopLevel;
       const depth = isTopLevel ? 0 : 1; // 0 = mamul, 1 = yarı mamul
 
+      let status = allComponentsReady ? 'Active' : 'Passive';
+      let statusLabel = allComponentsReady
+        ? '🟢 Bileşenler Hazır — İş Emri Açılabilir'
+        : '🟡 Beklemede — Alt Bileşen Eksik';
+
+      if (hasExistingOrder) {
+        status = 'HasExistingOrder';
+        statusLabel = `⚠️ İş Emri Mevcut ([${existingOrder.isEmriNo}] • ${existingOrder.durum})`;
+      }
+
       suggestions.push({
         stockId: stokId,
         stockCode: item.stokKodu,
@@ -489,10 +514,11 @@ class MRPService {
         currentStock,
         netRequirement: roundedQty,
         unit: item.birim || 'Adet',
-        status: allComponentsReady ? 'Active' : 'Passive',
-        statusLabel: allComponentsReady
-          ? '🟢 Bileşenler Hazır — İş Emri Açılabilir'
-          : '🟡 Beklemede — Alt Bileşen Eksik',
+        status,
+        statusLabel,
+        hasExistingOrder,
+        existingWorkOrderNo: existingOrder ? existingOrder.isEmriNo : null,
+        existingOrderStatus: existingOrder ? existingOrder.durum : null,
         isTopLevel,
         depth,
         blockers,
@@ -597,7 +623,16 @@ class MRPService {
       const year = new Date().getFullYear();
       for (const item of mrpData.workOrderSuggestions) {
         if (selectedStockIds && !selectedStockIds.includes(item.stockId)) continue;
-        if (item.status !== 'Active') continue; // Sadece aktif iş emri önerilerini oluştur
+        if (item.status !== 'Active' || item.hasExistingOrder) continue; // Sadece aktif ve daha önce iş emri açılmamış olanları oluştur
+
+        // Mükerrer iş emri kontrolü: Bu ürün için zaten aktif veya tamamlanmış iş emri varsa atla
+        const existingActiveWO = await UretimEmri.findOne({
+          where: {
+            stokId: item.stockId,
+            durum: { [Op.notIn]: ['Planned', 'Cancelled'] }
+          }
+        });
+        if (existingActiveWO) continue;
 
         const prefix = `ISEMRI-${year}-`;
         const lastOrder = await UretimEmri.findOne({
