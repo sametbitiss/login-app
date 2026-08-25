@@ -739,22 +739,33 @@ class PurchaseController {
       const durum = rawData.durum || rawData.status || 'Active';
       const notlar = (rawData.notlar || rawData.notes || '').trim() || null;
 
-      // Backend Validasyonları
-      if (!tedarikciKodu) {
-        throw new Error('Tedarikçi kodu zorunludur.');
+      // Backend Validasyonları - Tüm alanlar zorunlu
+      if (!tedarikciKodu) throw new Error('Tedarikçi kodu zorunludur.');
+      if (!firmaAdi || firmaAdi.length < 2) throw new Error('Firma resmi unvanı zorunludur (en az 2 karakter).');
+      if (!ticariAd) throw new Error('Ticari Ad / Kısa Ad alanı zorunludur.');
+      if (!kategori) throw new Error('Tedarikçi grubu / kategori seçimi zorunludur.');
+      if (!vergiDairesi) throw new Error('Vergi dairesi alanı zorunludur.');
+      if (!vergiNo || !/^[0-9]{10,11}$/.test(vergiNo.replace(/[\s-]/g, ''))) {
+        throw new Error('Vergi numarası zorunludur ve 10 haneli (Tüzel Kişi) veya 11 haneli (Şahıs) rakamlardan oluşmalıdır.');
       }
-      if (!firmaAdi || firmaAdi.length < 2) {
-        throw new Error('Firma resmi unvanı en az 2 karakter olmalıdır ve zorunludur.');
+      if (!ilgiliKisi) throw new Error('İlgili satış temsilcisi / yetkili kişi alanı zorunludur.');
+      if (!eposta || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eposta)) {
+        throw new Error('E-posta adresi zorunludur ve geçerli bir e-posta formatında olmalıdır (örn: siparis@firma.com).');
       }
-      if (eposta && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eposta)) {
-        throw new Error('Lütfen geçerli bir e-posta adresi giriniz.');
-      }
-      if (vergiNo && !/^[0-9]{10,11}$/.test(vergiNo.replace(/[\s-]/g, ''))) {
-        throw new Error('Vergi numarası 10 haneli (Tüzel) veya 11 haneli (Şahıs) rakamlardan oluşmalıdır.');
-      }
-      if (terminSuresi < 1) {
-        throw new Error('Varsayılan termin süresi en az 1 gün olmalıdır.');
-      }
+      if (!webSitesi) throw new Error('Web sitesi alanı zorunludur.');
+      if (!telefon) throw new Error('Sabit telefon numarası alanı zorunludur.');
+      if (!gsm) throw new Error('GSM / Cep telefonu numarası alanı zorunludur.');
+      if (!adres) throw new Error('Fatura & Merkez şirket adresi alanı zorunludur.');
+      if (!sehir) throw new Error('Şehir bilgisi zorunludur.');
+      if (!ulke) throw new Error('Ülke bilgisi zorunludur.');
+      if (!paraBirimi) throw new Error('Varsayılan para birimi seçimi zorunludur.');
+      if (!odemeVadesi) throw new Error('Varsayılan ödeme vadesi seçimi zorunludur.');
+      if (!teslimatSekli) throw new Error('Varsayılan teslimat şekli seçimi zorunludur.');
+      if (!bankaBilgileri) throw new Error('Banka hesap bilgileri (IBAN & Banka Adı) alanı zorunludur.');
+      if (isNaN(terminSuresi) || terminSuresi < 1) throw new Error('Varsayılan termin süresi zorunludur ve en az 1 gün olmalıdır.');
+      if (isNaN(performansSkoru) || performansSkoru < 0 || performansSkoru > 100) throw new Error('Performans / Kalite puanı 0 ile 100 arasında bir değer olmalıdır.');
+      if (!durum) throw new Error('Tedarikçi durumu zorunludur.');
+      if (!notlar) throw new Error('Özel notlar & tedarikçi değerlendirmesi alanı zorunludur.');
 
       await purchaseService.createSupplier({
         tedarikciKodu,
