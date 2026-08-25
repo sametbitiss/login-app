@@ -235,7 +235,44 @@
       border-color: rgba(99, 102, 241, 0.35);
       transform: translateX(2px);
     }
+    .mes-queue-card--ready {
+      border-left: 4px solid #10b981;
+    }
+    .mes-queue-card--locked {
+      border-left: 4px solid #f59e0b;
+      background: rgba(35, 25, 15, 0.45);
+    }
     .mes-queue-card:last-child { margin-bottom: 0; }
+
+    .mes-route-stepper {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 6px 2px;
+    }
+    .mes-route-step {
+      flex: 1;
+      min-width: 140px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      position: relative;
+    }
+    .mes-route-step--current {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+    }
+    .mes-route-step--completed {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    .mes-route-step--locked {
+      opacity: 0.75;
+      background: rgba(30, 25, 20, 0.5);
+      border-color: rgba(245, 158, 11, 0.25);
+    }
 
     /* Action Buttons */
     .mes-actions-row {
@@ -550,23 +587,44 @@
                     Bekleyen sırada iş emri bulunmamaktadır.
                   </div>
                 <% } else { %>
-                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
                     <% wc.queuedOrders.forEach((qo, idx) => { %>
-                      <div class="mes-queue-card" onclick="openOrderDetailModal(<%= JSON.stringify(qo) %>, '<%= wc.workCenterCode %>', '<%= wc.workCenterName.replace(/'/g, "\\'") %>')">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 6px; border-radius: 4px;">
+                      <div class="mes-queue-card <%= qo.isLocked ? 'mes-queue-card--locked' : 'mes-queue-card--ready' %>" onclick="openOrderDetailModal(<%= JSON.stringify(qo) %>, '<%= wc.workCenterCode %>', '<%= wc.workCenterName.replace(/'/g, "\\'") %>')">
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; background: <%= qo.isLocked ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)' %>; color: <%= qo.isLocked ? '#fbbf24' : '#34d399' %>; padding: 3px 6px; border-radius: 4px; margin-top: 2px;">
                             #<%= idx + 1 %>
                           </span>
                           <div>
-                            <strong style="color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"><%= qo.isEmriNo %></strong>
-                            <div style="font-size: 0.78rem; color: #cbd5e1;"><%= qo.stokAdi %> (<%= qo.planlananMiktar %> <%= qo.birim %>)</div>
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                              <strong style="color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"><%= qo.isEmriNo %></strong>
+                              <% if (qo.isLocked) { %>
+                                <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;">
+                                  🔒 Beklemede
+                                </span>
+                              <% } else { %>
+                                <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;">
+                                  🟢 Başlatılabilir
+                                </span>
+                              <% } %>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #f1f5f9; font-weight: 600; margin-top: 2px;">
+                              🛠️ <%= qo.operationName %> <span style="color: #94a3b8; font-weight: 400;">(Adım #<%= qo.operationSeq %>)</span>
+                            </div>
+                            <div style="font-size: 0.76rem; color: #94a3b8;">
+                              📦 <%= qo.stokAdi %> (<%= qo.planlananMiktar %> <%= qo.birim %>)
+                            </div>
+                            <% if (qo.isLocked && qo.lockReason) { %>
+                              <div style="font-size: 0.72rem; color: #fbbf24; background: rgba(245, 158, 11, 0.12); padding: 2px 6px; border-radius: 4px; margin-top: 4px; border: 1px dashed rgba(245, 158, 11, 0.3);">
+                                ⚠️ <%= qo.lockReason %>
+                              </div>
+                            <% } %>
                           </div>
                         </div>
-                        <div style="text-align: right;">
+                        <div style="text-align: right; min-width: 60px;">
                           <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #fbbf24; font-weight: 700;">
                             <%= qo.tahminiSaat %> Sa
                           </span>
-                          <div style="font-size: 0.72rem; color: #818cf8; font-weight: 600;">Detay ➔</div>
+                          <div style="font-size: 0.72rem; color: #818cf8; font-weight: 600; margin-top: 4px;">Detay ➔</div>
                         </div>
                       </div>
                     <% }); %>
@@ -581,7 +639,8 @@
                   <% if (ao.isPaused) { %>
                     <!-- Resume Button -->
                     <form action="/production/mes/start-job" method="POST" style="flex: 1; margin: 0;">
-                      <input type="hidden" name="orderId" value="<%= ao.id %>">
+                      <input type="hidden" name="operationId" value="<%= ao.id %>">
+                      <input type="hidden" name="orderId" value="<%= ao.workOrderId || ao.id %>">
                       <input type="hidden" name="workCenterId" value="<%= wc.id %>">
                       <button type="submit" class="btn-mes-action btn-mes-resume" style="width: 100%;">
                         <span>▶️ İşe Devam Et / Başlat</span>
@@ -595,21 +654,29 @@
                   <% } %>
 
                   <!-- Complete Button -->
-                  <button type="button" class="btn-mes-action btn-mes-complete" onclick="openCompleteModal('<%= ao.id %>', '<%= wc.id %>', '<%= ao.isEmriNo %>', '<%= ao.stokAdi.replace(/'/g, "\\'") %>', <%= ao.kalanMiktar %>, '<%= ao.birim %>')">
-                    <span>✅ Üretimi Tamamla / Kaydet</span>
+                  <button type="button" class="btn-mes-action btn-mes-complete" onclick="openCompleteModal('<%= ao.id %>', '<%= wc.id %>', '<%= ao.isEmriNo %>', '<%= ao.stokAdi.replace(/'/g, "\\'") %>', <%= ao.kalanMiktar %>, '<%= ao.birim %>', '<%= ao.operationName.replace(/'/g, "\\'") %>')">
+                    <span>✅ Adımı Tamamla / Kaydet</span>
                   </button>
                 <% } else if (wc.queuedOrders.length > 0) { %>
-                  <!-- Start Next Order in Queue -->
-                  <% const nextOrder = wc.queuedOrders[0]; %>
-                  <form action="/production/mes/start-job" method="POST" style="flex: 1; margin: 0;">
-                    <input type="hidden" name="orderId" value="<%= nextOrder.id %>">
-                    <input type="hidden" name="workCenterId" value="<%= wc.id %>">
-                    <button type="submit" class="btn-mes-action btn-mes-start" style="width: 100%;">
-                      <span>▶️ Sıradaki İşi Başlat (<%= nextOrder.isEmriNo %>)</span>
+                  <!-- Find First Ready Order in Queue -->
+                  <% const firstReadyOrder = wc.queuedOrders.find(o => o.isReady); %>
+                  <% if (firstReadyOrder) { %>
+                    <form action="/production/mes/start-job" method="POST" style="flex: 1; margin: 0;">
+                      <input type="hidden" name="operationId" value="<%= firstReadyOrder.id %>">
+                      <input type="hidden" name="orderId" value="<%= firstReadyOrder.workOrderId || firstReadyOrder.id %>">
+                      <input type="hidden" name="workCenterId" value="<%= wc.id %>">
+                      <button type="submit" class="btn-mes-action btn-mes-start" style="width: 100%;">
+                        <span>▶️ Sıradaki İşi Başlat (<%= firstReadyOrder.isEmriNo %>)</span>
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <% const lockedFirst = wc.queuedOrders[0]; %>
+                    <button type="button" class="btn-mes-action" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1.5px dashed rgba(245, 158, 11, 0.35); cursor: not-allowed; width: 100%;" disabled title="<%= lockedFirst.lockReason || 'Önceki adımın tamamlanması bekleniyor.' %>">
+                      <span>🔒 Sıradaki İş Beklemede (Önceki Adım Tamamlanmalı)</span>
                     </button>
-                  </form>
+                  <% } %>
                 <% } else { %>
-                  <button type="button" class="btn-mes-action" style="background: rgba(255, 255, 255, 0.05); color: #64748b; cursor: default;" disabled>
+                  <button type="button" class="btn-mes-action" style="background: rgba(255, 255, 255, 0.05); color: #64748b; cursor: default; width: 100%;" disabled>
                     <span>🟢 İstasyon Boş & Bekleyen İş Yok</span>
                   </button>
                 <% } %>
@@ -671,6 +738,16 @@
               <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 2px;" id="dtlOpCodeStep"></div>
             </div>
             <div style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fbbf24;" id="dtlOpTimes"></div>
+          </div>
+        </div>
+
+        <!-- Rota Adımları İlerleme Çizelgesi -->
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px 16px;">
+          <span style="font-size: 0.76rem; color: #818cf8; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 8px;">
+            🛣️ Üretim Rotası ve İstasyon İlerleme Sırası
+          </span>
+          <div id="dtlRouteStepper" class="mes-route-stepper">
+            <!-- Rendered dynamically -->
           </div>
         </div>
 
@@ -936,12 +1013,48 @@
       document.getElementById('dtlStationName').textContent = `[${wcCode}] ${wcName}`;
       document.getElementById('dtlProductName').textContent = `[${orderObj.stokKodu}] ${orderObj.stokAdi}`;
       document.getElementById('dtlTargetQty').textContent = `${orderObj.planlananMiktar} ${orderObj.birim} (Kalan: ${orderObj.kalanMiktar} ${orderObj.birim})`;
-      document.getElementById('dtlPriorityTermin').textContent = `${orderObj.oncelik} Öncelikli • Termin: ${orderObj.planlananBitisTarihi}`;
+      document.getElementById('dtlPriorityTermin').textContent = `${orderObj.oncelik} Öncelikli • Termin: ${orderObj.planlananBitisTarihi || '—'}`;
 
       const op = orderObj.operasyon || {};
-      document.getElementById('dtlOpName').textContent = op.ad || 'Genel İmalat Operasyonu';
-      document.getElementById('dtlOpCodeStep').textContent = `Operasyon Kodu: ${op.kod || 'OPS-10'} • Rota Adımı: ${op.sira || 10}`;
-      document.getElementById('dtlOpTimes').textContent = `Birim: ${op.birimDk || 5} Dk/Ad • Hazırlık: ${op.hazirlikDk || 15} Dk`;
+      document.getElementById('dtlOpName').textContent = orderObj.operationName || op.ad || 'Genel İmalat Operasyonu';
+      document.getElementById('dtlOpCodeStep').textContent = `Operasyon Kodu: ${orderObj.operationCode || op.kod || 'OPS-10'} • Rota Adımı: #${orderObj.operationSeq || op.sira || 10} (${orderObj.stepNumber || 1}/${orderObj.totalSteps || 1})`;
+      document.getElementById('dtlOpTimes').textContent = `Birim: ${op.birimDk || 5} Dk/Ad • Hazırlık: ${op.hazirlikDk || 15} Dk • Tahmini: ${orderObj.tahminiDakika || 60} Dk`;
+
+      // Route stepper
+      const stepperEl = document.getElementById('dtlRouteStepper');
+      const routeTimeline = orderObj.routeTimeline || [];
+      if (stepperEl) {
+        if (routeTimeline.length === 0) {
+          stepperEl.innerHTML = '<div style="color: #64748b; font-size: 0.82rem; font-style: italic; padding: 4px;">Tek adımlı operasyon süreci</div>';
+        } else {
+          stepperEl.innerHTML = routeTimeline.map(step => {
+            let statusBadge = '';
+            let stepClass = '';
+            if (step.isCompleted) {
+              statusBadge = '<span style="color: #34d399; font-weight: 800; font-size: 0.72rem;">✓ Tamamlandı</span>';
+              stepClass = 'mes-route-step--completed';
+            } else if (step.isRunning) {
+              statusBadge = '<span style="color: #818cf8; font-weight: 800; font-size: 0.72rem;">⚡ Üretimde</span>';
+              stepClass = 'mes-route-step--current';
+            } else if (step.isReady) {
+              statusBadge = '<span style="color: #34d399; font-weight: 800; font-size: 0.72rem;">🟢 Başlatılabilir</span>';
+              stepClass = 'mes-route-step--current';
+            } else {
+              statusBadge = '<span style="color: #fbbf24; font-weight: 800; font-size: 0.72rem;">🔒 Beklemede</span>';
+              stepClass = 'mes-route-step--locked';
+            }
+
+            return `
+              <div class="mes-route-step ${stepClass}">
+                <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Adım #${step.stepNumber}</div>
+                <div style="font-size: 0.84rem; font-weight: 800; color: #fff; margin: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${step.operationName}">${step.operationName}</div>
+                <div style="font-size: 0.74rem; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">🏢 ${step.workCenterName}</div>
+                <div style="margin-top: 6px;">${statusBadge}</div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
 
       // Components table
       const tbody = document.getElementById('dtlComponentsTbody');
@@ -990,11 +1103,11 @@
     // =========================================================================
     // 2. DURAKLAT / BEKLEMEYE AL MODALI (ZORUNLU AÇIKLAMA NOTU)
     // =========================================================================
-    function openPauseModal(orderId, wcId, orderNo, wcCode) {
+    function openPauseModal(opId, wcId, orderNo, wcCode) {
       const modal = document.getElementById('pauseJobModal');
       if (!modal) return;
 
-      document.getElementById('pauseModalOrderId').value = orderId;
+      document.getElementById('pauseModalOrderId').value = opId;
       document.getElementById('pauseModalWcId').value = wcId;
       document.getElementById('pauseModalOrderNo').textContent = `${orderNo} [${wcCode}]`;
       document.getElementById('pauseModalNotesInput').value = '';
@@ -1021,14 +1134,14 @@
     // =========================================================================
     // 3. ÜRETİMİ TAMAMLA & STOK GİRİŞİ YAP MODALI (OPSİYONEL NOT GİRİŞİ)
     // =========================================================================
-    function openCompleteModal(orderId, wcId, orderNo, prodName, remainingQty, unit) {
+    function openCompleteModal(opId, wcId, orderNo, prodName, remainingQty, unit, opName) {
       const modal = document.getElementById('completeJobModal');
       if (!modal) return;
 
-      document.getElementById('completeModalOrderId').value = orderId;
+      document.getElementById('completeModalOrderId').value = opId;
       document.getElementById('completeModalWcId').value = wcId;
       document.getElementById('completeModalOrderNo').textContent = orderNo;
-      document.getElementById('completeModalProdName').textContent = prodName;
+      document.getElementById('completeModalProdName').textContent = `${opName ? opName + ' • ' : ''}${prodName}`;
       document.getElementById('completeModalQtyInput').value = parseFloat(remainingQty || 1);
       document.getElementById('completeModalUnitBadge').textContent = unit || 'Adet';
       document.getElementById('completeModalNotesInput').value = '';

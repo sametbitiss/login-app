@@ -611,10 +611,10 @@
                 </div>
               </div>
 
-              <!-- 3. AKTİF ÇALIŞAN İŞ EMRİ BÖLÜMÜ -->
+              <!-- 3. AKTİF ÇALIŞAN İŞ EMRİ / OPERASYON BÖLÜMÜ -->
               <div>
                 <div style="font-size: 0.76rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
-                  ⚡ Aktif Çalışan İş Emri
+                  ⚡ Aktif Çalışan İş Adımı / Operasyon
                 </div>
 
                 <% if (c.activeRunningOrder) { %>
@@ -624,13 +624,16 @@
                         📋 <%= c.activeRunningOrder.isEmriNo %>
                       </span>
                       <span class="status-pill status-completed" style="font-size: 0.72rem; padding: 2px 8px;">
-                        ⚡ <%= c.activeRunningOrder.oncelik %> Öncelikli
+                        ⚡ <%= c.activeRunningOrder.oncelik || 'Normal' %> Öncelikli
                       </span>
                     </div>
 
                     <div class="active-order-body">
                       <div>
                         <div class="active-order-name">
+                          <% if (c.activeRunningOrder.operasyonAdi) { %>
+                            🛠️ <%= c.activeRunningOrder.operasyonAdi %> <span style="color: #94a3b8; font-weight: 400; font-size: 0.8rem;">(Adım #<%= c.activeRunningOrder.operasyonSira %>)</span> •
+                          <% } %>
                           [<%= c.activeRunningOrder.stokKarti ? c.activeRunningOrder.stokKarti.stokKodu : '—' %>] 
                           <%= c.activeRunningOrder.stokKarti ? c.activeRunningOrder.stokKarti.ad : c.activeRunningOrder.uretimBasligi %>
                         </div>
@@ -639,7 +642,7 @@
                           <span>•</span>
                           <span>Tahmini: <strong style="color: #fbbf24;"><%= c.activeRunningOrder.tahminiSaat || 0 %> Saat</strong></span>
                           <span>•</span>
-                          <span>Termin: <strong style="color: #cbd5e1;"><%= c.activeRunningOrder.planlananBitisTarihi %></strong></span>
+                          <span>Termin: <strong style="color: #cbd5e1;"><%= c.activeRunningOrder.planlananBitisTarihi || '—' %></strong></span>
                         </div>
                       </div>
                     </div>
@@ -651,12 +654,12 @@
                 <% } %>
               </div>
 
-              <!-- 4. KUYRUKTA / SIRADA BEKLEYEN İŞ EMİRLERİ LİSTESİ -->
+              <!-- 4. KUYRUKTA / SIRADA BEKLEYEN İŞ ADIMLARI LİSTESİ -->
               <div class="queue-section">
                 <div class="queue-title">
-                  <span>⏳ Kuyrukta Sırasını Bekleyen İşler</span>
+                  <span>⏳ Kuyrukta Sırasını Bekleyen İş Adımları</span>
                   <span style="font-family: 'JetBrains Mono', monospace; color: #818cf8; font-size: 0.78rem;">
-                    <%= c.queuedOrders.length %> Adet İş Emri
+                    <%= c.queuedOrders.length %> Adet (<%= c.readyOpsCount || 0 %> Hazır, <%= c.waitingOpsCount || 0 %> Beklemede)
                   </span>
                 </div>
 
@@ -667,25 +670,34 @@
                 <% } else { %>
                   <div style="display: flex; flex-direction: column; gap: 6px;">
                     <% c.queuedOrders.forEach((qo, idx) => { %>
-                      <div class="queue-item">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                          <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
+                      <div class="queue-item" style="border-left: 3px solid <%= qo.isLocked ? '#f59e0b' : '#10b981' %>; background: <%= qo.isLocked ? 'rgba(30, 25, 20, 0.4)' : 'rgba(30, 41, 59, 0.45)' %>;">
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                          <span style="background: <%= qo.isLocked ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)' %>; color: <%= qo.isLocked ? '#fbbf24' : '#34d399' %>; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
                             #<%= idx + 1 %>
                           </span>
                           <div>
-                            <strong style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;"><%= qo.isEmriNo %></strong>
-                            <div style="font-size: 0.75rem; color: #94a3b8;">
-                              <%= qo.stokKarti ? qo.stokKarti.ad : qo.uretimBasligi %> (<%= parseFloat(qo.planlananMiktar) %> <%= qo.birim %>)
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                              <strong style="color: #cbd5e1; font-family: 'JetBrains Mono', monospace;"><%= qo.isEmriNo %></strong>
+                              <% if (qo.isLocked) { %>
+                                <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; font-size: 0.65rem; font-weight: 800; padding: 1px 5px; border-radius: 4px;">🔒 Beklemede</span>
+                              <% } else { %>
+                                <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.65rem; font-weight: 800; padding: 1px 5px; border-radius: 4px;">🟢 Hazır</span>
+                              <% } %>
                             </div>
+                            <div style="font-size: 0.75rem; color: #f1f5f9; margin-top: 2px;">
+                              🛠️ <%= qo.operasyonAdi || 'Genel Operasyon' %> • <%= qo.stokKarti ? qo.stokKarti.ad : qo.uretimBasligi %> (<%= parseFloat(qo.planlananMiktar) %> <%= qo.birim %>)
+                            </div>
+                            <% if (qo.isLocked && qo.lockReason) { %>
+                              <div style="font-size: 0.7rem; color: #fbbf24; margin-top: 2px;">
+                                ⚠️ <%= qo.lockReason %>
+                              </div>
+                            <% } %>
                           </div>
                         </div>
-                        <div style="text-align: right;">
+                        <div style="text-align: right; min-width: 55px;">
                           <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #fbbf24; font-weight: 700;">
                             <%= qo.tahminiSaat || 0 %> Sa
                           </span>
-                          <div style="font-size: 0.7rem; color: #64748b;">
-                            <%= qo.durum === 'Approved' ? 'Onaylı' : 'Planlandı' %>
-                          </div>
                         </div>
                       </div>
                     <% }); %>

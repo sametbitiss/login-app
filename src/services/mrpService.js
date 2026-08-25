@@ -1,5 +1,6 @@
 const {
   UretimEmri,
+  UretimEmriOperasyon,
   UrunRecetesi,
   StokKarti,
   SatinAlmaTalebi,
@@ -10,6 +11,7 @@ const {
   sequelize
 } = require('../../models');
 const logService = require('./logService');
+const productionService = require('./productionService');
 const { Op } = require('sequelize');
 
 /**
@@ -643,6 +645,9 @@ class MRPService {
           ipAdresi: ipAddress
         });
 
+        // İş emrini rota operasyonlarına parçala ve iş merkezlerine dağıt
+        await productionService.createWorkOrderOperations(wo);
+
         createdRecords.workOrders.push(wo);
       }
     }
@@ -675,17 +680,23 @@ class MRPService {
       order: [['ad', 'ASC'], ['kullaniciAdi', 'ASC']]
     });
 
-    // 3. Fetch all active/pending/in-production production orders from DB with stock item and user
-    const allProductionOrders = await UretimEmri.findAll({
+    // 3. Fetch all active/pending operation steps from DB
+    const allOperations = await UretimEmriOperasyon.findAll({
       where: {
-        durum: { [Op.in]: ['Planned', 'Approved', 'In_Production', 'Quality_Check'] }
+        durum: { [Op.in]: ['Ready', 'Waiting_Previous_Op', 'In_Production', 'Paused'] }
       },
       include: [
+        { 
+          model: UretimEmri, 
+          as: 'uretimEmri',
+          include: [{ model: Kullanici, as: 'olusturan' }]
+        },
         { model: StokKarti, as: 'stokKarti' },
-        { model: Kullanici, as: 'olusturan' }
+        { model: UretimEmriOperasyon, as: 'oncekiOperasyon' },
+        { model: IsMerkezi, as: 'isMerkeziKarti' }
       ],
       order: [
-        ['planlananBaslangicTarihi', 'ASC'],
+        ['operasyonSira', 'ASC'],
         ['id', 'ASC']
       ]
     });
@@ -695,26 +706,30 @@ class MRPService {
       const dailyCapacityHours = parseFloat(wc.gunlukCalismaSaati || 8);
       const horizonCapacityHours = dailyCapacityHours * 5;
 
-      // Find work orders assigned to this work center
-      const stationOrders = allProductionOrders.filter(o => {
-        if (!o.isMerkezi) return false;
-        const oCenter = o.isMerkezi.trim();
+      // Find operations assigned to this work center
+      const stationOperations = allOperations.filter(op => {
+        if (op.isMerkeziId && Number(op.isMerkeziId) === Number(wc.id)) return true;
+        if (!op.isMerkezi) return false;
+        const opCenter = op.isMerkezi.trim();
         const code = wc.isMerkeziKodu ? wc.isMerkeziKodu.trim() : '';
         const name = wc.isMerkeziAdi ? wc.isMerkeziAdi.trim() : '';
         return (
-          oCenter === code ||
-          oCenter === name ||
-          (code && oCenter.includes(code)) ||
-          (name && oCenter.includes(name))
+          opCenter === code ||
+          opCenter === name ||
+          (code && opCenter.includes(code)) ||
+          (name && opCenter.includes(name))
         );
       });
 
-      // Split into active running order and queued orders
-      const activeRunningOrder = stationOrders.find(o => o.durum === 'In_Production') || null;
-      const queuedOrders = stationOrders.filter(o => o !== activeRunningOrder);
+      // Split into active running operation and queued operations
+      const activeRunningOp = stationOperations.find(o => o.durum === 'In_Production' || o.durum === 'Paused') || null;
+      const queuedOps = stationOperations.filter(o => o !== activeRunningOp);
+
+      const readyOpsCount = queuedOps.filter(o => o.durum === 'Ready').length;
+      const waitingOpsCount = queuedOps.filter(o => o.durum === 'Waiting_Previous_Op').length;
 
       // Determine operational status
-      let operationalStatus = 'Idle'; // 'Idle' (Boş), 'Busy' (Meşgul), 'Maintenance' (Bakımda/Arızalı), 'Inactive' (Pasif)
+      let operationalStatus = 'Idle'; // 'Idle', 'Busy', 'Paused', 'Maintenance', 'Inactive'
       let statusLabel = '🟢 Boş (Müsait)';
       let statusBadgeClass = 'status-approved';
 
@@ -726,21 +741,31 @@ class MRPService {
         operationalStatus = 'Inactive';
         statusLabel = '⛔ Pasif';
         statusBadgeClass = 'status-pending';
-      } else if (activeRunningOrder) {
-        operationalStatus = 'Busy';
-        statusLabel = '⚡ Meşgul (Üretimde)';
-        statusBadgeClass = 'status-completed';
+      } else if (activeRunningOp) {
+        if (activeRunningOp.durum === 'Paused') {
+          operationalStatus = 'Paused';
+          statusLabel = '⏸️ Duraklatıldı';
+          statusBadgeClass = 'status-pending';
+        } else {
+          operationalStatus = 'Busy';
+          statusLabel = '⚡ Meşgul (Üretimde)';
+          statusBadgeClass = 'status-completed';
+        }
       } else {
         operationalStatus = 'Idle';
         statusLabel = '🟢 Boş (Müsait)';
         statusBadgeClass = 'status-approved';
       }
 
-      // Calculate allocated hours
-      const allocatedHours = stationOrders.reduce((sum, o) => {
-        const remainingQty = Math.max(0, parseFloat(o.planlananMiktar || 1) - parseFloat(o.tamamlananMiktar || 0));
-        const estHours = parseFloat(o.tahminiSaat || 0);
-        return sum + (remainingQty * (estHours / (parseFloat(o.planlananMiktar) || 1)));
+      // Calculate allocated hours from standard operation times
+      const allocatedHours = stationOperations.reduce((sum, op) => {
+        const plannedQty = parseFloat(op.planlananMiktar || 1);
+        const completedQty = parseFloat(op.tamamlananMiktar || 0);
+        const remainingQty = Math.max(0, plannedQty - completedQty);
+        const setupMin = parseFloat(op.hazirlikSuresiDakika || 15);
+        const unitRunMin = parseFloat(op.calismaSuresiDakikaBirim || 5);
+        const opTotalMin = setupMin + (unitRunMin * remainingQty);
+        return sum + (opTotalMin / 60);
       }, 0);
 
       const loadPercentage = horizonCapacityHours > 0 
@@ -754,8 +779,8 @@ class MRPService {
         : null;
 
       // Active operator / personnel info
-      const activePersonnel = activeRunningOrder 
-        ? (activeRunningOrder.uretimYonetici || (activeRunningOrder.olusturan ? `${activeRunningOrder.olusturan.ad} ${activeRunningOrder.olusturan.soyad || ''}`.trim() : atolyeSorumlu))
+      const activePersonnel = activeRunningOp 
+        ? (activeRunningOp.operatorAdi || atolyeSorumlu)
         : atolyeSorumlu;
 
       // Assigned shift personnel objects
@@ -775,6 +800,45 @@ class MRPService {
         unvan: e.unvan || 'Personel'
       }));
 
+      // Active running order formatted for capacity view
+      const formattedActiveOrder = activeRunningOp ? {
+        id: activeRunningOp.id,
+        workOrderId: activeRunningOp.uretimEmriId,
+        workOrderNo: activeRunningOp.isEmriNo,
+        productionTitle: activeRunningOp.uretimEmri ? activeRunningOp.uretimEmri.uretimBasligi : activeRunningOp.operasyonAdi,
+        operationName: activeRunningOp.operasyonAdi,
+        operationSeq: activeRunningOp.operasyonSira,
+        operationCode: activeRunningOp.operasyonKodu,
+        stockName: activeRunningOp.stokKarti ? activeRunningOp.stokKarti.ad : (activeRunningOp.uretimEmri?.stokKarti?.ad || 'Mamul'),
+        plannedQuantity: activeRunningOp.planlananMiktar,
+        completedQuantity: activeRunningOp.tamamlananMiktar,
+        unit: activeRunningOp.birim,
+        status: activeRunningOp.durum,
+        operatorName: activeRunningOp.operatorAdi || 'Operatör',
+        plannedStartDate: activeRunningOp.uretimEmri?.planlananBaslangicTarihi || new Date().toISOString().split('T')[0],
+        plannedEndDate: activeRunningOp.uretimEmri?.planlananBitisTarihi || new Date().toISOString().split('T')[0]
+      } : null;
+
+      const formattedQueuedOrders = queuedOps.map(op => ({
+        id: op.id,
+        workOrderId: op.uretimEmriId,
+        workOrderNo: op.isEmriNo,
+        productionTitle: op.uretimEmri ? op.uretimEmri.uretimBasligi : op.operasyonAdi,
+        operationName: op.operasyonAdi,
+        operationSeq: op.operasyonSira,
+        operationCode: op.operasyonKodu,
+        stockName: op.stokKarti ? op.stokKarti.ad : (op.uretimEmri?.stokKarti?.ad || 'Mamul'),
+        plannedQuantity: op.planlananMiktar,
+        completedQuantity: op.tamamlananMiktar,
+        unit: op.birim,
+        status: op.durum,
+        isReady: op.durum === 'Ready',
+        isLocked: op.durum === 'Waiting_Previous_Op',
+        prevOpName: op.oncekiOperasyon ? op.oncekiOperasyon.operasyonAdi : null,
+        plannedStartDate: op.uretimEmri?.planlananBaslangicTarihi || new Date().toISOString().split('T')[0],
+        plannedEndDate: op.uretimEmri?.planlananBitisTarihi || new Date().toISOString().split('T')[0]
+      }));
+
       return {
         id: wc.id,
         workCenterCode: wc.isMerkeziKodu,
@@ -790,13 +854,15 @@ class MRPService {
         allocatedHours: parseFloat(allocatedHours.toFixed(1)),
         availableHours: Math.max(0, parseFloat((horizonCapacityHours - allocatedHours).toFixed(1))),
         loadPercentage,
-        activeOrdersCount: stationOrders.length,
+        activeOrdersCount: stationOperations.length,
+        readyOpsCount,
+        waitingOpsCount,
         isBottleneck,
         workersCount: wc.varsayilanIsciSayisi || 1,
         assignedPersonnelIds: assignedIds,
         assignedPersonnelList,
-        activeRunningOrder,
-        queuedOrders,
+        activeRunningOrder: formattedActiveOrder,
+        queuedOrders: formattedQueuedOrders,
         activePersonnel
       };
     });

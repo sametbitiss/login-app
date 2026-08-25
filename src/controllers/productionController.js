@@ -378,7 +378,7 @@ class ProductionController {
     const qty = parseFloat(plannedQuantity) || 1;
     const title = uretimBasligi || `🏭 [İş Emri] ${targetProduct.ad} (${qty} ${unit || targetProduct.birim || 'Adet'})`;
 
-    await productionRepository.create({
+    const createdOrder = await productionRepository.create({
       isEmriNo: nextNo,
       uretimBasligi: title,
       stokId: sId,
@@ -395,16 +395,27 @@ class ProductionController {
       notlar: notlar || `[Yeni İş Emri] Kaynak Talep: ${demandRef || 'Doğrudan Giriş'}`
     }, req.user, req.ip);
 
+    // İş emrini rota operasyonlarına parçala ve iş merkezlerine dağıt
+    await productionService.createWorkOrderOperations(createdOrder);
+
     res.redirect('/production/orders?success=order_created');
   });
 
   updateOrderStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { status, durum } = req.body;
+    const targetStatus = durum || status;
 
-    const updated = await productionRepository.updateStatus(id, durum || status, req.user, req.ip);
+    const updated = await productionRepository.updateStatus(id, targetStatus, req.user, req.ip);
     if (!updated) {
       throw new NotFoundError('Üretim iş emri bulunamadı.');
+    }
+
+    if (['Approved', 'In_Production'].includes(targetStatus)) {
+      const order = await productionRepository.findById(id);
+      if (order) {
+        await productionService.createWorkOrderOperations(order);
+      }
     }
 
     res.redirect('/production/orders');
@@ -904,7 +915,7 @@ class ProductionController {
 
   // 6. MES & PRODUCTION TRACKING
   listMES = asyncHandler(async (req, res) => {
-    const { IsMerkezi, Atolye, Kullanici, UretimEmri, StokKarti, UrunRecetesi, RotaOperasyon } = require('../../models');
+    const { IsMerkezi, Atolye, Kullanici, UretimEmri, UretimEmriOperasyon, StokKarti, UrunRecetesi, RotaOperasyon } = require('../../models');
     const { Op } = require('sequelize');
 
     const isAdmin = req.user.rol === 'Admin' || req.user.role === 'Admin';
@@ -929,45 +940,45 @@ class ProductionController {
       where: { rol: 'Employee' }
     });
 
-    // 3. Fetch all active/planned/in-production orders
-    const allOrders = await UretimEmri.findAll({
+    // 3. Fetch all active/pending operations
+    const allOperations = await UretimEmriOperasyon.findAll({
       where: {
-        durum: { [Op.in]: ['Planned', 'Approved', 'In_Production', 'Quality_Check'] }
+        durum: { [Op.in]: ['Ready', 'Waiting_Previous_Op', 'In_Production', 'Paused'] }
       },
       include: [
+        { 
+          model: UretimEmri, 
+          as: 'uretimEmri',
+          include: [{ model: Kullanici, as: 'olusturan' }]
+        },
         { model: StokKarti, as: 'stokKarti' },
-        { model: Kullanici, as: 'olusturan' }
+        { model: UretimEmriOperasyon, as: 'oncekiOperasyon' },
+        { model: IsMerkezi, as: 'isMerkeziKarti' },
+        { model: RotaOperasyon, as: 'rotaOperasyon' }
       ],
       order: [
-        ['planlananBaslangicTarihi', 'ASC'],
+        ['operasyonSira', 'ASC'],
         ['id', 'ASC']
       ]
     });
 
-    // 4. Fetch all BOM items and Routing operations to enrich work orders
+    // 4. Fetch all BOM items and all operation steps for route timelines
     const allBomItems = await UrunRecetesi.findAll({
       include: [{ model: StokKarti, as: 'bilesenUrun' }]
     });
 
-    const allRoutingOps = await RotaOperasyon.findAll({
-      order: [['stokId', 'ASC'], ['operasyonSira', 'ASC']]
+    const allOpsForOrders = await UretimEmriOperasyon.findAll({
+      include: [{ model: IsMerkezi, as: 'isMerkeziKarti' }],
+      order: [['operasyonSira', 'ASC'], ['id', 'ASC']]
     });
 
-    // Helper to enrich a work order object with operation and BOM components
-    const enrichOrder = (order, wc) => {
-      const stockId = order.stokId;
-      const plannedQty = parseFloat(order.planlananMiktar || 1);
-      const completedQty = parseFloat(order.tamamlananMiktar || 0);
+    // Helper to enrich an operation step for MES kiosk
+    const enrichOperation = (op, wc) => {
+      const parentOrder = op.uretimEmri;
+      const stockId = op.stokId;
+      const plannedQty = parseFloat(op.planlananMiktar || 1);
+      const completedQty = parseFloat(op.tamamlananMiktar || 0);
       const remainingQty = Math.max(0, plannedQty - completedQty);
-
-      // Find matching routing operation for this product and work center
-      const rotasForStock = allRoutingOps.filter(r => r.stokId === stockId);
-      const matchingRota = rotasForStock.find(r => {
-        if (!r.isMerkezi) return false;
-        const code = wc.isMerkeziKodu || '';
-        const name = wc.isMerkeziAdi || '';
-        return r.isMerkezi.includes(code) || r.isMerkezi.includes(name);
-      }) || rotasForStock[0] || null;
 
       // Find BOM material components for this product
       const bomsForStock = allBomItems.filter(b => b.mamulStokId === stockId && b.kalemTuru === 'Material');
@@ -991,8 +1002,8 @@ class ProductionController {
       });
 
       // Check if paused
-      const notlar = order.notlar || '';
-      const isPaused = notlar.includes('[DURAKLATILDI');
+      const notlar = op.notlar || '';
+      const isPaused = op.durum === 'Paused' || notlar.includes('[DURAKLATILDI');
       let pauseReason = null;
       let pauseNotes = null;
       if (isPaused) {
@@ -1006,45 +1017,76 @@ class ProductionController {
         }
       }
 
-      const estHours = parseFloat(order.tahminiSaat || 0);
-      const estMinutes = Math.round(estHours * 60) || 60;
+      const estMinutes = Math.round(parseFloat(op.toplamTahminiDakika || 60)) || 60;
+      const estHours = parseFloat((estMinutes / 60).toFixed(2));
+
+      // Get full route sequence of the parent work order
+      const parentOrderOps = allOpsForOrders.filter(o => o.uretimEmriId === op.uretimEmriId);
+      const totalStepsInRoute = parentOrderOps.length || 1;
+      const currentStepIndex = parentOrderOps.findIndex(o => o.id === op.id);
+      const currentStepNumber = currentStepIndex >= 0 ? (currentStepIndex + 1) : 1;
+
+      const routeTimeline = parentOrderOps.map((step, idx) => ({
+        stepNumber: idx + 1,
+        id: step.id,
+        operationCode: step.operasyonKodu,
+        operationName: step.operasyonAdi,
+        workCenterName: step.isMerkeziKarti ? step.isMerkeziKarti.isMerkeziAdi : step.isMerkezi,
+        status: step.durum,
+        isCurrent: step.id === op.id,
+        isCompleted: step.durum === 'Completed',
+        isRunning: step.durum === 'In_Production' || step.durum === 'Paused',
+        isReady: step.durum === 'Ready',
+        isLocked: step.durum === 'Waiting_Previous_Op'
+      }));
+
+      const isReady = op.durum === 'Ready';
+      const isLocked = op.durum === 'Waiting_Previous_Op';
+      const prevOp = op.oncekiOperasyon;
+      const lockReason = isLocked ? (prevOp ? `Önceki Adım: "${prevOp.operasyonAdi}" (#${prevOp.operasyonSira}) Bekleniyor` : 'Önceki Operasyonun Tamamlanması Bekleniyor') : null;
 
       return {
-        id: order.id,
-        isEmriNo: order.isEmriNo,
-        uretimBasligi: order.uretimBasligi,
-        stokId: order.stokId,
-        stokKodu: order.stokKarti ? order.stokKarti.stokKodu : '—',
-        stokAdi: order.stokKarti ? order.stokKarti.ad : order.uretimBasligi,
-        birim: order.birim || 'Adet',
+        id: op.id,
+        operationId: op.id,
+        workOrderId: op.uretimEmriId,
+        isEmriNo: op.isEmriNo,
+        parentOrderNo: parentOrder ? parentOrder.isEmriNo : op.isEmriNo,
+        uretimBasligi: parentOrder ? parentOrder.uretimBasligi : op.operasyonAdi,
+        operationName: op.operasyonAdi,
+        operationCode: op.operasyonKodu,
+        operationSeq: op.operasyonSira,
+        stepNumber: currentStepNumber,
+        totalSteps: totalStepsInRoute,
+        stokId: op.stokId,
+        stokKodu: op.stokKarti ? op.stokKarti.stokKodu : '—',
+        stokAdi: op.stokKarti ? op.stokKarti.ad : (parentOrder ? parentOrder.uretimBasligi : 'Ürün'),
+        birim: op.birim || 'Adet',
         planlananMiktar: plannedQty,
         tamamlananMiktar: completedQty,
         kalanMiktar: remainingQty,
-        durum: order.durum,
-        oncelik: order.oncelik,
+        durum: op.durum,
+        isReady,
+        isLocked,
+        lockReason,
+        oncelik: parentOrder ? parentOrder.oncelik : 'Normal',
         tahminiSaat: estHours,
         tahminiDakika: estMinutes,
-        planlananBaslangicTarihi: order.planlananBaslangicTarihi,
-        planlananBitisTarihi: order.planlananBitisTarihi,
-        gerceklesenBaslangicTarihi: order.gerceklesenBaslangicTarihi,
-        uretimYonetici: order.uretimYonetici,
-        notlar: order.notlar,
+        planlananBaslangicTarihi: parentOrder ? parentOrder.planlananBaslangicTarihi : null,
+        planlananBitisTarihi: parentOrder ? parentOrder.planlananBitisTarihi : null,
+        gerceklesenBaslangicTarihi: op.gerceklesenBaslangicTarihi,
+        uretimYonetici: op.operatorAdi || (parentOrder ? parentOrder.uretimYonetici : null),
+        notlar: op.notlar,
         isPaused,
         pauseReason,
         pauseNotes,
-        operasyon: matchingRota ? {
-          sira: matchingRota.operasyonSira,
-          kod: matchingRota.operasyonKodu || `OPS-${matchingRota.operasyonSira}`,
-          ad: matchingRota.operasyonAdi,
-          hazirlikDk: parseFloat(matchingRota.hazirlikSuresiDakika || 0),
-          birimDk: parseFloat(matchingRota.calismaSuresiDakikaBirim || 0)
-        } : {
-          sira: 10,
-          kod: 'OPS-10',
-          ad: 'Genel İmalat & Montaj Operasyonu',
-          hazirlikDk: 15,
-          birimDk: 5
+        operasyon: {
+          sira: op.operasyonSira,
+          kod: op.operasyonKodu,
+          ad: op.operasyonAdi,
+          hazirlikDk: parseFloat(op.hazirlikSuresiDakika || 15),
+          birimDk: parseFloat(op.calismaSuresiDakikaBirim || 5)
         },
+        routeTimeline,
         components
       };
     };
@@ -1073,26 +1115,34 @@ class ProductionController {
         unvan: e.unvan || 'Personel'
       }));
 
-      // Find orders for this station
-      const stationOrders = allOrders.filter(o => {
-        if (!o.isMerkezi) return false;
-        const oCenter = o.isMerkezi.trim();
+      // Find operations assigned to this station
+      const stationOperations = allOperations.filter(op => {
+        if (op.isMerkeziId && Number(op.isMerkeziId) === Number(wc.id)) return true;
+        if (!op.isMerkezi) return false;
+        const opCenter = op.isMerkezi.trim();
         const code = wc.isMerkeziKodu ? wc.isMerkeziKodu.trim() : '';
         const name = wc.isMerkeziAdi ? wc.isMerkeziAdi.trim() : '';
         return (
-          oCenter === code ||
-          oCenter === name ||
-          (code && oCenter.includes(code)) ||
-          (name && oCenter.includes(name))
+          opCenter === code ||
+          opCenter === name ||
+          (code && opCenter.includes(code)) ||
+          (name && opCenter.includes(name))
         );
       });
 
-      // Split active running order vs queued orders
-      const rawActiveOrder = stationOrders.find(o => o.durum === 'In_Production') || null;
-      const rawQueuedOrders = stationOrders.filter(o => o !== rawActiveOrder);
+      // Split active running operation vs queued operations
+      const rawActiveOp = stationOperations.find(o => o.durum === 'In_Production' || o.durum === 'Paused') || null;
+      const rawQueuedOps = stationOperations.filter(o => o !== rawActiveOp);
 
-      const activeRunningOrder = rawActiveOrder ? enrichOrder(rawActiveOrder, wc) : null;
-      const queuedOrders = rawQueuedOrders.map(o => enrichOrder(o, wc));
+      // Sort queued operations: 'Ready' first, then 'Waiting_Previous_Op', ordered by operasyonSira ASC
+      rawQueuedOps.sort((a, b) => {
+        if (a.durum === 'Ready' && b.durum !== 'Ready') return -1;
+        if (a.durum !== 'Ready' && b.durum === 'Ready') return 1;
+        return a.operasyonSira - b.operasyonSira;
+      });
+
+      const activeRunningOrder = rawActiveOp ? enrichOperation(rawActiveOp, wc) : null;
+      const queuedOrders = rawQueuedOps.map(o => enrichOperation(o, wc));
 
       // Operational status
       let operationalStatus = 'Idle';
@@ -1137,9 +1187,7 @@ class ProductionController {
       };
     });
 
-    // 6. Role-based filtering:
-    // If Admin: show ALL
-    // If Employee: show ONLY work centers where assigned in shift or workshop supervisor
+    // 6. Role-based filtering
     let visibleWorkCenters = workCentersReport;
     if (!isAdmin) {
       visibleWorkCenters = workCentersReport.filter(wc => {
@@ -1168,20 +1216,22 @@ class ProductionController {
   });
 
   startMESJob = asyncHandler(async (req, res) => {
-    const { orderId, workCenterId } = req.body;
-    if (!orderId) throw new ValidationError('İş emri ID belirtilmedi.');
+    const { orderId, operationId, workCenterId } = req.body;
+    const targetId = operationId || orderId;
+    if (!targetId) throw new ValidationError('İş adımı / operasyon ID belirtilmedi.');
 
-    const order = await productionService.startMESJob(orderId, workCenterId, req.user);
+    const op = await productionService.startMESJob(targetId, workCenterId, req.user);
 
     if (req.xhr || req.headers.accept?.includes('application/json')) {
-      return res.json({ success: true, message: `${order.isEmriNo} başlatıldı.`, order });
+      return res.json({ success: true, message: `[${op.isEmriNo}] "${op.operasyonAdi}" operasyonu başlatıldı.`, op });
     }
-    res.redirect('/production/mes?success=' + encodeURIComponent(`[${order.isEmriNo}] iş emri başlatıldı ve kronometre çalışmaya başladı.`));
+    res.redirect('/production/mes?success=' + encodeURIComponent(`[${op.isEmriNo}] "${op.operasyonAdi}" operasyonu başlatıldı ve kronometre çalışmaya başladı.`));
   });
 
   pauseMESJob = asyncHandler(async (req, res) => {
-    const { orderId, workCenterId, reason, notes } = req.body;
-    if (!orderId) throw new ValidationError('İş emri ID belirtilmedi.');
+    const { orderId, operationId, workCenterId, reason, notes } = req.body;
+    const targetId = operationId || orderId;
+    if (!targetId) throw new ValidationError('İş adımı / operasyon ID belirtilmedi.');
     if (!reason || !['Mola', 'Malzeme Bekleme', 'Arıza'].includes(reason)) {
       throw new ValidationError('Lütfen geçerli bir duraklatma sebebi seçiniz (Mola, Malzeme Bekleme, Arıza).');
     }
@@ -1189,37 +1239,46 @@ class ProductionController {
       throw new ValidationError('Duraklatma gerekçesi ve notlar alanı boş bırakılamaz!');
     }
 
-    const order = await productionService.pauseMESJob(orderId, workCenterId, reason, notes.trim(), req.user);
+    const op = await productionService.pauseMESJob(targetId, workCenterId, reason, notes.trim(), req.user);
 
     if (req.xhr || req.headers.accept?.includes('application/json')) {
-      return res.json({ success: true, message: `${order.isEmriNo} duraklatıldı.`, order });
+      return res.json({ success: true, message: `[${op.isEmriNo}] duraklatıldı.`, op });
     }
-    res.redirect('/production/mes?success=' + encodeURIComponent(`[${order.isEmriNo}] iş emri duraklatıldı (${reason}).`));
+    res.redirect('/production/mes?success=' + encodeURIComponent(`[${op.isEmriNo}] "${op.operasyonAdi}" operasyonu duraklatıldı (${reason}).`));
   });
 
   completeMESJob = asyncHandler(async (req, res) => {
-    const { orderId, workCenterId, completedQuantity, notes } = req.body;
-    if (!orderId) throw new ValidationError('İş emri ID belirtilmedi.');
+    const { orderId, operationId, workCenterId, completedQuantity, scrapQuantity, notes } = req.body;
+    const targetId = operationId || orderId;
+    if (!targetId) throw new ValidationError('İş adımı / operasyon ID belirtilmedi.');
     const qty = parseFloat(completedQuantity);
     if (isNaN(qty) || qty <= 0) {
       throw new ValidationError('Lütfen geçerli bir tamamlanan üretim miktarı giriniz.');
     }
+    const scrap = parseFloat(scrapQuantity) || 0;
 
-    const order = await productionService.recordProductionOutput(orderId, qty, 0, req.user, notes ? notes.trim() : '');
+    const result = await productionService.completeMESJob(targetId, qty, scrap, req.user, notes ? notes.trim() : '');
+
+    let msg = `[${result.completedOp.isEmriNo}] "${result.completedOp.operasyonAdi}" operasyonu tamamlandı.`;
+    if (result.unlockedNextOp) {
+      msg += ` ⚡ Bir sonraki adım olan "${result.unlockedNextOp.operasyonAdi}" (${result.unlockedNextOp.isMerkezi}) başlatılabilir hale geldi!`;
+    } else if (result.isFinalStep) {
+      msg += ` 🏭 Tüm adımlar tamamlandı ve ${qty} birim nihai mamul stoka eklendi!`;
+    }
 
     if (req.xhr || req.headers.accept?.includes('application/json')) {
-      return res.json({ success: true, message: `${order.isEmriNo} tamamlandı ve stok artışı yapıldı.`, order });
+      return res.json({ success: true, message: msg, result });
     }
-    res.redirect('/production/mes?success=' + encodeURIComponent(`[${order.isEmriNo}] üretimi tamamlandı, ${qty} birim ürün stoka eklendi ve iş merkezi serbest bırakıldı.`));
+    res.redirect('/production/mes?success=' + encodeURIComponent(msg));
   });
 
   updateMES = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { completedQuantity, scrapQuantity, tamamlananMiktar, fireMiktari } = req.body;
 
-    await productionService.recordProductionOutput(
+    await productionService.completeMESJob(
       id,
-      parseFloat(tamamlananMiktar !== undefined ? tamamlananMiktar : completedQuantity) || 0,
+      parseFloat(tamamlananMiktar !== undefined ? tamamlananMiktar : completedQuantity) || 1,
       parseFloat(fireMiktari !== undefined ? fireMiktari : scrapQuantity) || 0,
       req.user
     );

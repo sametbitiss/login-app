@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       UretimEmri.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
       UretimEmri.belongsTo(models.StokKarti, { foreignKey: 'stokId', as: 'stokKarti' });
+      UretimEmri.hasMany(models.UretimEmriOperasyon, { foreignKey: 'uretimEmriId', as: 'operasyonlar', onDelete: 'CASCADE' });
     }
   }
 
