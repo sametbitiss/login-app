@@ -150,6 +150,14 @@ class ProductionRepository {
       order.gerceklesenBaslangicTarihi = new Date();
     }
 
+    if (['Approved', 'In_Production'].includes(newStatus)) {
+      const productionService = require('../services/productionService');
+      await productionService.deductBOMComponentsForOrder(order, currentUser);
+    } else if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
+      const productionService = require('../services/productionService');
+      await productionService.restoreBOMComponentsForOrder(order, currentUser);
+    }
+
     if (newStatus === 'Completed' && oldStatus !== 'Completed') {
       order.gerceklesenBitisTarihi = new Date();
       if (!order.tamamlananMiktar || parseFloat(order.tamamlananMiktar) === 0) {
@@ -162,6 +170,19 @@ class ProductionRepository {
         const previousStock = parseFloat(stockItem.mevcutStok) || 0;
         stockItem.mevcutStok = previousStock + qtyToAdd;
         await stockItem.save();
+
+        await StokHareketi.create({
+          hareketNo: `MOV-PRD-${Date.now().toString().slice(-6)}`,
+          stokId: stockItem.id,
+          varisDepoId: 1,
+          hareketTuru: 'Inbound',
+          miktar: qtyToAdd,
+          birim: stockItem.birim || 'Adet',
+          birimFiyat: stockItem.satisFiyati || 0,
+          referansNo: order.isEmriNo,
+          notlar: `[Üretim Girişi / Nihai Mamul] ${order.isEmriNo} tamamlandı ve mamul stoka eklendi.`,
+          yapanKullaniciId: currentUser ? currentUser.id : null
+        });
 
         await logService.logCrud({
           kullaniciId: currentUser ? currentUser.id : null,

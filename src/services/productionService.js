@@ -146,9 +146,40 @@ class ProductionService {
         await order.update({ tahminiSaat: parseFloat(totalDurationHours.toFixed(2)) }, { transaction: t });
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // İŞ EMRİ OLUŞTURULMA ANINDA REÇETELİ BİLEŞENLERİN STOKTAN DÜŞÜLMESİ
-      // ═══════════════════════════════════════════════════════════════
+      // Reçeteli bileşenlerin stoktan düşülmesi
+      await this.deductBOMComponentsForOrder(order, null, t);
+
+      return createdOps;
+    };
+
+    if (transaction) {
+      return await runInTx(transaction);
+    } else {
+      return await sequelize.transaction(runInTx);
+    }
+  }
+
+  /**
+   * İş emri onaylandığında veya oluşturulduğunda, ürünün reçetesindeki
+   * hammadde/yarı mamulleri stoktan düşer ve StokHareketi (Outbound) kaydı açar.
+   */
+  async deductBOMComponentsForOrder(order, currentUser = null, transaction = null) {
+    const runInTx = async (t) => {
+      const stockId = order.stokId;
+      const plannedQty = parseFloat(order.planlananMiktar || 1);
+
+      // Daha önce bu iş emri için çıkış yapılmış mı kontrol et
+      const existingMovement = await StokHareketi.findOne({
+        where: {
+          referansNo: order.isEmriNo,
+          hareketTuru: 'Outbound'
+        },
+        transaction: t
+      });
+      if (existingMovement) {
+        return; // Zaten stoktan düşülmüş
+      }
+
       const bomItems = await UrunRecetesi.findAll({
         where: { mamulStokId: stockId, durum: 'Active' },
         transaction: t
@@ -185,12 +216,55 @@ class ProductionService {
             birimFiyat: compItem.alisFiyati || 0,
             referansNo: order.isEmriNo,
             notlar: `[İş Emri Sarfiyatı] ${order.isEmriNo} (${order.uretimBasligi || 'İş Emri'}) için reçeteli bileşen stoktan düşüldü.`,
-            yapanKullaniciId: order.olusturanId || null
+            yapanKullaniciId: (currentUser ? currentUser.id : null) || order.olusturanId || null
           }, { transaction: t });
         }
       }
+    };
 
-      return createdOps;
+    if (transaction) {
+      return await runInTx(transaction);
+    } else {
+      return await sequelize.transaction(runInTx);
+    }
+  }
+
+  /**
+   * İş emri iptal edildiğinde (Cancelled), daha önce stoktan düşülmüş bileşenleri
+   * stoka geri iade eder ve StokHareketi (Inbound) kaydı açar.
+   */
+  async restoreBOMComponentsForOrder(order, currentUser = null, transaction = null) {
+    const runInTx = async (t) => {
+      const outboundMovements = await StokHareketi.findAll({
+        where: {
+          referansNo: order.isEmriNo,
+          hareketTuru: 'Outbound'
+        },
+        transaction: t
+      });
+
+      for (const mov of outboundMovements) {
+        const compItem = await StokKarti.findByPk(mov.stokId, { transaction: t });
+        if (compItem) {
+          const currentStock = parseFloat(compItem.mevcutStok || 0);
+          const restoredStock = parseFloat((currentStock + parseFloat(mov.miktar)).toFixed(2));
+          await compItem.update({ mevcutStok: restoredStock }, { transaction: t });
+
+          const movPrefix = `MOV-RET-${Date.now().toString().slice(-6)}-${compItem.id}`;
+          await StokHareketi.create({
+            hareketNo: movPrefix,
+            stokId: compItem.id,
+            varisDepoId: 1,
+            hareketTuru: 'Inbound',
+            miktar: parseFloat(mov.miktar),
+            birim: mov.birim,
+            birimFiyat: mov.birimFiyat || 0,
+            referansNo: order.isEmriNo,
+            notlar: `[İş Emri İptali / Stok İadesi] ${order.isEmriNo} iptal edildiği için ayrılan hammadde stoka iade edildi.`,
+            yapanKullaniciId: (currentUser ? currentUser.id : null) || order.olusturanId || null
+          }, { transaction: t });
+        }
+      }
     };
 
     if (transaction) {
