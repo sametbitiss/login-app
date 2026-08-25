@@ -1001,17 +1001,22 @@ class ProductionController {
         };
       });
 
-      // Check if paused
+      // Check if paused (Sadece op.durum === 'Paused' ise duraklatılmış kabul et)
       const notlar = op.notlar || '';
-      const isPaused = op.durum === 'Paused' || notlar.includes('[DURAKLATILDI');
+      const isPaused = op.durum === 'Paused';
       let pauseReason = null;
       let pauseNotes = null;
       if (isPaused) {
-        const match = notlar.match(/\[DURAKLATILDI:\s*([^-\]]+)\s*-\s*([^\]]+)\]:\s*([^\n]+)/);
-        if (match) {
-          pauseReason = match[1].trim();
-          pauseNotes = match[3].trim();
-        } else {
+        const matches = notlar.match(/\[DURAKLATILDI:\s*([^-\]]+)\s*-\s*([^\]]+)\]:\s*([^\n]+)/g);
+        if (matches && matches.length > 0) {
+          const lastMatch = matches[matches.length - 1];
+          const match = lastMatch.match(/\[DURAKLATILDI:\s*([^-\]]+)\s*-\s*([^\]]+)\]:\s*([^\n]+)/);
+          if (match) {
+            pauseReason = match[1].trim();
+            pauseNotes = match[3].trim();
+          }
+        }
+        if (!pauseReason) {
           pauseReason = 'Mola';
           pauseNotes = 'İşletme kararı ile duraklatıldı';
         }
