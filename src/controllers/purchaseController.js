@@ -277,26 +277,63 @@ class PurchaseController {
   // ═══════════════════════ RFQ ═══════════════════════
   listRfqs = asyncHandler(async (req, res) => {
     const { search, status } = req.query;
-    const rfqs = await purchaseService.getAllRfqs({ search, status });
+    const rawRfqs = await purchaseService.getAllRfqs({ search, status });
     const rfqStats = await purchaseService.getRfqStats();
+
+    const rfqs = rawRfqs.map(r => {
+      const rfqObj = r.toJSON ? r.toJSON() : r;
+      const items = (rfqObj.kalemlerVerisi && Array.isArray(rfqObj.kalemlerVerisi)) ? rfqObj.kalemlerVerisi : [];
+      
+      const totalPrice = parseFloat(rfqObj.teklifEdilenToplamFiyat || rfqObj.offeredTotalPrice || rfqObj.araToplam || 0);
+      const subtotal = parseFloat(rfqObj.araToplam || rfqObj.subtotal || 0);
+      const discount = parseFloat(rfqObj.toplamIskonto || rfqObj.totalDiscount || 0);
+      const vat = parseFloat(rfqObj.toplamKdv || rfqObj.totalTax || 0);
+      
+      return {
+        ...rfqObj,
+        rfqNo: rfqObj.teklifTalepNo || rfqObj.rfqNo,
+        supplierName: rfqObj.tedarikciAdi || (rfqObj.tedarikci ? (rfqObj.tedarikci.ticariAd || rfqObj.tedarikci.firmaAdi) : 'Tedarikçi'),
+        supplierCode: rfqObj.tedarikci ? rfqObj.tedarikci.tedarikciKodu : '',
+        supplierRating: rfqObj.tedarikci ? (parseFloat(rfqObj.tedarikci.performansSkoru) || parseFloat(rfqObj.tedarikci.kaliteSkoru) || 85) : 85,
+        supplierTaxNo: rfqObj.tedarikci ? rfqObj.tedarikci.vergiNo : '',
+        supplierTaxOffice: rfqObj.tedarikci ? rfqObj.tedarikci.vergiDairesi : '',
+        supplierCity: rfqObj.tedarikci ? rfqObj.tedarikci.sehir : '',
+        itemsData: items,
+        totalPrice,
+        subtotal,
+        discount,
+        vat,
+        currency: rfqObj.paraBirimi || 'TRY',
+        paymentTerm: rfqObj.odemeVadesi || 'Vadeli_30',
+        deliveryDays: rfqObj.teslimSuresiGun || 5,
+        deliveryPlace: rfqObj.teslimYeri || 'Ana Hammadde & Üretim Ambarı',
+        vatStatus: rfqObj.kdvDurumu || 'Hariç',
+        rfqDate: rfqObj.teklifTalepTarihi || (rfqObj.createdAt ? new Date(rfqObj.createdAt).toISOString().split('T')[0] : ''),
+        validUntil: rfqObj.gecerlilikBitis || '',
+        status: rfqObj.durum || 'Received',
+        notes: rfqObj.notlar || ''
+      };
+    });
 
     const groupedMap = new Map();
 
     rfqs.forEach(rfq => {
       let productsInRfq = [];
 
-      const itemsData = rfq.kalemlerVerisi || rfq.itemsData;
-      if (itemsData && Array.isArray(itemsData) && itemsData.length > 0) {
-        itemsData.forEach(item => {
+      if (rfq.itemsData && rfq.itemsData.length > 0) {
+        rfq.itemsData.forEach(item => {
           const sId = item.stokId || item.stockItemId;
           if (sId) {
             productsInRfq.push({
               stockItemId: parseInt(sId, 10),
               stockCode: item.stokKodu || item.stockCode || 'STK-000',
-              itemName: item.ad || item.productName || 'Belirtilmemiş Ürün',
+              itemName: item.ad || item.productName || 'Malzeme',
               unit: item.birim || item.unit || 'Adet',
               unitPrice: parseFloat(item.birimFiyat || item.unitPrice) || 0,
-              quantity: parseFloat(item.miktar || item.quantity) || 1
+              quantity: parseFloat(item.teklifEdilenMiktar || item.miktar || item.quantity) || 1,
+              discountRate: parseFloat(item.iskontoOrani || item.discountRate) || 0,
+              vatRate: parseFloat(item.kdvOrani || item.vatRate) || 20,
+              netAmount: parseFloat(item.netAmount || item.netTutar) || 0
             });
           }
         });
@@ -305,11 +342,14 @@ class PurchaseController {
       if (productsInRfq.length === 0 && rfq.stokId) {
         productsInRfq.push({
           stockItemId: parseInt(rfq.stokId, 10),
-          stockCode: rfq.stokKarti ? rfq.stokKarti.stokKodu : 'GENEL-000',
+          stockCode: rfq.stokKarti ? rfq.stokKarti.stokKodu : 'STK-000',
           itemName: rfq.stokKarti ? rfq.stokKarti.ad : 'Genel Malzeme',
           unit: rfq.stokKarti ? rfq.stokKarti.birim : 'Adet',
           unitPrice: parseFloat(rfq.teklifEdilenBirimFiyat) || 0,
-          quantity: parseFloat(rfq.talepEdilenMiktar) || 1
+          quantity: parseFloat(rfq.talepEdilenMiktar) || 1,
+          discountRate: 0,
+          vatRate: 20,
+          netAmount: parseFloat(rfq.totalPrice) || 0
         });
       }
 
@@ -329,9 +369,12 @@ class PurchaseController {
         const group = groupedMap.get(key);
         if (!group.items.some(i => i.id === rfq.id)) {
           const offerCopy = {
-            ...(rfq.toJSON ? rfq.toJSON() : rfq),
+            ...rfq,
             itemUnitPrice: prod.unitPrice,
-            itemQuantity: prod.quantity
+            itemQuantity: prod.quantity,
+            itemDiscountRate: prod.discountRate,
+            itemVatRate: prod.vatRate,
+            itemNetAmount: prod.netAmount
           };
           group.items.push(offerCopy);
         }
@@ -342,14 +385,12 @@ class PurchaseController {
 
     const acceptedStockItemIds = new Set();
     rfqs.forEach(rfq => {
-      const rfqObj = rfq.toJSON ? rfq.toJSON() : rfq;
-      if (rfqObj.durum === 'Accepted') {
-        const items = (rfqObj.kalemlerVerisi && Array.isArray(rfqObj.kalemlerVerisi)) ? rfqObj.kalemlerVerisi : [];
-        items.forEach(item => {
+      if (rfq.status === 'Accepted') {
+        rfq.itemsData.forEach(item => {
           if (item.stokId || item.stockItemId) acceptedStockItemIds.add(parseInt(item.stokId || item.stockItemId, 10));
         });
-        if (items.length === 0 && rfqObj.stokId) {
-          acceptedStockItemIds.add(parseInt(rfqObj.stokId, 10));
+        if (rfq.itemsData.length === 0 && rfq.stokId) {
+          acceptedStockItemIds.add(parseInt(rfq.stokId, 10));
         }
       }
     });
@@ -363,20 +404,20 @@ class PurchaseController {
         const prices = validOffers.map(o => parseFloat(o.itemUnitPrice));
         const minPrice = Math.min(...prices);
 
-        const daysList = validOffers.map(o => parseInt(o.teslimSuresiGun || o.deliveryDays, 10) || 7);
+        const daysList = validOffers.map(o => parseInt(o.deliveryDays, 10) || 7);
         const minDeliveryDays = Math.min(...daysList);
 
         validOffers.forEach(o => {
           const unitPrice = parseFloat(o.itemUnitPrice) || 1;
           const priceScore = minPrice > 0 ? (minPrice / unitPrice) * 100 : 50;
 
-          const days = parseInt(o.teslimSuresiGun || o.deliveryDays, 10) || 7;
+          const days = parseInt(o.deliveryDays, 10) || 7;
           const deliveryScore = minDeliveryDays > 0 ? Math.min(100, Math.max(30, (minDeliveryDays / days) * 100)) : 70;
 
-          const supplierRating = o.tedarikci ? (parseFloat(o.tedarikci.performansSkoru) || parseFloat(o.tedarikci.kaliteSkoru) || 85) : 85;
+          const supplierRating = o.supplierRating || 85;
 
           let termBonus = 0;
-          const term = o.odemeVadesi || o.paymentTerm;
+          const term = o.paymentTerm;
           if (term === 'Vadeli_90') termBonus = 15;
           else if (term === 'Vadeli_60') termBonus = 10;
           else if (term === 'Vadeli_30') termBonus = 5;
@@ -699,6 +740,11 @@ class PurchaseController {
 
   rejectRfq = asyncHandler(async (req, res) => {
     await purchaseService.updateRfq(req.params.id, { durum: 'Rejected' }, req.user, req.ip);
+    res.redirect('/purchase/rfq');
+  });
+
+  deleteRfq = asyncHandler(async (req, res) => {
+    await purchaseService.deleteRfq(req.params.id, req.user, req.ip);
     res.redirect('/purchase/rfq');
   });
 

@@ -101,6 +101,25 @@ class RfqRepository {
     return rfq;
   }
 
+  async delete(id, currentUser = null, ipAddress = null) {
+    const rfq = await SatinAlmaTeklifTalebi.findByPk(id);
+    if (!rfq) return null;
+
+    await rfq.destroy();
+
+    await logService.logCrud({
+      kullaniciId: currentUser ? currentUser.id : null,
+      kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'System',
+      islem: 'DELETE',
+      varlik: 'SatinAlmaTeklifTalebi',
+      varlikId: id,
+      detaylar: { teklifTalepNo: rfq.teklifTalepNo },
+      ipAdresi: ipAddress
+    });
+
+    return true;
+  }
+
   async getNextRfqNo() {
     const year = new Date().getFullYear();
     const prefix = `RFQ-${year}-`;
@@ -116,9 +135,10 @@ class RfqRepository {
 
   async getStats() {
     const totalRfqs = await SatinAlmaTeklifTalebi.count();
-    const pendingRfqs = await SatinAlmaTeklifTalebi.count({ where: { durum: { [Op.in]: ['Draft', 'Sent'] } } });
+    const pendingRfqs = await SatinAlmaTeklifTalebi.count({ where: { durum: { [Op.in]: ['Draft', 'Sent', 'Received'] } } });
     const acceptedRfqs = await SatinAlmaTeklifTalebi.count({ where: { durum: 'Accepted' } });
-    return { totalRfqs, pendingRfqs, acceptedRfqs };
+    const totalAmount = await SatinAlmaTeklifTalebi.sum('teklifEdilenToplamFiyat') || 0;
+    return { totalRfqs, pendingRfqs, acceptedRfqs, totalAmount };
   }
 }
 

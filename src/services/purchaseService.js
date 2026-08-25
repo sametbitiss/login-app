@@ -143,6 +143,18 @@ class PurchaseService {
     return rfq;
   }
 
+  async deleteRfq(id, currentUser, ipAddress) {
+    const rfq = await rfqRepository.findById(id);
+    if (!rfq) throw new NotFoundError('Teklif bulunamadı.');
+    return await rfqRepository.delete(id, currentUser, ipAddress);
+  }
+
+  async rejectRfq(id, currentUser, ipAddress) {
+    const rfq = await rfqRepository.findById(id);
+    if (!rfq) throw new NotFoundError('Teklif bulunamadı.');
+    return await rfqRepository.update(id, { durum: 'Rejected' }, currentUser, ipAddress);
+  }
+
   async acceptRfq(id, currentUser, ipAddress) {
     const rfqId = parseInt(id, 10);
     const rfq = await rfqRepository.findById(rfqId);
