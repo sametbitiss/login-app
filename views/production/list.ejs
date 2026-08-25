@@ -496,9 +496,44 @@
                 const unit = o.birim || o.unit || 'Adet';
                 const status = o.durum || o.status || 'Approved';
                 const priority = o.oncelik || o.priority || 'Normal';
-                const estHours = parseFloat(o.tahminiSaat !== undefined ? o.tahminiSaat : (o.estimatedHours || 0));
                 const ops = o.operasyonlar || [];
                 const pct = plannedQty > 0 ? Math.min(100, Math.round((completedQty / plannedQty) * 100)) : 0;
+
+                // Calculate total estimated and completed minutes dynamically from ops
+                let totalEstMins = 0;
+                let completedOpsMins = 0;
+                let remainingOpsMins = 0;
+
+                if (ops.length > 0) {
+                  ops.forEach(op => {
+                    const opMin = parseFloat(op.toplamTahminiDakika) || 
+                      (parseFloat(op.hazirlikSuresiDakika || 0) + parseFloat(op.calismaSuresiDakikaBirim || 0) * plannedQty) || 0;
+                    totalEstMins += opMin;
+                    if (op.durum === 'Completed') {
+                      completedOpsMins += opMin;
+                    } else {
+                      remainingOpsMins += opMin;
+                    }
+                  });
+                }
+
+                if (totalEstMins === 0) {
+                  const dbHours = parseFloat(o.tahminiSaat !== undefined ? o.tahminiSaat : (o.estimatedHours || 0)) || 0;
+                  totalEstMins = Math.round(dbHours * 60);
+                  remainingOpsMins = totalEstMins;
+                }
+
+                let durationText = '';
+                if (totalEstMins > 0) {
+                  if (totalEstMins < 60) {
+                    durationText = `${Math.round(totalEstMins)} Dk`;
+                  } else {
+                    const h = (totalEstMins / 60).toFixed(1);
+                    durationText = `${h.endsWith('.0') ? parseInt(h) : h} Sa (${Math.round(totalEstMins)} Dk)`;
+                  }
+                } else {
+                  durationText = 'Standart';
+                }
               %>
                 <tr>
                   <!-- 1. İş Emri No & Kaynak -->
@@ -594,9 +629,14 @@
                     <div style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">
                       <%= o.planlananBitisTarihi || o.plannedEndDate || '—' %>
                     </div>
-                    <div style="font-size: 0.75rem; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
-                      ⏱️ <%= estHours %> Saat
+                    <div style="font-size: 0.76rem; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
+                      ⏱️ <%= durationText %>
                     </div>
+                    <% if (ops.length > 1 && completedOpsMins > 0) { %>
+                      <div style="font-size: 0.70rem; color: #34d399; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
+                        ✓ <%= Math.round(completedOpsMins) %> Dk bitti / Kalan: <%= Math.round(remainingOpsMins) %> Dk
+                      </div>
+                    <% } %>
                   </td>
 
                   <!-- 7. Durum -->
@@ -751,13 +791,21 @@
       const plannedQty = parseFloat(order.planlananMiktar !== undefined ? order.planlananMiktar : (order.plannedQuantity || 1));
       const completedQty = parseFloat(order.tamamlananMiktar !== undefined ? order.tamamlananMiktar : (order.completedQuantity || 0));
       const unit = order.birim || order.unit || 'Adet';
-      const status = order.durum || order.status || 'Approved';
+      const ops = order.operasyonlar || [];
+      let modalTotalMins = 0;
+      if (ops.length > 0) {
+        modalTotalMins = ops.reduce((acc, op) => acc + (parseFloat(op.toplamTahminiDakika) || (parseFloat(op.hazirlikSuresiDakika || 0) + parseFloat(op.calismaSuresiDakikaBirim || 0) * plannedQty) || 0), 0);
+      }
+      if (modalTotalMins === 0) {
+        modalTotalMins = Math.round((parseFloat(order.tahminiSaat || order.estimatedHours || 0)) * 60);
+      }
+      let modalDurStr = modalTotalMins > 0 ? (modalTotalMins < 60 ? `${Math.round(modalTotalMins)} Dk` : `${(modalTotalMins / 60).toFixed(1)} Saat (${Math.round(modalTotalMins)} Dk)`) : '—';
 
       document.getElementById('mOrderNo').textContent = orderNo;
       document.getElementById('mOrderStatus').textContent = status === 'In_Production' ? '⚡ Üretimde' : (status === 'Completed' ? '✅ Tamamlandı' : status);
       document.getElementById('mProductName').textContent = stockName;
       document.getElementById('mQtySummary').textContent = `${completedQty} / ${plannedQty} ${unit}`;
-      document.getElementById('mDatesSummary').textContent = `${order.planlananBitisTarihi || order.plannedEndDate || '—'} (${order.tahminiSaat || order.estimatedHours || 0} Sa)`;
+      document.getElementById('mDatesSummary').textContent = `${order.planlananBitisTarihi || order.plannedEndDate || '—'} (${modalDurStr})`;
       document.getElementById('mOrderNotes').textContent = order.notlar || order.receteNotlari || 'Kayıtlı not bulunmamaktadır.';
 
       const tbody = document.getElementById('mOpsTbody');
