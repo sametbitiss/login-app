@@ -47,6 +47,33 @@
     .view-pane.active { display: block; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Currency Rates Live Strip */
+    .currency-live-bar {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.15) 100%);
+      border: 1.5px solid rgba(99, 102, 241, 0.3);
+      border-radius: 14px;
+      padding: 12px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .currency-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      color: #f8fafc;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.85rem;
+    }
+
     /* Product Cards Grid — 2 per row */
     .product-cards-grid {
       display: grid;
@@ -120,8 +147,8 @@
 
     /* Recommended Offer Banner */
     .pbc-winner-banner {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.2));
-      border: 1.5px solid rgba(16, 185, 129, 0.35);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.25));
+      border: 1.5px solid rgba(16, 185, 129, 0.4);
       border-radius: 14px;
       padding: 12px 16px;
       margin: 14px 20px 0;
@@ -181,6 +208,7 @@
       font-weight: 900;
       color: #34d399;
       font-family: 'JetBrains Mono', monospace;
+      text-align: right;
     }
 
     /* Offer Item Lines Table */
@@ -221,7 +249,7 @@
       flex-wrap: wrap;
       gap: 10px;
     }
-    .pbc-oi-meta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pbc-oi-meta-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .pbc-oi-meta-chip {
       display: inline-flex;
       align-items: center;
@@ -353,10 +381,10 @@
 
     <main class="module-content">
 
-      <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div>
           <h1 style="font-size: 1.6rem; font-weight: 900; color: #f8fafc; margin: 0; letter-spacing: -0.4px;">Satın Alma Teklif Yönetimi (RFQ)</h1>
-          <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün kutucukları üzerinden teklifler ve Fiyat/Performans değerlendirmeleri.</p>
+          <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün kutucukları üzerinden teklifler ve kur normalizasyonlu Fiyat/Performans değerlendirmeleri.</p>
         </div>
         <div style="display: flex; gap: 12px;">
           <a href="/purchase/requisitions" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;">
@@ -365,6 +393,25 @@
           <a href="/purchase/rfq/add" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; padding: 10px 20px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);">
             ➕ Yeni Teklif Ekle
           </a>
+        </div>
+      </div>
+
+      <!-- Live Currency Rates Strip -->
+      <div class="currency-live-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.2rem;">💱</span>
+          <div>
+            <strong style="color: #f8fafc; font-size: 0.88rem;">Canlı Döviz Kurları Entegrasyonu (TCMB / Piyasa):</strong>
+            <div style="font-size: 0.76rem; color: #cbd5e1;">Dolar ($) ve Euro (€) teklifler anlık kurlar üzerinden TL'ye çevrilerek adil F/P skoru hesaplanır.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <div class="currency-tag">
+            <span style="color: #38bdf8;">USD:</span> ₺ <%= (typeof liveRates !== 'undefined' && liveRates.USD ? liveRates.USD.toFixed(2) : '48.08') %>
+          </div>
+          <div class="currency-tag">
+            <span style="color: #c084fc;">EUR:</span> ₺ <%= (typeof liveRates !== 'undefined' && liveRates.EUR ? liveRates.EUR.toFixed(2) : '56.09') %>
+          </div>
         </div>
       </div>
 
@@ -433,18 +480,33 @@
                   </div>
                 <% } %>
 
-                <% if (group.recommendedOffer && !group.isLocked) { %>
+                <% if (group.recommendedOffer && !group.isLocked) { 
+                  const rec = group.recommendedOffer;
+                  const recCurr = rec.currency || 'TRY';
+                  const recPrice = parseFloat(rec.totalPrice || rec.offeredTotalPrice || 0);
+                  const recPriceTRY = parseFloat(rec.totalPriceTRY || recPrice);
+                %>
                   <div class="pbc-winner-banner">
-                    <div class="pbc-winner-tag">⭐ EN UYGUN ÖNERİLEN TEKLİF</div>
+                    <div class="pbc-winner-tag">⭐ EN UYGUN ÖNERİLEN TEKLİF (F/P LİDERİ)</div>
                     <div class="pbc-winner-details">
-                      <strong><%= group.recommendedOffer.supplierName %></strong>
+                      <strong><%= rec.supplierName %></strong>
                       <span class="pbc-winner-price">
-                        <%= parseFloat(group.recommendedOffer.totalPrice || group.recommendedOffer.offeredTotalPrice || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= group.recommendedOffer.currency || 'TRY' %>
+                        <%= recPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= recCurr %>
+                        <% if (recCurr !== 'TRY' && recCurr !== 'TL') { %>
+                          <span style="font-size: 0.78rem; color: #a7f3d0; font-weight: 600;">(≈ ₺ <%= recPriceTRY.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %>)</span>
+                        <% } %>
                       </span>
                     </div>
-                    <% if (group.recommendedOffer.fpScore) { %>
-                      <div class="pbc-winner-score">F/P Skoru: %<%= group.recommendedOffer.fpScore %></div>
-                    <% } %>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                      <% if (rec.fpScore) { %>
+                        <div class="pbc-winner-score">Fiyat/Performans Skoru: <strong>%<%= rec.fpScore %></strong></div>
+                      <% } %>
+                      <% if (recCurr !== 'TRY' && recCurr !== 'TL') { %>
+                        <div style="font-size: 0.7rem; color: #a7f3d0; font-family: 'JetBrains Mono', monospace;">
+                          💱 1 <%= recCurr %> = ₺ <%= (liveRates[recCurr] || 1).toFixed(2) %>
+                        </div>
+                      <% } %>
+                    </div>
                   </div>
                 <% } %>
 
@@ -453,7 +515,9 @@
                   <% group.items.forEach(item => {
                     const itemsArr = (item.itemsData && Array.isArray(item.itemsData)) ? item.itemsData : [];
                     const totalPrice = parseFloat(item.totalPrice || item.offeredTotalPrice || item.subtotal || 0);
+                    const totalPriceTRY = parseFloat(item.totalPriceTRY || totalPrice);
                     const curr = item.currency || 'TRY';
+                    const isForeign = curr !== 'TRY' && curr !== 'TL';
                     const currSymbol = curr === 'USD' ? '$' : (curr === 'EUR' ? '€' : '₺');
                     const isItemDisabled = group.isLocked && item.status !== 'Accepted';
                   %>
@@ -465,7 +529,14 @@
                           <span class="pbc-oi-rfqno"><%= item.rfqNo %></span>
                           <% if (item.isRecommended && !group.isLocked) { %><span class="pbc-winner-pill">⭐ Önerilen</span><% } %>
                         </div>
-                        <div class="pbc-oi-total-price"><%= totalPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></div>
+                        <div class="pbc-oi-total-price">
+                          <div><%= totalPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></div>
+                          <% if (isForeign) { %>
+                            <div style="font-size: 0.72rem; color: #818cf8; font-weight: 700; margin-top: 1px;">
+                              ≈ ₺ <%= totalPriceTRY.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %>
+                            </div>
+                          <% } %>
+                        </div>
                       </div>
 
                       <!-- Product Items Detail Table -->
@@ -490,9 +561,19 @@
                               <tr>
                                 <td><strong style="color: #e2e8f0;"><%= line.ad || line.productName || line.stokKodu || '—' %></strong></td>
                                 <td><%= lineQty.toLocaleString('tr-TR') %> <%= line.birim || line.unit || group.unit %></td>
-                                <td class="item-price"><%= linePrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></td>
+                                <td class="item-price">
+                                  <%= linePrice.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %>
+                                  <% if (isForeign && liveRates[curr]) { %>
+                                    <div style="font-size: 0.68rem; color: #818cf8; font-weight: 600;">≈ ₺ <%= (linePrice * liveRates[curr]).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %></div>
+                                  <% } %>
+                                </td>
                                 <td class="item-discount"><%= lineDisc > 0 ? '%' + lineDisc.toFixed(1) : '—' %></td>
-                                <td class="item-net"><%= lineNet.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %></td>
+                                <td class="item-net">
+                                  <%= lineNet.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= currSymbol %>
+                                  <% if (isForeign && liveRates[curr]) { %>
+                                    <div style="font-size: 0.68rem; color: #cbd5e1; font-weight: 600;">≈ ₺ <%= (lineNet * liveRates[curr]).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %></div>
+                                  <% } %>
+                                </td>
                               </tr>
                             <% }); %>
                           </tbody>
@@ -527,7 +608,14 @@
                           <span class="pbc-oi-meta-chip">⏱️ Teslimat: <strong><%= item.deliveryDays ? item.deliveryDays + ' Gün' : '5 Gün' %></strong></span>
                           <span class="pbc-oi-meta-chip">💳 Vade: <strong><%= item.paymentTerm === 'Pesin' ? 'Peşin' : (item.paymentTerm === 'Vadeli_30' ? '30 Gün Vadeli' : item.paymentTerm) %></strong></span>
                           <% if (item.fpScore) { %>
-                            <span class="pbc-oi-meta-chip">📊 F/P: <strong>%<%= item.fpScore %></strong></span>
+                            <span class="pbc-oi-meta-chip" style="background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #818cf8;">
+                              📊 F/P Skoru: <strong>%<%= item.fpScore %></strong>
+                            </span>
+                          <% } %>
+                          <% if (isForeign && liveRates[curr]) { %>
+                            <span class="pbc-oi-meta-chip" style="color: #38bdf8; font-family: 'JetBrains Mono', monospace;">
+                              💱 1 <%= curr %> = ₺ <%= liveRates[curr].toFixed(2) %>
+                            </span>
                           <% } %>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -583,7 +671,9 @@
                   </td>
                 </tr>
               <% } else { %>
-                <% rfqs.forEach(rfq => { %>
+                <% rfqs.forEach(rfq => { 
+                  const isForeign = rfq.currency !== 'TRY' && rfq.currency !== 'TL';
+                %>
                   <tr>
                     <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.88rem;"><%= rfq.rfqNo %></strong></td>
                     <td>
@@ -614,6 +704,11 @@
                       <strong style="color: var(--emerald); font-size: 1rem; font-family: 'JetBrains Mono', monospace;">
                         <%= parseFloat(rfq.totalPrice || rfq.offeredTotalPrice || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %> <%= rfq.currency || 'TRY' %>
                       </strong>
+                      <% if (isForeign && rfq.totalPriceTRY) { %>
+                        <div style="font-size: 0.72rem; color: #818cf8; font-weight: 700; font-family: 'JetBrains Mono', monospace;">
+                          ≈ ₺ <%= parseFloat(rfq.totalPriceTRY).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) %>
+                        </div>
+                      <% } %>
                     </td>
                     <td style="font-size: 0.825rem;">
                       <div>⏱️ <strong><%= rfq.deliveryDays ? rfq.deliveryDays + ' Gün' : '5 Gün' %></strong></div>

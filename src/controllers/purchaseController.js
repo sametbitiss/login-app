@@ -8,6 +8,7 @@ const rfqRepository = require('../repositories/rfqRepository');
 const goodsReceiptRepository = require('../repositories/goodsReceiptRepository');
 const asyncHandler = require('../utils/asyncHandler');
 const { ValidationError } = require('../utils/appError');
+const currencyService = require('../services/currencyService');
 const { StokKarti, SatinAlmaSiparisi, Tedarikci, SatinAlmaTalebi, SatinAlmaTeklifTalebi, SatinAlmaFaturasi, MalKabul, Depo } = require('../../models');
 const { Op } = require('sequelize');
 
@@ -279,15 +280,19 @@ class PurchaseController {
     const { search, status } = req.query;
     const rawRfqs = await purchaseService.getAllRfqs({ search, status });
     const rfqStats = await purchaseService.getRfqStats();
+    const liveRates = await currencyService.getLiveRates();
 
     const rfqs = rawRfqs.map(r => {
       const rfqObj = r.toJSON ? r.toJSON() : r;
       const items = (rfqObj.kalemlerVerisi && Array.isArray(rfqObj.kalemlerVerisi)) ? rfqObj.kalemlerVerisi : [];
+      const curr = (rfqObj.paraBirimi || 'TRY').toUpperCase();
+      const currentRate = liveRates[curr] || 1.0;
       
       const totalPrice = parseFloat(rfqObj.teklifEdilenToplamFiyat || rfqObj.offeredTotalPrice || rfqObj.araToplam || 0);
       const subtotal = parseFloat(rfqObj.araToplam || rfqObj.subtotal || 0);
       const discount = parseFloat(rfqObj.toplamIskonto || rfqObj.totalDiscount || 0);
       const vat = parseFloat(rfqObj.toplamKdv || rfqObj.totalTax || 0);
+      const totalPriceTRY = currencyService.convertToTRY(totalPrice, curr, liveRates);
       
       return {
         ...rfqObj,
@@ -300,10 +305,12 @@ class PurchaseController {
         supplierCity: rfqObj.tedarikci ? rfqObj.tedarikci.sehir : '',
         itemsData: items,
         totalPrice,
+        totalPriceTRY,
+        exchangeRate: currentRate,
         subtotal,
         discount,
         vat,
-        currency: rfqObj.paraBirimi || 'TRY',
+        currency: curr,
         paymentTerm: rfqObj.odemeVadesi || 'Vadeli_30',
         deliveryDays: rfqObj.teslimSuresiGun || 5,
         deliveryPlace: rfqObj.teslimYeri || 'Ana Hammadde & Üretim Ambarı',
@@ -324,32 +331,43 @@ class PurchaseController {
         rfq.itemsData.forEach(item => {
           const sId = item.stokId || item.stockItemId;
           if (sId) {
+            const rawUnitPrice = parseFloat(item.birimFiyat || item.unitPrice) || 0;
+            const rawNet = parseFloat(item.netAmount || item.netTutar) || 0;
+            const unitPriceTRY = currencyService.convertToTRY(rawUnitPrice, rfq.currency, liveRates);
+            const netAmountTRY = currencyService.convertToTRY(rawNet, rfq.currency, liveRates);
+
             productsInRfq.push({
               stockItemId: parseInt(sId, 10),
               stockCode: item.stokKodu || item.stockCode || 'STK-000',
               itemName: item.ad || item.productName || 'Malzeme',
               unit: item.birim || item.unit || 'Adet',
-              unitPrice: parseFloat(item.birimFiyat || item.unitPrice) || 0,
+              unitPrice: rawUnitPrice,
+              unitPriceTRY,
               quantity: parseFloat(item.teklifEdilenMiktar || item.miktar || item.quantity) || 1,
               discountRate: parseFloat(item.iskontoOrani || item.discountRate) || 0,
               vatRate: parseFloat(item.kdvOrani || item.vatRate) || 20,
-              netAmount: parseFloat(item.netAmount || item.netTutar) || 0
+              netAmount: rawNet,
+              netAmountTRY
             });
           }
         });
       }
 
       if (productsInRfq.length === 0 && rfq.stokId) {
+        const rawUnitPrice = parseFloat(rfq.teklifEdilenBirimFiyat) || 0;
+        const unitPriceTRY = currencyService.convertToTRY(rawUnitPrice, rfq.currency, liveRates);
         productsInRfq.push({
           stockItemId: parseInt(rfq.stokId, 10),
           stockCode: rfq.stokKarti ? rfq.stokKarti.stokKodu : 'STK-000',
           itemName: rfq.stokKarti ? rfq.stokKarti.ad : 'Genel Malzeme',
           unit: rfq.stokKarti ? rfq.stokKarti.birim : 'Adet',
-          unitPrice: parseFloat(rfq.teklifEdilenBirimFiyat) || 0,
+          unitPrice: rawUnitPrice,
+          unitPriceTRY,
           quantity: parseFloat(rfq.talepEdilenMiktar) || 1,
           discountRate: 0,
           vatRate: 20,
-          netAmount: parseFloat(rfq.totalPrice) || 0
+          netAmount: parseFloat(rfq.totalPrice) || 0,
+          netAmountTRY: parseFloat(rfq.totalPriceTRY) || 0
         });
       }
 
@@ -371,10 +389,12 @@ class PurchaseController {
           const offerCopy = {
             ...rfq,
             itemUnitPrice: prod.unitPrice,
+            itemUnitPriceTRY: prod.unitPriceTRY,
             itemQuantity: prod.quantity,
             itemDiscountRate: prod.discountRate,
             itemVatRate: prod.vatRate,
-            itemNetAmount: prod.netAmount
+            itemNetAmount: prod.netAmount,
+            itemNetAmountTRY: prod.netAmountTRY
           };
           group.items.push(offerCopy);
         }
@@ -398,18 +418,20 @@ class PurchaseController {
     groupedRfqs.forEach(group => {
       group.isLocked = acceptedStockItemIds.has(group.stockItemId);
 
-      const validOffers = group.items.filter(o => o.itemUnitPrice && parseFloat(o.itemUnitPrice) > 0);
+      // Filter valid offers by TRY price
+      const validOffers = group.items.filter(o => o.itemUnitPriceTRY && parseFloat(o.itemUnitPriceTRY) > 0);
 
       if (validOffers.length > 0) {
-        const prices = validOffers.map(o => parseFloat(o.itemUnitPrice));
-        const minPrice = Math.min(...prices);
+        // Find minimum unit price IN TRY for fair currency comparison
+        const pricesTRY = validOffers.map(o => parseFloat(o.itemUnitPriceTRY));
+        const minPriceTRY = Math.min(...pricesTRY);
 
         const daysList = validOffers.map(o => parseInt(o.deliveryDays, 10) || 7);
         const minDeliveryDays = Math.min(...daysList);
 
         validOffers.forEach(o => {
-          const unitPrice = parseFloat(o.itemUnitPrice) || 1;
-          const priceScore = minPrice > 0 ? (minPrice / unitPrice) * 100 : 50;
+          const unitPriceTRY = parseFloat(o.itemUnitPriceTRY) || 1;
+          const priceScore = minPriceTRY > 0 ? (minPriceTRY / unitPriceTRY) * 100 : 50;
 
           const days = parseInt(o.deliveryDays, 10) || 7;
           const deliveryScore = minDeliveryDays > 0 ? Math.min(100, Math.max(30, (minDeliveryDays / days) * 100)) : 70;
@@ -439,6 +461,7 @@ class PurchaseController {
       rfqs,
       groupedRfqs,
       rfqStats,
+      liveRates,
       filterSearch: search || '',
       filterStatus: status || ''
     });
