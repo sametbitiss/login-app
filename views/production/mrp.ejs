@@ -397,16 +397,17 @@
                 <th>Malzeme Adı</th>
                 <th>Kategori</th>
                 <th>Depo Stoğu</th>
-                <th>Brüt İhtiyaç (Fireli & Yuvarlanmış)</th>
+                <th>Brüt İhtiyaç</th>
                 <th>Net Eksik Miktar</th>
-                <th>Önerilen Tedarikçi</th>
-                <th>Kaynak Talepler</th>
+                <th>İhtiyaç Tarihi (En Geç)</th>
+                <th>Hedef Depo</th>
+                <th>Kaynak / Tedarikçi</th>
                 <th style="text-align: right;">Aksiyon</th>
               </tr>
             </thead>
             <tbody>
               <% if (purchaseSuggestions.length === 0) { %>
-                <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Depoda eksik hammadde bulunmamaktadır. Tüm satın alma stokları yeterli! 🎉</td></tr>
+                <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Depoda eksik hammadde bulunmamaktadır. Tüm satın alma stokları yeterli! 🎉</td></tr>
               <% } else { %>
                 <% purchaseSuggestions.forEach((pr) => { %>
                   <tr>
@@ -420,8 +421,27 @@
                         🚨 +<%= pr.netShortage %> <%= pr.unit %>
                       </strong>
                     </td>
-                    <td style="font-size: 0.85rem; color: #cbd5e1;"><%= pr.suggestedSupplier %></td>
-                    <td style="font-size: 0.75rem; color: var(--text-muted); max-width: 260px;"><%= pr.demandSources %></td>
+                    <td>
+                      <% if (pr.requiredDate) { %>
+                        <div style="font-weight: 700; color: #38bdf8; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px;">
+                          📅 <%= new Date(pr.requiredDate).toLocaleDateString('tr-TR') %>
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">
+                          (Termin: <%= pr.deliveryDate ? new Date(pr.deliveryDate).toLocaleDateString('tr-TR') : '—' %> - <%= pr.productionDays %> Gün İmalat)
+                        </div>
+                      <% } else { %>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div style="font-size: 0.8rem; font-weight: 600; color: #cbd5e1; display: inline-flex; align-items: center; gap: 4px;">
+                        🏢 <%= pr.targetWarehouse %>
+                      </div>
+                    </td>
+                    <td>
+                      <div style="font-size: 0.8rem; color: var(--text-primary); font-weight: 600;"><%= pr.demandSources %></div>
+                      <div style="font-size: 0.72rem; color: var(--text-muted);"><%= pr.suggestedSupplier %></div>
+                    </td>
                     <td style="text-align: right;">
                       <form action="/production/mrp/execute" method="POST" style="display: inline-block;">
                         <input type="hidden" name="actionType" value="create_purchase_reqs">

@@ -97,6 +97,12 @@ class MRPService {
 
       const demandRef = demand.isEmriNo;
       const demandQty = parseFloat(demand.planlananMiktar || 1);
+
+      // İmalat süresi hesabı (Reçete & Rota operasyonları hazırlık + çalışma süresi)
+      const { totalMinutes, days: prodDays } = this._calculateManufacturingLeadTimeDays(demand.stokId, demandQty, routingsByStock);
+      // Geriye doğru çizelgeleme: İhtiyaç Tarihi = Teslim Tarihi - İmalat Süresi (Gün)
+      const requiredDateStr = this._calculateRequiredDate(demand.planlananBitisTarihi, prodDays);
+
       const demandInfo = {
         demandId: demand.id,
         demandRef,
@@ -108,7 +114,10 @@ class MRPService {
         priority: demand.oncelik || 'Normal',
         deliveryDate: demand.planlananBitisTarihi,
         startDate: demand.planlananBaslangicTarihi,
-        title: demand.uretimBasligi
+        title: demand.uretimBasligi,
+        productionMinutes: totalMinutes,
+        productionDays: prodDays,
+        requiredDate: requiredDateStr
       };
 
       // Ana ürün kendisi de intermediateProducts'a ekle (iş emri önerisi için)
@@ -122,13 +131,24 @@ class MRPService {
       }
       const ipEntry = intermediateProducts.get(demand.stokId);
       ipEntry.totalQty += demandQty;
-      ipEntry.demandSources.push({ demandRef, qty: demandQty, parentName: null });
+      ipEntry.demandSources.push({ demandRef, qty: demandQty, parentName: null, deliveryDate: demand.planlananBitisTarihi, requiredDate: requiredDateStr, prodDays });
+
+      const demandContext = {
+        demandRef,
+        parentName: st.ad,
+        deliveryDate: demand.planlananBitisTarihi,
+        startDate: demand.planlananBaslangicTarihi,
+        requiredDate: requiredDateStr,
+        prodDays,
+        parentStockId: demand.stokId,
+        demandQty
+      };
 
       // BOM ağacını recursive olarak patlat
       const tree = this._explodeBOM(
-        demand.stokId, demandQty, demandRef, st.ad,
+        demand.stokId, demandQty, demandContext,
         stockMap, bomsByParent, globalRequirements, intermediateProducts,
-        1, new Set()
+        1, new Set(), routingsByStock
       );
 
       demandAnalyses.push({ demand: demandInfo, tree });
@@ -188,6 +208,36 @@ class MRPService {
       if (req.isStockSufficient) continue;
 
       const sourceSummary = req.sources.map(s => s.demandRef).filter((v, i, a) => a.indexOf(v) === i).join(', ');
+      const stItem = stockMap.get(req.stockId);
+      const rawLocation = stItem?.depoLokasyonu || '';
+      const targetWarehouse = rawLocation ? rawLocation.split('/')[0].trim() : '[DEP-001] Ana Hammadde & Üretim Ambarı';
+
+      // Geriye doğru çizelgelenen en erken ihtiyaç tarihi ve termin tarihi
+      let earliestReqDate = null;
+      let earliestDeliveryDate = null;
+      let maxProdDays = 1;
+
+      for (const s of req.sources) {
+        if (s.requiredDate) {
+          if (!earliestReqDate || s.requiredDate < earliestReqDate) {
+            earliestReqDate = s.requiredDate;
+          }
+        }
+        if (s.deliveryDate) {
+          if (!earliestDeliveryDate || s.deliveryDate < earliestDeliveryDate) {
+            earliestDeliveryDate = s.deliveryDate;
+          }
+        }
+        if (s.prodDays && s.prodDays > maxProdDays) {
+          maxProdDays = s.prodDays;
+        }
+      }
+
+      if (!earliestReqDate) {
+        const d = new Date();
+        d.setDate(d.getDate() + 3);
+        earliestReqDate = d.toISOString().split('T')[0];
+      }
 
       if (req.procurementMethod === 'Satın Alma' || req.procurementMethod === 'Purchase') {
         purchaseSuggestions.push({
@@ -199,10 +249,14 @@ class MRPService {
           grossRequirement: req.grossRequirement,
           currentStock: req.currentStock,
           netShortage: req.netShortage,
-          suggestedSupplier: req.sources[0]?.item?.tedarikci || stockMap.get(req.stockId)?.tedarikci || 'Ana Tedarikçi',
+          suggestedSupplier: req.sources[0]?.item?.tedarikci || stItem?.tedarikci || 'Ana Tedarikçi',
+          targetWarehouse,
+          requiredDate: earliestReqDate,
+          deliveryDate: earliestDeliveryDate,
+          productionDays: maxProdDays,
           demandSources: sourceSummary,
           actionType: 'purchase',
-          actionLabel: '🛒 Satın Alma Talebi Oluştur'
+          actionLabel: '🛒 Talep Aç'
         });
       } else if (req.procurementMethod === 'Üretim' || req.procurementMethod === 'Production') {
         productionReqSuggestions.push({
@@ -214,6 +268,10 @@ class MRPService {
           grossRequirement: req.grossRequirement,
           currentStock: req.currentStock,
           netShortage: req.netShortage,
+          targetWarehouse,
+          requiredDate: earliestReqDate,
+          deliveryDate: earliestDeliveryDate,
+          productionDays: maxProdDays,
           demandSources: sourceSummary,
           actionType: 'production_request',
           actionLabel: '🏭 Üretim Talebi Oluştur'
@@ -275,10 +333,61 @@ class MRPService {
   }
 
   /**
+   * İmalat Süresi Hesabı (Reçete Rota Operasyonları ve İş Merkezi Hazırlık + Çalışma Süresi)
+   * @returns {{ totalMinutes: number, days: number }}
+   */
+  _calculateManufacturingLeadTimeDays(stockId, quantity, routingsByStock = {}) {
+    const routings = routingsByStock[stockId] || [];
+    let totalMinutes = 0;
+    if (routings.length > 0) {
+      routings.forEach(r => {
+        const setup = parseFloat(r.hazirlikSuresiDakika || 15);
+        const unit = parseFloat(r.calismaSuresiDakikaBirim || 5);
+        totalMinutes += (setup + (unit * quantity));
+      });
+    } else {
+      totalMinutes = 15 + (5 * quantity);
+    }
+    // 8 saatlik tek vardiya = 480 dakika baz alınarak gün hesabı
+    const days = Math.max(1, Math.ceil(totalMinutes / 480));
+    return { totalMinutes: parseFloat(totalMinutes.toFixed(2)), days };
+  }
+
+  /**
+   * Geriye Doğru Çizelgeleme: İhtiyaç Tarihi = Teslim Tarihi - İmalat Süresi (Gün)
+   * @returns {string} YYYY-MM-DD
+   */
+  _calculateRequiredDate(deliveryDateStr, prodDays = 1) {
+    let baseDate;
+    if (deliveryDateStr) {
+      baseDate = new Date(deliveryDateStr);
+    }
+    if (!baseDate || isNaN(baseDate.getTime())) {
+      baseDate = new Date();
+      baseDate.setDate(baseDate.getDate() + 7);
+    }
+
+    const reqDate = new Date(baseDate);
+    reqDate.setDate(reqDate.getDate() - prodDays);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Eğer teslim tarihinden geriye düşülen gün bugünden önceye denk geliyorsa en erken yarın olsun
+    if (reqDate < today) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    }
+
+    return reqDate.toISOString().split('T')[0];
+  }
+
+  /**
    * Recursive BOM Explosion
    * Bir ürünün reçetesini hammaddeye kadar patlat.
    */
-  _explodeBOM(parentStockId, requiredQty, demandRef, parentName, stockMap, bomsByParent, globalRequirements, intermediateProducts, depth, visited) {
+  _explodeBOM(parentStockId, requiredQty, demandContext, stockMap, bomsByParent, globalRequirements, intermediateProducts, depth, visited, routingsByStock = {}) {
     if (visited.has(parentStockId) || depth > 15) return null;
     const currentVisited = new Set(visited);
     currentVisited.add(parentStockId);
@@ -288,6 +397,9 @@ class MRPService {
 
     const boms = bomsByParent[parentStockId] || [];
     const children = [];
+
+    const demandRef = typeof demandContext === 'object' ? demandContext.demandRef : demandContext;
+    const parentName = typeof demandContext === 'object' ? demandContext.parentName : (stockMap.get(parentStockId)?.ad || 'Üst Ürün');
 
     for (const bom of boms) {
       const compId = bom.bilesenStokId;
@@ -315,7 +427,18 @@ class MRPService {
       }
       const gEntry = globalRequirements.get(compId);
       gEntry.grossQty += compGrossReq;
-      gEntry.sources.push({ demandRef, parentName, qty: compGrossReq });
+      
+      const sourceObj = {
+        demandRef,
+        parentName,
+        qty: compGrossReq,
+        parentStockId: typeof demandContext === 'object' ? demandContext.parentStockId : parentStockId,
+        demandQty: typeof demandContext === 'object' ? demandContext.demandQty : requiredQty,
+        deliveryDate: typeof demandContext === 'object' ? demandContext.deliveryDate : null,
+        requiredDate: typeof demandContext === 'object' ? demandContext.requiredDate : null,
+        prodDays: typeof demandContext === 'object' ? demandContext.prodDays : 1
+      };
+      gEntry.sources.push(sourceObj);
 
       let childTree = null;
 
@@ -344,10 +467,20 @@ class MRPService {
 
         // Sadece üretilmesi gereken net miktar > 0 ise alt bileşen reçetesini patlat
         if (netCompReq > 0) {
+          const childContext = {
+            demandRef,
+            parentName: compItem.ad,
+            deliveryDate: typeof demandContext === 'object' ? demandContext.deliveryDate : null,
+            requiredDate: typeof demandContext === 'object' ? demandContext.requiredDate : null,
+            prodDays: typeof demandContext === 'object' ? demandContext.prodDays : 1,
+            parentStockId: compId,
+            demandQty: netCompReq
+          };
+
           childTree = this._explodeBOM(
-            compId, netCompReq, demandRef, compItem.ad,
+            compId, netCompReq, childContext,
             stockMap, bomsByParent, globalRequirements, intermediateProducts,
-            depth + 1, currentVisited
+            depth + 1, currentVisited, routingsByStock
           );
         }
       }
@@ -587,30 +720,50 @@ class MRPService {
 
     // 1. Satın Alma Talepleri Oluştur
     if (createPurchaseReqs && mrpData.purchaseSuggestions.length > 0) {
+      const requisitionRepository = require('../repositories/requisitionRepository');
+
       for (const item of mrpData.purchaseSuggestions) {
         if (selectedStockIds && !selectedStockIds.includes(item.stockId)) continue;
 
-        const nextReqNo = `TAL-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
+        const nextReqNo = await requisitionRepository.generateRequisitionNo();
+        const stockItem = await StokKarti.findByPk(item.stockId);
+        const warehouseLocation = stockItem?.depoLokasyonu ? stockItem.depoLokasyonu.split('/')[0].trim() : (item.targetWarehouse || '[DEP-001] Ana Hammadde & Üretim Ambarı');
+
+        const detailedNotes = `[MRP Satın Alma Talebi]
+• Malzeme: [${item.stockCode}] ${item.name}
+• Talep Edilen Net Eksik Miktar: ${item.netShortage} ${item.unit} (Toplam Brüt İhtiyaç: ${item.grossRequirement} ${item.unit}, Mevcut Depo Stoğu: ${item.currentStock} ${item.unit})
+• İhtiyaç Tarihi: ${item.requiredDate} (Termin: ${item.deliveryDate || '—'} / ${item.productionDays} Gün İmalat Süresi Hesabı)
+• Giriş Yapılacak Depo: ${warehouseLocation}
+• Kaynak Sipariş / Talep: ${item.demandSources}`;
+
         const req = await SatinAlmaTalebi.create({
           talepNo: nextReqNo,
           kaynakModul: 'Production',
-          talepEdenAdi: currentUser ? (currentUser.ad ? `${currentUser.ad} ${currentUser.soyad || ''}` : currentUser.kullaniciAdi) : 'MRP Motoru',
+          talepEdenAdi: currentUser ? (currentUser.ad ? `${currentUser.ad} ${currentUser.soyad || ''}`.trim() : currentUser.kullaniciAdi) : 'MRP Planlama Motoru',
           stokId: item.stockId,
           talepEdilenMiktar: item.netShortage,
           birim: item.unit,
-          aciliyet: 'Normal',
-          durum: 'Approved',
-          notlar: `[Otomatik MRP] Net Eksik: ${item.netShortage} ${item.unit} (Brüt İhtiyaç: ${item.grossRequirement}, Stok: ${item.currentStock}). Kaynak Talepler: ${item.demandSources}`,
+          aciliyet: item.productionDays > 3 ? 'High' : 'Normal',
+          durum: 'Pending',
+          notlar: detailedNotes,
           olusturanId: currentUser ? currentUser.id : null
         });
 
         await logService.logCrud({
           kullaniciId: currentUser ? currentUser.id : null,
           kullaniciAdi: currentUser ? currentUser.kullaniciAdi : 'MRP Engine',
-          islem: 'CREATE',
+          islem: 'CREATE_REQUISITION',
           varlik: 'SatinAlmaTalebi',
           varlikId: req.id,
-          detaylar: { talepNo: req.talepNo, stokId: req.stokId, miktar: req.talepEdilenMiktar, kaynak: 'MRP_V2' },
+          detaylar: {
+            talepNo: req.talepNo,
+            stokId: req.stokId,
+            miktar: req.talepEdilenMiktar,
+            birim: req.birim,
+            hedefDepo: warehouseLocation,
+            ihtiyacTarihi: item.requiredDate,
+            kaynak: item.demandSources
+          },
           ipAdresi: ipAddress
         });
 

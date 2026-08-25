@@ -39,7 +39,7 @@ class RequisitionRepository {
     return await SatinAlmaTalebi.findAll({
       where,
       include: [
-        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim', 'alisFiyati', 'paraBirimi', 'tedarikci'] },
+        { model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim', 'kategori', 'depoLokasyonu', 'mevcutStok', 'alisFiyati', 'paraBirimi', 'tedarikci'] },
         { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }
       ],
       order: [['createdAt', 'DESC']]
