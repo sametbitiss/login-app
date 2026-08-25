@@ -219,16 +219,36 @@ class ProductionService {
       }
 
       // 4. Operasyonu ve Ana İş Emrini 'In_Production' yap
-      const startTime = new Date();
+      const now = new Date();
       const userFullName = currentUser ? (currentUser.fullName || `${currentUser.ad || ''} ${currentUser.soyad || ''}`.trim() || currentUser.kullaniciAdi) : 'Operatör';
 
+      let effectiveStartDate = now;
       let opNotes = op.notlar || '';
-      opNotes = opNotes.replace(/\[DURAKLATILDI[^\]]*\][^\n]*/g, '').trim();
-      opNotes += (opNotes ? '\n' : '') + `[İŞ BAŞLATILDI - ${startTime.toLocaleTimeString('tr-TR')}]: ${userFullName} tarafından istasyonda üretime alındı.`;
+
+      // Eğer duraklatılmış (Paused) bir iş yeniden başlatılıyorsa:
+      if (op.durum === 'Paused') {
+        let previousWorkedSeconds = 0;
+        const matches = opNotes.match(/GECEN:(\d+)s/g);
+        if (matches && matches.length > 0) {
+          const lastMatch = matches[matches.length - 1];
+          const numMatch = lastMatch.match(/GECEN:(\d+)s/);
+          if (numMatch) previousWorkedSeconds = parseInt(numMatch[1], 10);
+        } else if (op.gerceklesenBaslangicTarihi) {
+          previousWorkedSeconds = Math.max(0, Math.floor((now.getTime() - new Date(op.gerceklesenBaslangicTarihi).getTime()) / 1000));
+        }
+
+        // Yeni başlangıç zamanını, önceden çalışılan süre kadar geriye çekerek zaman damgasını ayarla
+        effectiveStartDate = new Date(now.getTime() - (previousWorkedSeconds * 1000));
+        opNotes += (opNotes ? '\n' : '') + `[İŞE DEVAM EDİLDİ - ${now.toLocaleTimeString('tr-TR')}]: ${userFullName} tarafından duraklatma sonrası işe devam edildi.`;
+      } else {
+        // İlk kez başlatılıyorsa
+        effectiveStartDate = op.gerceklesenBaslangicTarihi || now;
+        opNotes += (opNotes ? '\n' : '') + `[İŞ BAŞLATILDI - ${now.toLocaleTimeString('tr-TR')}]: ${userFullName} tarafından istasyonda üretime alındı.`;
+      }
 
       await op.update({
         durum: 'In_Production',
-        gerceklesenBaslangicTarihi: op.gerceklesenBaslangicTarihi || startTime,
+        gerceklesenBaslangicTarihi: effectiveStartDate,
         operatorId: currentUser ? currentUser.id : op.operatorId,
         operatorAdi: userFullName,
         isMerkeziId: targetWcId || op.isMerkeziId,
@@ -239,7 +259,7 @@ class ProductionService {
       if (op.uretimEmri) {
         await op.uretimEmri.update({
           durum: 'In_Production',
-          gerceklesenBaslangicTarihi: op.uretimEmri.gerceklesenBaslangicTarihi || startTime,
+          gerceklesenBaslangicTarihi: op.uretimEmri.gerceklesenBaslangicTarihi || effectiveStartDate,
           uretimYonetici: userFullName
         }, { transaction: t });
       }
@@ -277,9 +297,14 @@ class ProductionService {
 
       if (!op) throw new NotFoundError('Duraklatılacak aktif operasyon bulunamadı.');
 
-      const pauseTime = new Date().toLocaleTimeString('tr-TR');
+      const pauseDate = new Date();
+      let activeWorkedSeconds = 0;
+      if (op.gerceklesenBaslangicTarihi) {
+        activeWorkedSeconds = Math.max(0, Math.floor((pauseDate.getTime() - new Date(op.gerceklesenBaslangicTarihi).getTime()) / 1000));
+      }
+
       let opNotes = op.notlar || '';
-      opNotes += (opNotes ? '\n' : '') + `[DURAKLATILDI: ${reason} - ${pauseTime}]: ${notes}`;
+      opNotes += (opNotes ? '\n' : '') + `[DURAKLATILDI: ${reason} - ${pauseDate.toLocaleTimeString('tr-TR')} - GECEN:${activeWorkedSeconds}s]: ${notes}`;
 
       await op.update({
         durum: 'Paused',

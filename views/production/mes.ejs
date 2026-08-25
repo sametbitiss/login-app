@@ -628,7 +628,7 @@
                         <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; display: block;">
                           <%= ao.isPaused ? '⏸️ KRONOMETRE DONDURULDU (' + ao.pauseReason + ')' : '⏱️ İŞ KRONOMETRESİ & KALAN SÜRE' %>
                         </span>
-                        <span class="mes-timer-clock <%= ao.isPaused ? 'mes-timer-clock--paused' : '' %>" id="timerClock_<%= ao.id %>" data-minutes="<%= ao.tahminiDakika %>" data-paused="<%= ao.isPaused %>" data-order-id="<%= ao.id %>" data-wc-id="<%= wc.id %>" data-start-time="<%= ao.gerceklesenBaslangicTarihi ? new Date(ao.gerceklesenBaslangicTarihi).toISOString() : '' %>">
+                        <span class="mes-timer-clock <%= ao.isPaused ? 'mes-timer-clock--paused' : '' %>" id="timerClock_<%= ao.id %>" data-minutes="<%= ao.tahminiDakika %>" data-paused="<%= ao.isPaused %>" data-order-id="<%= ao.id %>" data-wc-id="<%= wc.id %>" data-start-time="<%= ao.gerceklesenBaslangicTarihi ? new Date(ao.gerceklesenBaslangicTarihi).toISOString() : '' %>" data-notes="<%= ao.notlar ? ao.notlar.replace(/"/g, '&quot;') : '' %>">
                           --:--:--
                         </span>
                       </div>
@@ -1018,6 +1018,7 @@
         const totalSeconds = Math.round(totalMinutes * 60);
         const isPaused = clock.getAttribute('data-paused') === 'true';
         const serverStartTimeStr = clock.getAttribute('data-start-time');
+        const notesStr = clock.getAttribute('data-notes') || '';
 
         let startTimestamp = null;
         if (serverStartTimeStr && !isNaN(new Date(serverStartTimeStr).getTime())) {
@@ -1034,14 +1035,18 @@
 
         let remainingSeconds = totalSeconds;
         if (isPaused) {
-          const pausedRemaining = localStorage.getItem('mes_timer_paused_rem_' + orderId);
-          if (pausedRemaining) {
-            remainingSeconds = parseInt(pausedRemaining, 10);
-          } else {
-            const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
-            remainingSeconds = Math.max(0, totalSeconds - elapsed);
-            localStorage.setItem('mes_timer_paused_rem_' + orderId, remainingSeconds);
+          // Duraklatılmış durumda: GECEN:XXs veya pause anındaki sabit süre kullanılır (kesinlikle akmaz)
+          let elapsedAtPause = 0;
+          const matches = notesStr.match(/GECEN:(\d+)s/g);
+          if (matches && matches.length > 0) {
+            const lastMatch = matches[matches.length - 1];
+            const numMatch = lastMatch.match(/GECEN:(\d+)s/);
+            if (numMatch) elapsedAtPause = parseInt(numMatch[1], 10);
+          } else if (serverStartTimeStr) {
+            elapsedAtPause = Math.max(0, Math.floor((Date.now() - startTimestamp) / 1000));
           }
+          remainingSeconds = Math.max(0, totalSeconds - elapsedAtPause);
+          localStorage.setItem('mes_timer_paused_rem_' + orderId, remainingSeconds);
         } else {
           localStorage.removeItem('mes_timer_paused_rem_' + orderId);
           const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
