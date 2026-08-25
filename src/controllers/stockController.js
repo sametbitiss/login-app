@@ -105,11 +105,14 @@ class StockController {
       };
     });
 
+    const suppliers = await Tedarikci.findAll({ where: { durum: 'Active' }, order: [['firmaAdi', 'ASC']] });
+
     res.render('stock/add', {
       user: req.user,
       nextStockCode,
       nextCode: nextStockCode,
       warehouses,
+      suppliers,
       CATEGORIES,
       ALL_ROLES,
       activeSubTab: 'items',
@@ -125,15 +128,29 @@ class StockController {
       if (category === 'Yarı_Mamul') category = 'Yari_Mamul';
 
       const barkod = (req.body.barkod || req.body.barcode || '').trim() || null;
-      const marka = (req.body.marka || req.body.brand || '').trim() || null;
+      let marka = (req.body.marka || req.body.brand || '').trim() || null;
       const model = (req.body.model || '').trim() || null;
       const aciklama = (req.body.aciklama || req.body.description || '').trim() || null;
       const depoLokasyonu = (req.body.depoLokasyonu || req.body.warehouseLocation || '').trim() || null;
-      const tedarikci = (req.body.tedarikci || req.body.supplier || '').trim() || null;
       const notlar = (req.body.notlar || req.body.notes || '').trim() || null;
 
+      let targetSupplierId = req.body.tedarikciId || req.body.supplierId || null;
+      let targetSupplierName = req.body.tedarikci || req.body.supplier ? (req.body.tedarikci || req.body.supplier).trim() : null;
+
+      if (targetSupplierName === 'Fabrika İçi Üretim' || targetSupplierId === 'FABRIKA_ICI' || (!targetSupplierId && category === 'Mamul')) {
+        targetSupplierId = null;
+        targetSupplierName = 'Fabrika İçi Üretim';
+        marka = marka || 'Fabrika İçi Üretim';
+      } else if (targetSupplierId) {
+        const foundSup = await Tedarikci.findByPk(targetSupplierId);
+        if (foundSup) {
+          targetSupplierName = foundSup.ticariAd || foundSup.firmaAdi;
+          marka = marka || foundSup.ticariAd || foundSup.firmaAdi;
+        }
+      }
+
       let procurementMethod = req.body.tedarikYontemi || req.body.procurementMethod || 'Satın Alma';
-      if (category === 'Mamul') {
+      if (category === 'Mamul' || targetSupplierName === 'Fabrika İçi Üretim') {
         procurementMethod = 'Üretim';
       } else if (category === 'Hammadde' || category === 'Ticari_Mal' || category === 'Ticari Mal') {
         procurementMethod = 'Satın Alma';
@@ -148,7 +165,8 @@ class StockController {
         model,
         aciklama,
         depoLokasyonu,
-        tedarikci,
+        tedarikci: targetSupplierName,
+        tedarikciId: targetSupplierId,
         notlar,
         birim: req.body.birim || req.body.unit || 'Adet',
         tedarikYontemi: procurementMethod,
@@ -166,6 +184,7 @@ class StockController {
     } catch (err) {
       const nextStockCode = await stockRepository.getNextStockCode();
       const rawWarehouses = await stockRepository.findAllWarehouses();
+      const suppliers = await Tedarikci.findAll({ where: { durum: 'Active' }, order: [['firmaAdi', 'ASC']] });
       const warehouses = rawWarehouses.map(wh => {
         const p = wh.toJSON ? wh.toJSON() : wh;
         const rawLocs = p.lokasyonlar || p.locations || [];
