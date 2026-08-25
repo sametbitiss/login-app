@@ -190,12 +190,13 @@ class ProductionService {
       }
 
       // 2. BAĞIMLILIK KONTROLÜ: Önceki operasyon tamamlanmış mı?
+      // Yalnızca henüz başlamamış operasyonlar için kontrol yap (Duraklatılmış bir işi devam ettirirken engelleme yapma)
       if (op.durum === 'Waiting_Previous_Op') {
         const prevOpName = op.oncekiOperasyon ? `"${op.oncekiOperasyon.operasyonAdi}" (Adım #${op.oncekiOperasyon.operasyonSira})` : 'Önceki Adım';
         throw new ValidationError(`⛔ Bu işlem başlatılamaz! Önceki adım olan ${prevOpName} henüz tamamlanmamıştır. Lütfen önce önceki istasyondaki işlemi bitiriniz.`);
       }
 
-      if (op.oncekiOperasyonId) {
+      if (op.durum !== 'Paused' && op.durum !== 'In_Production' && op.oncekiOperasyonId) {
         const prevOp = await UretimEmriOperasyon.findByPk(op.oncekiOperasyonId, { transaction: t });
         if (prevOp && prevOp.durum !== 'Completed') {
           throw new ValidationError(`⛔ Bu işlem başlatılamaz! Önceki adım olan "${prevOp.operasyonAdi}" henüz tamamlanmamıştır. (Mevcut Durum: ${prevOp.durum})`);
@@ -241,8 +242,8 @@ class ProductionService {
         effectiveStartDate = new Date(now.getTime() - (previousWorkedSeconds * 1000));
         opNotes += (opNotes ? '\n' : '') + `[İŞE DEVAM EDİLDİ - ${now.toLocaleTimeString('tr-TR')}]: ${userFullName} tarafından duraklatma sonrası işe devam edildi.`;
       } else {
-        // İlk kez başlatılıyorsa
-        effectiveStartDate = op.gerceklesenBaslangicTarihi || now;
+        // İlk kez başlatılıyorsa: Kesinlikle şu anki zaman damgası (now) olmalı!
+        effectiveStartDate = now;
         opNotes += (opNotes ? '\n' : '') + `[İŞ BAŞLATILDI - ${now.toLocaleTimeString('tr-TR')}]: ${userFullName} tarafından istasyonda üretime alındı.`;
       }
 
