@@ -669,7 +669,7 @@
                   <!-- 8. Aksiyonlar (Otomatik Durum & MES Bağlantısı) -->
                   <td style="text-align: right;">
                     <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
-                      <button type="button" class="btn" onclick="openOrderModal(<%= JSON.stringify(o) %>)" style="background: rgba(255, 255, 255, 0.08); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;" title="Detaylı Rota ve Operasyon Adımlarını Gör">
+                      <button type="button" class="btn" onclick="openOrderModalById(<%= o.id %>)" style="background: rgba(255, 255, 255, 0.08); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;" title="Detaylı Rota ve Operasyon Adımlarını Gör">
                         🔍 Detay
                       </button>
 
@@ -793,16 +793,25 @@
     updateClock();
     setInterval(updateClock, 1000);
 
-    function openOrderModal(order) {
+    const ordersDataList = <%- JSON.stringify(orders) %>;
+    const ordersMapById = {};
+    ordersDataList.forEach(o => {
+      ordersMapById[o.id] = o;
+    });
+
+    function openOrderModalById(orderId) {
       const modal = document.getElementById('orderDetailModal');
+      const order = ordersMapById[orderId];
       if (!modal || !order) return;
 
       const orderNo = order.isEmriNo || order.workOrderNo || `ISEMRI-${order.id}`;
       const stock = order.stokKarti || order.stockItem;
-      const stockName = stock ? `[${stock.stokKodu || stock.stockCode}] ${stock.ad || stock.name}` : (order.uretimBasligi || order.productionTitle);
+      const stockName = stock ? `[${stock.stokKodu || stock.stockCode || ''}] ${stock.ad || stock.name || ''}` : (order.uretimBasligi || order.productionTitle || '—');
       const plannedQty = parseFloat(order.planlananMiktar !== undefined ? order.planlananMiktar : (order.plannedQuantity || 1));
       const completedQty = parseFloat(order.tamamlananMiktar !== undefined ? order.tamamlananMiktar : (order.completedQuantity || 0));
-      const unit = order.birim || order.unit || 'Adet';
+      const unit = order.birim || order.unit || (stock ? stock.birim : 'Adet') || 'Adet';
+      const currentStatus = order.durum || order.status || 'Approved';
+
       const ops = order.operasyonlar || [];
       let modalTotalMins = 0;
       if (ops.length > 0) {
@@ -811,22 +820,27 @@
       if (modalTotalMins === 0) {
         modalTotalMins = Math.round((parseFloat(order.tahminiSaat || order.estimatedHours || 0)) * 60);
       }
-      let modalDurStr = modalTotalMins > 0 ? (modalTotalMins < 60 ? `${Math.round(modalTotalMins)} Dk` : `${(modalTotalMins / 60).toFixed(1)} Saat (${Math.round(modalTotalMins)} Dk)`) : '—';
+      const modalDurStr = modalTotalMins > 0 ? (modalTotalMins < 60 ? `${Math.round(modalTotalMins)} Dk` : `${(modalTotalMins / 60).toFixed(1)} Saat (${Math.round(modalTotalMins)} Dk)`) : '—';
+
+      let statusText = '🟢 Onaylandı';
+      if (currentStatus === 'In_Production') statusText = '⚡ İmalatta / Üretimde';
+      else if (currentStatus === 'Completed') statusText = '✅ Tamamlandı';
+      else if (currentStatus === 'Quality_Check') statusText = '🔍 Kalite Kontrolde';
+      else if (currentStatus === 'Cancelled') statusText = '⛔ İptal Edildi';
 
       document.getElementById('mOrderNo').textContent = orderNo;
-      document.getElementById('mOrderStatus').textContent = status === 'In_Production' ? '⚡ Üretimde' : (status === 'Completed' ? '✅ Tamamlandı' : status);
+      document.getElementById('mOrderStatus').textContent = statusText;
       document.getElementById('mProductName').textContent = stockName;
       document.getElementById('mQtySummary').textContent = `${completedQty} / ${plannedQty} ${unit}`;
       document.getElementById('mDatesSummary').textContent = `${order.planlananBitisTarihi || order.plannedEndDate || '—'} (${modalDurStr})`;
-      document.getElementById('mOrderNotes').textContent = order.notlar || order.receteNotlari || 'Kayıtlı not bulunmamaktadır.';
+      document.getElementById('mOrderNotes').textContent = order.notlar || order.receteNotlari || 'Kayıtlı özel not bulunmamaktadır.';
 
       const tbody = document.getElementById('mOpsTbody');
-      const ops = order.operasyonlar || [];
 
       if (ops.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5" style="padding: 16px; text-align: center; color: var(--text-muted);">
+            <td colspan="5" style="padding: 18px; text-align: center; color: var(--text-muted);">
               Bu iş emri için ayrıştırılmış rota adımı bulunamadı. Genel montaj istasyonunda işlem görmektedir.
             </td>
           </tr>
@@ -838,6 +852,8 @@
             statusBadge = '<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">✓ Tamamlandı</span>';
           } else if (op.durum === 'In_Production') {
             statusBadge = '<span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">⚡ Üretimde</span>';
+          } else if (op.durum === 'Paused') {
+            statusBadge = '<span style="background: rgba(245, 158, 11, 0.25); color: #f59e0b; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">⏸️ Duraklatıldı</span>';
           } else if (op.durum === 'Waiting_Previous_Op') {
             statusBadge = '<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">🔒 Beklemede</span>';
           }
@@ -848,10 +864,10 @@
           return `
             <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
               <td style="padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #818cf8;">
-                #${op.operasyonSira}
+                #${op.operasyonSira || '10'}
               </td>
               <td style="padding: 10px 12px; color: #fff; font-weight: 700;">
-                ${op.operasyonAdi}
+                ${op.operasyonAdi || 'Operasyon Adımı'}
               </td>
               <td style="padding: 10px 12px; color: #cbd5e1;">
                 🏢 ${wcName}
@@ -874,6 +890,13 @@
       const modal = document.getElementById('orderDetailModal');
       if (modal) modal.style.display = 'none';
     }
+
+    window.addEventListener('click', (e) => {
+      const modal = document.getElementById('orderDetailModal');
+      if (e.target === modal) {
+        closeOrderModal();
+      }
+    });
   </script>
 </body>
 </html>
