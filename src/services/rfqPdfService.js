@@ -6,7 +6,7 @@ class RfqPdfService {
   /**
    * Generates a formal, black & white / grayscale enterprise RFQ proposal document
    * strictly formatted to fill the full A4 page harmoniously with zero text overlap,
-   * and pipes it directly to the Express response stream.
+   * wide warehouse column, and pipes it directly to the Express response stream.
    */
   generatePdf(rfqData, resStream) {
     const doc = new PDFDocument({
@@ -137,17 +137,25 @@ class RfqPdfService {
     // ==================== 3. TİCARİ VE TESLİMAT ŞARTLARI ====================
     currentY = drawSectionHeader('2. TİCARİ VE TESLİMAT ŞARTLARI', currentY);
 
-    const termsBoxHeight = 44;
+    const termsBoxHeight = 48;
     doc.lineWidth(0.75).rect(startX, currentY, pageWidth, termsBoxHeight).stroke('#000000');
 
-    const colW = pageWidth / 4;
+    // Proportionate Columns: 100pt + 115pt + 185pt + 131.28pt = 531.28pt
+    const termsCols = [
+      { w: 100, x: startX },
+      { w: 115, x: startX + 100 },
+      { w: 185, x: startX + 215 },
+      { w: 131.28, x: startX + 400 }
+    ];
+
+    // Draw dividers
     for (let i = 1; i < 4; i++) {
-      doc.lineWidth(0.5).moveTo(startX + (i * colW), currentY).lineTo(startX + (i * colW), currentY + termsBoxHeight).stroke('#CCCCCC');
+      doc.lineWidth(0.5).moveTo(termsCols[i].x, currentY).lineTo(termsCols[i].x, currentY + termsBoxHeight).stroke('#CCCCCC');
     }
 
     // Col 1: Delivery Days
-    doc.font('Bold').fontSize(7.2).fillColor('#555555').text('TESLİM SÜRESİ', startX + 8, currentY + 6, { width: colW - 16, lineBreak: false });
-    doc.font('Bold').fontSize(9.5).fillColor('#000000').text(`${rfqData.deliveryDays || 5} İş Günü`, startX + 8, currentY + 22, { width: colW - 16, lineBreak: false, ellipsis: true });
+    doc.font('Bold').fontSize(7.2).fillColor('#555555').text('TESLİM SÜRESİ', termsCols[0].x + 8, currentY + 7, { width: termsCols[0].w - 16, lineBreak: false });
+    doc.font('Bold').fontSize(9).fillColor('#000000').text(`${rfqData.deliveryDays || 5} İş Günü`, termsCols[0].x + 8, currentY + 23, { width: termsCols[0].w - 16, lineBreak: false, ellipsis: true });
 
     // Col 2: Payment Term
     const termFormatted = rfqData.paymentTerm === 'Pesin'
@@ -158,16 +166,16 @@ class RfqPdfService {
           ? '60 Gün Vadeli'
           : (rfqData.paymentTerm === 'Vadeli_90' ? '90 Gün Vadeli' : (rfqData.paymentTerm || '30 Gün Vadeli'))));
 
-    doc.font('Bold').fontSize(7.2).fillColor('#555555').text('ÖDEME VADESİ', startX + colW + 8, currentY + 6, { width: colW - 16, lineBreak: false });
-    doc.font('Bold').fontSize(9.5).fillColor('#000000').text(termFormatted, startX + colW + 8, currentY + 22, { width: colW - 16, lineBreak: false, ellipsis: true });
+    doc.font('Bold').fontSize(7.2).fillColor('#555555').text('ÖDEME VADESİ', termsCols[1].x + 8, currentY + 7, { width: termsCols[1].w - 16, lineBreak: false });
+    doc.font('Bold').fontSize(9).fillColor('#000000').text(termFormatted, termsCols[1].x + 8, currentY + 23, { width: termsCols[1].w - 16, lineBreak: false, ellipsis: true });
 
-    // Col 3: Delivery Place
-    doc.font('Bold').fontSize(7.2).fillColor('#555555').text('TESLİM YERİ / AMBAR', startX + (2 * colW) + 8, currentY + 6, { width: colW - 16, lineBreak: false });
-    doc.font('Bold').fontSize(8.5).fillColor('#000000').text(rfqData.deliveryPlace || 'Ana Hammadde Ambarı', startX + (2 * colW) + 8, currentY + 22, { width: colW - 16, lineBreak: false, ellipsis: true });
+    // Col 3: Delivery Place (WIDE 185pt COLUMN - Accommodates warehouse location comfortably)
+    doc.font('Bold').fontSize(7.2).fillColor('#555555').text('TESLİM YERİ / AMBAR', termsCols[2].x + 8, currentY + 7, { width: termsCols[2].w - 16, lineBreak: false });
+    doc.font('Bold').fontSize(8.5).fillColor('#000000').text(rfqData.deliveryPlace || 'Ana Hammadde & Üretim Ambarı', termsCols[2].x + 8, currentY + 22, { width: termsCols[2].w - 16, height: 22 });
 
     // Col 4: Currency & VAT Status
-    doc.font('Bold').fontSize(7.2).fillColor('#555555').text('PARA BİRİMİ & KDV', startX + (3 * colW) + 8, currentY + 6, { width: colW - 16, lineBreak: false });
-    doc.font('Bold').fontSize(9.5).fillColor('#000000').text(`${currCode} • KDV ${rfqData.vatStatus || 'Hariç'}`, startX + (3 * colW) + 8, currentY + 22, { width: colW - 16, lineBreak: false, ellipsis: true });
+    doc.font('Bold').fontSize(7.2).fillColor('#555555').text('PARA BİRİMİ & KDV', termsCols[3].x + 8, currentY + 7, { width: termsCols[3].w - 16, lineBreak: false });
+    doc.font('Bold').fontSize(9).fillColor('#000000').text(`${currCode} • KDV ${rfqData.vatStatus || 'Hariç'}`, termsCols[3].x + 8, currentY + 23, { width: termsCols[3].w - 16, lineBreak: false, ellipsis: true });
 
     currentY += termsBoxHeight + 14;
 
