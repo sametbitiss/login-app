@@ -146,6 +146,50 @@ class ProductionService {
         await order.update({ tahminiSaat: parseFloat(totalDurationHours.toFixed(2)) }, { transaction: t });
       }
 
+      // ═══════════════════════════════════════════════════════════════
+      // İŞ EMRİ OLUŞTURULMA ANINDA REÇETELİ BİLEŞENLERİN STOKTAN DÜŞÜLMESİ
+      // ═══════════════════════════════════════════════════════════════
+      const bomItems = await UrunRecetesi.findAll({
+        where: { mamulStokId: stockId, durum: 'Active' },
+        transaction: t
+      });
+
+      for (const bom of bomItems) {
+        if (!bom.bilesenStokId || bom.kalemTuru === 'Labor') continue;
+
+        const baseQty = parseFloat(bom.bazMiktar || 1) || 1;
+        const reqQtyPerUnit = parseFloat(bom.gerekliMiktar || 1) / baseQty;
+        const scrapRate = parseFloat(bom.fireOrani || 0);
+        const scrapMultiplier = 1 + (scrapRate / 100);
+        let neededQty = plannedQty * reqQtyPerUnit * scrapMultiplier;
+
+        const compItem = await StokKarti.findByPk(bom.bilesenStokId, { transaction: t });
+        if (compItem) {
+          const compUnit = compItem.birim || bom.birim || 'Adet';
+          const isDiscrete = ['Adet', 'Paket', 'Koli', 'Set'].includes(compUnit);
+          neededQty = isDiscrete ? Math.ceil(neededQty) : parseFloat(neededQty.toFixed(2));
+
+          const oldStock = parseFloat(compItem.mevcutStok || 0);
+          const newStock = Math.max(0, parseFloat((oldStock - neededQty).toFixed(2)));
+
+          await compItem.update({ mevcutStok: newStock }, { transaction: t });
+
+          const movPrefix = `MOV-WO-${Date.now().toString().slice(-6)}-${compItem.id}`;
+          await StokHareketi.create({
+            hareketNo: movPrefix,
+            stokId: compItem.id,
+            cikisDepoId: 1,
+            hareketTuru: 'Outbound',
+            miktar: neededQty,
+            birim: compUnit,
+            birimFiyat: compItem.alisFiyati || 0,
+            referansNo: order.isEmriNo,
+            notlar: `[İş Emri Sarfiyatı] ${order.isEmriNo} (${order.uretimBasligi || 'İş Emri'}) için reçeteli bileşen stoktan düşüldü.`,
+            yapanKullaniciId: order.olusturanId || null
+          }, { transaction: t });
+        }
+      }
+
       return createdOps;
     };
 
@@ -412,36 +456,6 @@ class ProductionService {
       // 3. EĞER SON ADIM İSE: Ana iş emrini tamamla ve nihai mamul stoku artır
       if (isFinalStep && op.uretimEmri) {
         const order = op.uretimEmri;
-
-        // Backflushing: Reçetedeki hammadde bileşenlerini stoktan düş
-        const bomItems = await UrunRecetesi.findAll({
-          where: { mamulStokId: order.stokId, kalemTuru: 'Material' },
-          transaction: t
-        });
-
-        for (const bom of bomItems) {
-          if (!bom.bilesenStokId) continue;
-          const scrapMult = 1 + (parseFloat(bom.fireOrani || 0) / 100);
-          const requiredMaterialQty = parseFloat(bom.gerekliMiktar) * additionalCompleted * scrapMult;
-
-          const componentItem = await StokKarti.findByPk(bom.bilesenStokId, { transaction: t });
-          if (componentItem) {
-            const oldStock = parseFloat(componentItem.mevcutStok || 0);
-            const newStock = Math.max(0, oldStock - requiredMaterialQty);
-            await componentItem.update({ mevcutStok: newStock }, { transaction: t });
-
-            await StokHareketi.create({
-              hareketNo: `MOV-BF-${Date.now().toString().slice(-6)}`,
-              stokId: componentItem.id,
-              hareketTuru: 'Outbound',
-              miktar: requiredMaterialQty,
-              birim: componentItem.birim,
-              referansNo: order.isEmriNo,
-              notlar: `Üretim Düşümü (Backflushing): ${order.isEmriNo} — ${order.uretimBasligi}`,
-              yapanKullaniciId: currentUser ? currentUser.id : null
-            }, { transaction: t });
-          }
-        }
 
         // Mamul stokunu artır
         const finishedItem = await StokKarti.findByPk(order.stokId, { transaction: t });

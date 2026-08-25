@@ -178,29 +178,6 @@ class ProductionRepository {
           },
           ipAdresi: ipAddress
         });
-
-        const boms = await UrunRecetesi.findAll({ where: { mamulStokId: order.stokId } });
-        for (const bom of boms) {
-          const compItem = await StokKarti.findByPk(bom.bilesenStokId);
-          if (compItem) {
-            const reqQty = (qtyToAdd * parseFloat(bom.gerekliMiktar)) * (1 + (parseFloat(bom.fireOrani || 0) / 100));
-            const compPrevStock = parseFloat(compItem.mevcutStok) || 0;
-            compItem.mevcutStok = Math.max(0, compPrevStock - reqQty);
-            await compItem.save();
-
-            await StokHareketi.create({
-              hareketNo: `SH-${Date.now().toString().slice(-6)}`,
-              stokId: compItem.id,
-              cikisDepoId: 1,
-              hareketTuru: 'Outbound',
-              miktar: reqQty,
-              birimFiyat: compItem.alisFiyati || 0,
-              referansNo: order.isEmriNo,
-              notlar: `[Üretim Sarfı] ${order.isEmriNo} üretimi için reçeteli hammadde stoktan düşüldü.`,
-              yapanKullaniciId: currentUser ? currentUser.id : null
-            });
-          }
-        }
       }
     }
 
