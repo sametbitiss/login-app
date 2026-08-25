@@ -24,11 +24,10 @@ router.post('/requisitions/:id/convert', purchaseController.convertRequisition);
 router.get('/rfq', purchaseController.listRfqs);
 router.get('/rfq/add', purchaseController.renderAddRfq);
 router.post('/rfq/add', purchaseController.addRfq);
+router.get('/rfq/:id/pdf', purchaseController.viewRfqPdf);
 router.get('/rfq/:id/accept', purchaseController.acceptRfq);
 router.post('/rfq/:id/accept', purchaseController.acceptRfq);
 router.post('/rfq/:id/reject', purchaseController.rejectRfq);
-router.get('/rfq/:id/delete', purchaseController.deleteRfq);
-router.post('/rfq/:id/delete', purchaseController.deleteRfq);
 
 // 4. Satın Alma Siparişleri
 router.get('/orders', purchaseController.listOrders);

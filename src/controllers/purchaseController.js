@@ -9,6 +9,7 @@ const goodsReceiptRepository = require('../repositories/goodsReceiptRepository')
 const asyncHandler = require('../utils/asyncHandler');
 const { ValidationError } = require('../utils/appError');
 const currencyService = require('../services/currencyService');
+const rfqPdfService = require('../services/rfqPdfService');
 const { StokKarti, SatinAlmaSiparisi, Tedarikci, SatinAlmaTalebi, SatinAlmaTeklifTalebi, SatinAlmaFaturasi, MalKabul, Depo } = require('../../models');
 const { Op } = require('sequelize');
 
@@ -755,6 +756,49 @@ class PurchaseController {
     }
   });
 
+  viewRfqPdf = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const rfq = await rfqRepository.findById(id);
+    if (!rfq) {
+      return res.status(404).send('Teklif kaydı bulunamadı.');
+    }
+    const rfqObj = rfq.toJSON ? rfq.toJSON() : rfq;
+    const liveRates = await currencyService.getLiveRates();
+    const curr = (rfqObj.paraBirimi || 'TRY').toUpperCase();
+    const totalPriceTRY = currencyService.convertToTRY(rfqObj.teklifEdilenToplamFiyat, curr, liveRates);
+
+    const rfqData = {
+      ...rfqObj,
+      rfqNo: rfqObj.teklifTalepNo || rfqObj.rfqNo,
+      supplierName: rfqObj.tedarikciAdi || (rfqObj.tedarikci ? (rfqObj.tedarikci.ticariAd || rfqObj.tedarikci.firmaAdi) : 'Tedarikçi'),
+      supplierCode: rfqObj.tedarikci ? rfqObj.tedarikci.tedarikciKodu : '',
+      supplierRating: rfqObj.tedarikci ? (parseFloat(rfqObj.tedarikci.performansSkoru) || 85) : 85,
+      supplierTaxNo: rfqObj.tedarikci ? rfqObj.tedarikci.vergiNo : '',
+      supplierTaxOffice: rfqObj.tedarikci ? rfqObj.tedarikci.vergiDairesi : '',
+      supplierCity: rfqObj.tedarikci ? rfqObj.tedarikci.sehir : '',
+      deliveryDays: rfqObj.teslimSuresiGun || 5,
+      deliveryPlace: rfqObj.teslimYeri || 'Ana Hammadde & Üretim Ambarı',
+      paymentTerm: rfqObj.odemeVadesi || 'Vadeli_30',
+      vatStatus: rfqObj.kdvDurumu || 'Hariç',
+      currency: curr,
+      subtotal: parseFloat(rfqObj.araToplam || 0),
+      discount: parseFloat(rfqObj.toplamIskonto || 0),
+      vat: parseFloat(rfqObj.toplamKdv || 0),
+      totalPrice: parseFloat(rfqObj.teklifEdilenToplamFiyat || 0),
+      totalPriceTRY,
+      exchangeRate: liveRates[curr] || 1.0,
+      itemsData: rfqObj.kalemlerVerisi || [],
+      notes: rfqObj.notlar || '',
+      status: rfqObj.durum || 'Received',
+      validUntil: rfqObj.gecerlilikBitis || '',
+      supplier: rfqObj.tedarikci || {}
+    };
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${rfqData.rfqNo || 'teklif'}.pdf"`);
+    rfqPdfService.generatePdf(rfqData, res);
+  });
+
   acceptRfq = asyncHandler(async (req, res) => {
     const order = await purchaseService.acceptRfq(req.params.id, req.user, req.ip);
     const orderNo = order ? (order.siparisNo || order.orderNo) : '';
@@ -763,11 +807,6 @@ class PurchaseController {
 
   rejectRfq = asyncHandler(async (req, res) => {
     await purchaseService.updateRfq(req.params.id, { durum: 'Rejected' }, req.user, req.ip);
-    res.redirect('/purchase/rfq');
-  });
-
-  deleteRfq = asyncHandler(async (req, res) => {
-    await purchaseService.deleteRfq(req.params.id, req.user, req.ip);
     res.redirect('/purchase/rfq');
   });
 

@@ -286,20 +286,27 @@
       transform: translateY(-1px);
       box-shadow: 0 6px 22px rgba(16, 185, 129, 0.5);
     }
-    .btn-delete-item {
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 0.78rem;
+
+    .btn-view-pdf {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      color: #f8fafc;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 10px;
       cursor: pointer;
       text-decoration: none;
-      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
     }
-    .btn-delete-item:hover {
-      background: #ef4444;
-      color: #fff;
+    .btn-view-pdf:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: #ffffff;
+      color: #ffffff;
+      transform: translateY(-1px);
     }
 
     /* Locked group */
@@ -384,14 +391,11 @@
       <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div>
           <h1 style="font-size: 1.6rem; font-weight: 900; color: #f8fafc; margin: 0; letter-spacing: -0.4px;">Satın Alma Teklif Yönetimi (RFQ)</h1>
-          <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün kutucukları üzerinden teklifler ve kur normalizasyonlu Fiyat/Performans değerlendirmeleri.</p>
+          <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 4px;">Talep edilen ürün kutucukları üzerinden tedarikçi teklifleri ve kur normalizasyonlu Fiyat/Performans değerlendirmeleri.</p>
         </div>
         <div style="display: flex; gap: 12px;">
           <a href="/purchase/requisitions" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700;">
-            📋 Talepler Listesi
-          </a>
-          <a href="/purchase/rfq/add" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; padding: 10px 20px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);">
-            ➕ Yeni Teklif Ekle
+            📋 Satın Alma Talepleri →
           </a>
         </div>
       </div>
@@ -619,6 +623,11 @@
                           <% } %>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
+                          <!-- PDF Detail Button -->
+                          <a href="/purchase/rfq/<%= item.id %>/pdf" target="_blank" class="btn-view-pdf" title="Teklif Detayını PDF Olarak Görüntüle">
+                            <span>📄</span> Detay (PDF)
+                          </a>
+
                           <% if (item.status === 'Accepted') { %>
                             <span class="pbc-status-pill status-active">✅ Kabul Edildi</span>
                           <% } else if (item.status === 'Rejected') { %>
@@ -629,9 +638,6 @@
                             <span class="pbc-status-pill status-approved">📩 Teklif Alındı</span>
                             <a href="/purchase/rfq/<%= item.id %>/accept" class="btn-accept-order" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">
                               ✅ Kabul Et & Sipariş Oluştur
-                            </a>
-                            <a href="/purchase/rfq/<%= item.id %>/delete" class="btn-delete-item" onclick="return confirm('Bu teklifi silmek istediğinizden emin misiniz?');" title="Sil">
-                              🗑️
                             </a>
                           <% } %>
                         </div>
@@ -727,14 +733,15 @@
                       <% } %>
                     </td>
                     <td style="white-space: nowrap; text-align: right;">
+                      <a href="/purchase/rfq/<%= rfq.id %>/pdf" target="_blank" class="btn btn-sm btn-view-pdf" title="Teklif Detayını PDF Olarak Görüntüle">
+                        📄 PDF
+                      </a>
+
                       <% if (rfq.status !== 'Accepted' && rfq.status !== 'Rejected') { %>
-                        <a href="/purchase/rfq/<%= rfq.id %>/accept" class="btn-accept-order" style="font-size: 0.75rem; padding: 6px 14px;" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">
+                        <a href="/purchase/rfq/<%= rfq.id %>/accept" class="btn-accept-order" style="font-size: 0.75rem; padding: 6px 12px; margin-left: 4px;" onclick="return confirm('Bu teklifi kabul edip otomatik Satın Alma Siparişi oluşturmak istediğinizden emin misiniz?');">
                           ✅ Kabul Et
                         </a>
                       <% } %>
-                      <a href="/purchase/rfq/<%= rfq.id %>/delete" class="btn-delete-item" onclick="return confirm('Bu teklifi silmek istediğinizden emin misiniz?');" style="margin-left: 4px;">
-                        🗑️
-                      </a>
                     </td>
                   </tr>
                 <% }); %>
