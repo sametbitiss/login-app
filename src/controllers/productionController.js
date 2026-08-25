@@ -45,11 +45,28 @@ class ProductionController {
     const allOrders = await productionRepository.findAll({ search, status, priority });
     const stats = await productionRepository.getStats();
 
-    // Sadece gerçek üretim taleplerini al
-    const productionRequisitions = allOrders.filter(o => {
-      const isBOMReq = (o.isEmriNo && o.isEmriNo.startsWith('REQ-BOM')) || (o.uretimBasligi && o.uretimBasligi.includes('Reçete Oluşturma'));
-      return !isBOMReq;
+    // Ürün bazında tekilleştir: Her ürün için tek satır ve canlı durum
+    const seenStockIds = new Set();
+    const productionRequisitions = [];
+
+    // Önce imalattaki / onaylı işleri, sonra talepleri önceliklendirerek al
+    const sorted = [...allOrders].sort((a, b) => {
+      const rank = { 'In_Production': 1, 'Approved': 2, 'Completed': 3, 'Planned': 4, 'Cancelled': 5 };
+      return (rank[a.durum] || 99) - (rank[b.durum] || 99);
     });
+
+    for (const o of sorted) {
+      const isBOMReq = (o.isEmriNo && o.isEmriNo.startsWith('REQ-BOM')) || (o.uretimBasligi && o.uretimBasligi.includes('Reçete Oluşturma'));
+      if (isBOMReq) continue;
+
+      if (!seenStockIds.has(o.stokId)) {
+        seenStockIds.add(o.stokId);
+        productionRequisitions.push(o);
+      }
+    }
+
+    // ID sırasına göre sırala
+    productionRequisitions.sort((a, b) => a.id - b.id);
 
     res.render('production/requisitions', {
       user: req.user,
@@ -404,25 +421,52 @@ class ProductionController {
     const qty = parseFloat(plannedQuantity) || 1;
     const title = uretimBasligi || `🏭 [İş Emri] ${targetProduct.ad} (${qty} ${unit || targetProduct.birim || 'Adet'})`;
 
-    const createdOrder = await productionRepository.create({
-      isEmriNo: nextNo,
-      uretimBasligi: title,
-      stokId: sId,
-      planlananMiktar: qty,
-      birim: unit || targetProduct.birim || 'Adet',
-      durum: 'Approved',
-      oncelik: priority || 'Normal',
-      isMerkezi: workCenter || null,
-      planlananBaslangicTarihi: plannedStartDate || new Date().toISOString().split('T')[0],
-      planlananBitisTarihi: plannedEndDate || new Date().toISOString().split('T')[0],
-      tahminiSaat: parseFloat(estimatedHours) || 0,
-      uretimYonetici: productionManager || (req.user ? `${req.user.ad || ''} ${req.user.soyad || ''}`.trim() : 'Üretim Mühendisi'),
-      receteNotlari: receteNotlari || `Kaynak: ${demandRef || 'Manuel'}`,
-      notlar: notlar || `[Yeni İş Emri] Kaynak Talep: ${demandRef || 'Doğrudan Giriş'}`
-    }, req.user, req.ip);
+    // Eğer bu ürün için sistemde daha önceden açılmış bir 'Planned' talep varsa, yeni satır eklemek yerine onu güncelle
+    const existingPlannedOrder = await UretimEmri.findOne({
+      where: {
+        stokId: sId,
+        durum: 'Planned'
+      }
+    });
+
+    let targetOrder;
+    if (existingPlannedOrder) {
+      await existingPlannedOrder.update({
+        uretimBasligi: title,
+        planlananMiktar: qty,
+        birim: unit || targetProduct.birim || 'Adet',
+        durum: 'Approved',
+        oncelik: priority || existingPlannedOrder.oncelik || 'Normal',
+        isMerkezi: workCenter || existingPlannedOrder.isMerkezi || null,
+        planlananBaslangicTarihi: plannedStartDate || existingPlannedOrder.planlananBaslangicTarihi || new Date().toISOString().split('T')[0],
+        planlananBitisTarihi: plannedEndDate || existingPlannedOrder.planlananBitisTarihi || new Date().toISOString().split('T')[0],
+        tahminiSaat: parseFloat(estimatedHours) || existingPlannedOrder.tahminiSaat || 0,
+        uretimYonetici: productionManager || (req.user ? `${req.user.ad || ''} ${req.user.soyad || ''}`.trim() : 'Üretim Mühendisi'),
+        receteNotlari: receteNotlari || existingPlannedOrder.receteNotlari,
+        notlar: notlar || existingPlannedOrder.notlar
+      });
+      targetOrder = existingPlannedOrder;
+    } else {
+      targetOrder = await productionRepository.create({
+        isEmriNo: nextNo,
+        uretimBasligi: title,
+        stokId: sId,
+        planlananMiktar: qty,
+        birim: unit || targetProduct.birim || 'Adet',
+        durum: 'Approved',
+        oncelik: priority || 'Normal',
+        isMerkezi: workCenter || null,
+        planlananBaslangicTarihi: plannedStartDate || new Date().toISOString().split('T')[0],
+        planlananBitisTarihi: plannedEndDate || new Date().toISOString().split('T')[0],
+        tahminiSaat: parseFloat(estimatedHours) || 0,
+        uretimYonetici: productionManager || (req.user ? `${req.user.ad || ''} ${req.user.soyad || ''}`.trim() : 'Üretim Mühendisi'),
+        receteNotlari: receteNotlari || `Kaynak: ${demandRef || 'Manuel'}`,
+        notlar: notlar || `[Yeni İş Emri] Kaynak Talep: ${demandRef || 'Doğrudan Giriş'}`
+      }, req.user, req.ip);
+    }
 
     // İş emrini rota operasyonlarına parçala ve iş merkezlerine dağıt
-    await productionService.createWorkOrderOperations(createdOrder);
+    await productionService.createWorkOrderOperations(targetOrder);
 
     res.redirect('/production/orders?success=order_created');
   });

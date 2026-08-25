@@ -179,9 +179,11 @@
                   <td><%= creatorDisplay %></td>
                   <td>
                     <% if (status === 'Completed') { %>
-                      <span class="badge-status badge-has-bom">✓ Tamamlandı</span>
+                      <span class="badge-status badge-has-bom" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">✓ Tamamlandı</span>
                     <% } else if (status === 'In_Production') { %>
-                      <span class="badge-status badge-has-bom" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">● Üretimde</span>
+                      <span class="badge-status badge-has-bom" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">● İmalatta / Üretimde</span>
+                    <% } else if (status === 'Approved') { %>
+                      <span class="badge-status badge-has-bom" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">● Onaylandı</span>
                     <% } else if (status === 'Cancelled') { %>
                       <span class="badge-status badge-no-bom" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">✕ İptal Edildi</span>
                     <% } else { %>
@@ -193,6 +195,10 @@
                     <% if (status === 'Planned') { %>
                       <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
                         ⚡ MRP Havuzunda
+                      </span>
+                    <% } else if (status === 'Approved') { %>
+                      <span style="background: rgba(99, 102, 241, 0.18); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.35); font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        🟢 İş Emri Açıldı
                       </span>
                     <% } else if (status === 'In_Production') { %>
                       <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">

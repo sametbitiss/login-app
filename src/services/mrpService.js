@@ -647,28 +647,46 @@ class MRPService {
         const workOrderNo = `${prefix}${String(nextSeq).padStart(4, '0')}`;
 
         const todayStr = new Date().toISOString().split('T')[0];
-        const deliveryDate = new Date();
-        deliveryDate.setDate(deliveryDate.getDate() + 7);
-        const deliveryDateStr = deliveryDate.toISOString().split('T')[0];
-
-        const wo = await UretimEmri.create({
-          isEmriNo: workOrderNo,
-          uretimBasligi: `🏭 [MRP İş Emri] ${item.name} (${item.quantity} ${item.unit})`,
-          stokId: item.stockId,
-          planlananMiktar: item.quantity,
-          tamamlananMiktar: 0,
-          fireMiktari: 0,
-          birim: item.unit,
-          durum: 'Approved',
-          oncelik: item.priority || 'Normal',
-          isMerkezi: item.workCenter || 'Genel Üretim',
-          planlananBaslangicTarihi: todayStr,
-          planlananBitisTarihi: deliveryDateStr,
-          tahminiSaat: item.estimatedHours || 4,
-          receteNotlari: `Kaynak Talepler: ${item.demandSources}`,
-          notlar: `[MRP v2 İş Emri] Bileşenleri tam olan ürünün iş emridir. Öncelik sırası: #${item.priorityOrder}`,
-          olusturanId: currentUser ? currentUser.id : null
+        const existingPlanned = await UretimEmri.findOne({
+          where: { stokId: item.stockId, durum: 'Planned' }
         });
+
+        let wo;
+        if (existingPlanned) {
+          await existingPlanned.update({
+            uretimBasligi: `🏭 [MRP İş Emri] ${item.name} (${item.quantity} ${item.unit})`,
+            planlananMiktar: item.quantity,
+            birim: item.unit,
+            durum: 'Approved',
+            oncelik: item.priority || 'Normal',
+            isMerkezi: item.workCenter || 'Genel Üretim',
+            planlananBaslangicTarihi: todayStr,
+            planlananBitisTarihi: deliveryDateStr,
+            tahminiSaat: item.estimatedHours || 4,
+            receteNotlari: `Kaynak Talepler: ${item.demandSources}`,
+            notlar: `[MRP v2 İş Emri] Bileşenleri tam olan ürünün iş emridir. Öncelik sırası: #${item.priorityOrder}`
+          });
+          wo = existingPlanned;
+        } else {
+          wo = await UretimEmri.create({
+            isEmriNo: workOrderNo,
+            uretimBasligi: `🏭 [MRP İş Emri] ${item.name} (${item.quantity} ${item.unit})`,
+            stokId: item.stockId,
+            planlananMiktar: item.quantity,
+            tamamlananMiktar: 0,
+            fireMiktari: 0,
+            birim: item.unit,
+            durum: 'Approved',
+            oncelik: item.priority || 'Normal',
+            isMerkezi: item.workCenter || 'Genel Üretim',
+            planlananBaslangicTarihi: todayStr,
+            planlananBitisTarihi: deliveryDateStr,
+            tahminiSaat: item.estimatedHours || 4,
+            receteNotlari: `Kaynak Talepler: ${item.demandSources}`,
+            notlar: `[MRP v2 İş Emri] Bileşenleri tam olan ürünün iş emridir. Öncelik sırası: #${item.priorityOrder}`,
+            olusturanId: currentUser ? currentUser.id : null
+          });
+        }
 
         await logService.logCrud({
           kullaniciId: currentUser ? currentUser.id : null,
