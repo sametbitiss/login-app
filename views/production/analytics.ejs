@@ -59,8 +59,8 @@
     .analytics-grid-two {
       display: grid;
       grid-template-columns: 2fr 1fr;
-      gap: 20px;
-      margin-bottom: 24px;
+      gap: 24px;
+      margin-bottom: 28px;
     }
     @media (max-width: 1024px) {
       .analytics-grid-two { grid-template-columns: 1fr; }
@@ -70,7 +70,7 @@
       background: rgba(15, 23, 42, 0.8);
       border: 1.5px solid rgba(255, 255, 255, 0.08);
       border-radius: 20px;
-      padding: 22px 24px;
+      padding: 24px 26px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(16px);
     }
@@ -78,10 +78,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
     .analytics-card-title {
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 800;
       color: #f8fafc;
       display: flex;
@@ -245,7 +245,7 @@
         </div>
       </div>
 
-      <!-- Charts Section -->
+      <!-- Charts Section (Büyük & Geniş İlk Hali) -->
       <div class="analytics-grid-two">
         <!-- Station Capacity Load Bar Chart -->
         <div class="analytics-card">
@@ -254,11 +254,11 @@
               <span>🏭</span>
               <span>İş İstasyonları Kapasite Doluluk ve Yük Oranları (%)</span>
             </h3>
-            <a href="/production/capacity" style="color: #818cf8; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+            <a href="/production/capacity" style="color: #818cf8; font-size: 0.84rem; font-weight: 700; text-decoration: none;">
               Kapasite Detayı ➔
             </a>
           </div>
-          <div style="height: 330px; position: relative;">
+          <div style="height: 380px; position: relative;">
             <canvas id="capacityChart"></canvas>
           </div>
         </div>
@@ -270,18 +270,18 @@
               <span>📊</span>
               <span>İş Emri Durum Dağılımı</span>
             </h3>
-            <a href="/production/orders" style="color: #818cf8; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+            <a href="/production/orders" style="color: #818cf8; font-size: 0.84rem; font-weight: 700; text-decoration: none;">
               İş Emirleri ➔
             </a>
           </div>
-          <div style="height: 330px; position: relative;">
+          <div style="height: 380px; position: relative;">
             <canvas id="statusChart"></canvas>
           </div>
         </div>
       </div>
 
       <!-- MRP Critical Alerts Preview & Active Orders Section -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
         
         <!-- 1. MRP Net Requirements Preview -->
         <div class="analytics-card">
@@ -495,7 +495,7 @@
             },
             x: {
               grid: { display: false },
-              ticks: { color: '#cbd5e1', font: { weight: '600', size: 11 } }
+              ticks: { color: '#cbd5e1', font: { weight: '600', size: 12 } }
             }
           }
         }
@@ -525,7 +525,7 @@
           plugins: { 
             legend: { 
               position: 'bottom',
-              labels: { color: '#cbd5e1', font: { weight: '700', size: 11 }, padding: 14 }
+              labels: { color: '#cbd5e1', font: { weight: '700', size: 12 }, padding: 18 }
             } 
           },
           cutout: '68%'
