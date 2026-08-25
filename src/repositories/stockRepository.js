@@ -8,6 +8,7 @@ const {
   StokSayimi,
   Kullanici,
   UretimEmri,
+  Tedarikci,
   sequelize
 } = require('../../models');
 const logService = require('../services/logService');
@@ -47,7 +48,10 @@ class StockRepository {
     return await StokKarti.findAll({
       where,
       order: [['createdAt', 'DESC']],
-      include: [{ model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi'] }]
+      include: [
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi'] },
+        { model: Tedarikci, as: 'tedarikciKarti', attributes: ['id', 'tedarikciKodu', 'firmaAdi', 'ticariAd', 'terminSuresi', 'performansSkoru', 'sehir', 'eposta', 'telefon'] }
+      ]
     });
   }
 
@@ -55,7 +59,10 @@ class StockRepository {
     const validId = parseInt(id, 10);
     if (!validId || Number.isNaN(validId) || validId <= 0) return null;
     return await StokKarti.findByPk(validId, {
-      include: [{ model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] }]
+      include: [
+        { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
+        { model: Tedarikci, as: 'tedarikciKarti', attributes: ['id', 'tedarikciKodu', 'firmaAdi', 'ticariAd', 'terminSuresi', 'performansSkoru', 'sehir', 'eposta', 'telefon', 'bankaBilgileri', 'odemeVadesi'] }
+      ]
     });
   }
 
@@ -216,6 +223,7 @@ class StockRepository {
       model: ((data.model) && data.model.trim()) ? data.model.trim() : null,
       depoLokasyonu: targetLocation,
       tedarikci: ((data.tedarikci || data.supplier) && (data.tedarikci || data.supplier).trim()) ? (data.tedarikci || data.supplier).trim() : null,
+      tedarikciId: data.tedarikciId || data.supplierId || null,
       notlar: ((data.notlar || data.notes) && (data.notlar || data.notes).trim()) ? (data.notlar || data.notes).trim() : null,
       olusturanId: currentUser ? currentUser.id : null
     };
@@ -273,6 +281,7 @@ class StockRepository {
       updateData.depoLokasyonu = locToSet;
     }
     if (data.tedarikci !== undefined || data.supplier !== undefined) updateData.tedarikci = data.tedarikci || data.supplier;
+    if (data.tedarikciId !== undefined || data.supplierId !== undefined) updateData.tedarikciId = data.tedarikciId || data.supplierId || null;
     if (data.durum !== undefined || data.status !== undefined) updateData.durum = data.durum || data.status;
     if (data.notlar !== undefined || data.notes !== undefined) updateData.notlar = data.notlar || data.notes;
 

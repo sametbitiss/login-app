@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   class StokKarti extends Model {
     static associate(models) {
       StokKarti.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      StokKarti.belongsTo(models.Tedarikci, { foreignKey: 'tedarikciId', as: 'tedarikciKarti' });
       StokKarti.hasMany(models.RotaOperasyon, { foreignKey: 'stokId', as: 'rotaOperasyonlari' });
       StokKarti.hasMany(models.UrunRecetesi, { foreignKey: 'mamulStokId', as: 'receteler' });
     }
@@ -98,6 +99,14 @@ module.exports = (sequelize, DataTypes) => {
     tedarikci: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    tedarikciId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'Tedarikciler',
+        key: 'id'
+      }
     },
     rafOmru: {
       type: DataTypes.INTEGER,

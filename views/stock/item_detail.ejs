@@ -461,12 +461,27 @@
 
           <div class="glass-grid-2">
             <div class="field-wrap">
-              <label class="field-label">Ana Tedarikçi Firma</label>
-              <select name="supplier" class="field-input">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label class="field-label" style="margin-bottom: 0;">Ana Tedarikçi Firma</label>
+                <% if (item.tedarikciId || (item.tedarikciKarti && item.tedarikciKarti.id)) { %>
+                  <a href="/purchase/suppliers/<%= item.tedarikciId || item.tedarikciKarti.id %>" style="font-size: 0.78rem; color: #818cf8; font-weight: 700; text-decoration: none;">
+                    🏢 Tedarikçi Kartı ↗
+                  </a>
+                <% } %>
+              </div>
+              <select name="tedarikciId" class="field-input">
                 <option value="">Seçiniz / Belirtilmemiş</option>
                 <% if (suppliers && suppliers.length > 0) { %>
                   <% suppliers.forEach(sup => { %>
-                    <option value="<%= sup.companyName %>" <%= item.supplier === sup.companyName ? 'selected' : '' %>><%= sup.companyName %></option>
+                    <% 
+                      const sId = sup.id;
+                      const sName = sup.firmaAdi || sup.companyName;
+                      const sShort = sup.ticariAd || sName;
+                      const isSel = (item.tedarikciId === sId) || (item.supplier === sName) || (item.supplier === sShort) || (item.tedarikci === sName) || (item.tedarikci === sShort);
+                    %>
+                    <option value="<%= sId %>" <%= isSel ? 'selected' : '' %>>
+                      [<%= sup.tedarikciKodu || sup.supplierCode %>] <%= sShort %>
+                    </option>
                   <% }); %>
                 <% } %>
               </select>

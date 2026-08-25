@@ -281,6 +281,29 @@ class StockController {
     if (!item) throw new NotFoundError('Stok kalemi bulunamadı.');
 
     try {
+      let targetSupplierId = req.body.tedarikciId || req.body.supplierId || null;
+      let targetSupplierName = req.body.tedarikci || req.body.supplier ? (req.body.tedarikci || req.body.supplier).trim() : null;
+
+      if (targetSupplierName && !targetSupplierId) {
+        const foundSup = await Tedarikci.findOne({
+          where: {
+            [Op.or]: [
+              { firmaAdi: targetSupplierName },
+              { ticariAd: targetSupplierName }
+            ]
+          }
+        });
+        if (foundSup) {
+          targetSupplierId = foundSup.id;
+          targetSupplierName = foundSup.ticariAd || foundSup.firmaAdi;
+        }
+      } else if (targetSupplierId) {
+        const foundSup = await Tedarikci.findByPk(targetSupplierId);
+        if (foundSup) {
+          targetSupplierName = foundSup.ticariAd || foundSup.firmaAdi;
+        }
+      }
+
       await stockRepository.update(item.id, {
         tedarikYontemi: req.body.tedarikYontemi || req.body.procurementMethod || item.tedarikYontemi,
         durum: req.body.durum || req.body.status || item.durum,
@@ -291,7 +314,8 @@ class StockController {
         paraBirimi: req.body.paraBirimi || req.body.currency || item.paraBirimi,
         kdvOrani: (req.body.kdvOrani !== undefined && req.body.kdvOrani !== '') ? parseFloat(req.body.kdvOrani) : (req.body.taxRate !== undefined && req.body.taxRate !== '' ? parseFloat(req.body.taxRate) : item.kdvOrani),
         depoLokasyonu: req.body.depoLokasyonu || req.body.warehouseLocation ? (req.body.depoLokasyonu || req.body.warehouseLocation).trim() : null,
-        tedarikci: req.body.tedarikci || req.body.supplier ? (req.body.tedarikci || req.body.supplier).trim() : null,
+        tedarikci: targetSupplierName,
+        tedarikciId: targetSupplierId,
         marka: req.body.marka || req.body.brand ? (req.body.marka || req.body.brand).trim() : null,
         model: req.body.model ? req.body.model.trim() : null,
         notlar: req.body.notlar || req.body.notes ? (req.body.notlar || req.body.notes).trim() : null

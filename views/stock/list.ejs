@@ -234,11 +234,22 @@
                     <% if (item.barcode) { %><div style="font-size: 0.725rem; color: var(--text-muted);">Barkod: <%= item.barcode %></div><% } %>
                   </td>
                   <td>
-                    <div style="margin-bottom: 4px;"><span class="status-pill status-approved" style="font-size: 0.725rem;"><%= item.category %></span></div>
+                    <div style="margin-bottom: 4px;"><span class="status-pill status-approved" style="font-size: 0.725rem;"><%= item.category || item.kategori %></span></div>
                     <% if (method === 'Üretim') { %>
                       <span class="status-pill status-onleave" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); font-size: 0.725rem;">⚙️ Üretim</span>
                     <% } else { %>
                       <span class="status-pill status-pending" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); font-size: 0.725rem;">🛒 Satın Alma</span>
+                    <% } %>
+                    <% if (item.tedarikciId || (item.tedarikciKarti && item.tedarikciKarti.id)) { %>
+                      <div style="margin-top: 4px;">
+                        <a href="/purchase/suppliers/<%= item.tedarikciId || item.tedarikciKarti.id %>" style="font-size: 0.725rem; color: #38bdf8; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;">
+                          <span>🏢</span> <%= (item.tedarikciKarti ? (item.tedarikciKarti.ticariAd || item.tedarikciKarti.firmaAdi) : item.tedarikci) || 'Tedarikçi' %> ↗
+                        </a>
+                      </div>
+                    <% } else if (item.tedarikci && item.tedarikci !== 'Fabrika İçi Üretim') { %>
+                      <div style="margin-top: 4px; font-size: 0.725rem; color: var(--text-muted);">
+                        🏢 <%= item.tedarikci %>
+                      </div>
                     <% } %>
                   </td>
                   <td>

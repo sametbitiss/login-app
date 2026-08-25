@@ -142,6 +142,10 @@ class SupplierRepository {
       include: [
         { model: Kullanici, as: 'olusturan', attributes: ['id', 'kullaniciAdi', 'ad', 'soyad'] },
         {
+          model: StokKarti, as: 'stokKartlari',
+          attributes: ['id', 'stokKodu', 'ad', 'kategori', 'birim', 'mevcutStok', 'minStok', 'alisFiyati', 'paraBirimi', 'depoLokasyonu']
+        },
+        {
           model: SatinAlmaSiparisi, as: 'satinAlmaSiparisleri',
           include: [{ model: StokKarti, as: 'stokKarti', attributes: ['id', 'stokKodu', 'ad', 'birim'] }],
           order: [['createdAt', 'DESC']],

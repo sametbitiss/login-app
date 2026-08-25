@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   class Tedarikci extends Model {
     static associate(models) {
       Tedarikci.belongsTo(models.Kullanici, { foreignKey: 'olusturanId', as: 'olusturan' });
+      Tedarikci.hasMany(models.StokKarti, { foreignKey: 'tedarikciId', as: 'stokKartlari' });
       Tedarikci.hasMany(models.SatinAlmaSiparisi, { foreignKey: 'tedarikciId', as: 'satinAlmaSiparisleri' });
       Tedarikci.hasMany(models.SatinAlmaTeklifTalebi, { foreignKey: 'tedarikciId', as: 'teklifTalepleri' });
       Tedarikci.hasMany(models.MalKabul, { foreignKey: 'tedarikciId', as: 'malKabulleri' });

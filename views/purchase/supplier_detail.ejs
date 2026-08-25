@@ -147,6 +147,84 @@
             </div>
           <% } %>
         </div>
+      <% 
+        const stokList = supplier.stokKartlari || [];
+      %>
+
+      <!-- ATANMIŞ HAMMADDE VE STOK KARTLARI -->
+      <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow-md); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>🔩</span> Tedarikçiden Temin Edilen Hammaddeler & Stok Kartları
+            </h3>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+              Bu tedarikçiye atanmış hammadde stok kartları ve güncel depo durumu
+            </div>
+          </div>
+          <span class="status-pill status-approved" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+            <%= stokList.length %> Kalem Malzeme
+          </span>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Stok Kodu</th>
+                <th>Malzeme / Hammadde Adı</th>
+                <th>Kategori</th>
+                <th>Mevcut Fiziki Stok</th>
+                <th>Alış Birim Fiyatı</th>
+                <th>Depo Lokasyonu</th>
+                <th>Stok Durumu</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (stokList.length === 0) { %>
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                    Bu tedarikçiye henüz atanmış bir hammadde stok kartı bulunmamaktadır.
+                  </td>
+                </tr>
+              <% } else { %>
+                <% stokList.forEach(item => { %>
+                  <%
+                    const curStock = parseFloat(item.mevcutStok) || 0;
+                    const minStk = parseFloat(item.minStok) || 0;
+                    const price = parseFloat(item.alisFiyati) || 0;
+                    const curr = item.paraBirimi || 'TRY';
+                  %>
+                  <tr>
+                    <td>
+                      <a href="/stock/items/<%= item.id %>" style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-weight: 800; text-decoration: none;">
+                        <%= item.stokKodu %> ↗
+                      </a>
+                    </td>
+                    <td><strong style="color: var(--text-primary);"><%= item.ad %></strong></td>
+                    <td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 700;">🔩 Hammadde</span></td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #f8fafc;">
+                      <%= curStock.toLocaleString('tr-TR') %> <%= item.birim %>
+                    </td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--emerald);">
+                      <%= price.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= curr %>
+                    </td>
+                    <td><span style="color: var(--text-muted); font-size: 0.85rem;"><%= item.depoLokasyonu || 'Ana Depo' %></span></td>
+                    <td>
+                      <% if (curStock <= 0) { %>
+                        <span class="status-pill status-rejected">● Tükendi (Kritik)</span>
+                      <% } else if (curStock <= minStk) { %>
+                        <span class="status-pill status-partial">⚠️ Emniyet Stoğu</span>
+                      <% } else { %>
+                        <span class="status-pill status-approved">✓ Stok Yeterli</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow-md);">
