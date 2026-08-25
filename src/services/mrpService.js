@@ -204,6 +204,18 @@ class MRPService {
     const purchaseSuggestions = [];
     const productionReqSuggestions = [];
 
+    // Mevcut aktif satın alma taleplerini al (Pending, Approved, Ordered)
+    const existingPurchaseReqs = await SatinAlmaTalebi.findAll({
+      where: {
+        durum: { [Op.in]: ['Pending', 'Approved', 'Ordered'] }
+      },
+      attributes: ['id', 'stokId', 'talepNo', 'talepEdilenMiktar', 'durum']
+    });
+    const existingReqsByStock = new Map();
+    existingPurchaseReqs.forEach(r => {
+      existingReqsByStock.set(r.stokId, r);
+    });
+
     for (const req of materialRequirements) {
       if (req.isStockSufficient) continue;
 
@@ -239,6 +251,9 @@ class MRPService {
         earliestReqDate = d.toISOString().split('T')[0];
       }
 
+      const existingReq = existingReqsByStock.get(req.stockId) || null;
+      const hasExistingReq = !!existingReq;
+
       if (req.procurementMethod === 'Satın Alma' || req.procurementMethod === 'Purchase') {
         purchaseSuggestions.push({
           stockId: req.stockId,
@@ -255,8 +270,11 @@ class MRPService {
           deliveryDate: earliestDeliveryDate,
           productionDays: maxProdDays,
           demandSources: sourceSummary,
+          hasExistingReq,
+          existingReqNo: existingReq ? existingReq.talepNo : null,
+          existingReqStatus: existingReq ? existingReq.durum : null,
           actionType: 'purchase',
-          actionLabel: '🛒 Talep Aç'
+          actionLabel: hasExistingReq ? `✓ Talep Açıldı (${existingReq.talepNo})` : '🛒 Talep Aç'
         });
       } else if (req.procurementMethod === 'Üretim' || req.procurementMethod === 'Production') {
         productionReqSuggestions.push({
@@ -724,6 +742,17 @@ class MRPService {
 
       for (const item of mrpData.purchaseSuggestions) {
         if (selectedStockIds && !selectedStockIds.includes(item.stockId)) continue;
+
+        // Mükerrer satın alma talebi kontrolü: Bu hammadde için zaten açık bir talep varsa tekrar oluşturma
+        const existingActiveReq = await SatinAlmaTalebi.findOne({
+          where: {
+            stokId: item.stockId,
+            durum: { [Op.in]: ['Pending', 'Approved', 'Ordered'] }
+          }
+        });
+        if (existingActiveReq) {
+          continue;
+        }
 
         const nextReqNo = await requisitionRepository.generateRequisitionNo();
         const stockItem = await StokKarti.findByPk(item.stockId);

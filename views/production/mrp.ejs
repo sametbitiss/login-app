@@ -379,11 +379,12 @@
             <h3 style="font-size: 1rem; font-weight: 800; color: #fb7185; margin: 0;">🛒 Satın Alma Talebi Önerileri (Eksik Hammaddeler)</h3>
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 0 0;">Tedarik yöntemi Satın Alma olan ve fiziksel depo stoğu toplam brüt ihtiyacı karşılamayan hammaddeler.</p>
           </div>
-          <% if (purchaseSuggestions.length > 0) { %>
+          <% const pendingPurchases = purchaseSuggestions.filter(p => !p.hasExistingReq); %>
+          <% if (pendingPurchases.length > 0) { %>
             <form action="/production/mrp/execute" method="POST">
               <input type="hidden" name="actionType" value="create_purchase_reqs">
               <button type="submit" class="btn-quick-action" style="background: rgba(244, 63, 94, 0.2); color: #fb7185; border-color: rgba(244, 63, 94, 0.4);">
-                🛒 Tüm Satın Alma Taleplerini Oluştur (<%= purchaseSuggestions.length %> Kalem)
+                🛒 Tüm Satın Alma Taleplerini Oluştur (<%= pendingPurchases.length %> Kalem)
               </button>
             </form>
           <% } %>
@@ -443,13 +444,19 @@
                       <div style="font-size: 0.72rem; color: var(--text-muted);"><%= pr.suggestedSupplier %></div>
                     </td>
                     <td style="text-align: right;">
-                      <form action="/production/mrp/execute" method="POST" style="display: inline-block;">
-                        <input type="hidden" name="actionType" value="create_purchase_reqs">
-                        <input type="hidden" name="stockId" value="<%= pr.stockId %>">
-                        <button type="submit" class="btn-quick-action" style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3);">
-                          🛒 Talep Aç
-                        </button>
-                      </form>
+                      <% if (pr.hasExistingReq) { %>
+                        <span class="btn-quick-action" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35); font-weight: 700; cursor: default; display: inline-flex; align-items: center; gap: 5px;">
+                          ✓ Talep Açıldı (<%= pr.existingReqNo %>)
+                        </span>
+                      <% } else { %>
+                        <form action="/production/mrp/execute" method="POST" style="display: inline-block;">
+                          <input type="hidden" name="actionType" value="create_purchase_reqs">
+                          <input type="hidden" name="stockId" value="<%= pr.stockId %>">
+                          <button type="submit" class="btn-quick-action" style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3);">
+                            🛒 Talep Aç
+                          </button>
+                        </form>
+                      <% } %>
                     </td>
                   </tr>
                 <% }); %>
