@@ -712,27 +712,74 @@ class PurchaseController {
   });
 
   addSupplier = asyncHandler(async (req, res) => {
+    const rawData = req.body;
     try {
+      const tedarikciKodu = (rawData.tedarikciKodu || rawData.supplierCode || '').trim();
+      const firmaAdi = (rawData.firmaAdi || rawData.companyName || rawData.firmaUnvani || '').trim();
+      const ticariAd = (rawData.ticariAd || rawData.commercialName || '').trim() || null;
+      const kategori = rawData.kategori || rawData.category || 'Hammadde';
+      const vergiDairesi = (rawData.vergiDairesi || rawData.taxOffice || '').trim() || null;
+      const vergiNo = (rawData.vergiNo || rawData.taxNo || '').trim() || null;
+      const adres = (rawData.adres || rawData.address || rawData.faturaAdresi || '').trim() || null;
+      const sehir = (rawData.sehir || rawData.city || '').trim() || null;
+      const ulke = (rawData.ulke || rawData.country || 'Türkiye').trim();
+      const bankaBilgileri = (rawData.bankaBilgileri || rawData.bankAccountInfo || '').trim() || null;
+      const paraBirimi = rawData.paraBirimi || rawData.currency || 'TRY';
+      const odemeVadesi = rawData.odemeVadesi || rawData.paymentTerm || 'Vadeli_30';
+      const ilgiliKisi = (rawData.ilgiliKisi || rawData.contactPerson || rawData.salesRepresentative || '').trim() || null;
+      const eposta = (rawData.eposta || rawData.email || '').trim() || null;
+      const telefon = (rawData.telefon || rawData.phone || '').trim() || null;
+      const gsm = (rawData.gsm || rawData.mobilePhone || '').trim() || null;
+      const webSitesi = (rawData.webSitesi || rawData.website || '').trim() || null;
+      const teslimatSekli = rawData.teslimatSekli || rawData.deliveryTerms || 'DAP - Adrese / Fabrikaya Teslim';
+      const terminSuresi = parseInt(rawData.terminSuresi || rawData.leadTimeDays || rawData.deliveryDays, 10) || 7;
+      let performansSkoru = parseFloat(rawData.performansSkoru !== undefined ? rawData.performansSkoru : (rawData.performanceScore !== undefined ? rawData.performanceScore : 85));
+      if (isNaN(performansSkoru) || performansSkoru < 0) performansSkoru = 0;
+      if (performansSkoru > 100) performansSkoru = 100;
+      const durum = rawData.durum || rawData.status || 'Active';
+      const notlar = (rawData.notlar || rawData.notes || '').trim() || null;
+
+      // Backend Validasyonları
+      if (!tedarikciKodu) {
+        throw new Error('Tedarikçi kodu zorunludur.');
+      }
+      if (!firmaAdi || firmaAdi.length < 2) {
+        throw new Error('Firma resmi unvanı en az 2 karakter olmalıdır ve zorunludur.');
+      }
+      if (eposta && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eposta)) {
+        throw new Error('Lütfen geçerli bir e-posta adresi giriniz.');
+      }
+      if (vergiNo && !/^[0-9]{10,11}$/.test(vergiNo.replace(/[\s-]/g, ''))) {
+        throw new Error('Vergi numarası 10 haneli (Tüzel) veya 11 haneli (Şahıs) rakamlardan oluşmalıdır.');
+      }
+      if (terminSuresi < 1) {
+        throw new Error('Varsayılan termin süresi en az 1 gün olmalıdır.');
+      }
+
       await purchaseService.createSupplier({
-        tedarikciKodu: req.body.tedarikciKodu ? req.body.tedarikciKodu.trim() : (req.body.supplierCode ? req.body.supplierCode.trim() : ''),
-        firmaAdi: req.body.firmaAdi ? req.body.firmaAdi.trim() : (req.body.companyName ? req.body.companyName.trim() : ''),
-        vergiNo: req.body.vergiNo || req.body.taxNo || null,
-        vergiDairesi: req.body.vergiDairesi || req.body.taxOffice || null,
-        ilgiliKisi: req.body.ilgiliKisi || req.body.contactPerson || null,
-        eposta: req.body.eposta || req.body.email || null,
-        telefon: req.body.telefon || req.body.phone || null,
-        faks: req.body.faks || req.body.fax || null,
-        webSitesi: req.body.webSitesi || req.body.website || null,
-        adres: req.body.adres || req.body.address || null,
-        sehir: req.body.sehir || req.body.city || null,
-        ulke: req.body.ulke || req.body.country || 'Türkiye',
-        odemeVadesi: req.body.odemeVadesi || req.body.paymentTerm || 'Vadeli_30',
-        paraBirimi: req.body.paraBirimi || req.body.currency || 'TRY',
-        riskLimiti: parseFloat(req.body.riskLimiti || req.body.riskLimit) || 100000,
-        performansSkoru: parseFloat(req.body.performansSkoru || req.body.performanceScore) || 85,
-        kategori: req.body.kategori || req.body.category || 'Hammadde',
-        durum: 'Active',
-        notlar: req.body.notlar ? req.body.notlar.trim() : (req.body.notes ? req.body.notes.trim() : null)
+        tedarikciKodu,
+        firmaAdi,
+        ticariAd,
+        kategori,
+        vergiDairesi,
+        vergiNo,
+        adres,
+        sehir,
+        ulke,
+        bankaBilgileri,
+        paraBirimi,
+        odemeVadesi,
+        ilgiliKisi,
+        eposta,
+        telefon,
+        gsm,
+        webSitesi,
+        teslimatSekli,
+        terminSuresi,
+        performansSkoru,
+        kaliteSkoru: performansSkoru,
+        durum,
+        notlar
       }, req.user, req.ip);
 
       res.redirect('/purchase/suppliers');
@@ -742,7 +789,7 @@ class PurchaseController {
       res.render('purchase/supplier_add', {
         user: req.user,
         error: err.message || 'Tedarikçi eklenirken hata oluştu.',
-        nextCode,
+        nextCode: rawData.supplierCode || rawData.tedarikciKodu || nextCode,
         formData: req.body
       });
     }

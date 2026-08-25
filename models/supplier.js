@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
+    ticariAd: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     vergiNo: {
       type: DataTypes.STRING,
       allowNull: true
@@ -41,6 +45,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
+    gsm: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     faks: {
       type: DataTypes.STRING,
       allowNull: true
@@ -48,6 +56,20 @@ module.exports = (sequelize, DataTypes) => {
     webSitesi: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    bankaBilgileri: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    teslimatSekli: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'DAP - Adrese / Fabrikaya Teslim'
+    },
+    terminSuresi: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 7
     },
     adres: {
       type: DataTypes.TEXT,

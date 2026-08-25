@@ -50,35 +50,107 @@
 
     <main class="module-content">
 
+      <%
+        const code = supplier.tedarikciKodu || supplier.supplierCode || '—';
+        const name = supplier.firmaAdi || supplier.companyName || '—';
+        const tradeName = supplier.ticariAd || supplier.commercialName;
+        const taxOffice = supplier.vergiDairesi || supplier.taxOffice || '—';
+        const taxNo = supplier.vergiNo || supplier.taxNo || '—';
+        const contact = supplier.ilgiliKisi || supplier.contactPerson || '—';
+        const email = supplier.eposta || supplier.email || '—';
+        const phone = supplier.telefon || supplier.phone || '—';
+        const gsm = supplier.gsm || supplier.mobilePhone || '—';
+        const website = supplier.webSitesi || supplier.website || '—';
+        const address = supplier.adres || supplier.address || '—';
+        const city = supplier.sehir || supplier.city || '—';
+        const country = supplier.ulke || supplier.country || 'Türkiye';
+        const term = supplier.odemeVadesi || supplier.paymentTerm || 'Vadeli_30';
+        const curr = supplier.paraBirimi || supplier.currency || 'TRY';
+        const leadTime = supplier.terminSuresi || 7;
+        const deliveryTerms = supplier.teslimatSekli || 'DAP - Adrese / Fabrikaya Teslim';
+        const cat = supplier.kategori || supplier.category || 'Hammadde';
+        const status = supplier.durum || supplier.status || 'Active';
+        const bankInfo = supplier.bankaBilgileri || '—';
+        const notes = supplier.notlar || supplier.notes || '';
+
+        const termsMap = {
+          'Pesin': 'Peşin',
+          'Vadeli_15': '15 Gün Vadeli',
+          'Vadeli_30': '30 Gün Vadeli',
+          'Vadeli_45': '45 Gün Vadeli',
+          'Vadeli_60': '60 Gün Vadeli',
+          'Vadeli_90': '90 Gün Vadeli',
+          'Kredi_Karti': 'Kredi Kartı / DBS'
+        };
+        const displayTerm = termsMap[term] || term;
+
+        const catMap = {
+          'Hammadde': 'Hammadde Tedarikçisi',
+          'Yari_Mamul': 'Yarı Mamul Tedarikçisi',
+          'Hizmet': 'Fasoncu / Hizmet Sağlayıcı',
+          'Yedek_Parca': 'Yedek Parça & Sarf',
+          'Ambalaj': 'Ambalaj & Paketleme',
+          'Diger': 'Genel / Diğer'
+        };
+        const displayCat = catMap[cat] || cat;
+
+        let scoreVal = parseFloat(supplier.performansSkoru !== undefined ? supplier.performansSkoru : (supplier.kaliteSkoru !== undefined ? supplier.kaliteSkoru : (supplier.performanceScore || 85)));
+        if (scoreVal <= 5) scoreVal = scoreVal * 20;
+        scoreVal = Math.min(100, Math.round(scoreVal));
+
+        const ordersList = supplier.satinAlmaSiparisleri || supplier.purchaseOrders || [];
+      %>
+
       <div class="page-header">
         <div>
-          <h1>Tedarikçi Kart Detayı: <%= supplier.companyName %></h1>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Kodu: <%= supplier.supplierCode %></p>
+          <h1>Tedarikçi Kartı: <%= name %></h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+            <strong style="color: #818cf8; font-family: 'JetBrains Mono', monospace;"><%= code %></strong> • <%= displayCat %> • 
+            <% if (status === 'Active') { %>
+              <span class="status-pill status-active">● Aktif</span>
+            <% } else { %>
+              <span class="status-pill status-rejected">● Pasif</span>
+            <% } %>
+          </p>
         </div>
         <a href="/purchase/suppliers" class="btn btn-secondary">← Tedarikçi Listesine Dön</a>
       </div>
 
       <div class="card-detail">
         <div class="grid-3">
-          <div><div class="info-label">Şirket Unvanı</div><div class="info-val"><%= supplier.companyName %></div></div>
-          <div><div class="info-label">Vergi Dairesi / No</div><div class="info-val"><%= supplier.taxOffice || '—' %> / <%= supplier.taxNo || '—' %></div></div>
-          <div><div class="info-label">Ödeme Vadesi</div><div class="info-val"><%= supplier.paymentTerm %></div></div>
-          <div><div class="info-label">İletişim Kişisi</div><div class="info-val"><%= supplier.contactPerson || '—' %></div></div>
-          <div><div class="info-label">E-Posta</div><div class="info-val"><%= supplier.email || '—' %></div></div>
-          <div><div class="info-label">Telefon</div><div class="info-val"><%= supplier.phone || '—' %></div></div>
-          <%
-            let scoreVal = parseFloat(supplier.performanceScore || 85);
-            if (scoreVal <= 5) scoreVal = scoreVal * 20;
-            scoreVal = Math.min(100, Math.round(scoreVal));
-          %>
-          <div><div class="info-label">Değerlendirme Performans Puanı</div><div class="info-val" style="color: var(--amber); font-family: 'JetBrains Mono', monospace;">⭐ <%= scoreVal %> / 100 Puan</div></div>
-          <div><div class="info-label">Zamanında Teslim Oranı</div><div class="info-val" style="color: var(--emerald);">%<%= parseFloat(supplier.onTimeDeliveryRate || 95).toFixed(0) %></div></div>
-          <div><div class="info-label">Kalite Uygunluk Oranı</div><div class="info-val" style="color: var(--cyan);">%<%= parseFloat(supplier.qualityScore || 98).toFixed(0) %></div></div>
+          <div><div class="info-label">Firma Resmi Unvanı</div><div class="info-val"><%= name %></div></div>
+          <div><div class="info-label">Ticari / Kısa Ad</div><div class="info-val" style="color: #818cf8;"><%= tradeName || '—' %></div></div>
+          <div><div class="info-label">Vergi Dairesi / No</div><div class="info-val"><%= taxOffice %> / <%= taxNo %></div></div>
+
+          <div><div class="info-label">İlgili Satış Temsilcisi</div><div class="info-val"><%= contact %></div></div>
+          <div><div class="info-label">E-Posta</div><div class="info-val" style="font-size: 0.95rem; color: #38bdf8;"><%= email %></div></div>
+          <div><div class="info-label">Telefon & GSM</div><div class="info-val" style="font-size: 0.95rem;"><%= phone %> / <%= gsm %></div></div>
+
+          <div><div class="info-label">Ödeme Vadesi & Para Birimi</div><div class="info-val" style="color: #fbbf24;"><%= displayTerm %> (<%= curr %>)</div></div>
+          <div><div class="info-label">Teslimat Şekli & Termin</div><div class="info-val" style="font-size: 0.95rem;"><%= deliveryTerms.split('-')[0].trim() %> • <strong><%= leadTime %> Gün</strong></div></div>
+          <div><div class="info-label">Performans Puanı</div><div class="info-val" style="color: var(--amber); font-family: 'JetBrains Mono', monospace;">⭐ <%= scoreVal %> / 100</div></div>
+
+          <div style="grid-column: span 2;"><div class="info-label">Fatura & Şirket Adresi</div><div class="info-val" style="font-size: 0.9rem; font-weight: 500;"><%= address %> <%= city ? '(' + city + ' / ' + country + ')' : '' %></div></div>
+          <div><div class="info-label">Web Sitesi</div><div class="info-val" style="font-size: 0.9rem;"><%= website %></div></div>
+
+          <% if (bankInfo && bankInfo !== '—') { %>
+            <div style="grid-column: span 3; background: rgba(15, 23, 42, 0.4); padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border);">
+              <div class="info-label">🏦 Banka Hesap Bilgileri (IBAN)</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #f8fafc; margin-top: 4px;"><%= bankInfo %></div>
+            </div>
+          <% } %>
+
+          <% if (notes) { %>
+            <div style="grid-column: span 3; background: rgba(15, 23, 42, 0.4); padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border);">
+              <div class="info-label">📝 Özel Değerlendirme & Sözleşme Notları</div>
+              <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.4;"><%= notes %></div>
+            </div>
+          <% } %>
         </div>
       </div>
 
       <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow-md);">
-        <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">📋 Tedarikçiden Yapılan Son Satın Almalar</h3>
+        <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">📋 Tedarikçiden Yapılan Satın Almalar</h3>
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
@@ -92,17 +164,27 @@
               </tr>
             </thead>
             <tbody>
-              <% if (!supplier.purchaseOrders || supplier.purchaseOrders.length === 0) { %>
+              <% if (ordersList.length === 0) { %>
                 <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Bu tedarikçiden henüz verilmiş sipariş bulunmamaktadır.</td></tr>
               <% } else { %>
-                <% supplier.purchaseOrders.forEach(o => { %>
+                <% ordersList.forEach(o => { %>
+                  <% 
+                    const orderNo = o.siparisNo || o.orderNo;
+                    const st = o.stokKarti || o.stockItem;
+                    const qty = o.miktar !== undefined ? o.miktar : o.quantity;
+                    const unit = o.birim || (st ? st.birim : '');
+                    const total = parseFloat(o.toplamTutar !== undefined ? o.toplamTutar : o.totalAmount) || 0;
+                    const oCurr = o.paraBirimi || o.currency || 'TRY';
+                    const orderDate = o.siparisTarihi || o.orderDate || o.createdAt;
+                    const oStatus = o.durum || o.status || 'Ordered';
+                  %>
                   <tr>
-                    <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= o.orderNo %></strong></td>
-                    <td><%= o.stockItem ? o.stockItem.name : '—' %></td>
-                    <td><%= o.quantity %> <%= o.stockItem ? o.stockItem.unit : '' %></td>
-                    <td><strong style="color: var(--emerald);"><%= parseFloat(o.totalAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= o.currency %></strong></td>
-                    <td><%= new Date(o.orderDate).toLocaleDateString('tr-TR') %></td>
-                    <td><span class="status-pill status-active">● <%= o.status %></span></td>
+                    <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace;"><%= orderNo %></strong></td>
+                    <td><%= st ? (st.ad || st.name) : '—' %></td>
+                    <td><%= qty %> <%= unit %></td>
+                    <td><strong style="color: var(--emerald);"><%= total.toLocaleString('tr-TR', {minimumFractionDigits: 2}) %> <%= oCurr %></strong></td>
+                    <td><%= new Date(orderDate).toLocaleDateString('tr-TR') %></td>
+                    <td><span class="status-pill status-active">● <%= oStatus %></span></td>
                   </tr>
                 <% }); %>
               <% } %>

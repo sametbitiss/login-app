@@ -83,46 +83,104 @@
           <thead>
             <tr>
               <th>Tedarikçi Kodu</th>
-              <th>Firma Unvanı</th>
-              <th>İletişim Kişisi</th>
-              <th>Ödeme Vadesi</th>
+              <th>Firma Unvanı / Ticari Ad</th>
+              <th>Kategori</th>
+              <th>İletişim & Yetkili</th>
+              <th>Ödeme Vadesi & Para Birimi</th>
+              <th>Varsayılan Termin</th>
               <th>Performans</th>
               <th>Durum</th>
-              <th>Aksiyon</th>
+              <th style="text-align: right;">Aksiyon</th>
             </tr>
           </thead>
           <tbody>
             <% if (suppliers.length === 0) { %>
-              <tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 8px;">🏢</div>Henüz kayıtlı tedarikçi kartı bulunmamaktadır.<br><a href="/purchase/suppliers/add" style="color: var(--indigo); font-weight: 600;">İlk tedarikçi kartını oluşturun →</a></td></tr>
+              <tr><td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 8px;">🏢</div>Henüz kayıtlı tedarikçi kartı bulunmamaktadır.<br><a href="/purchase/suppliers/add" style="color: var(--indigo); font-weight: 600;">İlk tedarikçi kartını oluşturun →</a></td></tr>
             <% } else { %>
               <% suppliers.forEach(sup => { %>
+                <%
+                  const code = sup.tedarikciKodu || sup.supplierCode || '—';
+                  const name = sup.firmaAdi || sup.companyName || '—';
+                  const tradeName = sup.ticariAd || sup.commercialName;
+                  const contact = sup.ilgiliKisi || sup.contactPerson || '—';
+                  const phone = sup.telefon || sup.phone || sup.gsm || '';
+                  const email = sup.eposta || sup.email || '';
+                  const tax = sup.vergiNo || sup.taxNo;
+                  const taxOffice = sup.vergiDairesi || sup.taxOffice;
+                  const term = sup.odemeVadesi || sup.paymentTerm || 'Vadeli_30';
+                  const curr = sup.paraBirimi || sup.currency || 'TRY';
+                  const leadTime = sup.terminSuresi || 7;
+                  const cat = sup.kategori || sup.category || 'Hammadde';
+                  const status = sup.durum || sup.status || 'Active';
+
+                  const termsMap = {
+                    'Pesin': 'Peşin',
+                    'Vadeli_15': '15 Gün',
+                    'Vadeli_30': '30 Gün',
+                    'Vadeli_45': '45 Gün',
+                    'Vadeli_60': '60 Gün',
+                    'Vadeli_90': '90 Gün',
+                    'Kredi_Karti': 'Kredi Kartı'
+                  };
+                  const displayTerm = termsMap[term] || term;
+
+                  const catMap = {
+                    'Hammadde': 'Hammadde',
+                    'Yari_Mamul': 'Yarı Mamul',
+                    'Hizmet': 'Fasoncu / Hizmet',
+                    'Yedek_Parca': 'Yedek Parça',
+                    'Ambalaj': 'Ambalaj',
+                    'Diger': 'Genel / Diğer'
+                  };
+                  const displayCat = catMap[cat] || cat;
+
+                  let score = parseFloat(sup.performansSkoru !== undefined ? sup.performansSkoru : (sup.kaliteSkoru !== undefined ? sup.kaliteSkoru : (sup.performanceScore || 85)));
+                  if (score <= 5) score = score * 20;
+                  score = Math.min(100, Math.round(score));
+                %>
                 <tr>
-                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= sup.supplierCode %></strong></td>
+                  <td><strong style="color: var(--indigo); font-family: 'JetBrains Mono', monospace; font-size: 0.825rem;"><%= code %></strong></td>
                   <td>
-                    <div style="font-weight: 600;"><%= sup.companyName %></div>
-                    <% if (sup.taxNo) { %><div style="font-size: 0.75rem; color: var(--text-muted);">VN: <%= sup.taxNo %></div><% } %>
-                  </td>
-                  <td>
-                    <div><%= sup.contactPerson || '—' %></div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);"><%= sup.phone || '' %></div>
-                  </td>
-                  <td>
-                    <%
-                      let score = parseFloat(sup.performanceScore || 85);
-                      if (score <= 5) score = score * 20;
-                      score = Math.min(100, Math.round(score));
-                    %>
-                    <strong style="color: var(--amber); font-family: 'JetBrains Mono', monospace;">⭐ <%= score %> / 100 Puan</strong>
-                  </td>
-                  <td>
-                    <% if (sup.status === 'Active') { %>
-                      <span class="status-pill status-active">● Aktif</span>
-                    <% } else { %>
-                      <span class="status-pill status-rejected">● <%= sup.status %></span>
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 0.9rem;"><%= name %></div>
+                    <% if (tradeName) { %>
+                      <div style="font-size: 0.78rem; color: #818cf8; font-weight: 600;">🏷️ <%= tradeName %></div>
+                    <% } %>
+                    <% if (tax) { %>
+                      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                        <%= taxOffice ? taxOffice + ' • ' : '' %>VN: <%= tax %>
+                      </div>
                     <% } %>
                   </td>
                   <td>
-                    <a href="/purchase/suppliers/<%= sup.id %>/detail" class="btn btn-sm btn-secondary">🔍 Cari Detay</a>
+                    <span class="status-pill status-approved" style="background: rgba(99, 102, 241, 0.12); color: #818cf8; border-color: rgba(99, 102, 241, 0.25);">
+                      <%= displayCat %>
+                    </span>
+                  </td>
+                  <td>
+                    <div style="font-weight: 600; color: var(--text-primary);"><%= contact %></div>
+                    <% if (email) { %><div style="font-size: 0.75rem; color: #38bdf8;">✉️ <%= email %></div><% } %>
+                    <% if (phone) { %><div style="font-size: 0.75rem; color: var(--text-muted);">📞 <%= phone %></div><% } %>
+                  </td>
+                  <td>
+                    <div style="font-weight: 700; color: #fbbf24; font-size: 0.85rem;"><%= displayTerm %></div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted);">Para Birimi: <strong><%= curr %></strong></div>
+                  </td>
+                  <td>
+                    <strong style="color: #38bdf8; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"><%= leadTime %> Gün</strong>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);"><%= sup.teslimatSekli ? sup.teslimatSekli.split('-')[0].trim() : 'DAP' %></div>
+                  </td>
+                  <td>
+                    <strong style="color: var(--amber); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">⭐ <%= score %> / 100</strong>
+                  </td>
+                  <td>
+                    <% if (status === 'Active') { %>
+                      <span class="status-pill status-active">● Aktif</span>
+                    <% } else { %>
+                      <span class="status-pill status-rejected">● Pasif</span>
+                    <% } %>
+                  </td>
+                  <td style="text-align: right;">
+                    <a href="/purchase/suppliers/<%= sup.id %>/detail" class="btn btn-sm btn-secondary" style="font-weight: 600;">🔍 Cari Detay</a>
                   </td>
                 </tr>
               <% }); %>
