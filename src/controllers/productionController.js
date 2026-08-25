@@ -1,3 +1,5 @@
+const { Op } = require('sequelize');
+const { UretimEmri, UretimEmriOperasyon, IsMerkezi, StokKarti, UrunRecetesi, RotaOperasyon, SatisSiparisi, sequelize } = require('../../models');
 const productionRepository = require('../repositories/productionRepository');
 const stockRepository = require('../repositories/stockRepository');
 const mrpService = require('../services/mrpService');
