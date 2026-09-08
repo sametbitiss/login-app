@@ -1,8 +1,8 @@
-# Full-Stack ERP Application
+# Full-Stack ERP Uygulaması
 
-A full-stack Enterprise Resource Planning (ERP) application developed as part of an internship project. The application is designed to manage core business processes through integrated modules for administration, sales, purchasing, production, quality, and inventory.
+Staj kapsamında geliştirilen, işletmelerin temel iş süreçlerini yönetmeyi amaçlayan full-stack bir ERP uygulamasıdır. Uygulama; yönetim, satış, satın alma, üretim, kalite ve stok yönetimi gibi farklı modülleri bir araya getirmektedir.
 
-## Technologies
+## Kullanılan Teknolojiler
 
 * Node.js
 * Express.js
@@ -11,38 +11,38 @@ A full-stack Enterprise Resource Planning (ERP) application developed as part of
 * JavaScript
 * EJS
 * Bootstrap
-* REST APIs
+* REST API
 
-## Features
+## Özellikler
 
-* User authentication and authorization
-* Role-based access control
-* User and administration management
-* Sales management
-* Purchasing management
-* Production management
-* Quality management
-* Inventory management
-* PostgreSQL database integration
-* Business logic and workflow management
-* Application logging
-* Responsive web interface
+* Kullanıcı giriş ve yetkilendirme sistemi
+* Rol tabanlı yetkilendirme
+* Kullanıcı ve yönetim işlemleri
+* Satış yönetimi
+* Satın alma yönetimi
+* Üretim yönetimi
+* Kalite yönetimi
+* Stok yönetimi
+* PostgreSQL veritabanı entegrasyonu
+* İş kuralları ve süreç yönetimi
+* Uygulama loglama sistemi
+* Responsive web arayüzü
 
-## Architecture
+## Mimari
 
-The application follows a structured backend architecture with separated responsibilities for routing, controllers, services, database access, middleware, and business logic.
+Uygulama; yönlendirme, controller, service, veritabanı erişimi, middleware ve iş mantığı gibi sorumlulukların ayrıştırıldığı yapısal bir backend mimarisi kullanmaktadır.
 
-Sequelize is used as the ORM layer for PostgreSQL, while EJS and Bootstrap are used to build the user interface.
+PostgreSQL veritabanı ile veri erişimi için Sequelize ORM, kullanıcı arayüzü için ise EJS ve Bootstrap kullanılmıştır.
 
-## Key Implementations
+## Gerçekleştirilen Çalışmalar
 
-* Designed and implemented the PostgreSQL database structure.
-* Developed backend services and business logic using Node.js and Express.js.
-* Implemented authentication, authorization, and role-based permissions.
-* Integrated frontend views with backend services using EJS.
-* Implemented application logging and supporting middleware.
-* Developed business workflows for different ERP modules.
+* PostgreSQL veritabanı yapısının tasarlanması ve oluşturulması
+* Node.js ve Express.js kullanılarak backend servislerinin ve iş mantığının geliştirilmesi
+* Kimlik doğrulama, yetkilendirme ve rol tabanlı izin sisteminin geliştirilmesi
+* EJS kullanılarak frontend ve backend entegrasyonunun sağlanması
+* Uygulama loglama sistemi ve destekleyici middleware'lerin geliştirilmesi
+* Farklı ERP modülleri için iş süreçlerinin ve iş kurallarının uygulanması
 
-## Project Status
+## Proje Durumu
 
-This project was developed as an internship project for educational and practical experience.
+Bu proje, staj kapsamında eğitim ve pratik deneyim kazanmak amacıyla geliştirilmiştir.
